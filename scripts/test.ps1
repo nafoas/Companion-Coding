@@ -4,5 +4,5 @@
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
-dotnet restore (Join-Path $repoRoot "CompanionCore.slnx")
+dotnet restore (Join-Path $repoRoot "CompanionCore.slnx") --locked-mode
 dotnet test (Join-Path $repoRoot "CompanionCore.slnx") --configuration Release

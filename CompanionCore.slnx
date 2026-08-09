@@ -7,6 +7,7 @@
     <Project Path="src/CompanionCore.Runtime/CompanionCore.Runtime.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/CompanionCore.App.IntegrationTests/CompanionCore.App.IntegrationTests.csproj" />
     <Project Path="tests/CompanionCore.Capture.Tests/CompanionCore.Capture.Tests.csproj" />
     <Project Path="tests/CompanionCore.Presentation.Tests/CompanionCore.Presentation.Tests.csproj" />
     <Project Path="tests/CompanionCore.Runtime.Tests/CompanionCore.Runtime.Tests.csproj" />

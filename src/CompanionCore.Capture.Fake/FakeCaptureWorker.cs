@@ -11,8 +11,14 @@ namespace CompanionCore.Capture.Fake;
 /// </summary>
 public sealed class FakeCaptureWorker : ICaptureWorker
 {
+    private readonly ISystemClock _clock;
     private long _sequence;
     private bool _disposed;
+
+    public FakeCaptureWorker(ISystemClock? clock = null)
+    {
+        _clock = clock ?? SystemClock.Instance;
+    }
 
     public CaptureWorkerStatus Status { get; private set; } = CaptureWorkerStatus.Stopped;
 
@@ -34,6 +40,10 @@ public sealed class FakeCaptureWorker : ICaptureWorker
     public Task StopAsync(CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
+        // An already-cancelled token must not mutate status — the caller asked to stop
+        // via cancellation, not requested a state change we should still apply.
+        cancellationToken.ThrowIfCancellationRequested();
+
         SetStatus(CaptureWorkerStatus.Stopped);
         return Task.CompletedTask;
     }
@@ -41,7 +51,11 @@ public sealed class FakeCaptureWorker : ICaptureWorker
     public async Task RestartAsync(CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
+        // StopAsync/StartAsync each independently validate the token and leave status
+        // untouched if it's already cancelled, so a cancelled restart never leaves the
+        // worker in a half-transitioned state.
         await StopAsync(cancellationToken).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
         SetStatus(CaptureWorkerStatus.Restarting);
         await StartAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -52,7 +66,7 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         // a real capture of anything.
         var frame = new CaptureFrameMetadata(
             Interlocked.Increment(ref _sequence),
-            DateTimeOffset.UtcNow,
+            _clock.UtcNow,
             Width: 1,
             Height: 1);
         FrameProduced?.Invoke(this, frame);
@@ -61,7 +75,7 @@ public sealed class FakeCaptureWorker : ICaptureWorker
     private void SetStatus(CaptureWorkerStatus status)
     {
         Status = status;
-        StatusChanged?.Invoke(this, new CaptureWorkerStatusChanged(status, DateTimeOffset.UtcNow));
+        StatusChanged?.Invoke(this, new CaptureWorkerStatusChanged(status, _clock.UtcNow));
     }
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);

@@ -1,8 +1,10 @@
 using System.Runtime.CompilerServices;
 
-// The internal CompanionRuntime constructor may only be called from the application
-// composition root (CompanionCore.App) or from tests exercising the state machine
-// directly. No other assembly is granted access, so "only the composition root may
-// construct a CompanionRuntime" is enforced by the compiler, not by convention.
+// CompanionCore.App needs internal access to CompanionRuntime.ClaimConstructionAuthority
+// (its only way to obtain a runtime — the constructor itself is private, not internal,
+// so this grant does not expose it). CompanionCore.Runtime.Tests needs internal access
+// to LifecycleStateMachine, which carries the actual state-machine logic and none of
+// CompanionRuntime's one-shot identity guarantee, so it can be constructed freely for
+// exhaustive unit testing without fighting the production one-shot gate.
 [assembly: InternalsVisibleTo("CompanionCore.App")]
 [assembly: InternalsVisibleTo("CompanionCore.Runtime.Tests")]

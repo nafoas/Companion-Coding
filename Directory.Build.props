@@ -1,0 +1,13 @@
+<Project>
+
+  <PropertyGroup>
+    <!--
+      Every project restores with a packages.lock.json committed alongside it, locking
+      the full transitive dependency graph, not just top-level package versions. CI
+      restores in locked mode, which fails the build if the lock file doesn't exactly
+      match what a fresh restore would produce, rather than silently drifting.
+    -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!--
+      This project launches the real, compiled CompanionCore.App.exe and asserts on its
+      actual behavior (real launch, real multi-window construction-count, a genuine
+      second OS process, real shutdown) — the acceptance criteria unit tests and code
+      review cannot close on their own. It requires an interactive Windows desktop
+      session and is expected to run only on the windows-latest CI runner (or a
+      developer's own Windows machine), never on Linux/macOS.
+    -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      A ProjectReference to an executable copies its build output (exe + dependencies)
+      into this project's own output directory, which is how AppProcess.Locate() below
+      finds CompanionCore.App.exe at test time.
+    -->
+    <ProjectReference Include="..\..\src\CompanionCore.App\CompanionCore.App.csproj" />
+  </ItemGroup>
+
+</Project>

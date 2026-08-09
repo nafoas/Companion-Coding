@@ -5,10 +5,10 @@ namespace CompanionCore.Runtime.Tests;
 /// <summary>
 /// These exercise the guard's acquire/release logic within one process using two
 /// independent guard objects bound to the same mutex name — a proxy for, not a full
-/// replacement of, an actual second-process launch. True second-process behavior for
-/// the real application executable can only be verified by actually launching it twice,
-/// which requires Windows and is out of reach in this environment; see the Task 1
-/// handoff for what's covered here versus what still needs manual/CI verification.
+/// replacement of, an actual second-process launch (that's what
+/// <c>CompanionCore.App.IntegrationTests</c> covers). True second-process behavior for
+/// the real application executable can only be verified by actually launching it twice
+/// on Windows.
 /// </summary>
 public sealed class SingleInstanceGuardTests
 {
@@ -23,17 +23,14 @@ public sealed class SingleInstanceGuardTests
     }
 
     [Fact]
-    public async Task TryAcquire_WhenAlreadyHeldByAnotherGuardWithSameName_Fails()
+    public void TryAcquire_WhenAlreadyHeldByAnotherGuardWithSameName_Fails()
     {
         // Windows-only assertion: a named OS mutex's cross-instance exclusion is
         // well-established Win32 behavior, which is what this guard is actually built
         // for (the shipping target is Windows). On Linux, .NET's named Mutex does not
         // reliably provide the same cross-instance guarantee in this environment/SDK —
-        // confirmed empirically while writing this test: even from a genuinely different
-        // thread, a second same-named Mutex object here does not observe the first's
-        // held state. Rather than assert something false on this platform, or delete
-        // coverage entirely, this runs for real on Windows (including CI) and is a
-        // documented no-op elsewhere so it never reports a false failure.
+        // confirmed empirically while writing this test — so it runs for real on
+        // Windows (including CI) and is a documented no-op elsewhere.
         if (!OperatingSystem.IsWindows())
         {
             return;
@@ -43,17 +40,29 @@ public sealed class SingleInstanceGuardTests
         using var first = new SingleInstanceGuard(name);
         Assert.True(first.TryAcquire());
 
-        var secondAcquired = await Task.Run(() =>
+        // Deliberately Thread, not Task/async: a named mutex is owned per-thread, and
+        // ReleaseMutex must run on the exact thread that acquired it. An async
+        // continuation (await Task.Run(...)) can resume on a different thread-pool
+        // thread than the one that started the method, which would make `first`'s
+        // eventual `using`-triggered Dispose() run on the wrong thread and throw
+        // SynchronizationLockException — this is exactly what the real Windows CI run
+        // caught against a previous version of this test. A plain Thread + Join keeps
+        // the entire method, including `first`'s acquire and its end-of-method Dispose,
+        // on one thread throughout.
+        var secondAcquired = false;
+        var thread = new Thread(() =>
         {
             using var second = new SingleInstanceGuard(name);
-            return second.TryAcquire();
+            secondAcquired = second.TryAcquire();
         });
+        thread.Start();
+        thread.Join();
 
         Assert.False(secondAcquired);
     }
 
     [Fact]
-    public async Task TryAcquire_AfterFirstHolderDisposes_Succeeds()
+    public void TryAcquire_AfterFirstHolderDisposes_Succeeds()
     {
         // Windows-only assertion; see the comment in the previous test for why.
         if (!OperatingSystem.IsWindows())
@@ -64,13 +73,16 @@ public sealed class SingleInstanceGuardTests
         var name = UniqueName();
         var first = new SingleInstanceGuard(name);
         Assert.True(first.TryAcquire());
-        first.Dispose();
+        first.Dispose(); // Same thread that acquired it — no await between the two.
 
-        var secondAcquired = await Task.Run(() =>
+        var secondAcquired = false;
+        var thread = new Thread(() =>
         {
             using var second = new SingleInstanceGuard(name);
-            return second.TryAcquire();
+            secondAcquired = second.TryAcquire();
         });
+        thread.Start();
+        thread.Join();
 
         Assert.True(secondAcquired);
     }
