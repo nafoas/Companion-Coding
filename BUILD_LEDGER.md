@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 1 — Reproducible neutral skeleton |
-| Active task | Task 1 — Reproducible Neutral Skeleton |
-| Working branch | `claude/task-01-skeleton` (must branch from accepted `main`) |
-| Entry criteria met | Yes: Task 0 architecture accepted and merged |
-| Product code authorized | Task 1 scope only |
-| Live API authorized | No; final core gate only |
-| Automated tests | Required: Windows clean build, no-key/no-network launch, one-runtime, second-process, lifecycle, shutdown, worker-boundary, diagnostics-default |
-| Manual gate | Pending Task 1 foreman review |
-| Accepted `main` baseline | Task 0 merge `58bbdf9915659b3887e311f7b9cdf819cc39fc13` plus this foreman control commit |
-| Known limitations | No capture, persistence, API/network, personality, animation/audio, or polished UI authorized |
-| Deferred temptations | Real/out-of-process capture worker, SQLite/memory/journal, API/credentials, personality, animation, audio, polished UI, Task 2+ |
-| Approval | Task 0 accepted; Task 1 authorized but not accepted |
+| Current stage | Paused — approach reset |
+| Active task | None |
+| Working branch | None authorized |
+| Entry criteria met | No; a new user-approved approach and task packet are required |
+| Product code authorized | No |
+| Live API authorized | No |
+| Automated tests | Preserved reference only: Task 1 PR checkpoint passed 58/58 Windows tests before being closed unmerged |
+| Manual gate | Not applicable while paused |
+| Accepted `main` baseline | Task 0 architecture and project-control documentation only |
+| Known limitations | No implementation has been merged; closed PR #3 and its branch remain recoverable references |
+| Deferred temptations | All implementation, collaboration automation, personality, capture, persistence, API, animation, and UI work |
+| Approval | Construction paused by explicit user decision; no task is authorized |
 
 ## Gate history
 
@@ -21,19 +21,28 @@
 
 - Builder SHA reviewed: `9a51231aa8d76a399ef43ae4a8bfc5cdbd1195b3`
 - Foreman approval review: `4892489052`
-- Evidence: governing documents, exact diff/commit, complete architecture proposal, changed-file scope, and documentation-only handoff independently reviewed; no automated tests existed or applied.
 - Merge: PR #1 squash-merged to `main` as `58bbdf9915659b3887e311f7b9cdf819cc39fc13`.
-- Result: passed.
+- Result: passed as a documentation checkpoint.
 
 ### Task 1 — Reproducible neutral skeleton
 
-- Authorized by the foreman control commit that creates `tasks/active/task-01-skeleton.md`.
-- Builder must use `claude/task-01-skeleton`, open a draft PR, complete `tasks/review/HANDOFF.md`, and stop.
-- Result: pending.
+- Work reached closed PR #3 at head `da4797e1a3df2c6f0ddaaa0248098fd40f656121`.
+- The implementation checkpoint and its passing tests were not merged.
+- On 2026-08-09 the user withdrew authorization for the Claude–ChatGPT collaborative workflow and requested a complete approach reset.
+- The task is preserved at `tasks/paused/task-01-skeleton.md`.
+- Result: paused and superseded; not accepted.
+
+## Official Bnuy Backpedal™
+
+- Hourly foreman monitoring is paused.
+- No builder, foreman, or automated task may continue.
+- No later task may begin.
+- Existing documents, branches, commits, and tests are retained as reversible references.
+- Work resumes only after the user approves a new approach and a new active task packet is created.
 
 ## Ledger rules
 
-- At most one stage is in progress.
-- Claude cannot self-approve a gate.
-- Every approval must name the reviewed commit and test evidence.
-- Later-stage work remains deferred even if convenient.
+- At most one stage may be in progress.
+- No work occurs while there is no active task.
+- Existing paused work is not authorization to resume.
+- Later-stage ideas remain deferred until explicitly replanned.
