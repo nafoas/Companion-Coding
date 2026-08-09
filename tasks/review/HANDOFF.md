@@ -2,52 +2,58 @@
 
 ## Task
 
-Task 0 — Repository survey and architecture proposal, per `tasks/active/task-00-architecture.md`. This handoff covers revision 4, addressing the foreman's PR #1 re-review of revision 3 (two remaining documentation-consistency corrections; the four revision-2 findings were confirmed resolved).
+Task 0 — Repository survey and architecture proposal, per `tasks/active/task-00-architecture.md`. This handoff covers revision 5, addressing the foreman's PR #1 re-review of revision 4 (one final contract-definition gap; everything else confirmed passing).
 
 ## Completed
 
-Revised `docs/architecture/task-00-architecture-proposal.md` to address the foreman's PR #1 review of commit `5d82ee4`:
+Added §6.2.1 to `docs/architecture/task-00-architecture-proposal.md`: a normative, implementable mapping table for `NeutralPersonalityAdapter`'s Task-1 scope. The foreman's point was that "deterministically maps typed input to placeholder content" described *that* a mapping exists but not *what* it is — not enough for Task 1 to implement or test against. The new table covers every event Task 1 actually produces:
 
-1. **One canonical neutral-adapter name and contract** (§6.2, §8, §9) — the document used two different names, `NeutralPresentationSource` (§6.2, §9) and `NeutralPersonalityAdapter` (§8, prior handoff), for what was meant to be one implementation, and described it as passing typed input "straight through" despite `IPersonalityAdapter` and `IPresentationSink` having intentionally different input/output types. Standardized on `NeutralPersonalityAdapter : IPersonalityAdapter` everywhere, and corrected the behavior description: it deterministically maps typed semantic events/context to placeholder opaque content plus expression intents, may pass expression intents through unchanged, but never passes its typed input directly to `IPresentationSink`. The §8 diagram's presentation-flow block now spells this out inline so Task 1 has exactly one presentation abstraction to scaffold, not two conflated ones.
-2. **Backup authority wording in §8 matches §11** — the diagram's footer said `BackupRecoveryService` "operates through `MaintenanceStore`" when producing a backup, which contradicted §11's (already-correct, from revision 3) read-only-snapshot-vs-restore/migration distinction. Restated the footer: backup creation reads through a read-only snapshot interface and never resolves `MaintenanceStore`; only restore and migration resolve it, gated on runtime writes being stopped.
+| Event | Content key | Expression intent | Context fields | 
+|---|---|---|---|
+| `start`, cold (no checkpoint) | `lifecycle.started` | none | `hadRecoveredCheckpoint = false` |
+| `start`, checkpoint recovered | `lifecycle.recovering` | `recovering` | `hadRecoveredCheckpoint = true` |
+| `nap` | `lifecycle.napping` | none | none |
+| `wake` (valid, from `nap`) | `lifecycle.waking` | none | `priorState` |
+| `stop` | `lifecycle.stopped` | none | `isCleanShutdown` (diagnostics only) |
+| anything else / invalid transition | `lifecycle.unknown` | none | raw unrecognized event name (logged, never rendered) |
 
-The revision note at the top of the document and the §8 section caption were updated to reflect this as revision 4, tracing the fix history across revisions 2–4 for anyone reading the document cold.
+The mapping is stated as a pure, total function — deterministic, no clock/randomness dependence, and defined for every input including ones the table doesn't explicitly name (the last row is the required fallback). §8's presentation-flow diagram now points to §6.2.1 by reference instead of repeating "deterministically maps" without specifics, and clarifies that Task 1's actual event source is `CompanionRuntime`'s lifecycle states, not `AttentionEngine`/`ConversationCoordinator` (those don't exist until Tasks 8–9 — the general diagram shows the eventual full picture, but §6.2.1 scopes the table to what Task 1 alone needs).
 
 ## Changed
 
-- `docs/architecture/task-00-architecture-proposal.md` — revised in place per the two items above (§6.2, §8, §9, and the top-of-document revision note).
-- `tasks/review/HANDOFF.md` (this file) — rewritten for revision 4.
+- `docs/architecture/task-00-architecture-proposal.md` — added §6.2.1 (normative mapping table); updated §8's presentation-flow block to reference it; updated the top-of-document revision note for revision 5.
+- `tasks/review/HANDOFF.md` (this file) — rewritten for revision 5.
 
-No other files were touched. `AGENTS.md`, `BUILD_LEDGER.md`, the design/roadmap/packet docs, `tasks/active/task-00-architecture.md`, and `tasks/review/FOREMAN_REVIEW.md` are unmodified.
+No other files were touched.
 
 ## Verification
 
-No automated tests were run — still documentation-only; no source tree or test suite exists yet. Verification was a targeted grep for every remaining `NeutralPresentationSource` and `MaintenanceStore`/`BackupRecoveryService` mention across the document to confirm no stale reference survived the rename and wording fix, plus a re-read of §6.2, §8, and §9 together for consistency.
+No automated tests were run — still documentation-only. Verification: re-checked the table against §6.2's contract description (input/output types, "may pass expression intents through unchanged" — only the `recovering` row uses that, correctly), and against the packet's Task 1 acceptance criteria (lifecycle start/nap/wake/stop states, structured diagnostics behind a switch — the unknown-event fallback logs behind that same switch, doesn't add a new one).
 
 ## Remaining
 
-Nothing remaining within this revision's scope. Per the foreman's instruction ("Revise only the architecture proposal and `tasks/review/HANDOFF.md`, push one bounded commit, and stop. Do not begin Task 1."), no Task 1 scaffolding was started.
+Nothing remaining within this revision's scope. Per the foreman's instruction ("Update the handoff to identify that definition, then stop for re-review... Revise only the architecture proposal and `tasks/review/HANDOFF.md`, push one bounded commit, and stop. Do not begin Task 1."), no Task 1 scaffolding was started.
 
 ## Risks and assumptions
 
-- The foreman's review explicitly confirmed the six-step backup cut, generation fencing, live-runtime-vs-maintenance authority split, presentation flow shape, binding linear task order, capture limitations, and risk-gate labels all pass as of revision 3 — this revision touched none of that reasoning, only the two named naming/wording seams.
-- Assumed "the two contracts have different input/output types by design" is accurately captured by describing `NeutralPersonalityAdapter` as mapping typed input to placeholder content rather than attempting to enumerate the actual field-level shape of either contract — that level of detail seems appropriately deferred to Task 1's actual interface definitions rather than the architecture proposal.
+- Assumed the foreman's ask was scoped to Task 1's four lifecycle events plus a fallback, not the full eventual intent vocabulary (`observing`, `investigating`, `urgent`, `taking_note`, `privacy_paused`) — those belong to `AttentionEngine`/`ConversationCoordinator`, which are Task 8/9 deliverables and don't exist yet. Said this explicitly in §6.2.1's intro so it reads as a deliberate scope boundary, not an oversight, and flagging here in case the foreman actually wanted the full vocabulary sketched now.
+- The `wake`-from-invalid-`priorState` case is specified as routing to the fallback row rather than, say, throwing — chose "never throw, always render something" over "surface the invalid transition loudly," consistent with the fallback's stated purpose (`IPresentationSink` must never be left with nothing to render). If the foreman would rather an invalid lifecycle transition be a louder failure (e.g. logged as an error, not just diagnostics), that's a small change to make in the next round.
+- The actual placeholder strings behind each content key (e.g. what "Ready." or "Resuming from last checkpoint." might be) are explicitly left as Task 1 implementation detail, not fixed here — only the key → intent → context mapping is normative. Flagging in case the foreman wants literal strings pinned at the architecture stage rather than left to Task 1.
 
 ## Review focus
 
-- Whether the corrected §6.2/§8/§9 description of `NeutralPersonalityAdapter` is now precise enough to scaffold directly in Task 1, or whether the foreman wants the actual method signatures specified before that's true.
-- Whether the §8 backup-footer wording now matches §11 closely enough, or whether the foreman would prefer §8 simply reference §11 rather than restate it (to avoid a third place these two facts could drift apart from each other in a future revision).
+- Whether §6.2.1's table is actually sufficient for Task 1 to implement `NeutralPersonalityAdapter` directly against, or whether specific method signatures / a formal grammar are still needed before that's true.
+- Whether scoping the table to only Task 1's four lifecycle events (deferring the full intent vocabulary to Tasks 8–9) is the right cut, per the first risk item above.
 
 ## Repository state
 
 - Branch: `claude/multi-ai-code-collab-o5qhj1`; tracked by GitHub PR #1 (draft, base `main`).
-- This revision is committed on top of `5d82ee458bc396e92f212d9407a65d2c22e748b5` (revision 3), which sits on `7d8681f` (revision 2), `d668d3d` (foreman's `FOREMAN_REVIEW.md`), and `7060465`/`4c9e0d5` (original Task 0 submission).
+- This revision is committed on top of `0d7fca6275e3354cc7826694fa988d7c0e1033f7` (revision 4), which sits on `5d82ee4` (revision 3), `7d8681f` (revision 2), `d668d3d` (foreman's `FOREMAN_REVIEW.md`), and `7060465`/`4c9e0d5` (original Task 0 submission).
 - Worktree is clean except for this handoff file and the revised proposal, both included in this commit.
-- Subscribed to PR #1 activity since revision 3; this round's review arrived as a webhook event rather than requiring a manual poll, confirming that channel works.
 
 ## Next safe task
 
-Smallest safe next action, not yet started: await the foreman's re-review of this revision on PR #1. If approved, begin Task 1 (reproducible skeleton) exactly as scoped in §9/§15 of the proposal — `CompanionCore.App`, `CompanionCore.Runtime`, `CompanionCore.Presentation` (`IPersonalityAdapter`/`NeutralPersonalityAdapter` + `IPresentationSink`, the single consistent naming from this revision), `CompanionCore.Capture.Contracts`, and `CompanionCore.Capture.Fake`, with the single-instance guard and blank WPF shell — and nothing from `CompanionCore.Capture.Worker` (that's Task 5+, per §6.1).
+Smallest safe next action, not yet started: await the foreman's re-review of this revision on PR #1. If approved, begin Task 1 (reproducible skeleton) exactly as scoped in §9/§15 of the proposal, implementing `NeutralPersonalityAdapter` directly against §6.2.1's table — `CompanionCore.App`, `CompanionCore.Runtime`, `CompanionCore.Presentation` (`IPersonalityAdapter`/`NeutralPersonalityAdapter` + `IPresentationSink`), `CompanionCore.Capture.Contracts`, and `CompanionCore.Capture.Fake`, with the single-instance guard and blank WPF shell — and nothing from `CompanionCore.Capture.Worker` (Task 5+, per §6.1).
 
 ## Credit status
 

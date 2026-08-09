@@ -1,12 +1,12 @@
 # Task 0 — Architecture Proposal
 
-Status: revision 4, addressing the PR #1 re-review of revision 3 (commit `5d82ee458bc396e92f212d9407a65d2c22e748b5`), which called it two remaining documentation-consistency corrections short of approval. No product code accompanies this document.
+Status: revision 5, addressing the PR #1 re-review of revision 4 (commit `0d7fca6275e3354cc7826694fa988d7c0e1033f7`), which called it one final contract definition short of approval. No product code accompanies this document.
 
 Reviewed documents: `AGENTS.md`, `docs/Claude-Companion-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `BUILD_LEDGER.md`, `tasks/review/FOREMAN_REVIEW.md`, PR #1 review comments.
 
 ## Revision note
 
-Revision 2 responded to R1–R10 in `tasks/review/FOREMAN_REVIEW.md` (mapped: R1 → §2; R2 → §5; R3 → §5; R4 → §6, §8; R5 → §4, §12; R6 → §6, §8; R7 → §6; R8 → §13; R9 → §11; R10 → §15). Revision 3 addressed four bounded follow-up corrections: the backup-cut protocol (§5.2), the presentation diagram not showing `IPersonalityAdapter` (§8), §11 contradicting `MaintenanceStore` (§11), and §13's branching graph contradicting strict sequencing (§13). The foreman's re-review of revision 3 found those four substantively resolved and flagged exactly two remaining internal-consistency seams, both fixed in this revision (4): (1) `NeutralPresentationSource` vs. `NeutralPersonalityAdapter` named two different things for one implementation, and that implementation was described as passing typed input straight through despite `IPersonalityAdapter`/`IPresentationSink` having different input/output types — fixed by using `NeutralPersonalityAdapter : IPersonalityAdapter` consistently in §6.2, §8, §9 and clarifying it maps typed input to placeholder content rather than passing it through (§6.2, §8, §9); (2) the §8 diagram's backup footer said `BackupRecoveryService` "operates through `MaintenanceStore`" when producing a backup, contradicting §11's correct read-only-snapshot-vs-restore/migration distinction — fixed by restating the footer to match §11 exactly (§8).
+Revision 2 responded to R1–R10 in `tasks/review/FOREMAN_REVIEW.md` (mapped: R1 → §2; R2 → §5; R3 → §5; R4 → §6, §8; R5 → §4, §12; R6 → §6, §8; R7 → §6; R8 → §13; R9 → §11; R10 → §15). Revision 3 addressed four bounded follow-up corrections (backup-cut protocol, presentation diagram, §11/`MaintenanceStore` wording, §13's task-order map). Revision 4 unified `NeutralPersonalityAdapter` naming and fixed the §8 backup-footer wording. The foreman's re-review of revision 4 confirmed the backup footer, six-step cut, generation fencing, memory authority, presentation flow shape, binding task order, changed-file scope, and handoff all pass, and flagged exactly one remaining gap: `NeutralPersonalityAdapter` was described as mapping typed input to placeholder content only in the abstract, without a concrete, implementable mapping. Fixed in this revision (5) by adding §6.2.1, a normative table covering every Task-1 lifecycle event (`start` cold and with recovered checkpoint, `nap`, `wake`, `stop`, and a deterministic fallback for anything else) with its content key, expression intent, consulted context fields, and validity notes — referenced from §8's presentation-flow diagram.
 
 ## 1. Repository inventory
 
@@ -122,6 +122,21 @@ The prior revision's diagram implied `PresentationAdapter` "never receives chara
 - **`IPresentationSink`** — the UI-facing contract. Renders opaque strings/labels, status text, and typed expression intents (`observing`, `investigating`, `urgent`, `taking_note`, `privacy_paused`, `recovering`, …). It does not interpret, generate, or filter content; it displays whatever it's handed.
 - **`IPersonalityAdapter`** — the content-producing contract, installed at the Stage 13 Companion Awakening boundary. During all neutral-core stages, `NeutralPersonalityAdapter : IPersonalityAdapter` is the only implementation wired in. It deterministically maps typed semantic events/context to placeholder opaque content plus expression intents — it may pass expression intents through unchanged, but it does not pass its typed input straight to `IPresentationSink`, because `IPersonalityAdapter`'s input contract (typed events/context) and `IPresentationSink`'s input contract (opaque content/intents) are intentionally different types, not the same shape wearing two names. Core services (`AttentionEngine`, `ConversationCoordinator`, etc.) only ever emit typed semantic events and structured content to this seam — never character-specific literals — so swapping `NeutralPersonalityAdapter` for Prince's real `IPersonalityAdapter` implementation later is a Stage 13 configuration change, not a core rewrite, and Task 1 has exactly one presentation abstraction to scaffold, not two conflated ones.
 
+#### 6.2.1 `NeutralPersonalityAdapter`'s deterministic mapping for Task 1 (added — normative, implementable directly)
+
+Task 1 only produces `CompanionRuntime`'s four lifecycle states (start, nap, wake, stop) plus whatever the runtime hasn't recognized. `NeutralPersonalityAdapter`'s mapping for these is a pure function of `(lifecycleEvent, context) → (contentKey, expressionIntent)` — table-driven, no randomness, no clock-dependent variation, and total (every input has a defined output, including inputs the table doesn't otherwise name). Later tasks add rows for attention/conversation events (`observing`, `investigating`, `urgent`, `taking_note`, `privacy_paused`); this table is Task 1's complete scope, not the full eventual vocabulary.
+
+| Lifecycle event | Content key (stable identifier; string is placeholder-neutral and swappable at Stage 13) | Expression intent | Context fields consulted | Notes |
+|---|---|---|---|---|
+| `start`, first run (no prior checkpoint) | `lifecycle.started` | none | `hadRecoveredCheckpoint = false` | Baseline cold start. |
+| `start`, checkpoint recovered | `lifecycle.recovering` | `recovering` | `hadRecoveredCheckpoint = true` | Same `start` event, routed to a different row by the one context field that distinguishes cold start from restart-with-recovery — this is the mapping's only branch, and it's on a boolean, not open-ended state. |
+| `nap` | `lifecycle.napping` | none | none | Task 1's `nap` is a plain idle lifecycle state; it is not yet tied to Watchbun quiet-hour semantics (Stage 9), so no context field affects it. |
+| `wake` | `lifecycle.waking` | none | `priorState` (must be `nap`; anything else routes to the unknown-event fallback below rather than emitting wake content for an invalid transition) | |
+| `stop` | `lifecycle.stopped` | none | `isCleanShutdown` (recorded for diagnostics only; does not change the emitted content key in Task 1 — there's no UI visible after stop to differentiate) | |
+| any event not in `{start, nap, wake, stop}`, or a validity precondition above fails (e.g. `wake` with `priorState != nap`) | `lifecycle.unknown` | none | the unrecognized event's raw name (logged behind the Task 1 diagnostics switch, never rendered) | The deterministic fallback required by this section: the adapter must never throw or leave `IPresentationSink` with nothing to render for an input it doesn't recognize. |
+
+Expression intents in this table are `none` for every ordinary lifecycle transition — `recovering` is the only Task-1 intent, reserved for the one case (checkpoint-recovered start) the packet explicitly names as needing a distinct neutral label. Content keys are stable identifiers for tests and later Stage-13 replacement to key off; the actual placeholder strings behind them (e.g. "Ready.", "Resuming from last checkpoint.") are implementation detail, not an architectural decision, and may be adjusted freely in Task 1 as long as the key → intent → context mapping above holds.
+
 ### 6.3 Memory-write authority — runtime path vs. maintenance path (revised per R7)
 
 `LocalWriteGate` cannot literally be the *only* code that ever writes to `MemoryStore` — backup restore, schema migration, and any future explicit user-initiated deletion/correction have to write too, and none of those should become a loophole an automated/API path could exploit. Two distinct write paths, not one:
@@ -189,7 +204,10 @@ review comment corrected):
               │               pass expression intents through unchanged — it does
               │               not pass its typed input straight to IPresentationSink,
               │               since the two contracts have different input/output
-              │               types by design.
+              │               types by design. The exact mapping table for Task 1's
+              │               scope (CompanionRuntime's start/nap/wake/stop lifecycle
+              │               events, since AttentionEngine/ConversationCoordinator
+              │               don't exist until Tasks 8–9) is §6.2.1, normative.
               │  opaque content + expression intents (never the typed input)
               ▼
        IPresentationSink     (renders only — never generates or interprets)
