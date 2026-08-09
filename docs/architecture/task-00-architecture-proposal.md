@@ -1,12 +1,12 @@
 # Task 0 — Architecture Proposal
 
-Status: revision 3, addressing the PR #1 re-review of revision 2 (commit `7d8681fcae0520e23d5829d71418809871c852d8`). No product code accompanies this document.
+Status: revision 4, addressing the PR #1 re-review of revision 3 (commit `5d82ee458bc396e92f212d9407a65d2c22e748b5`), which called it two remaining documentation-consistency corrections short of approval. No product code accompanies this document.
 
 Reviewed documents: `AGENTS.md`, `docs/Claude-Companion-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `BUILD_LEDGER.md`, `tasks/review/FOREMAN_REVIEW.md`, PR #1 review comments.
 
 ## Revision note
 
-Revision 2 responded to R1–R10 in `tasks/review/FOREMAN_REVIEW.md` (mapped: R1 → §2; R2 → §5; R3 → §5; R4 → §6, §8; R5 → §4, §12; R6 → §6, §8; R7 → §6; R8 → §13; R9 → §11; R10 → §15). This revision (3) addresses the foreman's four bounded follow-up corrections on PR #1, left as a review on revision 2: (1) the backup-cut protocol was unspecified relative to concurrent writes → fixed in §5.2; (2) the §8 diagram didn't show `IPersonalityAdapter` in the flow and mislabeled the sink → fixed in §8; (3) §11 contradicted §6.3's `MaintenanceStore` by calling `LocalWriteGate` the sole writer → fixed in §11; (4) §13 branched tasks despite claiming strict sequencing → fixed in §13, with the branching graph kept only as an explicitly non-authoritative logical-dependency reference. A risk-register/handoff labeling error (rows 11–13 not all being "pre-Task-5" items) is also corrected.
+Revision 2 responded to R1–R10 in `tasks/review/FOREMAN_REVIEW.md` (mapped: R1 → §2; R2 → §5; R3 → §5; R4 → §6, §8; R5 → §4, §12; R6 → §6, §8; R7 → §6; R8 → §13; R9 → §11; R10 → §15). Revision 3 addressed four bounded follow-up corrections: the backup-cut protocol (§5.2), the presentation diagram not showing `IPersonalityAdapter` (§8), §11 contradicting `MaintenanceStore` (§11), and §13's branching graph contradicting strict sequencing (§13). The foreman's re-review of revision 3 found those four substantively resolved and flagged exactly two remaining internal-consistency seams, both fixed in this revision (4): (1) `NeutralPresentationSource` vs. `NeutralPersonalityAdapter` named two different things for one implementation, and that implementation was described as passing typed input straight through despite `IPersonalityAdapter`/`IPresentationSink` having different input/output types — fixed by using `NeutralPersonalityAdapter : IPersonalityAdapter` consistently in §6.2, §8, §9 and clarifying it maps typed input to placeholder content rather than passing it through (§6.2, §8, §9); (2) the §8 diagram's backup footer said `BackupRecoveryService` "operates through `MaintenanceStore`" when producing a backup, contradicting §11's correct read-only-snapshot-vs-restore/migration distinction — fixed by restating the footer to match §11 exactly (§8).
 
 ## 1. Repository inventory
 
@@ -120,7 +120,7 @@ The prior revision proposed an in-process background task for `CaptureWorker`. T
 The prior revision's diagram implied `PresentationAdapter` "never receives character-voice text," which is backwards: the eventual presentation layer must display personality-produced content, so the correct boundary is that *generation* stays out of UI infrastructure, not that the UI is blind to it. Two separate contracts replace the single `PresentationAdapter`:
 
 - **`IPresentationSink`** — the UI-facing contract. Renders opaque strings/labels, status text, and typed expression intents (`observing`, `investigating`, `urgent`, `taking_note`, `privacy_paused`, `recovering`, …). It does not interpret, generate, or filter content; it displays whatever it's handed.
-- **`IPersonalityAdapter`** — the content-producing contract, installed at the Stage 13 Companion Awakening boundary. During all neutral-core stages, a `NeutralPresentationSource` implementation emits placeholder strings and passes typed events straight through. Core services (`AttentionEngine`, `ConversationCoordinator`, etc.) only ever emit typed semantic events and structured content to this seam — never character-specific literals — so swapping `NeutralPresentationSource` for Prince's real `IPersonalityAdapter` later is a Stage 13 configuration change, not a core rewrite.
+- **`IPersonalityAdapter`** — the content-producing contract, installed at the Stage 13 Companion Awakening boundary. During all neutral-core stages, `NeutralPersonalityAdapter : IPersonalityAdapter` is the only implementation wired in. It deterministically maps typed semantic events/context to placeholder opaque content plus expression intents — it may pass expression intents through unchanged, but it does not pass its typed input straight to `IPresentationSink`, because `IPersonalityAdapter`'s input contract (typed events/context) and `IPresentationSink`'s input contract (opaque content/intents) are intentionally different types, not the same shape wearing two names. Core services (`AttentionEngine`, `ConversationCoordinator`, etc.) only ever emit typed semantic events and structured content to this seam — never character-specific literals — so swapping `NeutralPersonalityAdapter` for Prince's real `IPersonalityAdapter` implementation later is a Stage 13 configuration change, not a core rewrite, and Task 1 has exactly one presentation abstraction to scaffold, not two conflated ones.
 
 ### 6.3 Memory-write authority — runtime path vs. maintenance path (revised per R7)
 
@@ -145,7 +145,7 @@ interface ISemanticProvider
 
 ## 8. Module dependency diagram
 
-*(Revised — reflects the out-of-process `CaptureWorker` boundary and the separate `MaintenanceStore` path from revision 2, and now corrects the presentation flow to actually show `IPersonalityAdapter` in the path rather than mislabeling the sink as "NeutralPresentationSource".)*
+*(Revised across revisions 2–4 — reflects the out-of-process `CaptureWorker` boundary and the separate `MaintenanceStore` path (revision 2), the presentation flow showing `IPersonalityAdapter` explicitly (revision 3), and now, in revision 4, a single consistently-named `NeutralPersonalityAdapter` implementation plus a backup footer that matches §11's read-only-snapshot-vs-restore/migration distinction exactly.)*
 
 ```
                                   ┌─────────────────────┐
@@ -182,21 +182,29 @@ review comment corrected):
               │  typed semantic events (observing/investigating/urgent/...)
               │  and structured context — never character-specific literals
               ▼
-       IPersonalityAdapter   (neutral passthrough during core stages;
-              │               Prince's real adapter installed at Stage 13)
-              │  opaque content + expression intents only
+       IPersonalityAdapter   NeutralPersonalityAdapter is the only implementation
+              │               wired in during core stages; Prince's real adapter
+              │               is installed at Stage 13. It deterministically maps
+              │               typed input to placeholder opaque content, and may
+              │               pass expression intents through unchanged — it does
+              │               not pass its typed input straight to IPresentationSink,
+              │               since the two contracts have different input/output
+              │               types by design.
+              │  opaque content + expression intents (never the typed input)
               ▼
        IPresentationSink     (renders only — never generates or interprets)
 
-BackupRecoveryService reads MemoryStore + SessionJournal, writes archives via the SQLite
-online-backup mechanism and cut protocol (§5.2); operates through MaintenanceStore, never
-in the runtime's live request path.
+BackupRecoveryService producing a backup reads MemoryStore + SessionJournal through a
+read-only snapshot interface and the SQLite online-backup mechanism/cut protocol (§5.2);
+it never resolves MaintenanceStore and has no write capability at all. Only restore and
+migration resolve MaintenanceStore, gated on normal runtime writes being stopped (§6.3,
+§11 trust boundary 4). Neither path runs in the runtime's live request path.
 ```
 
 Dependency rules this is meant to enforce structurally, not just by convention:
 
 - `AttentionEngine`/`ConversationCoordinator` depend only on `IPersonalityAdapter`'s typed-event input contract, never on capture, memory, or API internals.
-- `IPersonalityAdapter` is the only place typed events become content/phrasing; a `NeutralPersonalityAdapter` implementation is the only one wired in during core stages, and it does no generation beyond passthrough of placeholder strings. Swapping it for Prince's real adapter at Stage 13 is a configuration change, not a core rewrite.
+- `IPersonalityAdapter` is the only place typed events become content/phrasing; `NeutralPersonalityAdapter` is the only implementation wired in during core stages, and it deterministically maps typed input to placeholder opaque content (not a literal passthrough of the typed input itself — `IPersonalityAdapter` and `IPresentationSink` have different input/output types by design). Swapping it for Prince's real adapter at Stage 13 is a configuration change, not a core rewrite.
 - `IPresentationSink` depends only on `IPersonalityAdapter`'s output (opaque content/intents) — it cannot reach `AttentionEngine`, `ConversationCoordinator`, capture, memory, or API internals directly, and it does not itself interpret or generate anything.
 - `ApiBridge` never holds a direct reference to `MemoryStore`; it only produces proposals `LocalWriteGate` accepts or rejects, so "API output can't bypass the write gate" is structural.
 - `ApiBridge` and `ISemanticProvider` implementations have no reference to `MaintenanceStore` — the maintenance/offline write path is unreachable from anywhere API-facing, by construction.
@@ -208,7 +216,7 @@ Dependency rules this is meant to enforce structurally, not just by convention:
 ```
 /src
   CompanionCore.Runtime/          CompanionRuntime, lifecycle states, single-instance guard
-  CompanionCore.Presentation/     IPresentationSink, NeutralPresentationSource, WPF shell (blank textbox/icon/status)
+  CompanionCore.Presentation/     IPersonalityAdapter, NeutralPersonalityAdapter, IPresentationSink, WPF shell (blank textbox/icon/status)
   CompanionCore.Capture.Contracts/ICaptureWorker, IPC message/event contracts, versioning (shared by both sides)
   CompanionCore.Capture.Worker/   real out-of-process worker host (Task 5+): WGC/D3D, frame pool, ring, VisualPipeline, PrivacyGuard
   CompanionCore.Capture.Fake/     in-process ICaptureWorker test double used through Task 1–4
