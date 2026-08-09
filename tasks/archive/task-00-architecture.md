@@ -1,5 +1,10 @@
 # Task 0 — Repository Survey and Architecture Proposal
 
+Status: **accepted and archived**  
+Reviewed builder SHA: `9a51231aa8d76a399ef43ae4a8bfc5cdbd1195b3`  
+Foreman approval review: `4892489052`  
+Merged to `main`: `58bbdf9915659b3887e311f7b9cdf819cc39fc13`
+
 ## Objective
 
 Produce an evidence-based Windows architecture proposal for the neutral Companion Core. Do not implement product behavior.
@@ -7,7 +12,7 @@ Produce an evidence-based Windows architecture proposal for the neutral Companio
 ## Entry criteria
 
 - Read `AGENTS.md`.
-- Read all three documents in `docs/`.
+- Read all three authoritative documents in `docs/`.
 - Confirm that the repository contains planning/control files only.
 
 ## Required output
@@ -28,34 +33,14 @@ Commit an architecture proposal under `docs/architecture/` containing:
 12. risk register with feasibility spikes;
 13. staged dependency map;
 14. explicit invariant and non-goal acknowledgement;
-15. open decisions requiring foreman approval.
+15. decisions requiring foreman approval.
 
 ## Allowed changes
 
 - `docs/architecture/**`
 - `tasks/review/HANDOFF.md`
-- this task file only to add Deferred Findings
+- the active task file only for Deferred Findings
 
-Do not modify the authoritative design, roadmap, master task packet, `AGENTS.md`, or Build Ledger.
+## Acceptance result
 
-## Non-goals
-
-- No application source code.
-- No project scaffolding beyond architecture-only examples clearly marked non-executable.
-- No API calls or credentials.
-- No personality, animation, audio, UI design, or game integration.
-- No selection-by-implementation: propose the stack and wait for approval.
-
-## Acceptance criteria
-
-- Recommendation addresses every required output.
-- Alternatives are evaluated rather than dismissed.
-- Unsupported/minimized capture limitations are stated honestly.
-- Memory authority, consent, worker isolation, API statelessness, and dev/production separation are reflected in module boundaries.
-- Risks have proposed proof-of-concept spikes and stop conditions.
-- No product code is committed.
-- `tasks/review/HANDOFF.md` is complete and names the reviewed commit.
-
-## Deferred Findings
-
-Add later-stage discoveries here without implementing them.
+Passed on the exact reviewed SHA above. The accepted architecture is `docs/architecture/task-00-architecture-proposal.md`. No product code was included.
