@@ -1,12 +1,12 @@
 # Task 0 — Architecture Proposal
 
-Status: revision 2, addressing `tasks/review/FOREMAN_REVIEW.md` (review of builder commit `4c9e0d555ffc4d67207ef306b2d1817b7f328789`). No product code accompanies this document.
+Status: revision 3, addressing the PR #1 re-review of revision 2 (commit `7d8681fcae0520e23d5829d71418809871c852d8`). No product code accompanies this document.
 
-Reviewed documents: `AGENTS.md`, `docs/Claude-Companion-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `BUILD_LEDGER.md`, `tasks/review/FOREMAN_REVIEW.md`.
+Reviewed documents: `AGENTS.md`, `docs/Claude-Companion-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `BUILD_LEDGER.md`, `tasks/review/FOREMAN_REVIEW.md`, PR #1 review comments.
 
 ## Revision note
 
-This revision responds point-by-point to R1–R10 in `tasks/review/FOREMAN_REVIEW.md`. Each affected section below is updated in place; nothing in this note duplicates the review's reasoning, it only maps each finding to where the fix landed: R1 → §2; R2 → §5; R3 → §5; R4 → §6, §8; R5 → §4, §12; R6 → §6, §8; R7 → §6; R8 → §13; R9 → §11; R10 → §15.
+Revision 2 responded to R1–R10 in `tasks/review/FOREMAN_REVIEW.md` (mapped: R1 → §2; R2 → §5; R3 → §5; R4 → §6, §8; R5 → §4, §12; R6 → §6, §8; R7 → §6; R8 → §13; R9 → §11; R10 → §15). This revision (3) addresses the foreman's four bounded follow-up corrections on PR #1, left as a review on revision 2: (1) the backup-cut protocol was unspecified relative to concurrent writes → fixed in §5.2; (2) the §8 diagram didn't show `IPersonalityAdapter` in the flow and mislabeled the sink → fixed in §8; (3) §11 contradicted §6.3's `MaintenanceStore` by calling `LocalWriteGate` the sole writer → fixed in §11; (4) §13 branched tasks despite claiming strict sequencing → fixed in §13, with the branching graph kept only as an explicitly non-authoritative logical-dependency reference. A risk-register/handoff labeling error (rows 11–13 not all being "pre-Task-5" items) is also corrected.
 
 ## 1. Repository inventory
 
@@ -70,13 +70,24 @@ Design consequences, independent of which row eventually tests out supported:
 
 Recovery on startup: read the journal from the last checkpoint marker forward, ignore a torn/invalid final frame if present, and for every valid frame whose operation ID is not already present in SQLite, replay the commit step. This makes recovery deterministic and duplicate-safe by construction, not by convention, and directly satisfies the packet's "kill during append and recover prior records" and "retry an operation and commit at most once" acceptance criteria.
 
-**Journal rotation** happens only immediately after a validated full backup/checkpoint (§ backups, below) — never on a timer or size threshold alone — so a rotated-away journal segment is only ever discarded once its contents are provably durable in a validated backup, not merely in the live database.
+**Journal rotation** happens only immediately after a validated full backup, using the exact cut protocol defined in §5.2 — never on a timer or size threshold alone — so a rotated-away journal segment is only ever discarded once its contents are provably durable in a validated backup, not merely in the live database.
 
 **Emergency privacy cancellation fencing**: the privacy-stop path (§11) revokes the current session generation before this protocol's append step runs for any in-flight semantic result. A late-arriving result tagged with a revoked generation is discarded before it ever reaches step 1 above — the durability protocol only ever sees writes that were already privacy-cleared, it does not itself decide what's admissible.
 
-### 5.2 Backup mechanism
+### 5.2 Backup mechanism and the durability cut
 
-Backups use SQLite's supported online backup mechanism (the `sqlite3_backup` API, exposed in .NET via `Microsoft.Data.Sqlite`'s `SqliteConnection.BackupDatabase`) or an equivalent safe snapshot — never a raw file copy of a live WAL-mode database, since that races with concurrent writers and can capture an inconsistent set of pages. The backup is then packaged as a compressed archive with a manifest (schema version, per-file checksums) written last, and the "current backup" pointer is only atomically replaced after the new archive validates. A backup is never allowed to overwrite a known-good one with output from a store that failed a health check first (Task 3's existing acceptance criteria already require this end-to-end).
+*(Revised — the prior revision named the backup mechanism but left the cut between "what's in the backup" and "what's still only in the journal" undefined; a write committed after the snapshot began but before rotation could have been silently lost. This revision specifies the exact protocol so that is provably impossible.)*
+
+Backups use SQLite's supported online backup mechanism (the `sqlite3_backup` API, exposed in .NET via `Microsoft.Data.Sqlite`'s `SqliteConnection.BackupDatabase`) or an equivalent safe snapshot — never a raw file copy of a live WAL-mode database, since that races with concurrent writers and can capture an inconsistent set of pages. Producing a backup is a six-step protocol, not a single API call:
+
+1. **Establish the cut.** `MemoryStore` has a single serializing writer (this is a single-process, single-writer workload), so establishing a cut is a momentary pause of new commits, not a long hold: record the highest committed local operation ID / journal checkpoint position at that instant as the **backup cut sequence**, then immediately resume accepting new commits. This pause covers one metadata read, not the snapshot itself.
+2. **Drain to the cut.** Before taking the snapshot, confirm every journal frame at or before the cut sequence is already committed to SQLite, replaying any that aren't yet (via the §5.1 recovery procedure). The snapshot must never start while a frame provably at-or-before the cut is still uncommitted.
+3. **Snapshot.** Once step 2 holds, take the SQLite online backup. Normal operation (including new writes after the cut) continues concurrently — the backup mechanism's whole purpose is that this is safe against a WAL-mode database. Writes after the cut are, by design, simply not part of this backup; step 6 is why that's safe.
+4. **Manifest.** Record the cut sequence (the operation ID / journal position from step 1) in the backup's manifest, alongside the existing schema version and per-file checksums.
+5. **Validate and promote.** Validate the new archive (checksums, manifest, schema version, health check against the source) and only then atomically replace the "current backup" pointer. A backup is never allowed to overwrite a known-good one with output from a store that failed a health check first (Task 3's existing acceptance criteria already require this end-to-end).
+6. **Rotate.** Only journal frames at or before the *promoted* backup's recorded cut sequence may be discarded. Every frame after the cut remains in the live journal untouched, regardless of how long the backup took to validate — it either stays in the live journal (if it arrived after this cut) or becomes coverable by the *next* backup's cut. This is what makes "a write committed after the snapshot began but before rotation" provably safe: such a write is always after the cut sequence by construction, so rotation in step 6 never touches it.
+
+An equivalent protocol is acceptable only if it proves the same property: no event committed after a given backup's recorded cut can ever be discarded by that backup's rotation.
 
 ### 5.3 Dev/production separation
 
@@ -134,56 +145,59 @@ interface ISemanticProvider
 
 ## 8. Module dependency diagram
 
-*(Revised per R4, R6, R7 — reflects the out-of-process `CaptureWorker` boundary, the `IPresentationSink`/`IPersonalityAdapter` split, and the separate `MaintenanceStore` path.)*
+*(Revised — reflects the out-of-process `CaptureWorker` boundary and the separate `MaintenanceStore` path from revision 2, and now corrects the presentation flow to actually show `IPersonalityAdapter` in the path rather than mislabeling the sink as "NeutralPresentationSource".)*
 
 ```
-                        ┌─────────────────────┐
-                        │   CompanionRuntime    │  (single authoritative instance,
-                        └──────────┬────────────┘   main process)
-          ┌───────────┬────────────┼────────────┬─────────────┬─────────────┐
-          ▼           ▼            ▼             ▼             ▼             ▼
-  IPresentationSink  TargetAuth  ConversationCoord  AttentionEngine  MemoryStore   ResourceWatchdog
-   (NeutralPresen-    Service           │                  ▲             ▲             │
-   tationSource in       │              │                  │             │             │
-   core stages)          │              ▼                  │             │             ▼
-          ▲          IPC (bounded,  VisualPipeline ─────────┘             │      (restarts workers,
-          │          versioned,     (via PrivacyGuard for                 │       clears disposable
-          │          cancellable,    non-game targets)                    │       data only, never
-          │          no identity/                                        │       touches committed
-          │          memory access)                                      │       memory)
-          │              │                                                │
-          │              ▼                                                │
-          │     ┌────────────────────┐                                   │
-          │     │  CaptureWorker      │  separate OS process (from        │
-          │     │  process (Task 5+)  │  Task 5 onward; Task 1 ships an   │
-          │     │  owns WGC/D3D,      │  in-process fake behind the same  │
-          │     │  frame pool, ring   │  ICaptureWorker contract)         │
-          │     └────────────────────┘                                   │
-          │                                                               │
-          │        ApiBridge ─── ISemanticProvider: Mock / Replay / (disabled Real)
-          │              │                                               ▲
-          │              ▼                                               │
-          │        LocalWriteGate ───────────────────────────────────────┘
-          │              │  (append-only proposals, runtime path)
-          │              ▼
-          │        SessionJournal ──▶ MemoryStore (checkpoint/commit protocol, §5.1)
-          │
-          │        MaintenanceStore  (separate capability, offline/guarded path only —
-          │              ▲            backup restore, migration, future explicit user
-          │              │            deletion; unreachable from ApiBridge/ISemanticProvider)
-          │              │
-          └── IPresentationSink receives typed semantic events (observing/investigating/
-              urgent/...) from AttentionEngine and ConversationCoordinator; renders opaque
-              content only, never generates or interprets it.
+                                  ┌─────────────────────┐
+                                  │   CompanionRuntime    │  (single authoritative
+                                  └──────────┬────────────┘   instance, main process)
+      ┌────────────┬───────────────┼───────────────┬─────────────┬─────────────┐
+      ▼            ▼               ▼               ▼             ▼             ▼
+ TargetAuth   ConversationCoord  AttentionEngine  CaptureWorker  MemoryStore  ResourceWatchdog
+  Service            │                 │           (IPC, Task 5+  ▲             │
+      │              ▼                 │            out-of-       │             ▼
+      │        VisualPipeline ─────────┘            process;      │      (restarts workers,
+      │       (via PrivacyGuard for                  Task 1 ships │       clears disposable
+      │        non-game targets)                     in-process   │       data only, never
+      │                                              fake behind  │       touches committed
+      │        ApiBridge ── ISemanticProvider:        same        │       memory)
+      │              │       Mock / Replay /          ICaptureWorker
+      │              │       (disabled Real)          contract)
+      │              ▼                                            │
+      │        LocalWriteGate ────────────────────────────────────┘
+      │              │  (append-only proposals, runtime path)
+      │              ▼
+      │        SessionJournal ──▶ MemoryStore (checkpoint/commit protocol, §5.1)
+      │
+      │        MaintenanceStore  (separate capability, offline/guarded path only —
+      │              ▲            backup restore, migration, future explicit user
+      │              │            deletion; unreachable from ApiBridge/ISemanticProvider)
+      │              │
+      └── target/session metadata only; no capture, no memory writes.
+
+Presentation flow (separate from the box above — this is what R6/this revision's
+review comment corrected):
+
+  AttentionEngine, ConversationCoordinator
+              │  typed semantic events (observing/investigating/urgent/...)
+              │  and structured context — never character-specific literals
+              ▼
+       IPersonalityAdapter   (neutral passthrough during core stages;
+              │               Prince's real adapter installed at Stage 13)
+              │  opaque content + expression intents only
+              ▼
+       IPresentationSink     (renders only — never generates or interprets)
 
 BackupRecoveryService reads MemoryStore + SessionJournal, writes archives via the SQLite
-online-backup mechanism (§5.2); operates through MaintenanceStore, never in the runtime's
-live request path.
+online-backup mechanism and cut protocol (§5.2); operates through MaintenanceStore, never
+in the runtime's live request path.
 ```
 
 Dependency rules this is meant to enforce structurally, not just by convention:
 
-- `IPresentationSink` depends only on typed events and opaque content, never on capture, memory, or API internals — what keeps the eventual `IPersonalityAdapter` swappable at the Stage 13 boundary without touching UI plumbing.
+- `AttentionEngine`/`ConversationCoordinator` depend only on `IPersonalityAdapter`'s typed-event input contract, never on capture, memory, or API internals.
+- `IPersonalityAdapter` is the only place typed events become content/phrasing; a `NeutralPersonalityAdapter` implementation is the only one wired in during core stages, and it does no generation beyond passthrough of placeholder strings. Swapping it for Prince's real adapter at Stage 13 is a configuration change, not a core rewrite.
+- `IPresentationSink` depends only on `IPersonalityAdapter`'s output (opaque content/intents) — it cannot reach `AttentionEngine`, `ConversationCoordinator`, capture, memory, or API internals directly, and it does not itself interpret or generate anything.
 - `ApiBridge` never holds a direct reference to `MemoryStore`; it only produces proposals `LocalWriteGate` accepts or rejects, so "API output can't bypass the write gate" is structural.
 - `ApiBridge` and `ISemanticProvider` implementations have no reference to `MaintenanceStore` — the maintenance/offline write path is unreachable from anywhere API-facing, by construction.
 - `CaptureWorker`'s IPC surface has no call that reaches `LocalWriteGate` or `CompanionRuntime`'s identity state — only frame/status data and bounded control commands cross the process boundary.
@@ -234,7 +248,7 @@ CompanionCore.sln
 - **Trust boundary 1 — capture**: `CaptureWorker` may only ever hold a handle to the single `TargetAuthorizationService`-approved HWND. It has no API to enumerate or capture any other window. `TargetAuthorizationService` itself may enumerate process/window metadata (for the consent prompt) without capturing pixels — enumeration and capture are separate capabilities so a bug in one can't silently grant the other.
 - **Trust boundary 2 — content**: `PrivacyGuard` sits between `VisualPipeline` and semantic interpretation for authorized non-game targets, high-threshold and independently unit-testable in isolation from the rest of the pipeline. Trusted game targets may explicitly bypass content-level filtering, but never target isolation (boundary 1 still applies).
 - **Trust boundary 3 — remote**: `ApiBridge` is the only component with network access. It never receives raw frames beyond what a request explicitly needs, never receives credentials in a form that could be logged, and every response is a proposal, not an authority — `LocalWriteGate` is boundary 4.
-- **Trust boundary 4 — memory authority**: `LocalWriteGate` is the sole writer to `MemoryStore`. Anything upstream of it, human or model-originated, can only produce append proposals; update/delete simply isn't a capability that exists on the other side of that boundary.
+- **Trust boundary 4 — memory authority** *(corrected — the prior wording said `LocalWriteGate` is "the sole writer to `MemoryStore`," which contradicted §6.3's separately-approved `MaintenanceStore` capability)*: `LocalWriteGate` is the sole **live-runtime/automated/API** writer to `MemoryStore` — anything upstream of it on that path, human-triggered or model-originated, can only produce append proposals; update/delete isn't a capability that exists on that side of the boundary at all. The capability-scoped, offline `MaintenanceStore` (§6.3) is the *only other* writer, and it is structurally unreachable from `ApiBridge`, `ISemanticProvider` implementations, or any other semantic/API-facing component. Within that maintenance surface, two different operations are also worth distinguishing: `BackupRecoveryService` producing a backup is a **read-only snapshot** of `MemoryStore` (§5.2) — it never writes to the live store — while **restore and migration** are the actual `MaintenanceStore` write path, gated on normal runtime writes being stopped and requiring local user intent or versioned migration authority (§6.3).
 - **Emergency boundary**: the stop-only privacy hotkey is a cross-cutting control that must reach `CaptureWorker` (stop, clear buffers), `VisualPipeline`/`ApiBridge` (cancel pending work), and `MemoryStore` (pause writes) without going through the normal event pipeline, so it stays effective even if another subsystem is misbehaving.
 - **Cancellation and late-result fencing** *(added per R9)*: cancellation is cooperative, so a capture-worker frame or a remote semantic result can still arrive after the hotkey fires, mid-flight. Every capture request, worker frame, and semantic result carries a target-session **generation ID** alongside its local operation ID. Privacy stop atomically increments/revokes the current generation, clears bounded buffers, cancels outstanding cancellation tokens, and pauses runtime writes. Any result — a capture frame from the worker process, a semantic interpretation from `ApiBridge` — that arrives tagged with a generation older than the current one is discarded before it can reach `IPresentationSink`, Seed creation, `SessionJournal`, or `MemoryStore`; the durability protocol in §5.1 only ever sees writes that already carry a current generation. Explicit resume creates a new generation rather than reusing or draining anything withheld under the old one, so a resumed session can never surface a frame or result that was captured before the stop.
 
@@ -256,17 +270,31 @@ CompanionCore.sln
 | 12 | Out-of-process `CaptureWorker` IPC has a bug that lets a frame/status message reach identity or memory state | Would silently reintroduce a "second identity" or write-gate-bypass risk despite the process boundary (§6.1) | Task 5 contract test: assert the IPC surface exposes no operation reachable from the worker side that can construct a runtime or call `LocalWriteGate`/`MaintenanceStore`; this is a structural (compile-time surface) check, not just a runtime test. |
 | 13 | A capture frame or semantic result arrives after a privacy-stop generation revocation | Privacy-stopped content could leak into presentation or memory if fencing is implemented inconsistently | Task 4/Task 7 acceptance test: fire privacy stop mid-request, then let the in-flight result arrive, and assert it never reaches `IPresentationSink`, journaling, or memory append (§11). |
 
-## 13. Staged dependency map
+## 13. Task execution order
+
+*(Revised — revision 2 still showed Tasks 3, 4, and 7 branching from Task 2 despite claiming sequential execution. The master packet authorizes exactly one linear order; that's the only map with any authority over what may start next. A separate, explicitly non-authoritative logical-dependency reference follows for context.)*
+
+### 13.1 Authorized execution order (binding)
+
+```
+0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12
+```
+
+This is the only order in which tasks may begin. Each arrow means "the foreman has gated the task on the left before the task on the right may start" — not "the task on the right needs code from the task on the left," which is a separate question addressed in §13.2. No task in this sequence is ever authorized out of order, including when a later task's code has no dependency on an intervening one (e.g. Task 4 does not need Task 3's backup code, but Task 4 still may not start until Task 3 is gated, because the packet permits at most one task in progress at a time).
+
+### 13.2 Logical dependency reference (non-authoritative)
+
+The graph below records which task's *code* actually depends on which other task's code — useful for understanding why a task is structured the way it is, and for spotting a task that's accidentally been given work it doesn't need. It does not authorize skipping ahead or reordering; §13.1 alone governs what may start next.
 
 ```
 Task 0 (this proposal)
   └─▶ Task 1 (skeleton: runtime, single instance, blank UI, ICaptureWorker contract + fake)
         └─▶ Task 2 (memory store, journal, write gate — §5.1 durability protocol)
-              └─▶ Task 3 (backup/repair — §5.2, depends on Task 2's store shape)
-              └─▶ Task 4 (consent/target authorization)
-                    └─▶ Task 5 (out-of-process capture worker — §6.1, needs an authorized target from Task 4)
-                          └─▶ Task 6 (regions/attention sheets — needs frames from Task 5)
-                                └─▶ Task 8 (attention engine — scores events Task 6 produces)
+              ├─▶ Task 3 (backup/repair — §5.2, needs Task 2's store shape)
+              ├─▶ Task 4 (consent/target authorization — no code dependency on Task 2, sequenced anyway per §13.1)
+              │     └─▶ Task 5 (out-of-process capture worker — §6.1, needs an authorized target from Task 4)
+              │           └─▶ Task 6 (regions/attention sheets — needs frames from Task 5)
+              │                 └─▶ Task 8 (attention engine — scores events Task 6 produces)
               └─▶ Task 7 (API bridge — write-gate proposals need Task 2's gate to exist)
                     Task 8 + Task 7 ─▶ Task 9 (conversation coordinator — needs attention events + API bridge)
                                           └─▶ Task 10 (memory consolidation — needs Task 2 store + Task 9 output)
@@ -274,7 +302,7 @@ Task 0 (this proposal)
 Task 3, 6, 10, 11 all feed ─▶ Task 12 (hardening + core gate)
 ```
 
-*(Revised per R8.)* Task 2 and Task 4 have no code-level mutual dependency, but tasks remain strictly sequential per the packet's "at most one stage is in progress" rule and `AGENTS.md`'s "work on exactly one explicitly assigned task." The diagram now shows Task 4 as following Task 2 in sequence rather than branching in parallel; no task in this map is ever authorized to start before the foreman has gated the one before it, independent of what the code dependencies alone would allow.
+Task 2 and Task 4 have no code-level mutual dependency — Task 4 is sequenced after Task 2 purely by §13.1, not because its code needs anything Task 2 produces.
 
 ## 14. Invariant and non-goal acknowledgement
 
