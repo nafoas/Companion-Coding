@@ -1,0 +1,46 @@
+# Build output
+bin/
+obj/
+dist/
+build/
+out/
+.vs/
+.idea/
+.vscode/
+
+# Dependencies and caches
+node_modules/
+.cache/
+coverage/
+TestResults/
+*.user
+*.suo
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+
+# Local databases, journals, backups, and captured material
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.journal
+*.wal
+*.shm
+*.zip
+captures/
+screenshots/
+fixtures/private/
+data/
+production-data/
+development-data/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
