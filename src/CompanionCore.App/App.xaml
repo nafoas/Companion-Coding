@@ -1,0 +1,9 @@
+<Application x:Class="CompanionCore.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        Deliberately no StartupUri: the composition root (App.xaml.cs) must acquire the
+        single-instance guard and construct the one CompanionRuntime before any window
+        is created, not as a side effect of WPF's default startup window resolution.
+    -->
+</Application>

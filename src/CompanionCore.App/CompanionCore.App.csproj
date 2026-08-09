@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CompanionCore.App</RootNamespace>
+    <AssemblyName>CompanionCore.App</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CompanionCore.Runtime\CompanionCore.Runtime.csproj" />
+    <ProjectReference Include="..\CompanionCore.Presentation\CompanionCore.Presentation.csproj" />
+    <ProjectReference Include="..\CompanionCore.Capture.Contracts\CompanionCore.Capture.Contracts.csproj" />
+    <ProjectReference Include="..\CompanionCore.Capture.Fake\CompanionCore.Capture.Fake.csproj" />
+  </ItemGroup>
+
+</Project>

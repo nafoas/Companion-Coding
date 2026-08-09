@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CompanionCore.App/CompanionCore.App.csproj" />
+    <Project Path="src/CompanionCore.Capture.Contracts/CompanionCore.Capture.Contracts.csproj" />
+    <Project Path="src/CompanionCore.Capture.Fake/CompanionCore.Capture.Fake.csproj" />
+    <Project Path="src/CompanionCore.Presentation/CompanionCore.Presentation.csproj" />
+    <Project Path="src/CompanionCore.Runtime/CompanionCore.Runtime.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CompanionCore.Capture.Tests/CompanionCore.Capture.Tests.csproj" />
+    <Project Path="tests/CompanionCore.Presentation.Tests/CompanionCore.Presentation.Tests.csproj" />
+    <Project Path="tests/CompanionCore.Runtime.Tests/CompanionCore.Runtime.Tests.csproj" />
+  </Folder>
+</Solution>
