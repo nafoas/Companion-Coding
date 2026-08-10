@@ -169,10 +169,37 @@ internal static class MemoryProposalValidator
             {
                 throw new MemoryValidationException("Retrieval metadata must be a JSON object.");
             }
+
+            ValidateCanonicalJsonShape(document.RootElement);
         }
         catch (JsonException exception)
         {
             throw new MemoryValidationException($"Retrieval metadata is invalid JSON: {exception.Message}");
+        }
+    }
+
+    private static void ValidateCanonicalJsonShape(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            var propertyNames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in element.EnumerateObject())
+            {
+                if (!propertyNames.Add(property.Name))
+                {
+                    throw new MemoryValidationException(
+                        "Retrieval metadata cannot contain duplicate object-property names.");
+                }
+
+                ValidateCanonicalJsonShape(property.Value);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
+            {
+                ValidateCanonicalJsonShape(item);
+            }
         }
     }
 

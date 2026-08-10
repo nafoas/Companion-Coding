@@ -157,6 +157,7 @@ public sealed class LocalWriteGateTests
             SyntheticMemory.Record(recordId: Guid.Empty),
             SyntheticMemory.Record(createdAtUtc: SyntheticMemory.BaselineUtc.ToOffset(TimeSpan.FromHours(1))),
             SyntheticMemory.Record() with { RetrievalMetadataJson = "not-json" },
+            SyntheticMemory.Record() with { RetrievalMetadataJson = "{\"duplicate\":1,\"duplicate\":2}" },
             SyntheticMemory.Record(visibleRecollection: new string('x', 16 * 1024 + 1)),
             SyntheticMemory.Record() with { SubjectKey = string.Empty },
         };
