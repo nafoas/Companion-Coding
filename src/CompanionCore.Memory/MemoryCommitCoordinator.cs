@@ -173,6 +173,104 @@ internal sealed class MemoryCommitCoordinator : IDisposable
         }
     }
 
+    internal async Task<PinnedMemorySnapshot> EstablishBackupCutAsync(
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ThrowIfDisposed();
+            if (_journal.ConfirmedThrough != _journal.HighestAppendSequence)
+            {
+                throw new MemoryIntegrityException(
+                    "A backup cut cannot cross an unresolved live journal tail.");
+            }
+
+            var databaseSequence = await _store.ReadMaximumJournalSequenceAsync(cancellationToken)
+                .ConfigureAwait(false);
+            if (databaseSequence != _journal.HighestAppendSequence)
+            {
+                throw new MemoryIntegrityException(
+                    "The committed SQLite sequence and journal cut do not agree.");
+            }
+
+            return await PinnedMemorySnapshot.CreateAsync(
+                    _store.DatabasePath,
+                    databaseSequence,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
+    }
+
+    internal async Task RotateJournalThroughAsync(
+        long promotedCutSequence,
+        Guid backupId,
+        IBackupTestHook? testHook,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ThrowIfDisposed();
+            if (_journal.ConfirmedThrough != _journal.HighestAppendSequence)
+            {
+                throw new MemoryIntegrityException(
+                    "Journal rotation cannot begin while a live recovery tail is unresolved.");
+            }
+
+            var databaseSequence = await _store.ReadMaximumJournalSequenceAsync(cancellationToken)
+                .ConfigureAwait(false);
+            if (databaseSequence != _journal.HighestAppendSequence
+                || promotedCutSequence > databaseSequence)
+            {
+                throw new MemoryIntegrityException(
+                    "Journal rotation cannot prove that SQLite contains the promoted cut and retained tail.");
+            }
+
+            await _journal.RotateThroughAsync(
+                    promotedCutSequence,
+                    backupId,
+                    testHook,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
+    }
+
+    internal async Task<MemoryHealthReport> ValidateSourceHealthAsync(
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ThrowIfDisposed();
+            if (_journal.ConfirmedThrough != _journal.HighestAppendSequence)
+            {
+                throw new MemoryIntegrityException(
+                    "Source health cannot be certified across an unresolved journal tail.");
+            }
+
+            return await _store.ValidateFullHealthAsync(
+                    _journal.HighestAppendSequence,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed)

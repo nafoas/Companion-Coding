@@ -6,4 +6,9 @@ public sealed class MemoryIntegrityException : Exception
         : base(message)
     {
     }
+
+    internal MemoryIntegrityException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
 }

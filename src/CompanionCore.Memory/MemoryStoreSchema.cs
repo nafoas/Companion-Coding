@@ -104,6 +104,25 @@ internal static class MemoryStoreSchema
         "immutable_memory_links_delete",
     ];
 
+    internal static readonly IReadOnlyDictionary<string, string> ExactUserObjects =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["schema_info"] = "table",
+            ["append_operations"] = "table",
+            ["memory_records"] = "table",
+            ["memory_links"] = "table",
+            ["memory_records_subject_idx"] = "index",
+            ["memory_links_target_idx"] = "index",
+            ["immutable_schema_info_update"] = "trigger",
+            ["immutable_schema_info_delete"] = "trigger",
+            ["immutable_append_operations_update"] = "trigger",
+            ["immutable_append_operations_delete"] = "trigger",
+            ["immutable_memory_records_update"] = "trigger",
+            ["immutable_memory_records_delete"] = "trigger",
+            ["immutable_memory_links_update"] = "trigger",
+            ["immutable_memory_links_delete"] = "trigger",
+        };
+
     internal static readonly IReadOnlyDictionary<string, string[]> RequiredColumns =
         new Dictionary<string, string[]>(StringComparer.Ordinal)
         {

@@ -2,91 +2,76 @@
 
 ## Task
 
-Task 2 — Append-Only Memory and Journal. Distinct Paw Gate passed; acceptance record is ready to publish.
-
-Reviewed gate candidate: remote head `056dedceb120e48c01b9c71d9a1f2d31ad207a5d`, local head `b367107`, exact shared tree `ab010b6f5a0d17ec23f84ef0252332143421e427`. Product implementation is remote `f3e11acb08a2056f0fe557b4517383a14471227c`, local `1e556ec`, tree `9e945c181164cb4683d62684e933c1efecdb813e`.
+Task 3 — Atomic Backup and Repair. Implementation is complete and rebased onto accepted remote `main`; exact-candidate publication, Windows CI, and the distinct Paw Gate remain pending.
 
 ## Completed
 
-- Added a locked .NET 10 `CompanionCore.Memory` project and 34-test `CompanionCore.Memory.Tests` project using `Microsoft.Data.Sqlite` directly.
-- Implemented fixed, physically distinct development/test data-root capabilities and a recognized-but-unopenable future production root/database path.
-- Implemented SQLite schema v1 as the sole committed/queryable authority with WAL, `synchronous=FULL`, foreign keys, exact schema validation, immutable-row triggers, operation envelopes, and SHA-256 record/operation checksums.
-- Implemented the sole public automated ingress, `LocalWriteGate`, with a concrete append allowlist, bounded validation, atomic multi-record operations, idempotent retries, and hard operation-ID conflicts.
-- Implemented the checksummed binary `SessionJournal` protocol: durable append, SQLite transaction, durable checkpoint, contiguous sequences, torn/checksum-invalid trailing-frame truncation, idempotent startup replay, checkpoint/store cross-validation, and a live-write fence while an unconfirmed recovery tail exists.
-- Implemented immutable source/correction/supersession/recurrence links and deterministic exact-subject retrieval with current-state, source-authority, confidence, recency, and stable-ID ordering.
-- Added synthetic tests for full-field reopen, schema/durability settings, root isolation, public API shape, direct SQL immutability, malformed/ambiguous/oversized input, crash windows, unresolved live tails, checksum corruption, missing journal history, corrections, supersession, recurrence, ranking, and exact-subject behavior.
-- Removed the temporary deliberately failing lock-generation step after committing the exact Windows-generated locks.
-- Added a permanent CI vulnerability audit covering direct and transitive packages in the locked solution graph.
-- Completed the distinct Paw Gate review across scope, authority, privacy, failure/cancellation behavior, resource lifetime, dependency locks, and every named crash/negative scenario; no blocker remains.
+- Recovered the exact credit-stop state and confirmed no Task 3 product edit had begun or been omitted before the stop.
+- Implemented a pinned exact journal/SQLite cut, released the serial writer before `SqliteConnection.BackupDatabase`, and independently health-validates both the snapshot and current source.
+- Implemented the fixed `backups-v1/memory-vault-v1.zip` archive with exactly one snapshot, one canonical versioned manifest, and one manifest-checksum entry; database length/SHA-256 live inside the manifest.
+- Implemented validate-before-promote atomic replacement and post-promotion journal rotation with a versioned checksummed rotation-base frame, retained post-cut appends, latest checkpoint, and old-or-complete-new replacement outcomes.
+- Serialized complete backup attempts so a delayed older cut cannot regress a newer archive while ordinary post-cut writes remain unblocked.
+- Implemented an assembly-internal repair authority/service behind the repository's cross-process exclusive lease; no public, automated, app, raw-path, or production maintenance surface exists.
+- Implemented exact damaged DB/WAL/SHM/journal preservation in unique immutable bundles, a checksummed repair-state marker, byte-exact rollback after any post-marker fault, and interrupted-repair rollback before new cancellation is honored.
+- Repair validates the archive and a durable copy of the live journal before mutation, retains every canonical contiguous post-cut append, tolerates only the production parser's one trailing tear/checksum failure, rejects non-trailing corruption, and reopens through ordinary Task 2 idempotent recovery.
+- Added 31 focused Task 3 cases covering cut exclusion, concurrent backup ordering, source/candidate/archive health, canonical ZIP structure, promotion/rotation fault sides, cancellation fences, open-repository rejection, immutable completed damaged evidence, post-cut replay, tamper/version/path attacks, interrupted repair, rollback, and repeated idempotency.
+- Completed the distinct local code/invariant/diff review. It found and corrected one preservation-boundary mismatch, then rechecked the final code checkpoint; the formal Paw Gate remains held for exact-head Windows evidence.
 
 ## Changed
 
-- `src/CompanionCore.Memory/**` — neutral memory models, validated roots, canonicalization/checksums, SQLite store, append gate, journal, recovery, and exact-subject retrieval.
-- `tests/CompanionCore.Memory.Tests/**` — 34 isolated synthetic tests and exact package lock.
-- `CompanionCore.slnx` — memory source/test projects.
-- `.github/workflows/ci.yml` — retained locked restore/build/test and added a fail-closed direct/transitive vulnerability audit.
-- `docs/Prince-Construction-Roadmap.md` — only the Boss-approved Stage 2 Task 2/Task 3 split and neutral-rendering correction.
-- `tasks/active/task-02-memory-journal.md` — bounded contract, dependency/root/envelope/frame judgments, and deferred limitations.
-- `BUILD_LEDGER.md`, `README.md`, and this handoff — Task 2 control/checkpoint state.
+- `src/CompanionCore.Memory/**` — backup format/writer/validator/service, pinned snapshot, full health checks, rotation-base journal support, repository/maintenance lease, preservation/marker/repair transaction, bounded internal test seams, and cleanup guards.
+- `tests/CompanionCore.Memory.Tests/MemoryBackupTests.cs` — 10 focused backup cases.
+- `tests/CompanionCore.Memory.Tests/MemoryRepairTests.cs` — 21 repair/tamper cases, counting nine theory rows.
+- `tasks/active/task-03-vault-repair.md` — local checkpoint and Personal Round Judgments J3–J8.
+- `BUILD_LEDGER.md`, `README.md`, and this handoff — evidence and still-pending gate state.
 
-No Task 1 product/test file, accepted architecture, Design BunDex, neutral-core master packet, direct workflow, archived/paused packet, app wiring, capture surface, network/API surface, production opener, or Task 3 maintenance capability changed.
+No project, package, lock, CI, app, capture, API, conversation, presentation, personality, architecture, roadmap, Design BunDex, prior task, screenshot, credential, production-data, or production-opener file changed.
 
 ## Verification
 
-- Accepted-base identity — passed: local surrogate base tree `69eb847631d381360d8ececa3d580912e4a5ad18` exactly equals remote accepted `main` commit `29d0a24e05b58f8ef053c4ebe0b6cfeea7b1ea99`'s tree.
-- Exact local/remote gate tree — passed: local `b367107` and remote `056dedceb120e48c01b9c71d9a1f2d31ad207a5d` both resolve to `ab010b6f5a0d17ec23f84ef0252332143421e427`.
-- `git diff --check be4955b..b367107` — passed.
-- Changed-path review against the Task 2 allowlist — passed; 49 implementation/control paths, with no unrelated source/test mutation.
-- Forbidden-surface search — passed: no backup, restore, rotation, migration, maintenance store, network client, credentials, production opening, app persistence wiring, personality, capture, conversation, or semantic-retrieval implementation.
-- Implementation CI run `31359852305`, job `93366425822` — passed on the PR merge candidate generated from implementation head `f3e11acb08a2056f0fe557b4517383a14471227c`.
-- Exact gate-head CI run `31360021794`, job `93366932942` — passed after the final handoff and J6–J8 record at remote head `056dedceb120e48c01b9c71d9a1f2d31ad207a5d`.
-- `dotnet restore CompanionCore.slnx --locked-mode` — passed using the committed exact locks.
-- `dotnet package list --project CompanionCore.slnx --vulnerable --include-transitive --no-restore --format json --output-version 1` — passed; the report lists all 11 projects and no vulnerable package/framework entries.
-- `dotnet build CompanionCore.slnx --no-restore --configuration Release` — passed with 0 warnings and 0 errors.
-- `dotnet test CompanionCore.slnx --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"` — passed 94/94, 0 failed, 0 skipped:
-  - Runtime: 26/26;
-  - Presentation: 19/19;
-  - synthetic Capture: 11/11;
-  - real WPF integration: 4/4;
-  - Memory/Journal: 34/34.
-- Latest uploaded TRX artifact `9052019291`, digest `sha256:4c790d363a4ff75d0275f3fa1817ccfee58fb6d4cf73681b4a1cc39fd62a5e79`, independently confirms totals `4 + 11 + 34 + 19 + 26 = 94` with zero failures.
+- Code checkpoint rebased onto accepted remote `main` — feature commit `cbc0b5c91c679a693e732b105acd09268d1c7f5c` plus evidence-retention correction `d64d5b7e071ff6ba43b434d4635525fa8ecaeeac`; exact resulting tree `e8bd0811f2b6ccd93892a7eec97778fa9e9fcaca`; 30 source/test paths, 4,445 additions, 31 deletions.
+- Locked restore — passed locally with exact SDK 10.0.302: `dotnet restore CompanionCore.slnx --locked-mode -p:EnableWindowsTargeting=true -m:1`.
+- Release build — passed for all 11 projects with 0 warnings and 0 errors: `dotnet build CompanionCore.slnx --no-restore --configuration Release -p:EnableWindowsTargeting=true -m:1`.
+- Runnable regression/focused suite — 121/121 passed through a temporary in-process reflection runner because this sandbox denies VSTest's local communication socket. Breakdown: 90 accepted non-Windows regressions plus 31 Task 3 cases.
+- Windows-only remainder — the four accepted real WPF app/process integration cases cross-compile here but cannot execute on Linux. With them, exact-candidate Windows CI should report 125/125.
+- Dependency graph — no project or lock file changed. Locked restore resolves the accepted versions, including Microsoft.Data.Sqlite 10.0.10 and every SQLitePCLRaw component at 2.1.12. The permanent `dotnet package list --vulnerable --include-transitive` query was blocked by this sandbox's network policy and remains mandatory in Windows CI; no clean fresh audit is claimed locally.
+- Local review — clean: the complete diff passes `git diff --check`, all product/test changes are confined to the two authorized memory trees, project/dependency/lock/CI files are unchanged, exactly one task is active, and synthetic fixtures contain no credentials, network/API, capture, personality, or private content.
+- Authority surface — clean: reflection verifies no exported backup/repair/maintenance type, no public backup/repair/raw-path/production capability, and no app/runtime/capture/presentation reference to repair.
+- Formatting tool — `dotnet format --verify-no-changes` could not connect to its sandbox-blocked named pipe. Normal and full-solution compilers report zero warnings; no formatter result is claimed.
 
 ## Remaining
 
-- Publish the Paw Gate acceptance record and archived Task 2 packet.
-- Run fresh CI on that exact acceptance-record head.
-- Mark PR #6 ready, merge it after the final check passes, then activate the bounded Task 3 packet from accepted `main`.
+- Publish the Task 3 descendant to `agent/task-03-vault-repair`, then open/update the draft PR from the actual accepted `main` parent.
+- Run the exact Windows workflow: locked restore, permanent direct/transitive vulnerability audit, Release build with zero warnings/errors, and all expected 125 tests.
+- Confirm the published exact head/tree matches this locally reviewed descendant, combine that confirmation with Windows CI, and record the formal Paw Gate decision. Do not mark Task 3 accepted or activate Task 4 before that evidence passes.
+- If CI exposes a Windows-specific replacement/durability difference, change only Task 3 and rerun the complete gate.
 
 ## Risks and assumptions
 
-- This Linux workspace has no .NET SDK. Windows CI is the compiler/runtime oracle; no local test execution is claimed.
-- Git transport remains denied, so local history uses a tree-identical surrogate base. Remote commits parent the actual remote branch/main chain, and exact tree equality is checked at every publication.
-- The permanent audit queries current NuGet vulnerability metadata. Exact package selection remains locked; future advisories are expected to fail later CI rather than silently pass.
-- Journal rotation is intentionally absent until Task 3. The development/test journal is append-only and may grow until that gate supplies validated backup cuts and rotation.
-- Integrity checks detect accidental/tampered content within the accepted local-account threat model; Task 2 does not claim cryptographic authenticity against a hostile local account that can rewrite both data and validation metadata.
+- `File.Replace`, file-share exclusion, WPF process behavior, and the permanent vulnerability audit still require the named Windows execution oracle even though the complete solution cross-builds locally.
+- The 8 GiB database/archive caps are explicit synthetic non-production safety bounds, not final production retention sizing.
+- Staging cleanup is deliberately best-effort: a uniquely named non-authoritative orphan may remain after cleanup I/O failure, but no cleanup path can target the promoted archive, committed DB/journal, or completed damaged-source bundle.
+- Production roots, session-end scheduling, user repair UI/ceremony, backup encryption, schema migration, identity/photograph expansion, and multi-generation/off-device retention remain deferred.
 
 ## Review focus
 
-- Verify the exact journal → SQLite transaction → checkpoint order, cancellation fence, replay idempotency, and trailing-frame rules.
-- Verify an unconfirmed live journal tail blocks later writes until reopen/recovery and that checkpoints beyond SQLite fail closed.
-- Verify SQLite remains the single committed authority and the canonical operation envelope is not a second writer/store.
-- Verify only concrete append proposals cross the public automated gate and every direct store commit surface is assembly-internal.
-- Verify correction/supersession/recurrence behavior is append-only and retrieval precedence is deterministic.
-- Verify no production location can be constructed/opened and rejected overrides create no files.
-- Verify locks resolve every SQLitePCLRaw component to 2.1.12 and the clean audit is enforced in CI.
-- Verify no Task 3 or later-stage surface slipped into the candidate.
+- Re-prove cut pinning and `BackupDatabase` page copy happen before promotion, with post-cut writes excluded from the snapshot but retained through rotation and repair.
+- Re-prove concurrent attempts cannot regress the archive and every failure leaves an old or new complete journal consistent with the authoritative promoted cut.
+- Re-prove archive/parser bounds, canonical manifest/checksums, exact entry set, SQLite/schema/content health, and tamper/path/version rejection before mutation.
+- Re-prove repair quiescence, capability isolation, immutable complete evidence, marker recovery, cancellation boundary, byte-exact rollback, and ordinary idempotent replay.
+- Re-run public-surface and changed-path checks for forbidden production, automated maintenance, Task 4+, personality, private fixture, or dependency drift.
 
 ## Repository state
 
-- Local branch: `agent/task-02-bundex-local`; remote branch: `agent/task-02-bundex`; draft PR #6 pending the published acceptance record.
-- Remote accepted base: `29d0a24e05b58f8ef053c4ebe0b6cfeea7b1ea99`, tree `69eb847631d381360d8ececa3d580912e4a5ad18`.
-- Verified gate head: remote `056dedceb120e48c01b9c71d9a1f2d31ad207a5d`; local `b367107`; shared tree `ab010b6f5a0d17ec23f84ef0252332143421e427`.
-- Local working tree contains only this pending acceptance/control-record update.
+- Accepted remote base: `44caa2fc6474b0952eaed5f086bfb3c49bf73c18`; accepted tree `2423473e0a0fb915bf40c2554947f7166cd7d9f4`.
+- Current branch/publication target: `agent/task-03-vault-repair`; preserved surrogate branch: `agent/task-03-vault-repair-local`.
+- Candidate code checkpoint: `d64d5b7e071ff6ba43b434d4635525fa8ecaeeac`; this handoff is its control-record descendant.
+- Existing obsolete Claude foreman automations remain paused under the accepted direct-build workflow; they were not resumed.
 
 ## Next safe task
 
-Publish the acceptance record, rerun exact-head CI, mark PR #6 ready, and merge it. Then create the bounded Task 3 packet from accepted `main`; do not begin Task 3 product code before that packet is active.
+Stop at the remote/Windows gate. When transport is restored, publish this descendant, run exact-head Windows CI, and close the formal Paw Gate only from passing evidence. Do not begin Task 4.
 
 ## Credit status
 
-Not credit-related.
+Credits and Git transport are restored. The candidate is safely rebased and ready to publish; no remote branch update, PR head, vulnerability-audit pass, Windows test pass, Paw Gate approval, or Task 3 acceptance is claimed until those actions actually complete.
