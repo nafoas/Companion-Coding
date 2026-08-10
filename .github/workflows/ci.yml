@@ -35,7 +35,7 @@ jobs:
             foreach ($project in @($audit.projects)) {
               foreach ($framework in @($project.frameworks)) {
                 foreach ($package in @($framework.topLevelPackages) + @($framework.transitivePackages)) {
-                  if (@($package.vulnerabilities).Count -gt 0) {
+                  if ($null -ne $package -and @($package.vulnerabilities).Count -gt 0) {
                     $package
                   }
                 }
