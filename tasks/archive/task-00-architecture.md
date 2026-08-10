@@ -2,7 +2,7 @@
 
 Status: **accepted and archived**  
 Reviewed builder SHA: `9a51231aa8d76a399ef43ae4a8bfc5cdbd1195b3`  
-Foreman approval review: `4892489052`  
+Independent approval review: `4892489052`
 Merged to `main`: `58bbdf9915659b3887e311f7b9cdf819cc39fc13`
 
 ## Objective
@@ -33,7 +33,7 @@ Commit an architecture proposal under `docs/architecture/` containing:
 12. risk register with feasibility spikes;
 13. staged dependency map;
 14. explicit invariant and non-goal acknowledgement;
-15. decisions requiring foreman approval.
+15. decisions requiring independent gate approval.
 
 ## Allowed changes
 

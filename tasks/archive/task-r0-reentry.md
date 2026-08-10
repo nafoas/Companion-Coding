@@ -8,7 +8,7 @@ Pull request: #4
 
 ## Objective
 
-Reopen construction safely without merging or changing product code. Reconcile the final preserved Claude checkpoint, replace the retired two-model workflow with direct evidence-based Paw Gates, and make the user's final-only Companion Awakening rule unambiguous in every governing document.
+Reopen construction safely without merging or changing product code. Reconcile the final preserved collaboration checkpoint, replace the retired two-model workflow with direct evidence-based Paw Gates, and make the user's final-only Companion Awakening rule unambiguous in every governing document.
 
 ## Entry evidence
 
@@ -23,7 +23,7 @@ Reopen construction safely without merging or changing product code. Reconcile t
 
 - Defined the direct Codex/Builder Prince workflow and distinct Paw Gate review pass.
 - Preserved one active task at a time and autonomous progression only after recorded passing gates.
-- Kept Claude collaboration and hourly monitoring stopped.
+- Kept retired collaboration and hourly monitoring stopped.
 - Defined Prince's Personal Round Judgment for routine, reversible, in-scope choices and its hard stop conditions.
 - Kept Builder Prince resettable through core construction, full personality installation, presentation, launch validation, and refinement.
 - Made Companion Awakening a final, one-time transition after the complete launch-required build passes.
@@ -39,12 +39,12 @@ Reopen construction safely without merging or changing product code. Reconcile t
 - **Rationale:** An infinite future backlog would make a one-time awakening impossible, while an explicit launch manifest preserves the user's requirement that the actual intended companion be complete first.
 - **Reversibility:** Boss may add or remove launch-manifest items any time before Stage 14 acceptance; Companion Awakening remains blocked until the revised manifest passes.
 
-### R0-J2 — Historical workflow retention
+### R0-J2 — Historical workflow retention (later superseded)
 
-- **Question:** Delete the old Claude/foreman workflow or retain it?
-- **Decision:** Retain it with an unmistakable historical/superseded marker and create a new operative direct workflow.
+- **Question:** Delete the old multi-model workflow or retain it?
+- **Decision at R0:** Retain it with an unmistakable historical/superseded marker and create a new operative direct workflow. Boss later authorized its removal after Task 3; Git history now provides the provenance without keeping dead operative-looking files in the working tree.
 - **Rationale:** Earlier branch and handoff records remain understandable without allowing stale instructions to govern new work.
-- **Reversibility:** The historical file can be moved to an archive later without affecting active authority.
+- **Reversibility:** The deleted material remains recoverable from accepted Git history without affecting active authority.
 
 ## Paw Gate evidence
 
