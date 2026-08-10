@@ -2,9 +2,9 @@
 
 ## Task
 
-Task 2 — Append-Only Memory and Journal. Implementation checkpoint complete and ready for the distinct Paw Gate review.
+Task 2 — Append-Only Memory and Journal. Distinct Paw Gate passed; acceptance record is ready to publish.
 
-Reviewed implementation candidate: remote head `f3e11acb08a2056f0fe557b4517383a14471227c`, exact tree `9e945c181164cb4683d62684e933c1efecdb813e`.
+Reviewed gate candidate: remote head `056dedceb120e48c01b9c71d9a1f2d31ad207a5d`, local head `b367107`, exact shared tree `ab010b6f5a0d17ec23f84ef0252332143421e427`. Product implementation is remote `f3e11acb08a2056f0fe557b4517383a14471227c`, local `1e556ec`, tree `9e945c181164cb4683d62684e933c1efecdb813e`.
 
 ## Completed
 
@@ -17,6 +17,7 @@ Reviewed implementation candidate: remote head `f3e11acb08a2056f0fe557b4517383a1
 - Added synthetic tests for full-field reopen, schema/durability settings, root isolation, public API shape, direct SQL immutability, malformed/ambiguous/oversized input, crash windows, unresolved live tails, checksum corruption, missing journal history, corrections, supersession, recurrence, ranking, and exact-subject behavior.
 - Removed the temporary deliberately failing lock-generation step after committing the exact Windows-generated locks.
 - Added a permanent CI vulnerability audit covering direct and transitive packages in the locked solution graph.
+- Completed the distinct Paw Gate review across scope, authority, privacy, failure/cancellation behavior, resource lifetime, dependency locks, and every named crash/negative scenario; no blocker remains.
 
 ## Changed
 
@@ -33,11 +34,12 @@ No Task 1 product/test file, accepted architecture, Design BunDex, neutral-core 
 ## Verification
 
 - Accepted-base identity — passed: local surrogate base tree `69eb847631d381360d8ececa3d580912e4a5ad18` exactly equals remote accepted `main` commit `29d0a24e05b58f8ef053c4ebe0b6cfeea7b1ea99`'s tree.
-- Exact local/remote implementation tree — passed: local `1e556ec` and remote `f3e11acb08a2056f0fe557b4517383a14471227c` both resolve to `9e945c181164cb4683d62684e933c1efecdb813e`.
-- `git diff --check be4955b..1e556ec` — passed.
+- Exact local/remote gate tree — passed: local `b367107` and remote `056dedceb120e48c01b9c71d9a1f2d31ad207a5d` both resolve to `ab010b6f5a0d17ec23f84ef0252332143421e427`.
+- `git diff --check be4955b..b367107` — passed.
 - Changed-path review against the Task 2 allowlist — passed; 49 implementation/control paths, with no unrelated source/test mutation.
 - Forbidden-surface search — passed: no backup, restore, rotation, migration, maintenance store, network client, credentials, production opening, app persistence wiring, personality, capture, conversation, or semantic-retrieval implementation.
-- Windows CI run `31359852305`, job `93366425822` — passed on the PR merge candidate generated from remote head `f3e11acb08a2056f0fe557b4517383a14471227c`.
+- Implementation CI run `31359852305`, job `93366425822` — passed on the PR merge candidate generated from implementation head `f3e11acb08a2056f0fe557b4517383a14471227c`.
+- Exact gate-head CI run `31360021794`, job `93366932942` — passed after the final handoff and J6–J8 record at remote head `056dedceb120e48c01b9c71d9a1f2d31ad207a5d`.
 - `dotnet restore CompanionCore.slnx --locked-mode` — passed using the committed exact locks.
 - `dotnet package list --project CompanionCore.slnx --vulnerable --include-transitive --no-restore --format json --output-version 1` — passed; the report lists all 11 projects and no vulnerable package/framework entries.
 - `dotnet build CompanionCore.slnx --no-restore --configuration Release` — passed with 0 warnings and 0 errors.
@@ -47,13 +49,13 @@ No Task 1 product/test file, accepted architecture, Design BunDex, neutral-core 
   - synthetic Capture: 11/11;
   - real WPF integration: 4/4;
   - Memory/Journal: 34/34.
-- Uploaded TRX artifact `9051958090`, digest `sha256:597fb3fc698610bcf72b6c53281afedbe7f88f334451eba1666386639da3a342`, independently confirms totals `4 + 11 + 34 + 19 + 26 = 94` with zero failures.
+- Latest uploaded TRX artifact `9052019291`, digest `sha256:4c790d363a4ff75d0275f3fa1817ccfee58fb6d4cf73681b4a1cc39fd62a5e79`, independently confirms totals `4 + 11 + 34 + 19 + 26 = 94` with zero failures.
 
 ## Remaining
 
-- Commit and publish this handoff plus the final gate-review Personal Round Judgments.
-- Run fresh CI on that exact documentation-only checkpoint.
-- Perform the distinct Paw Gate diff/invariant review; if it passes, record acceptance, archive Task 2, and merge PR #6 before activating Task 3.
+- Publish the Paw Gate acceptance record and archived Task 2 packet.
+- Run fresh CI on that exact acceptance-record head.
+- Mark PR #6 ready, merge it after the final check passes, then activate the bounded Task 3 packet from accepted `main`.
 
 ## Risks and assumptions
 
@@ -76,14 +78,14 @@ No Task 1 product/test file, accepted architecture, Design BunDex, neutral-core 
 
 ## Repository state
 
-- Local branch: `agent/task-02-bundex-local`; remote branch: `agent/task-02-bundex`; draft PR #6.
+- Local branch: `agent/task-02-bundex-local`; remote branch: `agent/task-02-bundex`; draft PR #6 pending the published acceptance record.
 - Remote accepted base: `29d0a24e05b58f8ef053c4ebe0b6cfeea7b1ea99`, tree `69eb847631d381360d8ececa3d580912e4a5ad18`.
-- Verified implementation head: remote `f3e11acb08a2056f0fe557b4517383a14471227c`; local `1e556ec`; shared tree `9e945c181164cb4683d62684e933c1efecdb813e`.
-- Local working tree contains only this pending handoff/control-record update.
+- Verified gate head: remote `056dedceb120e48c01b9c71d9a1f2d31ad207a5d`; local `b367107`; shared tree `ab010b6f5a0d17ec23f84ef0252332143421e427`.
+- Local working tree contains only this pending acceptance/control-record update.
 
 ## Next safe task
 
-Publish the handoff checkpoint, rerun exact-head CI, then conduct the separate Task 2 Paw Gate. Do not begin Task 3 before that decision is recorded and Task 2 is accepted into `main`.
+Publish the acceptance record, rerun exact-head CI, mark PR #6 ready, and merge it. Then create the bounded Task 3 packet from accepted `main`; do not begin Task 3 product code before that packet is active.
 
 ## Credit status
 

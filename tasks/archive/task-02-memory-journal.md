@@ -1,10 +1,15 @@
 # Task 2 — Append-Only Memory and Journal
 
-Status: **active**
+Status: **accepted — Paw Gate passed 2026-08-10**
 Authorized: 2026-08-10 under the accepted direct-build workflow and Boss-approved Stage 2 split
 Accepted remote base: `29d0a24e05b58f8ef053c4ebe0b6cfeea7b1ea99`
 Accepted base tree: `69eb847631d381360d8ececa3d580912e4a5ad18`
 Working branch: `agent/task-02-bundex`
+Accepted implementation head: `f3e11acb08a2056f0fe557b4517383a14471227c`
+Reviewed gate head: `056dedceb120e48c01b9c71d9a1f2d31ad207a5d`
+Exact reviewed gate tree: `ab010b6f5a0d17ec23f84ef0252332143421e427`
+Pull request: #6
+Final pre-acceptance CI: run `31360021794`, job `93366932942`
 
 ## Objective
 
@@ -119,15 +124,15 @@ Do not modify Task 1 source/tests, the Design BunDex, neutral-core master packet
 
 ## Paw Gate
 
-Task 2 passes only when:
+Gate result: **PASS** on 2026-08-10. The separate review confirmed:
 
-- the implementation matches the §5.1 journal → SQLite → checkpoint protocol and preserves one committed authority;
-- public/assembly dependency shape makes the automated write gate structural rather than conventional;
-- exact diff review confirms no Task 3 maintenance/backup capability and no production opening path;
-- every crash, idempotency, append-only, correction-precedence, checksum, and root-isolation negative test passes;
-- package locks are reproducible and the exact dependency graph contains no known vulnerable package warning;
-- fresh exact-candidate Windows CI passes locked restore, Release build, all Task 1 regressions, and the complete Task 2 suite;
-- limitations and Personal Round Judgments are recorded before Task 3 becomes active.
+- the implementation matches the §5.1 journal → SQLite → checkpoint protocol and preserves SQLite as the one committed authority;
+- public/assembly dependency shape makes `LocalWriteGate` structural, with no automated update/delete or direct store-commit surface;
+- the 49-path current-base diff is allowlisted and contains no Task 3 maintenance/backup capability, production opening path, network/API, capture, conversation, or personality behavior;
+- crash, unresolved-tail, idempotency, append-only, correction-precedence, checksum, canonicality, and root-isolation negative tests pass;
+- exact package locks resolve every SQLitePCLRaw component to 2.1.12 and the permanent direct/transitive vulnerability audit is clean;
+- gate head `056dedceb120e48c01b9c71d9a1f2d31ad207a5d` passed locked restore, audit, Release build with 0 warnings/0 errors, and 94/94 Windows tests;
+- limitations and Personal Round Judgments J1–J8 are recorded before Task 3 becomes active.
 
 ## Personal Round Judgment log
 

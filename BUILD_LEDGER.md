@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 2 — append-only BunDex spine and crash safety |
-| Active task | Task 2 — Append-Only Memory and Journal |
+| Current stage | Between gates — Task 2 accepted; Task 3 packet next |
+| Active task | None; Task 2 archived after acceptance |
 | Working branch | `agent/task-02-bundex` |
-| Entry criteria met | Yes; Task 1 passed and merged, Stage 2 split explicitly approved, bounded Task 2 packet active |
-| Product code authorized | Yes, only within Task 2's memory/journal and synthetic-test scope |
+| Entry criteria met | Yes for Task 3 packet creation after PR #6 merges |
+| Product code authorized | No between tasks; Task 3 requires its own active packet |
 | Live API authorized | No |
-| Automated tests | Accepted baseline passed 60/60 Windows tests; Task 2 exact-candidate tests pending |
-| Manual gate | Task 2 pending implementation, crash/idempotency/root-isolation review, and fresh exact-head CI |
+| Automated tests | Task 2 gate head passed locked restore, clean dependency audit, Release build, and 94/94 Windows tests |
+| Manual gate | Task 2 passed exact-tree, 49-path scope, write-authority, recovery/cancellation, root-isolation, and forbidden-surface review |
 | Accepted `main` baseline | `29d0a24e05b58f8ef053c4ebe0b6cfeea7b1ea99` — Task 1 neutral skeleton accepted and merged |
-| Known limitations | No durable memory is accepted yet; local environment has no .NET SDK, so Windows CI is the execution oracle |
+| Known limitations | Task 2 has no Vault, restore, repair, journal rotation, migration, production opener, or app wiring; Windows CI remains the execution oracle |
 | Deferred temptations | Task 3 Vault/Repairs/maintenance authority and all later capture/API/conversation/personality work |
-| Approval | Task 2 active under the Boss-approved Stage 2 split and autonomous pre-API Paw Gates |
+| Approval | Task 2 passed on 2026-08-10; acceptance records and PR #6 may merge before Task 3 becomes active |
 
 ## Gate history
 
@@ -40,6 +40,16 @@
 - CI: run `31354524133`, job `93351605021`; locked restore passed, Release build passed with 0 warnings and 0 errors, and 60/60 tests passed (Runtime 26, Presentation 19, synthetic Capture 11, real WPF integration 4).
 - D1: the Boss explicitly approved keeping Task 1 neutral and moving durable journal/checkpoint work to Task 2; only the stale Stage 1 roadmap wording was amended.
 - Result: passed; acceptance records may be published and PR #5 merged before Task 2 becomes active.
+
+### Task 2 — Append-only memory and journal
+
+- Candidate: draft PR #6 at reviewed gate head `056dedceb120e48c01b9c71d9a1f2d31ad207a5d`, exact tree `ab010b6f5a0d17ec23f84ef0252332143421e427`; implementation head `f3e11acb08a2056f0fe557b4517383a14471227c`.
+- Scope: 49 allowlisted paths — one neutral memory source project, one synthetic test project, solution/CI integration, bounded control records, and the Boss-approved Roadmap Stage 2 split.
+- Review: current-base whitespace, one-active-task state, changed-path allowlist, exact local/remote tree equality, public write authority, journal → SQLite → checkpoint ordering, cancellation fence, replay/idempotency, unresolved-tail handling, root isolation, and forbidden later-stage surfaces all passed.
+- Dependencies: both locks resolve all SQLitePCLRaw components to 2.1.12; the permanent direct/transitive vulnerability audit reports all 11 projects and no vulnerable entries.
+- CI: run `31360021794`, job `93366932942`; locked restore and audit passed, Release build passed with 0 warnings and 0 errors, and 94/94 tests passed (Runtime 26, Presentation 19, synthetic Capture 11, real WPF integration 4, Memory/Journal 34).
+- Personal Round Judgments J1–J8 record the tree-identical transport base, dependency pin, canonical envelope, fixed roots, pre-durability frame bound, checkpoint/store cross-check, duplicate-key rejection, and unresolved-live-tail recovery fence.
+- Result: passed; acceptance records may be published and PR #6 merged before Task 3 becomes active.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

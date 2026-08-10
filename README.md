@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, and Task 1's neutral skeleton are accepted. Task 2 is building the append-only BunDex store and crash-safe journal.
+Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, and Task 2's append-only memory/journal spine are accepted. Task 3's bounded Vault/Repairs packet is next.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture, the R0 direct-build controls, and Task 1's neutral skelet
 
 ## Current task
 
-Task 2: append-only memory and journal. Work is restricted to the neutral SQLite store, automated write gate, checksummed recovery journal, linked retrieval, data-root isolation, and synthetic tests. Vault/Repairs remain Task 3.
+No active implementation between gates. Task 2 passed; the next control actions are merging PR #6 and activating a bounded Task 3 packet. No Task 3 product work begins before that packet exists.
 
 ## Important boundaries
 
