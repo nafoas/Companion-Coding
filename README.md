@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, and Task 2's append-only memory/journal spine are accepted. Task 3's neutral atomic-backup and guarded-repair implementation is complete locally and awaiting its exact-candidate Windows Paw Gate; it is not accepted yet.
+Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, and Task 2's append-only memory/journal spine are accepted. Task 3's neutral atomic-backup and guarded-repair Paw Gate passed on PR #7; merge and acceptance recording remain before any later task.
 
 ## Builder workflow
 

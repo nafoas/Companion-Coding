@@ -1,11 +1,11 @@
 # Task 3 — Atomic Backup and Repair
 
-Status: **active**
+Status: **Paw Gate passed; PR #7 merge pending**
 Authorized: 2026-08-10 under the accepted direct-build workflow and Boss-approved Stage 2 split
 Accepted remote base: `44caa2fc6474b0952eaed5f086bfb3c49bf73c18`
 Accepted base tree: `2423473e0a0fb915bf40c2554947f7166cd7d9f4`
 Working branch: `agent/task-03-vault-repair`
-Candidate code checkpoint: `d64d5b7e071ff6ba43b434d4635525fa8ecaeeac`; local code/invariant/diff review is clean, while the Paw Gate remains held for exact-candidate Windows CI and final exact-head confirmation
+Reviewed remote head: `d4d7bddb35ae1a2b8f3b2fdb47e28d74322ef83a`; exact tree `324874f5b7c2d274732ff82c91aa9631fa587b57`; Windows CI and the distinct code/invariant/diff Paw Gate passed
 
 ## Objective
 
