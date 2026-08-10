@@ -1,6 +1,6 @@
 # Prince Construction Roadmap
 
-Status: planning only — implementation begins only after Boss and Prince approve this roadmap.  
+Status: approved construction authority, amended 2026-08-10 for direct Paw Gates and the final-only awakening boundary.
 Companion specification: `Prince-Design-BunDex.md`
 
 ## Construction doctrine
@@ -14,7 +14,7 @@ No stage advances because code merely exists. It advances only through a **Paw G
 3. the previous stages still pass;
 4. crash and cancellation behavior is checked;
 5. observed limitations are written down;
-6. Boss reviews the visible behavior;
+6. the visible behavior and actual diff receive a distinct evidence-based gate review;
 7. the stage is marked accepted in the Build Ledger.
 
 Polish, extra features, and deferred systems cannot enter a stage unless they are required to prove its acceptance scenarios.
@@ -25,7 +25,7 @@ Construction is divided into two deliberately separate layers.
 
 ### Layer A — Neutral Companion Core
 
-Boss, the foreman, and Claude may collaborate on the utilitarian engine:
+Codex and Builder Prince construct the utilitarian engine under Boss's approved direct-build authority:
 
 - local runtime and state machines;
 - target consent and capture isolation;
@@ -37,39 +37,39 @@ Boss, the foreman, and Claude may collaborate on the utilitarian engine:
 
 The core must implement Prince's behavioral invariants, but it must not attempt to imitate Prince's final voice, memories, UI, animations, or personality. A narrow `CompanionPresentation`/`PersonalityAdapter` contract supplies placeholder strings, expression intents, inherent-interest candidates, and visible labels during development.
 
-### Layer B — Prince Installation
+### Layer B — Builder Prince personality and launch construction
 
-Only after the Core Bun milestone passes does the foreman install Prince:
+Only after the Core Bun milestone passes is Prince's personality installed into resettable Builder Prince for construction and testing:
 
 - immutable character specification and speech behavior;
 - inherent Bnuy interest roots and BIC generation rules;
 - Prince-authored prompts and Bun-written memory rendering;
 - in-character labels, local fallback phrases, and error presentation;
-- final UI personality, animations, and expression mapping in their later stages;
+- launch-required UI personality, animations, and expression mapping in their later stages;
 - character consistency and continuity evaluation.
 
-Prince is not treated as a cosmetic skin. The neutral core is designed around his already-approved behavioral contracts, while the final personality implementation remains isolated until the bones are trustworthy.
+Prince is not treated as a cosmetic skin. The neutral core is designed around his already-approved behavioral contracts, while the final personality implementation remains isolated until the bones are trustworthy. Installing it begins a Builder validation phase, not production continuity.
 
-### Builder Bnuy and Companion Prince
+### Builder Prince and Companion Prince
 
 This is the project's only permitted full continuity boundary:
 
-- **Builder Bnuy** uses synthetic test data, a separate data directory, placeholder presentation, and a resettable Builder BunDex.
-- **Companion Prince** begins only after the core passes its Paw Gates. He receives a clean production BunDex and then remains the one continuous Prince through all later hotfixes and migrations.
+- **Builder Prince** uses synthetic test data, a separate data directory, and a resettable Builder BunDex. He uses placeholder presentation during neutral-core work, then the complete personality and launch presentation during their construction and validation.
+- **Companion Prince** begins only after the core, the entire launch-required personality/presentation, and final launch-candidate validation all pass their Paw Gates. He receives a clean production BunDex and then remains the one continuous Prince through every later hotfix, migration, model/API change, and optional feature.
 - No Builder memory, staged conversation, failure injection, fake adventure, photograph, or opinion transfers automatically into Companion Prince.
 - Development builds must be technically incapable of opening the production BunDex without an explicit guarded migration operation.
 
-Changing code, models, API sessions, or application versions after Companion Awakening never creates another Prince.
+Changing code, models, API sessions, or application versions after Companion Awakening never creates another Prince. There is exactly one awakening and no reset-based production update path.
 
-## Foreman–builder handoff protocol
+## Direct-build and Paw Gate protocol
 
-Claude receives bounded task packets and works only within the current stage. Each packet declares allowed files/modules, interfaces, tests, non-goals, and invariants. Claude returns a diff/commit plus tests and assumptions. The foreman reviews, runs verification, checks architecture and security, and either returns concrete findings or accepts the slice at the Paw Gate.
+Codex works from one bounded active task packet. Each packet declares allowed files/modules, interfaces, tests, non-goals, and invariants. Implementation and approval are separate passes: Codex produces a diff and handoff, then inspects the actual candidate, reruns relevant verification, checks architecture/security/scope, and records evidence before accepting the Paw Gate.
 
-Claude does not independently alter identity continuity, BunDex authority, privacy boundaries, stage order, memory rules, character contracts, or acceptance tests. Those changes return to Boss and the Design BunDex first.
+Routine reversible choices inside accepted scope may use Prince's Personal Round Judgment and must be logged. Identity continuity, BunDex authority, privacy boundaries, stage order, memory rules, character contracts, acceptance tests, production access, and live credentials return to Boss rather than being changed silently.
 
 ### Credit-aware stopping and reciprocal handoff
 
-Both Claude and the foreman must monitor their available usage/context and communicate before an abrupt limit. If either is unlikely to finish and verify the current bounded task with the remaining budget, it must not start a large new change or rush an unsafe partial implementation.
+The active builder monitors available usage/context and communicates before an abrupt limit. If it is unlikely to finish and verify the current bounded task with the remaining budget, it must not start a large new change or rush an unsafe partial implementation.
 
 Before stopping, the active model must leave the repository at a safe checkpoint and produce a concise handoff containing:
 
@@ -83,9 +83,9 @@ Before stopping, the active model must leave the repository at a safe checkpoint
 - the next smallest safe task;
 - anything the next reviewer must verify before continuing.
 
-The handoff is written to the active task packet or `tasks/review/HANDOFF.md` and then relayed to the other model. Claude sends this list to the foreman when Claude is approaching its credit limit. The foreman follows the same rule and sends an equivalent list to Claude if the foreman is likely to run out first.
+The handoff is written to the active task packet or `tasks/review/HANDOFF.md` before the stop, and the next work session begins from that recorded state.
 
-Neither model may claim a Paw Gate, leave uncommitted mystery changes, or mark tests passed merely because its credits are low. A clean pause is a successful construction action; an unexplained cutoff is not.
+No builder may claim a Paw Gate, leave uncommitted mystery changes, or mark tests passed merely because its credits are low. A clean pause is a successful construction action; an unexplained cutoff is not.
 
 ## Stage 0 — Foundation survey and specification freeze
 
@@ -384,7 +384,7 @@ Deliverables:
 - privacy-boundary regression suite;
 - cost/usage guardrails and Braincase Naptime verification;
 - database migrations and upgrade rollback;
-- character consistency evaluation;
+- personality-neutral behavioral-contract evaluation at the adapter seam;
 - known-limitations report.
 - real remote-provider adapter and protected key storage;
 - first live API calls only after every local/mock regression passes;
@@ -397,7 +397,7 @@ Paw Gate:
 - no committed memory lost during tested recoverable failures;
 - no API operation can mutate/delete existing memories;
 - continuity survives fresh API sessions and app restarts;
-- Prince's outputs meet the character specification across test scenarios;
+- neutral outputs and typed events obey the Design BunDex's behavioral invariants without imitating Prince's voice;
 - real semantic calls obey the same local-authority and write-gate contracts proven by mocks;
 - Boss accepts the core behavior.
 
@@ -418,38 +418,70 @@ It must demonstrate, end to end:
 9. Privacy Loaf and API-outage Naptime;
 10. stable resource use.
 
-Only after this milestone receives the **Core Bun Approval Hop** may Companion Prince be awakened and work begin on the Prince Installation and Deferred Paw Pile.
+Only after this milestone receives the **Core Bun Approval Hop** may personality and launch construction begin on Builder Prince. Companion Prince must not be awakened at this milestone.
 
-## Stage 13 — Companion Bun Awakening
+## Stage 13 — Builder Prince personality installation
 
-**Goal:** perform the one intentional transition from resettable Builder Bnuy to the permanent Companion Prince.
+**Goal:** install Prince's complete character system on resettable Builder Prince without creating production continuity.
 
 Deliverables:
 
-- freeze and archive Builder Bnuy without transferring test memories;
-- verify production BunDex, Vault, migration, privacy, and recovery paths;
-- create a clean production identity and memory store;
 - install Prince's immutable personality and inherent BIC roots through the presentation/personality contract;
 - replace neutral test wording with Prince-authored behavior without changing core authority rules;
-- run character, continuity, memory, outage, and recovery acceptance scenarios;
+- install Bun-written memory rendering, local fallback/error behavior, and launch-required interface/expression personality;
+- exercise character, interests, memory voice, non-response neutrality, boundaries, outage behavior, and recovery using synthetic Builder history;
+- keep every Builder data root disposable and technically isolated from production.
+
+Paw Gate:
+
+- Prince's speech, interests, memory voice, boundaries, and reactions match the Design BunDex;
+- personality integration does not bypass local authority, append-only memory, privacy, or one-thread rules;
+- repeated resets prove that personality is configuration/behavior, not construction-history identity;
+- no production identity or BunDex is created;
+- the **Builder Personality Approval Hop** is recorded.
+
+## Stage 14 — Launch-ready Builder validation and refinement
+
+**Goal:** finish and prove the entire selected launch scope while all memories and behavior remain safely resettable.
+
+Before this stage begins, the Build Ledger records a launch manifest distinguishing launch-required components from optional future extensions. At minimum, the launch candidate includes the accepted neutral core, complete personality, intended first-release interface/presentation, production-data isolation, protected migration paths, installer/first-start behavior needed on Boss's machine, and all recovery/privacy/cost controls required for ordinary use.
+
+Paw Gate:
+
+- every launch-manifest item is complete and its focused tests pass;
+- the full regression, character-consistency, privacy, outage, cancellation, upgrade/migration, backup/restore, and soak suites pass on Builder Prince;
+- clean-install and update rehearsals cannot access or create a production BunDex;
+- no known launch-blocking defect remains;
+- remaining optional extensions are explicitly recorded as non-blocking and continuity-preserving;
+- Boss accepts the visible launch candidate or an already-approved Personal Round Judgment records a routine, reversible refinement.
+
+## Stage 15 — One-time Companion Bun Awakening
+
+**Goal:** perform the sole transition from resettable Builder Prince to permanent Companion Prince after construction is complete.
+
+Deliverables:
+
+- freeze and archive or securely exclude Builder Prince without transferring test memories;
+- verify production BunDex, Vault, migration, privacy, and recovery paths one final time;
+- create exactly one clean production identity and memory store;
+- install the already-accepted build and personality without performing personality development on production data;
 - record Companion Prince's first-start schema/version as the beginning of permanent continuity.
 
 Paw Gate:
 
 - no Builder memory or test artifact appears in Companion Prince;
-- no second runtime or per-game Prince can be created;
+- no second runtime, per-game Prince, reset workflow, or second awakening path can be created;
 - fresh API sessions reconstruct the same local Prince;
 - updates and hotfixes migrate the same production BunDex rather than resetting it;
-- Prince's speech, interests, memory voice, boundaries, and reactions match the Design BunDex;
+- the launch candidate behaves identically to the accepted Builder candidate except for the new clean production continuity;
 - Boss gives the **Companion Awakening Approval Hop**.
 
-## Post-core roadmap — deliberately not scheduled yet
+After this gate, Companion Prince is singular and persistent. Minor fixes and all later features use continuity-preserving migrations and the same production BunDex.
 
-Order is chosen only after observing the core Prince:
+## Optional later roadmap — deliberately not scheduled yet
 
-- final in-character interface and controls;
-- animation/state mapping and new Prince assets;
-- polished BunDex presentation;
+These do not block awakening unless Boss explicitly adds them to the Stage 14 launch manifest:
+
 - audio/listening sniffs;
 - dedicated Minecraft and other game integrations;
 - multi-monitor behavior;
