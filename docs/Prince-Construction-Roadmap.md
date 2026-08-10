@@ -138,27 +138,44 @@ Durable journal/checkpoint work begins in Stage 2. Conversation Thread ownership
 
 **Goal:** make local autobiographical continuity trustworthy before adding eyes or a faraway Braincase.
 
-Deliverables:
+This roadmap milestone is implemented through two sequential bounded packets and two separate Paw Gates. The Boss approved this split on 2026-08-10 so backup/repair authority cannot leak into the live append-only path:
+
+- **Task 2 — Append-only memory and journal:** build and gate the committed store, automated write gate, journal, recovery, retrieval, and data-root isolation.
+- **Task 3 — Atomic backup and repair:** only after Task 2 passes, build and gate Vault creation, restore, replay across the backup cut, and the guarded maintenance capability.
+
+Task 2 deliverables:
 
 - append-only BunDex store;
 - immutable record IDs, sources, confidence, timestamps, and supersession links;
+- append-only automated `LocalWriteGate` with no update/delete capability;
 - session journal and transactional checkpoints;
-- one visible Bun-written recollection plus invisible structured metadata;
+- one neutral visible recollection payload plus invisible structured metadata; Bun-written rendering waits for Stage 13;
 - recurrence links instead of destructive duplicate merging;
 - local retrieval of current versus superseded understanding;
-- atomic `Da Bun Vault.zip` creation with manifest and checksums;
-- Bnuy Repairs restoration and journal replay;
+- development/test and future production data roots that ordinary development configuration cannot cross;
 - strict separation of committed memories from disposable caches.
 
-Paw Gate scenarios:
+Task 2 Paw Gate scenarios:
 
 - kill the app during a write and recover without corrupting prior memories;
 - attempt an update/delete through the automated write gate and verify rejection;
 - append a correction and retrieve it ahead of the earlier conception;
+- retry one local operation and commit it at most once;
+- verify that a development/test build cannot open the production BunDex through normal configuration.
+
+Task 3 follow-on deliverables:
+
+- atomic `Da Bun Vault.zip` creation with manifest and checksums;
+- Bnuy Repairs restoration and journal replay after the backup cut;
+- a guarded maintenance capability structurally unreachable from API/automated code.
+
+Task 3 Paw Gate scenarios:
+
 - build a Vault, corrupt the live BunDex, restore, and replay valid later journal entries;
+- interrupt backup creation and preserve the previous valid Vault;
 - verify that resource cleanup cannot touch committed memories.
 
-Not included: model-generated memories or real gameplay observations.
+Not included in either packet: model-generated memories, real gameplay observations, personality voice, or production BunDex data.
 
 ## Stage 3 — Consent shell and target isolation
 

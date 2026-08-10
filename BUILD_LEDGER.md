@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Between gates — Task 1 accepted; Task 2 packet next |
-| Active task | None; Task 1 archived after acceptance |
-| Working branch | `agent/task-01-skeleton` |
-| Entry criteria met | Yes for Task 2 packet creation after PR #5 merges |
-| Product code authorized | No between tasks; Task 2 requires its own active packet |
+| Current stage | Between gates — Task 2 accepted; Task 3 packet next |
+| Active task | None; Task 2 archived after acceptance |
+| Working branch | `agent/task-02-bundex` |
+| Entry criteria met | Yes for Task 3 packet creation after PR #6 merges |
+| Product code authorized | No between tasks; Task 3 requires its own active packet |
 | Live API authorized | No |
-| Automated tests | Task 1 exact candidate passed locked restore, Release build, and 60/60 Windows tests |
-| Manual gate | Task 1 passed exact-tree, changed-path, forbidden-surface, lifecycle, process-boundary, and CI review |
-| Accepted `main` baseline | `74e68218ffa7ef7680701c03971916278535c16c` — Task 0 architecture plus accepted R0 controls |
-| Known limitations | The accepted skeleton has no durable memory, real capture, conversation, API, or personality; Windows/WPF execution evidence comes from CI |
-| Deferred temptations | All Task 3+ maintenance/capture/API work; personality, final presentation, and awakening remain later-gated |
-| Approval | Task 1 passed on 2026-08-10; Task 2 packet is the next authorized control action |
+| Automated tests | Task 2 gate head passed locked restore, clean dependency audit, Release build, and 94/94 Windows tests |
+| Manual gate | Task 2 passed exact-tree, 49-path scope, write-authority, recovery/cancellation, root-isolation, and forbidden-surface review |
+| Accepted `main` baseline | `29d0a24e05b58f8ef053c4ebe0b6cfeea7b1ea99` — Task 1 neutral skeleton accepted and merged |
+| Known limitations | Task 2 has no Vault, restore, repair, journal rotation, migration, production opener, or app wiring; Windows CI remains the execution oracle |
+| Deferred temptations | Task 3 Vault/Repairs/maintenance authority and all later capture/API/conversation/personality work |
+| Approval | Task 2 passed on 2026-08-10; acceptance records and PR #6 may merge before Task 3 becomes active |
 
 ## Gate history
 
@@ -40,6 +40,16 @@
 - CI: run `31354524133`, job `93351605021`; locked restore passed, Release build passed with 0 warnings and 0 errors, and 60/60 tests passed (Runtime 26, Presentation 19, synthetic Capture 11, real WPF integration 4).
 - D1: the Boss explicitly approved keeping Task 1 neutral and moving durable journal/checkpoint work to Task 2; only the stale Stage 1 roadmap wording was amended.
 - Result: passed; acceptance records may be published and PR #5 merged before Task 2 becomes active.
+
+### Task 2 — Append-only memory and journal
+
+- Candidate: draft PR #6 at reviewed gate head `056dedceb120e48c01b9c71d9a1f2d31ad207a5d`, exact tree `ab010b6f5a0d17ec23f84ef0252332143421e427`; implementation head `f3e11acb08a2056f0fe557b4517383a14471227c`.
+- Scope: 49 allowlisted paths — one neutral memory source project, one synthetic test project, solution/CI integration, bounded control records, and the Boss-approved Roadmap Stage 2 split.
+- Review: current-base whitespace, one-active-task state, changed-path allowlist, exact local/remote tree equality, public write authority, journal → SQLite → checkpoint ordering, cancellation fence, replay/idempotency, unresolved-tail handling, root isolation, and forbidden later-stage surfaces all passed.
+- Dependencies: both locks resolve all SQLitePCLRaw components to 2.1.12; the permanent direct/transitive vulnerability audit reports all 11 projects and no vulnerable entries.
+- CI: run `31360021794`, job `93366932942`; locked restore and audit passed, Release build passed with 0 warnings and 0 errors, and 94/94 tests passed (Runtime 26, Presentation 19, synthetic Capture 11, real WPF integration 4, Memory/Journal 34).
+- Personal Round Judgments J1–J8 record the tree-identical transport base, dependency pin, canonical envelope, fixed roots, pre-durability frame bound, checkpoint/store cross-check, duplicate-key rejection, and unresolved-live-tail recovery fence.
+- Result: passed; acceptance records may be published and PR #6 merged before Task 3 becomes active.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

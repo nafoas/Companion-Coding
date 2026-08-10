@@ -20,6 +20,32 @@ jobs:
       - name: Restore (locked mode)
         run: dotnet restore CompanionCore.slnx --locked-mode
 
+      - name: Audit dependencies
+        shell: pwsh
+        run: |
+          $auditOutput = dotnet package list --project CompanionCore.slnx --vulnerable --include-transitive --no-restore --format json --output-version 1
+          $auditExitCode = $LASTEXITCODE
+          $auditOutput
+          if ($auditExitCode -ne 0) {
+            throw "Dependency vulnerability audit command failed."
+          }
+          $auditJson = $auditOutput -join [Environment]::NewLine
+          $audit = $auditJson | ConvertFrom-Json
+          $vulnerablePackages = @(
+            foreach ($project in @($audit.projects)) {
+              foreach ($framework in @($project.frameworks)) {
+                foreach ($package in @($framework.topLevelPackages) + @($framework.transitivePackages)) {
+                  if ($null -ne $package -and @($package.vulnerabilities).Count -gt 0) {
+                    $package
+                  }
+                }
+              }
+            }
+          )
+          if ($vulnerablePackages.Count -gt 0) {
+            throw "The locked dependency graph contains a known vulnerable package."
+          }
+
       - name: Build
         run: dotnet build CompanionCore.slnx --no-restore --configuration Release
 
