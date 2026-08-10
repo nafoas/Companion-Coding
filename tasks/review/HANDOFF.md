@@ -14,6 +14,7 @@ R0 — Direct-build re-entry and continuity alignment. Documentation/control gat
 - Amended the continuity authority so Builder Prince remains resettable through core, personality, presentation, and final launch validation.
 - Split the post-core roadmap into Builder personality installation, launch-ready Builder validation/refinement, and final one-time Companion Awakening.
 - Required a clean production BunDex, zero Builder-memory transfer, and singular continuity across all post-awakening updates.
+- Completed the distinct remote Paw Gate review and accepted R0.
 
 ## Changed
 
@@ -36,13 +37,12 @@ R0 — Direct-build re-entry and continuity alignment. Documentation/control gat
 - Scope allowlist check — passed; all 11 candidate files are Markdown/control files named by the active packet, with no source, test, dependency, CI, or product file.
 - Contradiction search — passed; no operative instruction awakens Companion Prince after core alone, assigns new work to Claude/foreman monitoring, or permits Builder-memory transfer/reset-based production updates.
 - Final checkpoint comparison — GitHub compare confirmed one final commit and one changed file (`tasks/review/HANDOFF.md`) after the reviewed Task 1 code SHA.
+- Remote review — PR #4 reported 11 changed documentation/control files, was mergeable, and had no configured CI checks; its remote tree `bfb3bcefe16f41535f8043a199a368f84f7cf4c3` exactly matched the clean locally reviewed tree.
 - No product tests are applicable to R0. Historical Task 1 test evidence is not claimed as a current pass.
 
 ## Remaining
 
-- Complete the R0 candidate diff review and record the Paw Gate outcome.
-- If R0 passes, merge it before creating a new active Task 1 adoption packet.
-- Task 1 itself remains unmerged and unaccepted.
+Nothing remains in R0. Task 1 itself remains unmerged and unaccepted and will begin only from a new active adoption packet after PR #4 merges.
 
 ## Risks and assumptions
 
@@ -59,8 +59,8 @@ R0 — Direct-build re-entry and continuity alignment. Documentation/control gat
 ## Repository state
 
 - Branch: `agent/reentry-docs`, based on accepted `main` at `b937cce504058c863b0ab3dfc037e1cf4e0227b4`.
-- Candidate is documentation/control only.
-- Clean-worktree status and final commit SHA are recorded after publication.
+- Reviewed remote candidate: PR #4 head `99b48124894d431060952ecaecb83900af7f0106`; exact tree `bfb3bcefe16f41535f8043a199a368f84f7cf4c3`.
+- Candidate and acceptance record are documentation/control only; the local worktree was clean before this bounded gate-record update.
 
 ## Next safe task
 

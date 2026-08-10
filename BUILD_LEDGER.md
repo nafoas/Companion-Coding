@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Re-entry Paw Gate — direct build alignment |
-| Active task | R0 — Re-entry and continuity alignment |
-| Working branch | `agent/reentry-docs` |
-| Entry criteria met | Yes; user approved direct autonomous construction with Paw Gates and clarified the one-time awakening boundary |
+| Current stage | Between gates — R0 accepted; Task 1 adoption next |
+| Active task | None; R0 archived after acceptance |
+| Working branch | None after PR #4 merge |
+| Entry criteria met | Yes for Task 1 adoption-packet creation; product code still requires its own gate |
 | Product code authorized | No; R0 is control/documentation only |
 | Live API authorized | No |
-| Automated tests | Preserved reference only: Task 1 PR checkpoint passed 58/58 Windows tests before being closed unmerged; it must be revalidated during its own adoption gate |
-| Manual gate | R0 review pending |
-| Accepted `main` baseline | Task 0 architecture and project-control documentation only |
+| Automated tests | R0 documentation checks passed; preserved Task 1 checkpoint's historical 58/58 Windows result must be revalidated during its own adoption gate |
+| Manual gate | R0 passed: exact remote PR #4 diff and tree reviewed; documentation-only scope confirmed |
+| Accepted `main` baseline | Task 0 architecture plus R0 direct-build and continuity controls after PR #4 merge |
 | Known limitations | No implementation has been merged; closed PR #3 remains a recoverable but unaccepted checkpoint; local non-Windows environment cannot substitute for required Windows/WPF CI |
 | Deferred temptations | Task 1 adoption and all Task 2+ implementation; personality, final presentation, and awakening remain gated after the neutral core |
-| Approval | User authorized R0 and autonomous pre-API progression on 2026-08-10; current gate pending evidence review |
+| Approval | R0 passed on 2026-08-10; Task 1 adoption packet is the next authorized control action |
 
 ## Gate history
 
@@ -31,6 +31,14 @@
 - On 2026-08-09 the user withdrew authorization for the Claude–ChatGPT collaborative workflow and requested a complete approach reset.
 - The task is preserved at `tasks/paused/task-01-skeleton.md`.
 - Result: paused and superseded; not accepted.
+
+### R0 — Direct-build re-entry and continuity alignment
+
+- Candidate: PR #4, reviewed head `99b48124894d431060952ecaecb83900af7f0106`, exact tree `bfb3bcefe16f41535f8043a199a368f84f7cf4c3`.
+- Scope: 11 documentation/control files, 371 additions, 123 deletions; no product, test, dependency, build, or CI file.
+- Verification: diff whitespace, one-active-task, scope allowlist, stale-authority/awakening contradiction search, and exact local/remote tree equality all passed.
+- CI: no checks configured or required for this documentation-only gate.
+- Result: passed; direct Paw Gate workflow and final-only one-time Companion Awakening boundary accepted.
 
 ## Official Bnuy Backpedal™
 

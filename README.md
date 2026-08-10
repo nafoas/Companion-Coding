@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture is accepted. Construction is resuming through a documentation-only re-entry gate before the preserved Task 1 implementation is considered for adoption.
+Task 0's architecture and the R0 direct-build controls are accepted. The preserved Task 1 implementation is next, but it remains unaccepted until its own current-base diff and fresh Windows verification pass.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture is accepted. Construction is resuming through a documentat
 
 ## Current task
 
-R0: direct-build re-entry and continuity alignment. No product code is authorized by this control gate.
+No active implementation between gates. The next control action is creating Task 1's direct adoption packet; product code is authorized only inside that packet.
 
 ## Important boundaries
 
