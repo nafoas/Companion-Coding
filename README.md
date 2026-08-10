@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture and the R0 direct-build controls are accepted. The preserved Task 1 implementation is next, but it remains unaccepted until its own current-base diff and fresh Windows verification pass.
+Task 0's architecture, the R0 direct-build controls, and Task 1's neutral skeleton are accepted. Task 2's append-only BunDex spine and crash-safety packet is next.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture and the R0 direct-build controls are accepted. The preserv
 
 ## Current task
 
-No active implementation between gates. The next control action is creating Task 1's direct adoption packet; product code is authorized only inside that packet.
+No active implementation between gates. Task 1 passed; the next control action is merging PR #5 and activating a bounded Task 2 packet. No Task 2 product work begins before that packet exists.
 
 ## Important boundaries
 
