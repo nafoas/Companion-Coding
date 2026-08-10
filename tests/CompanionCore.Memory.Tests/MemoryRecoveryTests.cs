@@ -56,6 +56,38 @@ public sealed class MemoryRecoveryTests
     }
 
     [Fact]
+    public async Task UnconfirmedLiveTail_BlocksLaterWriteUntilReopenRecovery()
+    {
+        using var directory = new MemoryTestDirectory();
+        var stranded = SyntheticMemory.Record(subjectKey: "synthetic.stranded-live-tail");
+        var later = SyntheticMemory.Record(subjectKey: "synthetic.after-live-tail");
+
+        await using (var repository = await directory.OpenRepositoryAsync())
+        {
+            var prepared = MemoryProposalValidator.Prepare(SyntheticMemory.Proposal(stranded));
+            var sequence = await repository.Journal.AppendOperationAsync(
+                prepared.CanonicalPayload,
+                default);
+            Assert.Equal(1, sequence);
+
+            await Assert.ThrowsAsync<MemoryIntegrityException>(() =>
+                repository.WriteGate.SubmitAsync(SyntheticMemory.Proposal(later)));
+
+            Assert.Equal((0L, 0L, 0L), await repository.Store.ReadCountsAsync(default));
+            Assert.Equal(1, repository.Journal.HighestAppendSequence);
+            Assert.Equal(0, repository.Journal.ConfirmedThrough);
+        }
+
+        await using var recovered = await directory.OpenRepositoryAsync();
+        Assert.Single(await recovered.RetrieveBySubjectAsync(stranded.SubjectKey));
+
+        var laterResult = await recovered.WriteGate.SubmitAsync(SyntheticMemory.Proposal(later));
+        Assert.Equal(WriteGateStatus.Committed, laterResult.Status);
+        Assert.Equal((2L, 2L, 0L), await recovered.Store.ReadCountsAsync(default));
+        Assert.Equal(2, recovered.Journal.ConfirmedThrough);
+    }
+
+    [Fact]
     public async Task TornLaterFrame_DoesNotLoseEarlierRecoverableAppend()
     {
         using var directory = new MemoryTestDirectory();

@@ -22,6 +22,12 @@ internal sealed class MemoryCommitCoordinator : IDisposable
         try
         {
             ThrowIfDisposed();
+            if (_journal.ConfirmedThrough != _journal.HighestAppendSequence)
+            {
+                throw new MemoryIntegrityException(
+                    "The journal contains an unconfirmed recovery tail; reopen the repository before accepting another write.");
+            }
+
             var prepared = MemoryProposalValidator.Prepare(proposal);
             var existing = await _store.FindOperationAsync(
                     prepared.Proposal.LocalOperationId,
