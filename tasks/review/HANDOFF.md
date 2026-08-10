@@ -14,6 +14,7 @@ Task 1 — Reproducible Neutral Skeleton Adoption. Active and not yet gate-appro
 - Made same-guard mutex reacquisition idempotent so recursive Windows mutex ownership cannot leak past the guard's single release.
 - Added regression coverage for both lifecycle corrections and a public-runtime post-dispose assertion.
 - Corrected two comments that still described Stage 13 personality installation as Companion Awakening; it now correctly occurs on resettable Builder Prince.
+- Updated GitHub's official actions to their Node 24 generations after the first fresh run reported Node 20 deprecation warnings: `checkout@v5`, `setup-dotnet@v5`, and `upload-artifact@v6`.
 
 ## Changed
 
@@ -24,19 +25,19 @@ Task 1 — Reproducible Neutral Skeleton Adoption. Active and not yet gate-appro
 - `tests/CompanionCore.Runtime.Tests/CompanionRuntimeConstructionTests.cs`, `LifecycleStateMachineTests.cs`, and `SingleInstanceGuardTests.cs` — regression evidence for the corrections.
 - `BUILD_LEDGER.md`, `README.md`, `tasks/active/task-01-skeleton.md`, and this handoff — current control state and the discovered roadmap conflict.
 
-Seven of the 60 imported files now deliberately differ from the preserved checkpoint; they are exactly the four corrected source files and three corrected test files listed above. The other 53 still byte-match.
+Eight of the 60 imported files now deliberately differ from the preserved checkpoint: the workflow, four corrected source files, and three corrected test files listed above. The other 52 still byte-match.
 
 ## Verification
 
 - Source file-list comparison against preserved checkpoint — passed; all and only the 60 allowed import files are present.
 - Initial source blob comparison — passed, 60/60 exact before deliberate corrections.
-- Post-review comparison — exactly seven explained differences and no unexplained mismatch.
+- Post-review comparison — exactly eight explained differences and no unexplained mismatch.
 - Lock-file JSON structure check — passed for every committed `packages.lock.json`.
 - Static forbidden-surface search — passed: production source contains no HTTP/socket/network client, process spawning, real WGC/screen/window capture, native interop, filesystem/data-root access, SQLite, `MemoryStore`, or `SessionJournal` implementation.
 - Manual `--test-mode` review — scenarios are limited to ready, multiwindow, shutdown, and bounded second-process hold mechanics; they do not start capture, access persistence, use a network, change identity authority, or bypass the pre-runtime mutex guard.
 - Staged candidate checks — passed: `git diff --cached --check`, one active task, 64-file allowed-scope list (60 adopted product/build/test files plus four control records), and no out-of-scope path.
 - Local build/tests — not run because this Linux environment has neither the pinned .NET SDK nor PowerShell and cannot run WPF equivalently.
-- Fresh Windows CI — pending on the exact draft PR candidate; historical 58/58 is not claimed as current evidence. Two added facts make the expected minimum 60 passing tests.
+- First fresh Windows CI run on head `6a2842b0d9462b3d8e7354d068d18c851e0f96d5` — locked restore passed; Release build passed with 0 compiler warnings and 0 errors; 60/60 tests passed (Runtime 26, Presentation 19, Capture 11, real WPF integration 4). A second run is required after the actions-only Node 24 update.
 
 ## Remaining
 

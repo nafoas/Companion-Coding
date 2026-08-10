@@ -139,6 +139,8 @@ Task 1 passes only when:
 
 No material judgment yet. Routine mechanical adoption uses the already accepted Task 1 design; any divergence is logged here before the gate.
 
+Routine maintenance note: the first fresh CI run showed GitHub-hosted Node 20 deprecation warnings from `checkout@v4`, `setup-dotnet@v4`, and `upload-artifact@v4`. Official `action.yml` files confirm the current Node 24 generations are checkout v5, setup-dotnet v5, and upload-artifact v6, so the workflow was advanced without changing build/test semantics.
+
 ## Deferred Findings
 
 ### D1 — Roadmap Stage 1 is broader than the accepted Task 1 contract
