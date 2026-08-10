@@ -118,9 +118,10 @@ No automated test may require paid access, secrets, capture hardware, a live des
 - `src/CompanionCore.Capture.Contracts/**`;
 - `src/CompanionCore.Capture.Fake/**`;
 - Task 1-focused tests under `tests/**`;
-- `BUILD_LEDGER.md`, `README.md`, this task/archived packet, and `tasks/review/HANDOFF.md` for control and gate records only.
+- `BUILD_LEDGER.md`, `README.md`, this task/archived packet, and `tasks/review/HANDOFF.md` for control and gate records only;
+- the Stage 1 section of `docs/Prince-Construction-Roadmap.md`, solely for the Boss-authorized D1 boundary correction recorded below.
 
-Do not modify the Design BunDex, roadmap, direct workflow, neutral-core packet, accepted architecture, archived Task 0/R0 packets, paused historical Task 1 packet, or unrelated files.
+Do not otherwise modify the Design BunDex, roadmap, direct workflow, neutral-core packet, accepted architecture, archived Task 0/R0 packets, paused historical Task 1 packet, or unrelated files.
 
 ## Paw Gate
 
@@ -137,14 +138,14 @@ Task 1 passes only when:
 
 ## Personal Round Judgment log
 
-No material judgment yet. Routine mechanical adoption uses the already accepted Task 1 design; any divergence is logged here before the gate.
+The recommendation for D1 was to correct the stale roadmap boundary instead of pulling persistence, conversation, or personality work into Task 1. This was not exercised unilaterally: the Boss explicitly approved the recommendation on 2026-08-10. The amendment is narrow and preserves the already accepted detailed task sequencing.
 
 Routine maintenance note: the first fresh CI run showed GitHub-hosted Node 20 deprecation warnings from `checkout@v4`, `setup-dotnet@v4`, and `upload-artifact@v4`. Official `action.yml` files confirm the current Node 24 generations are checkout v5, setup-dotnet v5, and upload-artifact v6, so the workflow was advanced without changing build/test semantics.
 
 ## Deferred Findings
 
-### D1 — Roadmap Stage 1 is broader than the accepted Task 1 contract
+### D1 — Roadmap Stage 1 was broader than the accepted Task 1 contract — resolved
 
-The roadmap's Stage 1 still asks for an event bus/state store, a Conversation Thread placeholder, packaged Prince messages, and restart recovery of a tiny checkpoint. The more specific accepted architecture/master Task 1 and both the historical and current active packets instead define a neutral no-persistence skeleton; they place `SessionJournal`/transactional checkpoint work in Task 2 and the Conversation Coordinator in Task 9, while core-only rules prohibit Prince-authored messages now.
+Before correction, the roadmap's Stage 1 asked for an event bus/state store, a Conversation Thread placeholder, packaged Prince messages, and restart recovery of a tiny checkpoint. The more specific accepted architecture/master Task 1 and both the historical and current active packets instead define a neutral no-persistence skeleton; they place `SessionJournal`/transactional checkpoint work in Task 2 and the Conversation Coordinator in Task 9, while core-only rules prohibit Prince-authored messages now.
 
-This is a specification conflict, not permission to pull Task 2/9 work forward. Task 1 implementation and CI may proceed, but its Paw Gate cannot be declared accepted until Boss chooses whether to amend the stale Stage 1 roadmap wording (recommended) or deliberately expand/re-sequence the active task.
+This was a specification conflict, not permission to pull Task 2/9 work forward. On 2026-08-10 the Boss explicitly approved the recommendation to amend the stale Stage 1 wording. The Stage 1 deliverables and Paw Gate now describe the neutral skeleton boundary; durable journal/checkpoint work remains Stage 2, conversation remains later, and Builder personality wording remains Stage 13. D1 no longer blocks the Task 1 gate.

@@ -116,23 +116,23 @@ Paw Gate:
 
 Deliverables:
 
-- blank text box and template icon;
-- one local Prince Runtime with explicit lifecycle states;
-- one event bus/state store;
-- one Conversation Thread placeholder;
-- local packaged Prince messages for start, nap, wake, and recoverable error;
-- clean start, clean shutdown, and restart recovery of a tiny non-sensitive checkpoint;
+- deliberately plain shell with a blank text box, template icon, neutral status, and minimal lifecycle controls;
+- one local Prince Runtime with explicit, deterministic lifecycle states;
+- a single-instance guard acquired before Runtime or subsystem construction;
+- neutral personality-adapter and rendering-sink seams with packaged placeholder content keys and strings;
+- a bounded, cancellable capture-worker contract backed only by an in-process synthetic fake;
+- clean start and idempotent shutdown with cancellation of owned work;
 - technical diagnostics hidden behind an explicit switch.
 
 Paw Gate scenario:
 
-1. Start Prince.
-2. Enter a placeholder thought.
-3. Close and restart the app.
-4. The same local Runtime restores the thought and state.
-5. No duplicate Prince identity or per-window state appears.
+1. Start the neutral skeleton without a key, network call, real capture, or production-data access.
+2. Exercise the exact start, nap, wake, stop, invalid-transition, and cancellation behavior.
+3. Open multiple windows and confirm that all of them share the same Runtime.
+4. Start a second process and confirm that it exits before constructing another Runtime or subsystem.
+5. Shut down and confirm that no worker or application process remains.
 
-Not included: screenshots, API, animations, semantic memory, games.
+Durable journal/checkpoint work begins in Stage 2. Conversation Thread ownership arrives in its later conversation stage, and Builder personality wording arrives only in Stage 13. Not included here: persistence, conversation, real screenshots/capture, API, personality, animations, audio, or games.
 
 ## Stage 2 — BunDex spine and crash safety
 
