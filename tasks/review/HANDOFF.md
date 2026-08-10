@@ -2,7 +2,7 @@
 
 ## Task
 
-Task 1 — Reproducible Neutral Skeleton Adoption. Active and not yet gate-approved.
+Task 1 — Reproducible Neutral Skeleton Adoption. Paw Gate passed 2026-08-10; acceptance-record publication and merge remain.
 
 ## Completed
 
@@ -16,6 +16,7 @@ Task 1 — Reproducible Neutral Skeleton Adoption. Active and not yet gate-appro
 - Corrected two comments that still described Stage 13 personality installation as Companion Awakening; it now correctly occurs on resettable Builder Prince.
 - Updated GitHub's official actions to their Node 24 generations after the first fresh run reported Node 20 deprecation warnings: `checkout@v5`, `setup-dotnet@v5`, and `upload-artifact@v6`.
 - Resolved Deferred Finding D1 after the Boss explicitly approved Prince's recommendation: corrected only Roadmap Stage 1 so persistence begins at Stage 2, conversation remains later, and personality remains Stage 13.
+- Performed a separate exact-candidate Paw Gate review and recorded Task 1 as accepted.
 
 ## Changed
 
@@ -25,7 +26,7 @@ Task 1 — Reproducible Neutral Skeleton Adoption. Active and not yet gate-appro
 - `src/CompanionCore.Presentation/NeutralPersonalityAdapter.cs` and `PresentationContent.cs` — current Builder-phase continuity terminology only.
 - `tests/CompanionCore.Runtime.Tests/CompanionRuntimeConstructionTests.cs`, `LifecycleStateMachineTests.cs`, and `SingleInstanceGuardTests.cs` — regression evidence for the corrections.
 - `docs/Prince-Construction-Roadmap.md` — Boss-authorized Stage 1 boundary correction only.
-- `BUILD_LEDGER.md`, `README.md`, `tasks/active/task-01-skeleton.md`, and this handoff — current control and gate records.
+- `BUILD_LEDGER.md`, `README.md`, `tasks/archive/task-01-skeleton.md`, and this handoff — final control and gate records.
 
 Eight of the 60 imported files now deliberately differ from the preserved checkpoint: the workflow, four corrected source files, and three corrected test files listed above. The other 52 still byte-match.
 
@@ -41,11 +42,15 @@ Eight of the 60 imported files now deliberately differ from the preserved checkp
 - Local build/tests — not run because this Linux environment has neither the pinned .NET SDK nor PowerShell and cannot run WPF equivalently.
 - First fresh Windows CI run on head `6a2842b0d9462b3d8e7354d068d18c851e0f96d5` — locked restore passed; Release build passed with 0 compiler warnings and 0 errors; 60/60 tests passed (Runtime 26, Presentation 19, Capture 11, real WPF integration 4). Its action-runtime warnings triggered the Node 24 update and second run below.
 - Second fresh Windows CI run `31345693135` on exact head `59d23b829e3b605fcbf0675e4d714da1d35af0bc` — locked restore passed; Release build passed with 0 compiler warnings and 0 errors; 60/60 tests passed (Runtime 26, Presentation 19, Capture 11, real WPF integration 4), with no action-runtime deprecation warnings.
+- Final candidate Windows CI run `31354524133`, job `93351605021`, on exact head `6c50b9d73607dcd70a4e0b931f0b8bceaffe59da` — locked restore passed; Release build passed with 0 compiler warnings and 0 errors; 60/60 tests passed (Runtime 26, Presentation 19, synthetic Capture 11, real WPF integration 4).
+- Exact-tree review — passed: local and published remote tree are both `92ab14ced552624fb41b07170d35b2365ecf0565`; PR #5 is open, draft, and mergeable at the reviewed head.
+- Final current-base scope review — passed: 65/65 changed paths are allowlisted, exactly one task was active during implementation, and diff whitespace is clean.
+- Final forbidden-surface review — passed: production source contains no network client/socket, process spawning, real capture/WGC/D3D, native interop, filesystem/production-root access, SQLite, `MemoryStore`, or `SessionJournal` implementation.
 
 ## Remaining
 
-- Publish the narrow D1 documentation amendment and require one final exact-head locked restore, Release build, and full Windows/WPF test run.
-- Independently review the complete exact-head current-base diff and record the Task 1 Paw Gate result.
+- Publish the acceptance-record-only commit and require its exact-head Windows CI.
+- Mark PR #5 ready and squash-merge it without changing the accepted tree contents.
 
 ## Risks and assumptions
 
@@ -61,17 +66,18 @@ Eight of the 60 imported files now deliberately differ from the preserved checkp
 - Disposal/cancellation terminality and mutex release correctness.
 - Neutral §6.2.1 mapping and absence of character/personality behavior.
 - Synthetic-only capture boundary and absence of network/production-root code.
-- Exact final-head CI result and the narrowness of D1's user-directed roadmap correction before gate acceptance.
+- Acceptance-record-only diff, exact final-head CI, and squash merge without product changes.
 
 ## Repository state
 
 - Local branch: `agent/task-01-skeleton-local`; draft PR branch: `agent/task-01-skeleton`.
 - Base: `74e68218ffa7ef7680701c03971916278535c16c`.
-- Published product candidate before the D1 amendment: `59d23b829e3b605fcbf0675e4d714da1d35af0bc`, tree `54c60bef5eefbe899799ee46ab2633f73f3cf0f8`.
+- Accepted candidate: `6c50b9d73607dcd70a4e0b931f0b8bceaffe59da`, exact tree `92ab14ced552624fb41b07170d35b2365ecf0565`.
+- Draft PR: #5, open and mergeable at the accepted candidate before this acceptance-record-only commit.
 
 ## Next safe task
 
-Publish, verify, and gate Task 1 only. Do not begin Task 2 until final-head Windows CI passes, the full diff is accepted, and the Task 1 gate is recorded.
+Publish and merge Task 1 without further product changes. After the merge, create the bounded Task 2 packet before implementing append-only memory or journal behavior.
 
 ## Credit status
 

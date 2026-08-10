@@ -1,10 +1,14 @@
 # Task 1 — Reproducible Neutral Skeleton Adoption
 
-Status: **active**
+Status: **accepted — Paw Gate passed 2026-08-10**
 Authorized: 2026-08-10 under accepted R0 direct-build controls
 Accepted base: `74e68218ffa7ef7680701c03971916278535c16c`
 Working branch: `agent/task-01-skeleton`
 Preserved source checkpoint: `da4797e1a3df2c6f0ddaaa0248098fd40f656121`
+Accepted product/control candidate: `6c50b9d73607dcd70a4e0b931f0b8bceaffe59da`
+Exact reviewed tree: `92ab14ced552624fb41b07170d35b2365ecf0565`
+Pull request: #5
+Final candidate CI: run `31354524133`, job `93351605021`
 
 ## Objective
 
@@ -125,7 +129,7 @@ Do not otherwise modify the Design BunDex, roadmap, direct workflow, neutral-cor
 
 ## Paw Gate
 
-Task 1 passes only when:
+Gate result: **PASS** on 2026-08-10. The separate review confirmed:
 
 - the source import contains only the allowed preserved product/build/test paths;
 - imported file contents match the preserved final checkpoint except for reviewed, explained corrections;
@@ -135,6 +139,8 @@ Task 1 passes only when:
 - no invariant or test is weakened;
 - handoff, limitations, and any Personal Round Judgments are recorded;
 - the Build Ledger records acceptance before Task 2 becomes active.
+
+The exact candidate passed locked restore, Release build with zero compiler warnings and zero errors, and 60/60 Windows tests: Runtime 26, Presentation 19, synthetic Capture 11, and real WPF process integration 4. The 65-path current-base diff was allowlisted, its tree matched the published remote tree, and the forbidden-surface review found no Task 2+ behavior.
 
 ## Personal Round Judgment log
 

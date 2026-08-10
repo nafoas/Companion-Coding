@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 1 — reproducible neutral skeleton adoption |
-| Active task | Task 1 — Reproducible Neutral Skeleton Adoption |
+| Current stage | Between gates — Task 1 accepted; Task 2 packet next |
+| Active task | None; Task 1 archived after acceptance |
 | Working branch | `agent/task-01-skeleton` |
-| Entry criteria met | Yes; Task 0 and R0 accepted, preserved checkpoint audited, bounded adoption packet active |
-| Product code authorized | Yes, only within Task 1's explicit allowed paths and neutral scope |
+| Entry criteria met | Yes for Task 2 packet creation after PR #5 merges |
+| Product code authorized | No between tasks; Task 2 requires its own active packet |
 | Live API authorized | No |
-| Automated tests | Fresh Task 1 candidate not yet run; historical checkpoint passed 58/58 Windows tests |
-| Manual gate | Pending exact current-base diff review and fresh Windows CI |
+| Automated tests | Task 1 exact candidate passed locked restore, Release build, and 60/60 Windows tests |
+| Manual gate | Task 1 passed exact-tree, changed-path, forbidden-surface, lifecycle, process-boundary, and CI review |
 | Accepted `main` baseline | `74e68218ffa7ef7680701c03971916278535c16c` — Task 0 architecture plus accepted R0 controls |
-| Known limitations | No product implementation is accepted on `main`; local non-Windows environment cannot substitute for required Windows/WPF CI |
-| Deferred temptations | All Task 2+ persistence/capture/API work; personality, final presentation, and awakening remain later-gated |
-| Approval | Task 1 adoption active under user-approved autonomous pre-API Paw Gates |
+| Known limitations | The accepted skeleton has no durable memory, real capture, conversation, API, or personality; Windows/WPF execution evidence comes from CI |
+| Deferred temptations | All Task 3+ maintenance/capture/API work; personality, final presentation, and awakening remain later-gated |
+| Approval | Task 1 passed on 2026-08-10; Task 2 packet is the next authorized control action |
 
 ## Gate history
 
@@ -24,13 +24,22 @@
 - Merge: PR #1 squash-merged to `main` as `58bbdf9915659b3887e311f7b9cdf819cc39fc13`.
 - Result: passed as a documentation checkpoint.
 
-### Task 1 — Reproducible neutral skeleton
+### Historical Task 1 — Claude checkpoint
 
 - Work reached closed PR #3 at head `da4797e1a3df2c6f0ddaaa0248098fd40f656121`.
 - The implementation checkpoint and its passing tests were not merged.
 - On 2026-08-09 the user withdrew authorization for the Claude–ChatGPT collaborative workflow and requested a complete approach reset.
 - The task is preserved at `tasks/paused/task-01-skeleton.md`.
 - Result: paused and superseded; not accepted.
+
+### Task 1 — Direct neutral skeleton adoption
+
+- Candidate: draft PR #5 at reviewed head `6c50b9d73607dcd70a4e0b931f0b8bceaffe59da`, exact tree `92ab14ced552624fb41b07170d35b2365ecf0565`.
+- Scope: 65 allowlisted paths — 60 adopted product/build/test files, four control records, and the Boss-authorized Roadmap Stage 1 correction.
+- Review: current-base diff whitespace, one-active-task state, changed-path allowlist, exact local/remote tree equality, lifecycle and process boundaries, test-mode confinement, and forbidden Task 2+ surfaces all passed.
+- CI: run `31354524133`, job `93351605021`; locked restore passed, Release build passed with 0 warnings and 0 errors, and 60/60 tests passed (Runtime 26, Presentation 19, synthetic Capture 11, real WPF integration 4).
+- D1: the Boss explicitly approved keeping Task 1 neutral and moving durable journal/checkpoint work to Task 2; only the stale Stage 1 roadmap wording was amended.
+- Result: passed; acceptance records may be published and PR #5 merged before Task 2 becomes active.
 
 ### R0 — Direct-build re-entry and continuity alignment
 
