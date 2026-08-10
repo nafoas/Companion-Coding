@@ -18,8 +18,13 @@ public sealed class DataRootPolicyTests
             Path.Combine(directory.BasePath, "CompanionCore.Dev", "Memory"),
             location.RootPath);
         Assert.NotEqual(policy.RecognizedProductionRoot, location.RootPath);
+        Assert.Equal(
+            DevelopmentDataRootPolicy.DevelopmentDatabaseFileName,
+            Path.GetFileName(location.DatabasePath));
+        Assert.NotEqual(policy.RecognizedProductionDatabasePath, location.DatabasePath);
         Assert.False(Directory.Exists(location.RootPath));
         Assert.False(Directory.Exists(policy.RecognizedProductionRoot));
+        Assert.False(File.Exists(policy.RecognizedProductionDatabasePath));
     }
 
     [Fact]
@@ -52,6 +57,7 @@ public sealed class DataRootPolicyTests
         Assert.Equal("CompanionCore.Tests", first.ApplicationNamespace);
         Assert.Contains(firstId.ToString("N"), first.RootPath, StringComparison.Ordinal);
         Assert.NotEqual(first.RootPath, second.RootPath);
+        Assert.Equal(TestDataRootPolicy.TestDatabaseFileName, Path.GetFileName(first.DatabasePath));
         Assert.False(Directory.Exists(first.RootPath));
         Assert.Throws<ArgumentException>(() => TestDataRootPolicy.Create("relative", Guid.NewGuid()));
         Assert.Throws<ArgumentException>(() => TestDataRootPolicy.Create(directory.BasePath, Guid.Empty));
@@ -62,8 +68,9 @@ public sealed class DataRootPolicyTests
     {
         var publicConstructors = typeof(MemoryStoreLocation).GetConstructors(
             BindingFlags.Public | BindingFlags.Instance);
-        var open = Assert.Single(typeof(MemoryRepository).GetMethods(
-            BindingFlags.Public | BindingFlags.Static).Where(method => method.Name == "OpenAsync"));
+        var open = Assert.Single(
+            typeof(MemoryRepository).GetMethods(BindingFlags.Public | BindingFlags.Static),
+            method => method.Name == "OpenAsync");
 
         Assert.Empty(publicConstructors);
         Assert.Equal(typeof(MemoryStoreLocation), open.GetParameters()[0].ParameterType);

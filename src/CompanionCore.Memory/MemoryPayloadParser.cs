@@ -36,6 +36,10 @@ internal static class MemoryPayloadParser
         {
             throw new JournalCorruptionException($"A journal operation contains invalid formatted data: {exception.Message}");
         }
+        catch (InvalidOperationException exception)
+        {
+            throw new JournalCorruptionException($"A journal operation contains an invalid JSON value: {exception.Message}");
+        }
     }
 
     private static MemoryRecordDraft ParseRecord(JsonElement element)

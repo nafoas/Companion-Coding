@@ -161,6 +161,13 @@ public sealed class LocalWriteGateTests
             SyntheticMemory.Record() with { SubjectKey = string.Empty },
         };
 
+        var emptyOperationId = await repository.WriteGate.SubmitAsync(
+            new AppendMemoryProposal(Guid.Empty, [SyntheticMemory.Record()]));
+        var emptyBatch = await repository.WriteGate.SubmitAsync(
+            new AppendMemoryProposal(Guid.NewGuid(), Array.Empty<MemoryRecordDraft>()));
+        Assert.Equal(WriteGateStatus.Rejected, emptyOperationId.Status);
+        Assert.Equal(WriteGateStatus.Rejected, emptyBatch.Status);
+
         foreach (var record in invalidRecords)
         {
             var result = await repository.WriteGate.SubmitAsync(SyntheticMemory.Proposal(record));

@@ -7,6 +7,7 @@ namespace CompanionCore.Memory;
 public static class TestDataRootPolicy
 {
     public const string TestApplicationNamespace = "CompanionCore.Tests";
+    public const string TestDatabaseFileName = "test-memory-v1.db";
 
     public static MemoryStoreLocation Create(string isolatedBasePath, Guid testRunId)
     {
@@ -27,6 +28,10 @@ public static class TestDataRootPolicy
             testRunId.ToString("N"),
             "Memory");
 
-        return new MemoryStoreLocation(DataRootKind.Test, TestApplicationNamespace, root);
+        return new MemoryStoreLocation(
+            DataRootKind.Test,
+            TestApplicationNamespace,
+            root,
+            TestDatabaseFileName);
     }
 }

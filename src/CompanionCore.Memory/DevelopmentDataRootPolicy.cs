@@ -8,6 +8,8 @@ public sealed class DevelopmentDataRootPolicy
 {
     public const string DevelopmentApplicationNamespace = "CompanionCore.Dev";
     public const string ProductionApplicationNamespace = "CompanionCore";
+    public const string DevelopmentDatabaseFileName = "development-memory-v1.db";
+    public const string ProductionDatabaseFileName = "memory-v1.db";
 
     private readonly string _localApplicationDataBase;
 
@@ -27,6 +29,10 @@ public sealed class DevelopmentDataRootPolicy
         ProductionApplicationNamespace,
         "Memory");
 
+    public string RecognizedProductionDatabasePath => Path.Combine(
+        RecognizedProductionRoot,
+        ProductionDatabaseFileName);
+
     public MemoryStoreLocation Resolve(string? configuredRootOverride = null)
     {
         if (configuredRootOverride is not null)
@@ -45,7 +51,11 @@ public sealed class DevelopmentDataRootPolicy
             throw new DataRootViolationException("The development and production memory roots must be distinct.");
         }
 
-        return new MemoryStoreLocation(DataRootKind.Development, DevelopmentApplicationNamespace, root);
+        return new MemoryStoreLocation(
+            DataRootKind.Development,
+            DevelopmentApplicationNamespace,
+            root,
+            DevelopmentDatabaseFileName);
     }
 
     private static bool PathsEqual(string left, string right)
