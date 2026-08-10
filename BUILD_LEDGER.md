@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Between gates — Task 1 accepted; Task 2 packet next |
-| Active task | None; Task 1 archived after acceptance |
-| Working branch | `agent/task-01-skeleton` |
-| Entry criteria met | Yes for Task 2 packet creation after PR #5 merges |
-| Product code authorized | No between tasks; Task 2 requires its own active packet |
+| Current stage | Stage 2 — append-only BunDex spine and crash safety |
+| Active task | Task 2 — Append-Only Memory and Journal |
+| Working branch | `agent/task-02-bundex` |
+| Entry criteria met | Yes; Task 1 passed and merged, Stage 2 split explicitly approved, bounded Task 2 packet active |
+| Product code authorized | Yes, only within Task 2's memory/journal and synthetic-test scope |
 | Live API authorized | No |
-| Automated tests | Task 1 exact candidate passed locked restore, Release build, and 60/60 Windows tests |
-| Manual gate | Task 1 passed exact-tree, changed-path, forbidden-surface, lifecycle, process-boundary, and CI review |
-| Accepted `main` baseline | `74e68218ffa7ef7680701c03971916278535c16c` — Task 0 architecture plus accepted R0 controls |
-| Known limitations | The accepted skeleton has no durable memory, real capture, conversation, API, or personality; Windows/WPF execution evidence comes from CI |
-| Deferred temptations | All Task 3+ maintenance/capture/API work; personality, final presentation, and awakening remain later-gated |
-| Approval | Task 1 passed on 2026-08-10; Task 2 packet is the next authorized control action |
+| Automated tests | Accepted baseline passed 60/60 Windows tests; Task 2 exact-candidate tests pending |
+| Manual gate | Task 2 pending implementation, crash/idempotency/root-isolation review, and fresh exact-head CI |
+| Accepted `main` baseline | `29d0a24e05b58f8ef053c4ebe0b6cfeea7b1ea99` — Task 1 neutral skeleton accepted and merged |
+| Known limitations | No durable memory is accepted yet; local environment has no .NET SDK, so Windows CI is the execution oracle |
+| Deferred temptations | Task 3 Vault/Repairs/maintenance authority and all later capture/API/conversation/personality work |
+| Approval | Task 2 active under the Boss-approved Stage 2 split and autonomous pre-API Paw Gates |
 
 ## Gate history
 
