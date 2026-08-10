@@ -139,6 +139,21 @@ The local Git network broker declined `git fetch` after PR #5 merged. The new lo
 
 Official NuGet metadata on 2026-08-10 identifies `Microsoft.Data.Sqlite` 10.0.10 as the current stable package. Its default dependency floor can resolve `SQLitePCLRaw.bundle_e_sqlite3` 2.1.11, whose native package is deprecated with a high-severity vulnerability; stable 2.1.12 is available. Task 2 will pin `Microsoft.Data.Sqlite` 10.0.10 and directly pin the compatible 2.1.12 bundle so locked restore cannot select 2.1.11. The exact resolved graph and vulnerability output remain gate evidence; if restore reports incompatibility or any advisory, stop and revise before acceptance.
 
+### J3 — Retain the canonical operation envelope in SQLite
+
+The operation checksum cannot be independently verified from a subject-only row without either reconstructing every record in the multi-record operation or retaining the bytes that were checksummed. Schema v1 therefore stores the immutable canonical operation payload beside its SHA-256 checksum. Retrieval verifies the payload's checksum, canonical form, operation ID, and exact record-ID set, then verifies each returned record against both its row checksum and the operation envelope. This duplicates bounded canonical bytes inside the one SQLite authority; it does not make the journal a peer store or add a write path.
+
+### J4 — Fixed database names make environment separation explicit
+
+Development, tests, and the recognized future production root use different fixed database filenames as well as different namespaces and roots: `development-memory-v1.db`, `test-memory-v1.db`, and future `memory-v1.db`. Task 2 exposes the future path only for rejection tests; no production `DataRootKind`, location factory, or open capability exists.
+
+### J5 — Reject aggregate frame overflow before durability
+
+Per-field bounds can combine into an operation larger than the journal's 16 MiB frame ceiling. Canonical validation now rejects that aggregate size before entering the durable writer. The journal also builds and bounds a complete frame before marking itself faulted-on-failure, so an oversized proposal writes no bytes and does not poison the live repository. A focused negative test confirms that a valid append can immediately follow an oversized rejection.
+
 ## Deferred Findings
 
-No unresolved finding at activation. Vault/repair, maintenance authority, backup-cut rotation, production opening, personality rendering, semantic retrieval, and app wiring are deliberately deferred to their named later tasks.
+- Journal rotation and bounded archive cuts remain Task 3; until then the development/test journal grows append-only.
+- Task 2 validates schema version, exact columns, required object names, operation envelopes, and record checksums. Task 3 repair/manifest work may add deeper schema-definition diagnostics; Task 2 does not claim protection from a hostile local account that can rewrite both data and validation metadata.
+- Exact-subject retrieval is intentionally the only query surface. Semantic selection, grouping, consolidation, and context packets remain Task 10.
+- Production opening, app wiring, model/API proposals, personality rendering, and every non-synthetic memory source remain deferred to their named stages.
