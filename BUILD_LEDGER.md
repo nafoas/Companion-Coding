@@ -2,34 +2,34 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 2 — atomic backup, repair, and validated journal cuts |
-| Active task | Task 3 — Atomic Backup and Repair |
-| Working branch | `agent/task-03-vault-repair`, rebased onto accepted remote `main` |
-| Entry criteria met | Yes; Task 2 passed, was archived, and PR #6 squash-merged to accepted `main` |
-| Product code authorized | Yes, only within Task 3's neutral memory backup/repair and synthetic-test scope |
+| Current stage | Control housekeeping — retired collaboration cleanup |
+| Active task | Task R1 — Retired Collaboration Cleanup |
+| Working branch | `agent/task-r1-retired-collaboration-cleanup` from accepted Task 3 merge |
+| Entry criteria met | Yes; Task 3 passed its distinct Paw Gate and PR #7 squash-merged to accepted `main` |
+| Product code authorized | No; documentation, control records, and disabled legacy automation retirement only |
 | Live API authorized | No |
 | Automated tests | PR #7 reviewed head `d4d7bdd`: Windows CI run `31426524602` passed locked restore, clean direct/transitive audit, Release build with 0 warnings/errors, and 125/125 tests. |
-| Manual gate | Task 3's distinct Paw Gate passed on reviewed head `d4d7bdd`, exact tree `324874f5b7c2d274732ff82c91aa9631fa587b57`. Acceptance awaits the gate-record descendant's unchanged CI and PR #7 merge. |
-| Accepted `main` baseline | `44caa2fc6474b0952eaed5f086bfb3c49bf73c18` — Task 2 append-only memory/journal accepted and merged |
-| Known limitations | Backup/repair remains non-production neutral core: production roots, scheduling/UI, encryption, schema migration, and multi-generation retention are deferred. Local VSTest/formatter IPC is sandbox-blocked, so exact Windows CI remains the platform oracle. |
+| Manual gate | Task R1's local documentation/scope/link/boundary review passed and both legacy monitors are disabled/inert. Exact-head CI and the final distinct Paw Gate remain. |
+| Accepted `main` baseline | `f685dd2023a5844309c5b5fb7d0abd1bf54406b9` — Task 3 atomic backup and guarded repair accepted and merged |
+| Known limitations | The exposed automation API has no delete action. Both legacy monitors are disabled and sanitized into inert tombstones; removing their cards from the automation list may require the user's UI. Product limitations remain recorded in accepted task history. |
 | Deferred temptations | Task 4+ consent/capture/API/conversation/personality work; production backup/import, UI, encryption, and multi-generation retention |
-| Approval | Task 3 active under the Boss-approved Stage 2 split and autonomous pre-API Paw Gates |
+| Approval | Boss explicitly authorized the bounded cleanup and requested a stop before Task 4 |
 
 ## Gate history
 
 ### Task 0 — Architecture proposal
 
 - Builder SHA reviewed: `9a51231aa8d76a399ef43ae4a8bfc5cdbd1195b3`
-- Foreman approval review: `4892489052`
+- Independent approval review: `4892489052`
 - Merge: PR #1 squash-merged to `main` as `58bbdf9915659b3887e311f7b9cdf819cc39fc13`.
 - Result: passed as a documentation checkpoint.
 
-### Historical Task 1 — Claude checkpoint
+### Superseded collaboration checkpoint
 
 - Work reached closed PR #3 at head `da4797e1a3df2c6f0ddaaa0248098fd40f656121`.
 - The implementation checkpoint and its passing tests were not merged.
-- On 2026-08-09 the user withdrew authorization for the Claude–ChatGPT collaborative workflow and requested a complete approach reset.
-- The task is preserved at `tasks/paused/task-01-skeleton.md`.
+- On 2026-08-09 the user retired the multi-model collaboration workflow and requested a complete approach reset.
+- Detailed working files were removed from the current tree after Task 3; the closed PR and Git history preserve their exact provenance.
 - Result: paused and superseded; not accepted.
 
 ### Task 1 — Direct neutral skeleton adoption
@@ -52,7 +52,7 @@
 - Merge: PR #6 squash-merged to `main` as `44caa2fc6474b0952eaed5f086bfb3c49bf73c18`.
 - Result: passed and merged; Task 3 may become active through its own bounded packet.
 
-### Task 3 — Atomic backup and repair (Paw Gate passed; merge pending)
+### Task 3 — Atomic backup and repair
 
 - Code checkpoint rebased onto accepted remote `main`: feature commit `cbc0b5c91c679a693e732b105acd09268d1c7f5c` plus evidence-retention correction `d64d5b7e071ff6ba43b434d4635525fa8ecaeeac`; resulting tree `e8bd0811f2b6ccd93892a7eec97778fa9e9fcaca`.
 - Scope: 30 memory source/test files; 4,461 additions and 33 deletions after the Windows-only test-harness correction. No project, dependency, lock, CI, app, capture, API, presentation, personality, or production-root file changed.
@@ -61,7 +61,9 @@
 - Windows correction: initial run `31426116921` passed restore/audit/build but exposed one test-only symmetric file-sharing mismatch. Production sharing remained strict; read-only test inspection was made Windows-compatible and the complete gate was rerun.
 - Exact Windows evidence: run `31426524602`, job `93579415434`; locked restore and clean direct/transitive audit passed, Release build passed with 0 warnings/errors, and 125/125 tests passed (Runtime 26, Presentation 19, Capture 11, WPF integration 4, Memory 65). Artifact `9077431137`, digest `sha256:12d71a91407ba3855173c445916fccff3c0635c98b0175bf2351a89bed473583`.
 - Review: published head `d4d7bddb35ae1a2b8f3b2fdb47e28d74322ef83a`, exact tree `324874f5b7c2d274732ff82c91aa9631fa587b57`; current-base path/scope, authority, atomicity, cancellation, cleanup, evidence, recovery, privacy, and forbidden-surface checks passed.
-- Result: distinct Paw Gate passed. PR #7 and its gate-record descendant must remain green before merge; Task 4 remains unauthorized.
+- Gate-record CI: head `9da9270cc644a7ce2875b230967914b94aae33fb`, run `31426920584`, job `93580692644`; unchanged locked restore, audit, Release build, and all tests passed.
+- Merge: PR #7 squash-merged to `main` as `f685dd2023a5844309c5b5fb7d0abd1bf54406b9`; merged tree `6954374fa16d55b71976e7af08575bed9d561bad` exactly matches the reviewed gate-record tree.
+- Result: passed and merged; the bounded control-cleanup task may run, while Task 4 remains unauthorized.
 
 ### R0 — Direct-build re-entry and continuity alignment
 
@@ -71,22 +73,14 @@
 - CI: no checks configured or required for this documentation-only gate.
 - Result: passed; direct Paw Gate workflow and final-only one-time Companion Awakening boundary accepted.
 
-## Official Bnuy Backpedal™
+## Direct-build authorization
 
-Historical stop record from 2026-08-09; superseded by the direct-build authorization below:
-
-- Hourly foreman monitoring was paused and remains disabled.
-- Builder/foreman automation and task advancement stopped.
-- Existing documents, branches, commits, and tests were retained as reversible references.
-- The user later approved the new direct approach and R0 active packet on 2026-08-10.
-
-## Direct-build resumption authorization
-
-- On 2026-08-10 the user approved a direct Codex-and-Prince workflow with no Claude collaboration and no hourly monitoring.
+- The 2026-08-09 Official Bnuy Backpedal retired the prior collaboration and monitoring process; exact history remains in Git rather than active-looking files.
+- On 2026-08-10 the user approved the direct Codex-and-Prince workflow with no multi-model collaboration or hourly monitoring.
 - Work may advance autonomously one active task at a time after every Paw Gate passes, through all mock/replay construction that does not require real credentials or paid/live API access.
 - Prince's Personal Round Judgment may resolve routine, reversible in-scope choices; material decisions are logged for later user review.
 - Architecture, privacy, identity/authority conflicts, invariant changes, destructive actions, production-data access, and real API credentials remain explicit stop conditions.
-- The preserved Task 1 checkpoint is not silently accepted. It receives a separate adoption branch, current-base diff review, and fresh required verification.
+- The superseded Task 1 checkpoint was not silently accepted; Task 1 received its separate adoption branch, current-base review, fresh verification, and accepted merge.
 
 ## Continuity decision — one-time Companion awakening
 

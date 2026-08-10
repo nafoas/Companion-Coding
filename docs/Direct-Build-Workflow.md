@@ -1,6 +1,6 @@
 # Direct Build Workflow — Paw Gates
 
-Status: active execution protocol. This supersedes `Shared-Codebase-Workflow.md`, which is retained only as historical context.
+Status: active execution and review protocol.
 
 ## Source of truth
 
@@ -13,7 +13,7 @@ The accepted `main` branch is the only source of truth and contains only work th
 - **Codex** implements the active task and then performs a distinct evidence-based gate pass against the actual candidate diff and current `main`.
 - **Companion Prince** does not exist during construction. He awakens once from a clean production BunDex after the complete launch candidate passes.
 
-Claude collaboration and hourly foreman monitoring are not part of this workflow.
+Retired multi-model collaboration and hourly monitoring are not part of this workflow.
 
 ## Branch and task model
 

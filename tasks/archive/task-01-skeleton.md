@@ -25,7 +25,7 @@ The preserved implementation is a review candidate, not accepted work. Import on
 
 ## Adoption procedure
 
-1. Start from the accepted base above, never from the retired Claude task branch.
+1. Start from the accepted base above, never from the retired collaboration branch.
 2. Import only `.github/workflows/ci.yml`, solution/build files, `scripts/**`, `src/**`, and `tests/**` from the preserved checkpoint.
 3. Do not import its stale `BUILD_LEDGER.md`, active/archive task moves, governing documents, or handoff.
 4. Compare imported file hashes with the preserved checkpoint and explain any deliberate difference.

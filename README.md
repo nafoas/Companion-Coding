@@ -2,13 +2,13 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, and Task 2's append-only memory/journal spine are accepted. Task 3's neutral atomic-backup and guarded-repair Paw Gate passed on PR #7; merge and acceptance recording remain before any later task.
+Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, Task 2's append-only memory/journal spine, and Task 3's atomic-backup and guarded-repair layer are accepted. The active task is a documentation-only cleanup of the retired collaboration machinery; Task 4 remains locked.
 
 ## Builder workflow
 
 1. Read `AGENTS.md`.
 2. Read `docs/Direct-Build-Workflow.md`.
-3. Read `docs/Claude-Companion-Core-Task-Packet.md` (historical filename; current neutral-core authority).
+3. Read `docs/Neutral-Core-Task-Packet.md`.
 4. Work on exactly the task in `tasks/active/`.
 5. Use a dedicated `agent/task-XX-name` branch.
 6. Run and report tests honestly.
@@ -17,7 +17,7 @@ Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, 
 
 ## Current task
 
-Task 3: atomic backup and repair. Work is restricted to the validated SQLite backup cut, canonical/checksummed archive, atomic promotion, covered-prefix journal rotation, damaged-source preservation, guarded repair, post-cut replay, and synthetic tests. Consent/capture and all later systems remain deferred.
+Task R1: retired collaboration cleanup. Work is restricted to neutralizing current documentation names and links, deleting superseded workflow clutter whose provenance remains in Git, recording Task 3 acceptance, and retiring disabled legacy monitors. Product code and Task 4 remain untouched.
 
 ## Important boundaries
 

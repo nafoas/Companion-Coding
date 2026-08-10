@@ -4,15 +4,15 @@
 
 Status: revision 5, addressing the PR #1 re-review of revision 4 (commit `0d7fca6275e3354cc7826694fa988d7c0e1033f7`), which called it one final contract definition short of approval. No product code accompanies this document.
 
-Reviewed documents: `AGENTS.md`, `docs/Claude-Companion-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `BUILD_LEDGER.md`, `tasks/review/FOREMAN_REVIEW.md`, PR #1 review comments.
+Reviewed documents: `AGENTS.md`, the packet now named `docs/Neutral-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `BUILD_LEDGER.md`, the historical architecture-review record preserved in Git, and PR #1 review comments.
 
 ## Revision note
 
-Revision 2 responded to R1–R10 in `tasks/review/FOREMAN_REVIEW.md` (mapped: R1 → §2; R2 → §5; R3 → §5; R4 → §6, §8; R5 → §4, §12; R6 → §6, §8; R7 → §6; R8 → §13; R9 → §11; R10 → §15). Revision 3 addressed four bounded follow-up corrections (backup-cut protocol, presentation diagram, §11/`MaintenanceStore` wording, §13's task-order map). Revision 4 unified `NeutralPersonalityAdapter` naming and fixed the §8 backup-footer wording. The foreman's re-review of revision 4 confirmed the backup footer, six-step cut, generation fencing, memory authority, presentation flow shape, binding task order, changed-file scope, and handoff all pass, and flagged exactly one remaining gap: `NeutralPersonalityAdapter` was described as mapping typed input to placeholder content only in the abstract, without a concrete, implementable mapping. Fixed in this revision (5) by adding §6.2.1, a normative table covering every Task-1 lifecycle event (`start` cold and with recovered checkpoint, `nap`, `wake`, `stop`, and a deterministic fallback for anything else) with its content key, expression intent, consulted context fields, and validity notes — referenced from §8's presentation-flow diagram.
+Revision 2 responded to the ten historical review findings (mapped: R1 → §2; R2 → §5; R3 → §5; R4 → §6, §8; R5 → §4, §12; R6 → §6, §8; R7 → §6; R8 → §13; R9 → §11; R10 → §15). Later revisions addressed the backup-cut protocol, presentation flow, maintenance wording, task ordering, adapter naming, and the concrete lifecycle-to-placeholder mapping now in §6.2.1. The full superseded review exchange remains available in Git history.
 
 ## 1. Repository inventory
 
-The repository contains only planning/control and review files: `AGENTS.md`, `BUILD_LEDGER.md`, `README.md`, `docs/Claude-Companion-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `docs/Shared-Codebase-Workflow.md`, `tasks/active/task-00-architecture.md`, `tasks/review/HANDOFF.md`, `tasks/review/FOREMAN_REVIEW.md`, and `.gitignore`. No source tree, build files, or CI exist yet. Nothing here needs preservation or migration — Task 1 starts from a clean skeleton.
+At the time of this proposal, the repository contained only planning, control, and review files; no source tree, build files, or CI existed yet. The superseded workflow filenames from that snapshot remain recoverable in Git history and are not current dependencies.
 
 ## 2. Recommended Windows stack
 
@@ -344,7 +344,7 @@ Task 2 and Task 4 have no code-level mutual dependency — Task 4 is sequenced a
 
 ## 15. Decisions (revised per R10 — resolved, not open)
 
-`tasks/review/FOREMAN_REVIEW.md` resolved all five items this proposal previously listed as open. Recorded here as the accepted decisions this revision builds on:
+The historical architecture review resolved all five items this proposal previously listed as open. They are recorded here as the accepted decisions this revision builds on:
 
 1. **Stack**: WPF + .NET 10 LTS is approved (§2). WinUI 3 remains deferred to the presentation layer, only if it demonstrates a concrete benefit there.
 2. **`CaptureWorker` process isolation**: an out-of-process capture worker is required before real WGC capture is accepted (§6.1). Task 1 defines the `ICaptureWorker` contract and an in-process fake only; the real out-of-process worker is built starting Task 5, not before.

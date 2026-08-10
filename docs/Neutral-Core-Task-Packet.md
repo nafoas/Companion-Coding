@@ -1,6 +1,6 @@
 # Companion Core — Direct Build Packet
 
-The filename is retained for stable historical links. This packet no longer assigns work to Claude or a separate foreman; `Direct-Build-Workflow.md` governs execution and review.
+This is the authoritative personality-neutral core packet. `Direct-Build-Workflow.md` governs execution and review.
 
 ## How to use this packet
 
