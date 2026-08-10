@@ -10,6 +10,9 @@ internal sealed class SessionJournal : IAsyncDisposable
     private const int MinimumBodyLength = FrameMetadataLength + ChecksumLength;
     private const int MaximumBodyLength = 16 * 1024 * 1024;
 
+    internal const int MaximumOperationPayloadLength =
+        MaximumBodyLength - FrameMetadataLength - ChecksumLength;
+
     private static readonly byte[] Header = [(byte)'C', (byte)'C', (byte)'S', (byte)'J', 1, 0, 0, 0];
 
     private readonly FileStream _stream;
@@ -76,12 +79,12 @@ internal sealed class SessionJournal : IAsyncDisposable
             ThrowIfUnavailable();
             cancellationToken.ThrowIfCancellationRequested();
             var sequence = _nextSequence;
+            var rawFrame = BuildRawFrame(
+                JournalFrameType.AppendOperation,
+                sequence,
+                canonicalOperationPayload.Span);
             durableWriteStarted = true;
-            await WriteFrameDurablyAsync(
-                    JournalFrameType.AppendOperation,
-                    sequence,
-                    canonicalOperationPayload,
-                    CancellationToken.None)
+            await WriteFrameDurablyAsync(rawFrame, CancellationToken.None)
                 .ConfigureAwait(false);
             _nextSequence = checked(sequence + 1);
             return sequence;
@@ -122,12 +125,12 @@ internal sealed class SessionJournal : IAsyncDisposable
                 return;
             }
 
+            var rawFrame = BuildRawFrame(
+                JournalFrameType.Checkpoint,
+                confirmedThrough,
+                ReadOnlySpan<byte>.Empty);
             durableWriteStarted = true;
-            await WriteFrameDurablyAsync(
-                    JournalFrameType.Checkpoint,
-                    confirmedThrough,
-                    ReadOnlyMemory<byte>.Empty,
-                    CancellationToken.None)
+            await WriteFrameDurablyAsync(rawFrame, CancellationToken.None)
                 .ConfigureAwait(false);
             _confirmedThrough = confirmedThrough;
         }
@@ -311,12 +314,9 @@ internal sealed class SessionJournal : IAsyncDisposable
     }
 
     private async Task WriteFrameDurablyAsync(
-        JournalFrameType frameType,
-        long sequence,
-        ReadOnlyMemory<byte> payload,
+        ReadOnlyMemory<byte> rawFrame,
         CancellationToken cancellationToken)
     {
-        var rawFrame = BuildRawFrame(frameType, sequence, payload.Span);
         _stream.Seek(0, SeekOrigin.End);
         await _stream.WriteAsync(rawFrame, cancellationToken).ConfigureAwait(false);
         await _stream.FlushAsync(cancellationToken).ConfigureAwait(false);

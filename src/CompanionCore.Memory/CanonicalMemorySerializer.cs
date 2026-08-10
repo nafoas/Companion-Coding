@@ -10,6 +10,12 @@ internal static class CanonicalMemorySerializer
     internal static PreparedAppendOperation Prepare(AppendMemoryProposal proposal)
     {
         var payload = SerializeOperation(proposal);
+        if (payload.Length > SessionJournal.MaximumOperationPayloadLength)
+        {
+            throw new MemoryValidationException(
+                "The canonical append operation exceeds the bounded journal-frame size.");
+        }
+
         var normalizedProposal = MemoryPayloadParser.ParseOperation(payload);
         var recordChecksums = normalizedProposal.Records.ToDictionary(
             record => record.RecordId,

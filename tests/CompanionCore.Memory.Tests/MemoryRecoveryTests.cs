@@ -149,6 +149,25 @@ public sealed class MemoryRecoveryTests
         Assert.Equal(0, repository.Journal.ConfirmedThrough);
     }
 
+    [Fact]
+    public async Task OversizedRawFrame_IsRejectedWithoutFaultingJournal()
+    {
+        using var directory = new MemoryTestDirectory();
+        await using var repository = await directory.OpenRepositoryAsync();
+        var oversized = new byte[SessionJournal.MaximumOperationPayloadLength + 1];
+
+        await Assert.ThrowsAsync<MemoryValidationException>(() =>
+            repository.Journal.AppendOperationAsync(oversized, default));
+
+        var valid = MemoryProposalValidator.Prepare(
+            SyntheticMemory.Proposal(SyntheticMemory.Record()));
+        var sequence = await repository.Journal.AppendOperationAsync(
+            valid.CanonicalPayload,
+            default);
+        Assert.Equal(1, sequence);
+        Assert.Equal(1, repository.Journal.HighestAppendSequence);
+    }
+
     private static async Task FlipLastByteAsync(string path)
     {
         await using var stream = new FileStream(
