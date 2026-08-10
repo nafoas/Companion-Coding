@@ -218,7 +218,7 @@ public sealed class MemoryBackupTests
         var first = await repository.CreateBackupAsync();
         var archiveBefore = await File.ReadAllBytesAsync(first.ArchivePath);
         await CommitAsync(repository, "synthetic.invalid-candidate.retained");
-        var journalBefore = await File.ReadAllBytesAsync(directory.Location.JournalPath);
+        var journalBefore = await ReadLiveJournalBytesAsync(directory.Location.JournalPath);
         var hook = DelegateBackupHook.At(
             BackupTestPoint.CandidateBuilt,
             _ =>
@@ -238,7 +238,7 @@ public sealed class MemoryBackupTests
             repository.CreateBackupAsync(hook));
 
         Assert.Equal(archiveBefore, await File.ReadAllBytesAsync(first.ArchivePath));
-        Assert.Equal(journalBefore, await File.ReadAllBytesAsync(directory.Location.JournalPath));
+        Assert.Equal(journalBefore, await ReadLiveJournalBytesAsync(directory.Location.JournalPath));
         Assert.Equal(1L, repository.Journal.RotationBase?.CutSequence);
         Assert.Equal(2, repository.Journal.HighestAppendSequence);
         Assert.Empty(Directory.EnumerateFiles(
@@ -375,6 +375,20 @@ public sealed class MemoryBackupTests
         var replacement = archive.CreateEntry(name, CompressionLevel.Optimal);
         using var stream = replacement.Open();
         stream.Write(bytes);
+    }
+
+    private static async Task<byte[]> ReadLiveJournalBytesAsync(string path)
+    {
+        await using var stream = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite,
+            bufferSize: 4096,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
+        using var bytes = new MemoryStream();
+        await stream.CopyToAsync(bytes);
+        return bytes.ToArray();
     }
 
     private sealed class DelegateBackupHook : IBackupTestHook
