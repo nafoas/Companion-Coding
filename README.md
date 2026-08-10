@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, and Task 2's append-only memory/journal spine are accepted. Task 3's bounded Vault/Repairs packet is next.
+Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, and Task 2's append-only memory/journal spine are accepted. Task 3's neutral atomic-backup and guarded-repair Paw Gate passed on PR #7; merge and acceptance recording remain before any later task.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, 
 
 ## Current task
 
-No active implementation between gates. Task 2 passed; the next control actions are merging PR #6 and activating a bounded Task 3 packet. No Task 3 product work begins before that packet exists.
+Task 3: atomic backup and repair. Work is restricted to the validated SQLite backup cut, canonical/checksummed archive, atomic promotion, covered-prefix journal rotation, damaged-source preservation, guarded repair, post-cut replay, and synthetic tests. Consent/capture and all later systems remain deferred.
 
 ## Important boundaries
 

@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Between gates — Task 2 accepted; Task 3 packet next |
-| Active task | None; Task 2 archived after acceptance |
-| Working branch | `agent/task-02-bundex` |
-| Entry criteria met | Yes for Task 3 packet creation after PR #6 merges |
-| Product code authorized | No between tasks; Task 3 requires its own active packet |
+| Current stage | Stage 2 — atomic backup, repair, and validated journal cuts |
+| Active task | Task 3 — Atomic Backup and Repair |
+| Working branch | `agent/task-03-vault-repair`, rebased onto accepted remote `main` |
+| Entry criteria met | Yes; Task 2 passed, was archived, and PR #6 squash-merged to accepted `main` |
+| Product code authorized | Yes, only within Task 3's neutral memory backup/repair and synthetic-test scope |
 | Live API authorized | No |
-| Automated tests | Task 2 gate head passed locked restore, clean dependency audit, Release build, and 94/94 Windows tests |
-| Manual gate | Task 2 passed exact-tree, 49-path scope, write-authority, recovery/cancellation, root-isolation, and forbidden-surface review |
-| Accepted `main` baseline | `29d0a24e05b58f8ef053c4ebe0b6cfeea7b1ea99` — Task 1 neutral skeleton accepted and merged |
-| Known limitations | Task 2 has no Vault, restore, repair, journal rotation, migration, production opener, or app wiring; Windows CI remains the execution oracle |
-| Deferred temptations | Task 3 Vault/Repairs/maintenance authority and all later capture/API/conversation/personality work |
-| Approval | Task 2 passed on 2026-08-10; acceptance records and PR #6 may merge before Task 3 becomes active |
+| Automated tests | PR #7 reviewed head `d4d7bdd`: Windows CI run `31426524602` passed locked restore, clean direct/transitive audit, Release build with 0 warnings/errors, and 125/125 tests. |
+| Manual gate | Task 3's distinct Paw Gate passed on reviewed head `d4d7bdd`, exact tree `324874f5b7c2d274732ff82c91aa9631fa587b57`. Acceptance awaits the gate-record descendant's unchanged CI and PR #7 merge. |
+| Accepted `main` baseline | `44caa2fc6474b0952eaed5f086bfb3c49bf73c18` — Task 2 append-only memory/journal accepted and merged |
+| Known limitations | Backup/repair remains non-production neutral core: production roots, scheduling/UI, encryption, schema migration, and multi-generation retention are deferred. Local VSTest/formatter IPC is sandbox-blocked, so exact Windows CI remains the platform oracle. |
+| Deferred temptations | Task 4+ consent/capture/API/conversation/personality work; production backup/import, UI, encryption, and multi-generation retention |
+| Approval | Task 3 active under the Boss-approved Stage 2 split and autonomous pre-API Paw Gates |
 
 ## Gate history
 
@@ -49,7 +49,19 @@
 - Dependencies: both locks resolve all SQLitePCLRaw components to 2.1.12; the permanent direct/transitive vulnerability audit reports all 11 projects and no vulnerable entries.
 - CI: run `31360021794`, job `93366932942`; locked restore and audit passed, Release build passed with 0 warnings and 0 errors, and 94/94 tests passed (Runtime 26, Presentation 19, synthetic Capture 11, real WPF integration 4, Memory/Journal 34).
 - Personal Round Judgments J1–J8 record the tree-identical transport base, dependency pin, canonical envelope, fixed roots, pre-durability frame bound, checkpoint/store cross-check, duplicate-key rejection, and unresolved-live-tail recovery fence.
-- Result: passed; acceptance records may be published and PR #6 merged before Task 3 becomes active.
+- Merge: PR #6 squash-merged to `main` as `44caa2fc6474b0952eaed5f086bfb3c49bf73c18`.
+- Result: passed and merged; Task 3 may become active through its own bounded packet.
+
+### Task 3 — Atomic backup and repair (Paw Gate passed; merge pending)
+
+- Code checkpoint rebased onto accepted remote `main`: feature commit `cbc0b5c91c679a693e732b105acd09268d1c7f5c` plus evidence-retention correction `d64d5b7e071ff6ba43b434d4635525fa8ecaeeac`; resulting tree `e8bd0811f2b6ccd93892a7eec97778fa9e9fcaca`.
+- Scope: 30 memory source/test files; 4,461 additions and 33 deletions after the Windows-only test-harness correction. No project, dependency, lock, CI, app, capture, API, presentation, personality, or production-root file changed.
+- Protocol: pinned exact SQLite cut, online backup, independent full health validation, canonical/checksummed archive, atomic promotion, post-promotion covered-prefix rotation, exclusive repair authority, immutable damaged-source evidence, marker-guarded rollback, and ordinary idempotent post-cut replay.
+- Local verification: full locked restore passed; full Release solution cross-build passed with 0 warnings/errors; 121/121 locally runnable cases passed. This covers all 90 accepted non-Windows regressions plus 31 Task 3 cases.
+- Windows correction: initial run `31426116921` passed restore/audit/build but exposed one test-only symmetric file-sharing mismatch. Production sharing remained strict; read-only test inspection was made Windows-compatible and the complete gate was rerun.
+- Exact Windows evidence: run `31426524602`, job `93579415434`; locked restore and clean direct/transitive audit passed, Release build passed with 0 warnings/errors, and 125/125 tests passed (Runtime 26, Presentation 19, Capture 11, WPF integration 4, Memory 65). Artifact `9077431137`, digest `sha256:12d71a91407ba3855173c445916fccff3c0635c98b0175bf2351a89bed473583`.
+- Review: published head `d4d7bddb35ae1a2b8f3b2fdb47e28d74322ef83a`, exact tree `324874f5b7c2d274732ff82c91aa9631fa587b57`; current-base path/scope, authority, atomicity, cancellation, cleanup, evidence, recovery, privacy, and forbidden-surface checks passed.
+- Result: distinct Paw Gate passed. PR #7 and its gate-record descendant must remain green before merge; Task 4 remains unauthorized.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

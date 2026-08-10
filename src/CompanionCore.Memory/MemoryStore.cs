@@ -20,16 +20,49 @@ internal sealed partial class MemoryStore : IAsyncDisposable
 
     internal static async Task<MemoryStore> OpenAsync(
         MemoryStoreLocation location,
+        CancellationToken cancellationToken) =>
+        await OpenCoreAsync(
+                location,
+                SqliteOpenMode.ReadWriteCreate,
+                allowInitialization: true,
+                enableWal: true,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+    internal static async Task<MemoryStore> OpenExistingAsync(
+        MemoryStoreLocation location,
+        CancellationToken cancellationToken) =>
+        await OpenCoreAsync(
+                location,
+                SqliteOpenMode.ReadWrite,
+                allowInitialization: false,
+                enableWal: false,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+    private static async Task<MemoryStore> OpenCoreAsync(
+        MemoryStoreLocation location,
+        SqliteOpenMode openMode,
+        bool allowInitialization,
+        bool enableWal,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(location);
         ValidateLocationCapability(location);
 
-        Directory.CreateDirectory(location.RootPath);
+        if (allowInitialization)
+        {
+            Directory.CreateDirectory(location.RootPath);
+        }
+        else if (!File.Exists(location.DatabasePath))
+        {
+            throw new MemoryIntegrityException("The memory database to validate does not exist.");
+        }
+
         var connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = location.DatabasePath,
-            Mode = SqliteOpenMode.ReadWriteCreate,
+            Mode = openMode,
             Cache = SqliteCacheMode.Private,
             Pooling = false,
         }.ToString();
@@ -40,8 +73,13 @@ internal sealed partial class MemoryStore : IAsyncDisposable
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             var store = new MemoryStore(connection, location.DatabasePath);
             await store.ConfigureSafetyPragmasAsync(cancellationToken).ConfigureAwait(false);
-            await store.InitializeOrValidateSchemaAsync(cancellationToken).ConfigureAwait(false);
-            await store.EnableWalAsync(cancellationToken).ConfigureAwait(false);
+            await store.InitializeOrValidateSchemaAsync(allowInitialization, cancellationToken)
+                .ConfigureAwait(false);
+            if (enableWal)
+            {
+                await store.EnableWalAsync(cancellationToken).ConfigureAwait(false);
+            }
+
             return store;
         }
         catch
@@ -182,12 +220,15 @@ internal sealed partial class MemoryStore : IAsyncDisposable
         }
     }
 
-    private async Task InitializeOrValidateSchemaAsync(CancellationToken cancellationToken)
+    private async Task InitializeOrValidateSchemaAsync(
+        bool allowInitialization,
+        CancellationToken cancellationToken)
     {
         var hasSchemaInfo = await ObjectExistsAsync("schema_info", cancellationToken).ConfigureAwait(false);
         if (!hasSchemaInfo)
         {
-            if (await CountUserObjectsAsync(cancellationToken).ConfigureAwait(false) != 0)
+            if (!allowInitialization
+                || await CountUserObjectsAsync(cancellationToken).ConfigureAwait(false) != 0)
             {
                 throw new MemoryIntegrityException(
                     "A non-empty database without recognized schema metadata cannot be initialized automatically.");

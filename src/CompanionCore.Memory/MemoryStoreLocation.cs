@@ -38,4 +38,22 @@ public sealed class MemoryStoreLocation
     internal string DatabasePath { get; }
 
     internal string JournalPath => Path.Combine(RootPath, "session-journal-v1.bin");
+
+    internal string BackupDirectoryPath => Path.Combine(RootPath, "backups-v1");
+
+    internal string BackupArchivePath => Path.Combine(BackupDirectoryPath, "memory-vault-v1.zip");
+
+    internal string BackupStagingDirectoryPath => Path.Combine(RootPath, ".backup-staging-v1");
+
+    internal string BackupValidationDirectoryPath => Path.Combine(RootPath, ".backup-validation-v1");
+
+    internal string RepairStagingDirectoryPath => Path.Combine(RootPath, ".repair-staging-v1");
+
+    internal string MaintenanceLockPath => Path.Combine(RootPath, "memory-maintenance-v1.lock");
+
+    internal string RepairMarkerPath => Path.Combine(RootPath, "repair-state-v1.bin");
+
+    internal string RepairMarkerTemporaryPath => Path.Combine(RootPath, ".repair-state-v1.bin.tmp");
+
+    internal string DamagedPreservationDirectoryPath => Path.Combine(RootPath, "damaged-memory-v1");
 }

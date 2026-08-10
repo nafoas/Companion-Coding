@@ -9,26 +9,36 @@ internal sealed class SessionJournal : IAsyncDisposable
     private const int FrameMetadataLength = 1 + sizeof(long) + sizeof(int);
     private const int MinimumBodyLength = FrameMetadataLength + ChecksumLength;
     private const int MaximumBodyLength = 16 * 1024 * 1024;
+    private const int RotationBasePayloadLength = sizeof(int) + 16 + sizeof(long);
+    private const int RotationBaseFormatVersion = 1;
 
     internal const int MaximumOperationPayloadLength =
         MaximumBodyLength - FrameMetadataLength - ChecksumLength;
 
     private static readonly byte[] Header = [(byte)'C', (byte)'C', (byte)'S', (byte)'J', 1, 0, 0, 0];
 
-    private readonly FileStream _stream;
+    private readonly string _journalPath;
+    private FileStream _stream;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
+    private IReadOnlyList<JournalAppendFrame> _allAppendFrames = Array.Empty<JournalAppendFrame>();
     private IReadOnlyList<JournalAppendFrame> _recoveryTail = Array.Empty<JournalAppendFrame>();
+    private JournalRotationBase? _rotationBase;
     private long _nextSequence = 1;
     private long _confirmedThrough;
     private bool _faulted;
     private bool _disposed;
 
-    private SessionJournal(FileStream stream)
+    private SessionJournal(string journalPath, FileStream stream)
     {
+        _journalPath = journalPath;
         _stream = stream;
     }
 
     internal IReadOnlyList<JournalAppendFrame> RecoveryTail => _recoveryTail;
+
+    internal IReadOnlyList<JournalAppendFrame> AllAppendFrames => _allAppendFrames;
+
+    internal JournalRotationBase? RotationBase => _rotationBase;
 
     internal long ConfirmedThrough => _confirmedThrough;
 
@@ -40,15 +50,9 @@ internal sealed class SessionJournal : IAsyncDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(journalPath)
             ?? throw new ArgumentException("The journal path must have a parent directory.", nameof(journalPath)));
 
-        var stream = new FileStream(
-            journalPath,
-            FileMode.OpenOrCreate,
-            FileAccess.ReadWrite,
-            FileShare.Read,
-            bufferSize: 4096,
-            FileOptions.Asynchronous);
+        var stream = OpenStream(journalPath, FileMode.OpenOrCreate);
 
-        var journal = new SessionJournal(stream);
+        var journal = new SessionJournal(journalPath, stream);
         try
         {
             await journal.InitializeAndScanAsync(cancellationToken).ConfigureAwait(false);
@@ -86,6 +90,11 @@ internal sealed class SessionJournal : IAsyncDisposable
             durableWriteStarted = true;
             await WriteFrameDurablyAsync(rawFrame, CancellationToken.None)
                 .ConfigureAwait(false);
+            var appended = new JournalAppendFrame(
+                sequence,
+                canonicalOperationPayload.ToArray());
+            _allAppendFrames = [.. _allAppendFrames, appended];
+            _recoveryTail = [.. _recoveryTail, appended];
             _nextSequence = checked(sequence + 1);
             return sequence;
         }
@@ -133,6 +142,9 @@ internal sealed class SessionJournal : IAsyncDisposable
             await WriteFrameDurablyAsync(rawFrame, CancellationToken.None)
                 .ConfigureAwait(false);
             _confirmedThrough = confirmedThrough;
+            _recoveryTail = _allAppendFrames
+                .Where(frame => frame.Sequence > confirmedThrough)
+                .ToArray();
         }
         catch
         {
@@ -148,6 +160,187 @@ internal sealed class SessionJournal : IAsyncDisposable
             _writeLock.Release();
         }
     }
+
+    internal async Task RotateThroughAsync(
+        long cutSequence,
+        Guid backupId,
+        IBackupTestHook? testHook,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfUnavailable();
+        if (cutSequence < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(cutSequence));
+        }
+
+        if (backupId == Guid.Empty)
+        {
+            throw new ArgumentException("A journal rotation requires a backup ID.", nameof(backupId));
+        }
+
+        await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        string? temporaryPath = null;
+        string? rollbackPath = null;
+        try
+        {
+            ThrowIfUnavailable();
+            cancellationToken.ThrowIfCancellationRequested();
+            var existingBase = _rotationBase?.CutSequence ?? 0;
+            if (cutSequence < existingBase
+                || cutSequence > _confirmedThrough
+                || cutSequence > HighestAppendSequence)
+            {
+                throw new MemoryIntegrityException(
+                    "Journal rotation cannot move outside the confirmed promoted cut.");
+            }
+
+            var retained = _allAppendFrames
+                .Where(frame => frame.Sequence > cutSequence)
+                .OrderBy(frame => frame.Sequence)
+                .ToArray();
+            var expected = cutSequence + 1;
+            foreach (var frame in retained)
+            {
+                if (frame.Sequence != expected)
+                {
+                    throw new JournalCorruptionException(
+                        "Post-cut journal append sequences are not contiguous.");
+                }
+
+                expected = checked(expected + 1);
+            }
+
+            var parent = Path.GetDirectoryName(_journalPath)
+                ?? throw new MemoryIntegrityException("The journal path has no parent directory.");
+            temporaryPath = Path.Combine(
+                parent,
+                $".{Path.GetFileName(_journalPath)}.{Guid.NewGuid():N}.rotation.tmp");
+            rollbackPath = Path.Combine(
+                parent,
+                $".{Path.GetFileName(_journalPath)}.{Guid.NewGuid():N}.rotation.old");
+
+            await WriteRotatedJournalAsync(
+                    temporaryPath,
+                    new JournalRotationBase(
+                        RotationBaseFormatVersion,
+                        backupId,
+                        cutSequence),
+                    retained,
+                    _confirmedThrough,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            await using (var validation = await OpenAsync(temporaryPath, cancellationToken)
+                             .ConfigureAwait(false))
+            {
+                var validatedBase = validation.RotationBase;
+                if (validatedBase is null
+                    || validatedBase.BackupId != backupId
+                    || validatedBase.CutSequence != cutSequence
+                    || validation.HighestAppendSequence != HighestAppendSequence
+                    || validation.ConfirmedThrough != _confirmedThrough
+                    || validation.AllAppendFrames.Count != retained.Length)
+                {
+                    throw new MemoryIntegrityException(
+                        "The staged rotated journal failed independent validation.");
+                }
+            }
+
+            if (testHook is not null)
+            {
+                await testHook.OnPointAsync(
+                        BackupTestPoint.BeforeJournalReplacement,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // From the first replacement step onward, cancellation is intentionally
+            // ignored. The current stream is reopened before returning or throwing.
+            await _stream.DisposeAsync().ConfigureAwait(false);
+            try
+            {
+                File.Replace(temporaryPath, _journalPath, rollbackPath, ignoreMetadataErrors: true);
+                temporaryPath = null;
+            }
+            catch
+            {
+                _stream = OpenStream(_journalPath, FileMode.Open);
+                await InitializeAndScanAsync(CancellationToken.None).ConfigureAwait(false);
+                throw;
+            }
+
+            _stream = OpenStream(_journalPath, FileMode.Open);
+            try
+            {
+                await InitializeAndScanAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            catch
+            {
+                await _stream.DisposeAsync().ConfigureAwait(false);
+                if (File.Exists(rollbackPath))
+                {
+                    File.Replace(rollbackPath, _journalPath, destinationBackupFileName: null);
+                    rollbackPath = null;
+                }
+
+                _stream = OpenStream(_journalPath, FileMode.Open);
+                await InitializeAndScanAsync(CancellationToken.None).ConfigureAwait(false);
+                throw;
+            }
+
+            if (testHook is not null)
+            {
+                await testHook.OnPointAsync(
+                        BackupTestPoint.AfterJournalReplacement,
+                        CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+
+            if (File.Exists(rollbackPath))
+            {
+                File.Delete(rollbackPath);
+                rollbackPath = null;
+            }
+        }
+        finally
+        {
+            try
+            {
+                if (temporaryPath is not null)
+                {
+                    MemoryPathGuard.TryDeleteTaskOwnedFile(
+                        Path.GetDirectoryName(_journalPath)
+                            ?? throw new MemoryIntegrityException(
+                                "The journal path has no parent directory."),
+                        temporaryPath);
+                }
+            }
+            finally
+            {
+                // A rollback file is intentionally retained if an unexpected failure
+                // occurred after replacement and before it was safe to discard.
+                _writeLock.Release();
+            }
+        }
+    }
+
+    internal static Task BuildRecoveryJournalAsync(
+        string path,
+        Guid backupId,
+        long cutSequence,
+        IReadOnlyList<JournalAppendFrame> postCutFrames,
+        CancellationToken cancellationToken) =>
+        WriteRotatedJournalAsync(
+            path,
+            new JournalRotationBase(
+                RotationBaseFormatVersion,
+                backupId,
+                cutSequence),
+            postCutFrames,
+            confirmedThrough: cutSequence,
+            cancellationToken);
 
     /// <summary>
     /// Internal deterministic process-death injection used only by the friend test
@@ -225,6 +418,8 @@ internal sealed class SessionJournal : IAsyncDisposable
         var appendFrames = new List<JournalAppendFrame>();
         long highestAppendSequence = 0;
         long lastCheckpoint = 0;
+        JournalRotationBase? rotationBase = null;
+        var sawNonBaseFrame = false;
 
         while (_stream.Position < _stream.Length)
         {
@@ -270,8 +465,7 @@ internal sealed class SessionJournal : IAsyncDisposable
             var sequence = BinaryPrimitives.ReadInt64LittleEndian(content.Slice(1, sizeof(long)));
             var payloadLength = BinaryPrimitives.ReadInt32LittleEndian(
                 content.Slice(1 + sizeof(long), sizeof(int)));
-            if (sequence <= 0
-                || payloadLength < 0
+            if (payloadLength < 0
                 || payloadLength != content.Length - FrameMetadataLength)
             {
                 throw new JournalCorruptionException("A checksummed journal frame has invalid metadata.");
@@ -280,8 +474,26 @@ internal sealed class SessionJournal : IAsyncDisposable
             var payload = content.Slice(FrameMetadataLength, payloadLength).ToArray();
             switch (frameType)
             {
+                case JournalFrameType.RotationBase:
+                    if (rotationBase is not null
+                        || sawNonBaseFrame
+                        || sequence < 0
+                        || payloadLength != RotationBasePayloadLength)
+                    {
+                        throw new JournalCorruptionException(
+                            "A rotation-base frame must be the journal's first and only base.");
+                    }
+
+                    rotationBase = ParseRotationBase(payload, sequence);
+                    highestAppendSequence = sequence;
+                    lastCheckpoint = sequence;
+                    break;
+
                 case JournalFrameType.AppendOperation:
-                    if (payloadLength == 0 || sequence != highestAppendSequence + 1)
+                    sawNonBaseFrame = true;
+                    if (sequence <= 0
+                        || payloadLength == 0
+                        || sequence != highestAppendSequence + 1)
                     {
                         throw new JournalCorruptionException(
                             "Append-frame sequences must be contiguous and carry payloads.");
@@ -292,7 +504,9 @@ internal sealed class SessionJournal : IAsyncDisposable
                     break;
 
                 case JournalFrameType.Checkpoint:
-                    if (payloadLength != 0
+                    sawNonBaseFrame = true;
+                    if (sequence <= 0
+                        || payloadLength != 0
                         || sequence > highestAppendSequence
                         || sequence < lastCheckpoint)
                     {
@@ -309,9 +523,100 @@ internal sealed class SessionJournal : IAsyncDisposable
 
         _nextSequence = checked(highestAppendSequence + 1);
         _confirmedThrough = lastCheckpoint;
+        _rotationBase = rotationBase;
+        _allAppendFrames = appendFrames.ToArray();
         _recoveryTail = appendFrames.Where(frame => frame.Sequence > lastCheckpoint).ToArray();
         _stream.Seek(0, SeekOrigin.End);
     }
+
+    private static async Task WriteRotatedJournalAsync(
+        string path,
+        JournalRotationBase rotationBase,
+        IReadOnlyList<JournalAppendFrame> retainedFrames,
+        long confirmedThrough,
+        CancellationToken cancellationToken)
+    {
+        await using var stream = new FileStream(
+            path,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.None,
+            bufferSize: 4096,
+            FileOptions.Asynchronous | FileOptions.WriteThrough);
+        await stream.WriteAsync(Header, cancellationToken).ConfigureAwait(false);
+        var basePayload = BuildRotationBasePayload(rotationBase);
+        await stream.WriteAsync(
+                BuildRawFrame(
+                    JournalFrameType.RotationBase,
+                    rotationBase.CutSequence,
+                    basePayload),
+                cancellationToken)
+            .ConfigureAwait(false);
+        foreach (var frame in retainedFrames)
+        {
+            await stream.WriteAsync(
+                    BuildRawFrame(
+                        JournalFrameType.AppendOperation,
+                        frame.Sequence,
+                        frame.CanonicalOperationPayload),
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        if (confirmedThrough > rotationBase.CutSequence)
+        {
+            await stream.WriteAsync(
+                    BuildRawFrame(
+                        JournalFrameType.Checkpoint,
+                        confirmedThrough,
+                        ReadOnlySpan<byte>.Empty),
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        await stream.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+        stream.Flush(flushToDisk: true);
+    }
+
+    private static byte[] BuildRotationBasePayload(JournalRotationBase rotationBase)
+    {
+        var payload = new byte[RotationBasePayloadLength];
+        BinaryPrimitives.WriteInt32LittleEndian(payload, rotationBase.FormatVersion);
+        if (!rotationBase.BackupId.TryWriteBytes(payload.AsSpan(sizeof(int), 16)))
+        {
+            throw new MemoryIntegrityException("The backup ID could not be encoded for journal rotation.");
+        }
+
+        BinaryPrimitives.WriteInt64LittleEndian(
+            payload.AsSpan(sizeof(int) + 16, sizeof(long)),
+            rotationBase.CutSequence);
+        return payload;
+    }
+
+    private static JournalRotationBase ParseRotationBase(byte[] payload, long frameSequence)
+    {
+        var formatVersion = BinaryPrimitives.ReadInt32LittleEndian(payload);
+        var backupId = new Guid(payload.AsSpan(sizeof(int), 16));
+        var cutSequence = BinaryPrimitives.ReadInt64LittleEndian(
+            payload.AsSpan(sizeof(int) + 16, sizeof(long)));
+        if (formatVersion != RotationBaseFormatVersion
+            || backupId == Guid.Empty
+            || cutSequence != frameSequence)
+        {
+            throw new JournalCorruptionException("The journal rotation-base payload is invalid.");
+        }
+
+        return new JournalRotationBase(formatVersion, backupId, cutSequence);
+    }
+
+    private static FileStream OpenStream(string path, FileMode mode) =>
+        new(
+            path,
+            mode,
+            FileAccess.ReadWrite,
+            FileShare.Read,
+            bufferSize: 4096,
+            FileOptions.Asynchronous);
 
     private async Task WriteFrameDurablyAsync(
         ReadOnlyMemory<byte> rawFrame,
@@ -409,7 +714,10 @@ internal sealed class SessionJournal : IAsyncDisposable
     {
         AppendOperation = 1,
         Checkpoint = 2,
+        RotationBase = 3,
     }
 }
 
 internal sealed record JournalAppendFrame(long Sequence, byte[] CanonicalOperationPayload);
+
+internal sealed record JournalRotationBase(int FormatVersion, Guid BackupId, long CutSequence);
