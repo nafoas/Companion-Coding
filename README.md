@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture and the R0 direct-build controls are accepted. The preserved Task 1 implementation is next, but it remains unaccepted until its own current-base diff and fresh Windows verification pass.
+Task 0's architecture and the R0 direct-build controls are accepted. Task 1 is adopting the preserved neutral skeleton, but it remains unaccepted until its current-base diff and fresh Windows verification pass.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture and the R0 direct-build controls are accepted. The preserv
 
 ## Current task
 
-No active implementation between gates. The next control action is creating Task 1's direct adoption packet; product code is authorized only inside that packet.
+Task 1: reproducible neutral skeleton adoption. Product work is restricted to its active packet; no Task 2+ or personality work is authorized.
 
 ## Important boundaries
 

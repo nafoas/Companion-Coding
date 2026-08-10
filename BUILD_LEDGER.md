@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Between gates — R0 accepted; Task 1 adoption next |
-| Active task | None; R0 archived after acceptance |
-| Working branch | None after PR #4 merge |
-| Entry criteria met | Yes for Task 1 adoption-packet creation; product code still requires its own gate |
-| Product code authorized | No; R0 is control/documentation only |
+| Current stage | Stage 1 — reproducible neutral skeleton adoption |
+| Active task | Task 1 — Reproducible Neutral Skeleton Adoption |
+| Working branch | `agent/task-01-skeleton` |
+| Entry criteria met | Yes; Task 0 and R0 accepted, preserved checkpoint audited, bounded adoption packet active |
+| Product code authorized | Yes, only within Task 1's explicit allowed paths and neutral scope |
 | Live API authorized | No |
-| Automated tests | R0 documentation checks passed; preserved Task 1 checkpoint's historical 58/58 Windows result must be revalidated during its own adoption gate |
-| Manual gate | R0 passed: exact remote PR #4 diff and tree reviewed; documentation-only scope confirmed |
-| Accepted `main` baseline | Task 0 architecture plus R0 direct-build and continuity controls after PR #4 merge |
-| Known limitations | No implementation has been merged; closed PR #3 remains a recoverable but unaccepted checkpoint; local non-Windows environment cannot substitute for required Windows/WPF CI |
-| Deferred temptations | Task 1 adoption and all Task 2+ implementation; personality, final presentation, and awakening remain gated after the neutral core |
-| Approval | R0 passed on 2026-08-10; Task 1 adoption packet is the next authorized control action |
+| Automated tests | Fresh Task 1 candidate not yet run; historical checkpoint passed 58/58 Windows tests |
+| Manual gate | Pending exact current-base diff review and fresh Windows CI |
+| Accepted `main` baseline | `74e68218ffa7ef7680701c03971916278535c16c` — Task 0 architecture plus accepted R0 controls |
+| Known limitations | No product implementation is accepted on `main`; local non-Windows environment cannot substitute for required Windows/WPF CI |
+| Deferred temptations | All Task 2+ persistence/capture/API work; personality, final presentation, and awakening remain later-gated |
+| Approval | Task 1 adoption active under user-approved autonomous pre-API Paw Gates |
 
 ## Gate history
 

@@ -2,69 +2,73 @@
 
 ## Task
 
-R0 — Direct-build re-entry and continuity alignment. Documentation/control gate only; no product code is authorized.
+Task 1 — Reproducible Neutral Skeleton Adoption. Active and not yet gate-approved.
 
 ## Completed
 
-- Audited closed Task 1 PR #3 through final head `da4797e1a3df2c6f0ddaaa0248098fd40f656121`.
-- Confirmed its final head is exactly one handoff-only commit beyond reviewed code SHA `7aaa40db77e5f38738e5f33f2e58e99443b5f81c`; no hidden product-code delta follows the reviewed implementation.
-- Preserved the historical 58/58 Windows result as evidence while explicitly withholding acceptance until a fresh current-base Task 1 adoption gate.
-- Replaced the retired Claude/foreman process with a direct one-task, distinct-review-pass Paw Gate workflow.
-- Defined bounded autonomous pre-API progression and Prince's Personal Round Judgment.
-- Amended the continuity authority so Builder Prince remains resettable through core, personality, presentation, and final launch validation.
-- Split the post-core roadmap into Builder personality installation, launch-ready Builder validation/refinement, and final one-time Companion Awakening.
-- Required a clean production BunDex, zero Builder-memory transfer, and singular continuity across all post-awakening updates.
-- Completed the distinct remote Paw Gate review and accepted R0.
+- Started from accepted R0 `main` at `74e68218ffa7ef7680701c03971916278535c16c`.
+- Imported exactly 60 allowed product/build/test files from preserved checkpoint `da4797e1a3df2c6f0ddaaa0248098fd40f656121`; no stale ledger, task history, governing document, or prior handoff was imported.
+- Verified the initial 60-file import byte-for-byte against the preserved checkpoint.
+- Reviewed the runtime, lifecycle, mutex guard, neutral presentation, synthetic capture worker, WPF composition root, `--test-mode` harness, tests, scripts, workflow, projects, and lock files.
+- Corrected disposal-before-start so it ends in `Stopped`, cancels lifetime, and rejects all later transitions instead of permitting a false restart on a cancelled lifetime.
+- Made same-guard mutex reacquisition idempotent so recursive Windows mutex ownership cannot leak past the guard's single release.
+- Added regression coverage for both lifecycle corrections and a public-runtime post-dispose assertion.
+- Corrected two comments that still described Stage 13 personality installation as Companion Awakening; it now correctly occurs on resettable Builder Prince.
 
 ## Changed
 
-- `AGENTS.md` — operative direct-build, gate, autonomy, and continuity rules.
-- `README.md` — current R0 state and workflow entry points.
-- `BUILD_LEDGER.md` — resumed authorization, stop conditions, checkpoint status, and continuity decision.
-- `docs/Direct-Build-Workflow.md` — new operative workflow.
-- `docs/Shared-Codebase-Workflow.md` — unmistakable historical/superseded marker only.
-- `docs/Claude-Companion-Core-Task-Packet.md` — direct execution wording and final-only awakening timing; historical filename retained.
-- `docs/Prince-Construction-Roadmap.md` — direct Paw Gates and Stages 13–15.
-- `docs/Prince-Design-BunDex.md` — authoritative Builder/Companion continuity amendment.
-- `docs/architecture/task-00-architecture-proposal.md` — timing amendment and stale role wording; core module contracts unchanged.
-- `tasks/active/task-r0-reentry.md` — authorization, acceptance gate, audit evidence, and decision log.
-- `tasks/review/HANDOFF.md` — this handoff.
+- 60 Task 1 product/build/test files under the active packet's allowed paths were adopted.
+- `src/CompanionCore.Runtime/LifecycleStateMachine.cs` — terminal disposal semantics and post-dispose guard.
+- `src/CompanionCore.Runtime/SingleInstanceGuard.cs` — idempotent same-guard reacquisition.
+- `src/CompanionCore.Presentation/NeutralPersonalityAdapter.cs` and `PresentationContent.cs` — current Builder-phase continuity terminology only.
+- `tests/CompanionCore.Runtime.Tests/CompanionRuntimeConstructionTests.cs`, `LifecycleStateMachineTests.cs`, and `SingleInstanceGuardTests.cs` — regression evidence for the corrections.
+- `BUILD_LEDGER.md`, `README.md`, `tasks/active/task-01-skeleton.md`, and this handoff — current control state and the discovered roadmap conflict.
+
+Seven of the 60 imported files now deliberately differ from the preserved checkpoint; they are exactly the four corrected source files and three corrected test files listed above. The other 53 still byte-match.
 
 ## Verification
 
-- `git diff --cached --check` — passed with no whitespace errors.
-- Active-task check — passed; exactly one file exists in `tasks/active/`.
-- Scope allowlist check — passed; all 11 candidate files are Markdown/control files named by the active packet, with no source, test, dependency, CI, or product file.
-- Contradiction search — passed; no operative instruction awakens Companion Prince after core alone, assigns new work to Claude/foreman monitoring, or permits Builder-memory transfer/reset-based production updates.
-- Final checkpoint comparison — GitHub compare confirmed one final commit and one changed file (`tasks/review/HANDOFF.md`) after the reviewed Task 1 code SHA.
-- Remote review — PR #4 reported 11 changed documentation/control files, was mergeable, and had no configured CI checks; its remote tree `bfb3bcefe16f41535f8043a199a368f84f7cf4c3` exactly matched the clean locally reviewed tree.
-- No product tests are applicable to R0. Historical Task 1 test evidence is not claimed as a current pass.
+- Source file-list comparison against preserved checkpoint — passed; all and only the 60 allowed import files are present.
+- Initial source blob comparison — passed, 60/60 exact before deliberate corrections.
+- Post-review comparison — exactly seven explained differences and no unexplained mismatch.
+- Lock-file JSON structure check — passed for every committed `packages.lock.json`.
+- Static forbidden-surface search — passed: production source contains no HTTP/socket/network client, process spawning, real WGC/screen/window capture, native interop, filesystem/data-root access, SQLite, `MemoryStore`, or `SessionJournal` implementation.
+- Manual `--test-mode` review — scenarios are limited to ready, multiwindow, shutdown, and bounded second-process hold mechanics; they do not start capture, access persistence, use a network, change identity authority, or bypass the pre-runtime mutex guard.
+- Staged candidate checks — passed: `git diff --cached --check`, one active task, 64-file allowed-scope list (60 adopted product/build/test files plus four control records), and no out-of-scope path.
+- Local build/tests — not run because this Linux environment has neither the pinned .NET SDK nor PowerShell and cannot run WPF equivalently.
+- Fresh Windows CI — pending on the exact draft PR candidate; historical 58/58 is not claimed as current evidence. Two added facts make the expected minimum 60 passing tests.
 
 ## Remaining
 
-Nothing remains in R0. Task 1 itself remains unmerged and unaccepted and will begin only from a new active adoption packet after PR #4 merges.
+- Stage and review the complete current-base diff.
+- Publish the draft PR and require its locked restore, Release build, and full Windows/WPF test run.
+- Resolve Deferred Finding D1 before accepting the Paw Gate: Roadmap Stage 1 still requires checkpoint/thread/message behaviors that conflict with the accepted, more specific Task 1/Task 2/Task 9 boundaries.
 
 ## Risks and assumptions
 
-- The old `docs/Shared-Codebase-Workflow.md` retains obsolete wording for historical intelligibility; its first paragraph explicitly removes all operative authority.
-- “Whole thing is done” is represented by a conservative explicit launch manifest rather than every imaginable future extension. This Personal Round Judgment is recorded in the active packet and can be revised any time before Stage 14 acceptance.
-- Windows/WPF test evidence cannot be recreated in the local non-Windows review environment; the Task 1 adoption gate therefore requires fresh Windows CI on its exact candidate.
+- The shipping app contains an explicit `--test-mode` harness. It is a minor local denial-of-service surface (`hold`) but is inert with respect to private data, capture, persistence, network, identity creation order, and memory authority. Removing or compile-gating it would reduce integration-test fidelity and is not currently recommended.
+- `SingleInstanceGuard` is intentionally acquired and disposed on the WPF UI thread because Windows mutex ownership is thread-affine.
+- CI is the execution oracle for WPF and Windows named-mutex behavior; no local Linux result is represented as equivalent.
+- D1 is an actual specification conflict and cannot be resolved through Personal Round Judgment under the accepted R0 stop rules.
 
 ## Review focus
 
-- Verify the one-time awakening boundary is identical across AGENTS, workflow, roadmap, BunDex, architecture amendment, packet, and ledger.
-- Verify autonomous progression cannot cross credentials/live paid API, architecture, privacy, identity/authority, destructive, or production-data boundaries.
-- Verify no product file entered R0 and no historical Task 1 result was converted into acceptance.
+- Composition-root ordering: mutex acquisition precedes runtime/subsystem construction.
+- One-shot `CompanionRuntime` authority and multi-window sharing.
+- Disposal/cancellation terminality and mutex release correctness.
+- Neutral §6.2.1 mapping and absence of character/personality behavior.
+- Synthetic-only capture boundary and absence of network/production-root code.
+- Exact CI result and D1's user-directed resolution before gate acceptance.
 
 ## Repository state
 
-- Branch: `agent/reentry-docs`, based on accepted `main` at `b937cce504058c863b0ab3dfc037e1cf4e0227b4`.
-- Reviewed remote candidate: PR #4 head `99b48124894d431060952ecaecb83900af7f0106`; exact tree `bfb3bcefe16f41535f8043a199a368f84f7cf4c3`.
-- Candidate and acceptance record are documentation/control only; the local worktree was clean before this bounded gate-record update.
+- Local branch: `agent/task-01-skeleton-local`; intended remote branch: `agent/task-01-skeleton`.
+- Base: `74e68218ffa7ef7680701c03971916278535c16c`.
+- Worktree will be committed and published after the staged diff check.
 
 ## Next safe task
 
-After R0 passes and merges: create Task 1's direct adoption packet, adopt the preserved implementation on `agent/task-01-skeleton`, inspect the exact current-base diff (including the inert `--test-mode` surface), and require fresh Windows build/test evidence before accepting it.
+Publish and verify Task 1 only. Do not begin Task 2 until fresh Windows CI passes, the full diff is accepted, D1 is resolved, and the Task 1 gate is recorded.
 
 ## Credit status
 
