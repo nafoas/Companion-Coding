@@ -151,6 +151,18 @@ Development, tests, and the recognized future production root use different fixe
 
 Per-field bounds can combine into an operation larger than the journal's 16 MiB frame ceiling. Canonical validation now rejects that aggregate size before entering the durable writer. The journal also builds and bounds a complete frame before marking itself faulted-on-failure, so an oversized proposal writes no bytes and does not poison the live repository. A focused negative test confirms that a valid append can immediately follow an oversized rejection.
 
+### J6 — Cross-check journal checkpoints against the SQLite authority
+
+A checksummed checkpoint is structurally valid journal data, but it cannot be allowed to declare an append committed when SQLite has no corresponding committed sequence. Startup recovery now compares the journal's confirmed cut with SQLite's maximum committed journal sequence and fails closed if the checkpoint advances beyond the one committed authority. A regression test constructs that exact crash/corruption state and proves no data is silently accepted. Task 3 may replace this with a deeper validated repair diagnosis, but may not weaken the fail-closed invariant.
+
+### J7 — Reject duplicate metadata property names before canonicalization
+
+JSON permits parsers to expose repeated object-property names, while sorting those names into a canonical checksum envelope would leave their semantic interpretation ambiguous. Validation now recursively rejects duplicate property names with ordinal comparison before any journal write. The existing malformed-input test proves the proposal leaves no durable trace. A later schema may define a different unambiguous policy before production, but Task 2 does not silently choose first- or last-property semantics.
+
+### J8 — Require recovery before writing past an unconfirmed live tail
+
+If the journal append becomes durable and the following SQLite commit fails, accepting a later live append could checkpoint beyond the unresolved operation and hide it from startup replay. The serial coordinator now refuses every later submission while `ConfirmedThrough` differs from the highest append sequence; closing and reopening performs the normal idempotent recovery before writes resume. A focused test proves the later proposal cannot cross the tail, then proves reopen recovers the stranded operation and permits the later append. This can be revised only by a future in-process recovery state machine that proves the same no-skip property.
+
 ## Deferred Findings
 
 - Journal rotation and bounded archive cuts remain Task 3; until then the development/test journal grows append-only.
