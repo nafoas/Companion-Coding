@@ -132,6 +132,25 @@ public sealed class MemoryRecoveryTests
     }
 
     [Fact]
+    public async Task CheckpointBeyondCommittedStore_FailsClosed()
+    {
+        using var directory = new MemoryTestDirectory();
+        await using (var repository = await directory.OpenRepositoryAsync())
+        {
+            var prepared = MemoryProposalValidator.Prepare(
+                SyntheticMemory.Proposal(SyntheticMemory.Record()));
+            var sequence = await repository.Journal.AppendOperationAsync(
+                prepared.CanonicalPayload,
+                default);
+            await repository.Journal.AppendCheckpointAsync(sequence, default);
+            Assert.Equal((0L, 0L, 0L), await repository.Store.ReadCountsAsync(default));
+        }
+
+        await Assert.ThrowsAsync<MemoryIntegrityException>(() =>
+            MemoryRepository.OpenAsync(directory.Location));
+    }
+
+    [Fact]
     public async Task CancellationBeforeDurableAppend_WritesNothing()
     {
         using var directory = new MemoryTestDirectory();

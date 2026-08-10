@@ -81,6 +81,12 @@ internal sealed class MemoryCommitCoordinator : IDisposable
             ThrowIfDisposed();
             var maximumDatabaseSequence = await _store.ReadMaximumJournalSequenceAsync(cancellationToken)
                 .ConfigureAwait(false);
+            if (_journal.ConfirmedThrough > maximumDatabaseSequence)
+            {
+                throw new MemoryIntegrityException(
+                    "The journal checkpoint advances beyond the committed SQLite authority.");
+            }
+
             if (maximumDatabaseSequence > _journal.HighestAppendSequence)
             {
                 throw new MemoryIntegrityException(
