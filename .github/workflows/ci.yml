@@ -17,21 +17,6 @@ jobs:
         with:
           global-json-file: global.json
 
-      # Temporary, deliberately failing bootstrap step. It prints the exact lock files
-      # generated on the pinned Windows/.NET toolchain. The next commit consumes those
-      # files and removes this step before any Task 2 candidate can pass CI.
-      - name: Generate Task 2 lock preview (temporary gate)
-        shell: pwsh
-        run: |
-          dotnet restore tests/CompanionCore.Memory.Tests/CompanionCore.Memory.Tests.csproj --force-evaluate
-          Write-Output "TASK2_MEMORY_LOCK_BEGIN"
-          Get-Content src/CompanionCore.Memory/packages.lock.json
-          Write-Output "TASK2_MEMORY_LOCK_END"
-          Write-Output "TASK2_TEST_LOCK_BEGIN"
-          Get-Content tests/CompanionCore.Memory.Tests/packages.lock.json
-          Write-Output "TASK2_TEST_LOCK_END"
-          throw "Task 2 lock preview generated; commit the exact files and remove this temporary step."
-
       - name: Restore (locked mode)
         run: dotnet restore CompanionCore.slnx --locked-mode
 
