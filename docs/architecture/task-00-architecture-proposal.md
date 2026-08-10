@@ -1,5 +1,7 @@
 # Task 0 — Architecture Proposal
 
+> **Continuity amendment (2026-08-10):** the core architecture below remains accepted. References that formerly coupled personality installation to Companion Awakening are amended to the current roadmap: Prince's adapter is installed and tested on resettable Builder Prince in Stage 13, launch readiness is proven in Stage 14, and permanent Companion Prince awakens once in Stage 15 with a clean BunDex. This timing change does not alter the neutral-core module contracts.
+
 Status: revision 5, addressing the PR #1 re-review of revision 4 (commit `0d7fca6275e3354cc7826694fa988d7c0e1033f7`), which called it one final contract definition short of approval. No product code accompanies this document.
 
 Reviewed documents: `AGENTS.md`, `docs/Claude-Companion-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `BUILD_LEDGER.md`, `tasks/review/FOREMAN_REVIEW.md`, PR #1 review comments.
@@ -120,13 +122,13 @@ The prior revision proposed an in-process background task for `CaptureWorker`. T
 The prior revision's diagram implied `PresentationAdapter` "never receives character-voice text," which is backwards: the eventual presentation layer must display personality-produced content, so the correct boundary is that *generation* stays out of UI infrastructure, not that the UI is blind to it. Two separate contracts replace the single `PresentationAdapter`:
 
 - **`IPresentationSink`** — the UI-facing contract. Renders opaque strings/labels, status text, and typed expression intents (`observing`, `investigating`, `urgent`, `taking_note`, `privacy_paused`, `recovering`, …). It does not interpret, generate, or filter content; it displays whatever it's handed.
-- **`IPersonalityAdapter`** — the content-producing contract, installed at the Stage 13 Companion Awakening boundary. During all neutral-core stages, `NeutralPersonalityAdapter : IPersonalityAdapter` is the only implementation wired in. It deterministically maps typed semantic events/context to placeholder opaque content plus expression intents — it may pass expression intents through unchanged, but it does not pass its typed input straight to `IPresentationSink`, because `IPersonalityAdapter`'s input contract (typed events/context) and `IPresentationSink`'s input contract (opaque content/intents) are intentionally different types, not the same shape wearing two names. Core services (`AttentionEngine`, `ConversationCoordinator`, etc.) only ever emit typed semantic events and structured content to this seam — never character-specific literals — so swapping `NeutralPersonalityAdapter` for Prince's real `IPersonalityAdapter` implementation later is a Stage 13 configuration change, not a core rewrite, and Task 1 has exactly one presentation abstraction to scaffold, not two conflated ones.
+- **`IPersonalityAdapter`** — the content-producing contract, installed on resettable Builder Prince during the Stage 13 personality phase. During all neutral-core stages, `NeutralPersonalityAdapter : IPersonalityAdapter` is the only implementation wired in. It deterministically maps typed semantic events/context to placeholder opaque content plus expression intents — it may pass expression intents through unchanged, but it does not pass its typed input straight to `IPresentationSink`, because `IPersonalityAdapter`'s input contract (typed events/context) and `IPresentationSink`'s input contract (opaque content/intents) are intentionally different types, not the same shape wearing two names. Core services (`AttentionEngine`, `ConversationCoordinator`, etc.) only ever emit typed semantic events and structured content to this seam — never character-specific literals — so swapping `NeutralPersonalityAdapter` for Prince's real `IPersonalityAdapter` implementation later is a Stage 13 Builder configuration change, not a core rewrite or Companion Awakening, and Task 1 has exactly one presentation abstraction to scaffold, not two conflated ones.
 
 #### 6.2.1 `NeutralPersonalityAdapter`'s deterministic mapping for Task 1 (added — normative, implementable directly)
 
 Task 1 only produces `CompanionRuntime`'s four lifecycle states (start, nap, wake, stop) plus whatever the runtime hasn't recognized. `NeutralPersonalityAdapter`'s mapping for these is a pure function of `(lifecycleEvent, context) → (contentKey, expressionIntent)` — table-driven, no randomness, no clock-dependent variation, and total (every input has a defined output, including inputs the table doesn't otherwise name). Later tasks add rows for attention/conversation events (`observing`, `investigating`, `urgent`, `taking_note`, `privacy_paused`); this table is Task 1's complete scope, not the full eventual vocabulary.
 
-| Lifecycle event | Content key (stable identifier; string is placeholder-neutral and swappable at Stage 13) | Expression intent | Context fields consulted | Notes |
+| Lifecycle event | Content key (stable identifier; string is placeholder-neutral and swappable on Builder Prince at Stage 13) | Expression intent | Context fields consulted | Notes |
 |---|---|---|---|---|
 | `start`, first run (no prior checkpoint) | `lifecycle.started` | none | `hadRecoveredCheckpoint = false` | Baseline cold start. |
 | `start`, checkpoint recovered | `lifecycle.recovering` | `recovering` | `hadRecoveredCheckpoint = true` | Same `start` event, routed to a different row by the one context field that distinguishes cold start from restart-with-recovery — this is the mapping's only branch, and it's on a boolean, not open-ended state. |
@@ -199,7 +201,7 @@ review comment corrected):
               ▼
        IPersonalityAdapter   NeutralPersonalityAdapter is the only implementation
               │               wired in during core stages; Prince's real adapter
-              │               is installed at Stage 13. It deterministically maps
+              │               is installed on Builder Prince at Stage 13. It maps
               │               typed input to placeholder opaque content, and may
               │               pass expression intents through unchanged — it does
               │               not pass its typed input straight to IPresentationSink,
@@ -222,7 +224,7 @@ migration resolve MaintenanceStore, gated on normal runtime writes being stopped
 Dependency rules this is meant to enforce structurally, not just by convention:
 
 - `AttentionEngine`/`ConversationCoordinator` depend only on `IPersonalityAdapter`'s typed-event input contract, never on capture, memory, or API internals.
-- `IPersonalityAdapter` is the only place typed events become content/phrasing; `NeutralPersonalityAdapter` is the only implementation wired in during core stages, and it deterministically maps typed input to placeholder opaque content (not a literal passthrough of the typed input itself — `IPersonalityAdapter` and `IPresentationSink` have different input/output types by design). Swapping it for Prince's real adapter at Stage 13 is a configuration change, not a core rewrite.
+- `IPersonalityAdapter` is the only place typed events become content/phrasing; `NeutralPersonalityAdapter` is the only implementation wired in during core stages, and it deterministically maps typed input to placeholder opaque content (not a literal passthrough of the typed input itself — `IPersonalityAdapter` and `IPresentationSink` have different input/output types by design). Swapping it for Prince's real adapter on Builder Prince at Stage 13 is a configuration change, not a core rewrite or production awakening.
 - `IPresentationSink` depends only on `IPersonalityAdapter`'s output (opaque content/intents) — it cannot reach `AttentionEngine`, `ConversationCoordinator`, capture, memory, or API internals directly, and it does not itself interpret or generate anything.
 - `ApiBridge` never holds a direct reference to `MemoryStore`; it only produces proposals `LocalWriteGate` accepts or rejects, so "API output can't bypass the write gate" is structural.
 - `ApiBridge` and `ISemanticProvider` implementations have no reference to `MaintenanceStore` — the maintenance/offline write path is unreachable from anywhere API-facing, by construction.
@@ -265,7 +267,7 @@ CompanionCore.sln
 
 - **Build/test**: xUnit, `dotnet build` / `dotnet test` on the pinned .NET 10 LTS SDK, GitHub Actions `windows-latest` runner on every push to the working branch. Business-logic tests (`AttentionEngine`, `ConversationCoordinator`, `MemoryStore`, `LocalWriteGate`, `ApiBridge` against Mock/Replay) require no capture, network, or credentials, satisfying "no automated test may require paid API access."
 - **Capture-layer tests**: through Task 4, `CaptureWorker`/`VisualPipeline` are tested entirely against the in-process `ICaptureWorker` fake (§6.1, §9) with synthetic fixtures — no real capture, no separate process, in CI at this stage. From Task 5 onward, the same contract is exercised against the real out-of-process worker in integration tests; real-WGC-against-a-real-window verification stays manual/nightly rather than a PR gate, since it's fragile headlessly.
-- **Local script**: `scripts/test.ps1` wraps the same `dotnet test` invocation CI runs, so a human or the foreman can reproduce results locally.
+- **Local script**: `scripts/test.ps1` wraps the same `dotnet test` invocation CI runs, so a human or the Paw Gate reviewer can reproduce results locally.
 - **Packaging**: none required at this stage (explicitly out of scope per non-goals). `dotnet publish -r win-x64 --self-contained` is sufficient for a runnable artifact when a human wants to try the skeleton; no installer/updater.
 - **Windows version target**: Windows 10 1903 (build 18362)+, the documented minimum for `IGraphicsCaptureItemInterop::CreateForWindow`. Minimized-window and exclusive-fullscreen support are treated as unproven until the §12 spike, per §4 — not assumed available on any particular later build.
 
@@ -306,7 +308,7 @@ CompanionCore.sln
 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12
 ```
 
-This is the only order in which tasks may begin. Each arrow means "the foreman has gated the task on the left before the task on the right may start" — not "the task on the right needs code from the task on the left," which is a separate question addressed in §13.2. No task in this sequence is ever authorized out of order, including when a later task's code has no dependency on an intervening one (e.g. Task 4 does not need Task 3's backup code, but Task 4 still may not start until Task 3 is gated, because the packet permits at most one task in progress at a time).
+This is the only order in which tasks may begin. Each arrow means "the task on the left has passed and been recorded at its Paw Gate before the task on the right may start" — not "the task on the right needs code from the task on the left," which is a separate question addressed in §13.2. No task in this sequence is ever authorized out of order, including when a later task's code has no dependency on an intervening one (e.g. Task 4 does not need Task 3's backup code, but Task 4 still may not start until Task 3 is gated, because the packet permits at most one task in progress at a time).
 
 ### 13.2 Logical dependency reference (non-authoritative)
 
@@ -338,7 +340,7 @@ Task 2 and Task 4 have no code-level mutual dependency — Task 4 is sequenced a
 - **Consent and target isolation**: capture is opt-in per target, tab/foreground changes never retarget, browsers are denied by default, the privacy hotkey is stop-only with mandatory explicit resume.
 - **Screenshot/resource lifetime**: raw frames are RAM-only, ring-bounded, deterministically disposed; no durable screenshot storage in the core.
 - **Failure behavior**: journaling, checkpointing, idempotent retries required from Task 2 onward, not deferred to hardening.
-- **Non-goals**: no character voice/personality, final art/animation, audio/mic capture, multi-monitor support beyond a single-monitor guard, game-specific mods, unapproved browser-tab capture, distribution/updater/sync, cloud memory, model auto-switching, or pre-profiling numeric tuning — at any point before the Task 12/Stage 12 gate, and not even then, since that gate explicitly stops before personality/UI work (Stage 13 is a separate, later approval).
+- **Non-goals**: no character voice/personality, final art/animation, audio/mic capture, multi-monitor support beyond a single-monitor guard, game-specific mods, unapproved browser-tab capture, distribution/updater/sync, cloud memory, model auto-switching, or pre-profiling numeric tuning — at any point before the Task 12/Stage 12 gate, and not even then, since that gate explicitly stops before personality/UI work (Stage 13 is a separate Builder phase; Companion Awakening is later still).
 
 ## 15. Decisions (revised per R10 — resolved, not open)
 

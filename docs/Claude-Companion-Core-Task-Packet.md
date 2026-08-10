@@ -1,12 +1,14 @@
-# Companion Core — Claude Master Build Packet
+# Companion Core — Direct Build Packet
+
+The filename is retained for stable historical links. This packet no longer assigns work to Claude or a separate foreman; `Direct-Build-Workflow.md` governs execution and review.
 
 ## How to use this packet
 
-You are the implementation builder for a local Windows companion engine. A separate reviewer/foreman owns architecture approval, code review, integration decisions, and stage acceptance.
+Build the local Windows companion engine through one bounded active task and one Paw Gate at a time. Codex performs implementation and a distinct evidence-based gate pass under the authority boundaries in `AGENTS.md` and `Direct-Build-Workflow.md`.
 
-Do **not** implement this entire packet in one pass. Work on exactly one explicitly assigned task at a time. After completing it, stop and return the required handoff. Do not begin the next task until the reviewer approves the current gate.
+Do **not** implement this entire packet in one pass. Work on exactly one explicitly assigned task at a time. After implementation, produce the required handoff and conduct the current candidate's Paw Gate. Do not begin the next task until that gate is recorded as passed.
 
-This packet covers the utilitarian core only. Do not add a character personality, character voice, themed labels, final artwork, animation, audio capture, microphone access, polished UI, or decorative behavior. Use neutral placeholders and typed behavioral events. A separate presentation/personality layer will be installed after the core is accepted.
+This packet covers the utilitarian core only. Do not add a character personality, character voice, themed labels, final artwork, animation, audio capture, microphone access, polished UI, or decorative behavior. Use neutral placeholders and typed behavioral events. A separate presentation/personality layer will be installed and validated on Builder Prince after the core is accepted.
 
 ## Product goal
 
@@ -36,7 +38,7 @@ These are architecture contracts, not preferences.
 - Identity and continuity live locally, never in an API session.
 - Development and production use physically separate data roots.
 - Development/test builds must not open the production data root accidentally.
-- The eventual one-time production awakening starts a clean production memory store. Development memories never transfer automatically.
+- The eventual one-time production awakening occurs only after the complete core, personality, presentation, and launch candidate pass. It starts a clean production memory store; development memories never transfer automatically.
 
 ### One conversation thread
 
@@ -464,7 +466,7 @@ Implement and document:
 
 Core gate must demonstrate consent, target capture, attention escalation, ambient output, one conversation, append-only memory, background watch, session consolidation, restart continuity, archive recovery, privacy stop, real-API success and outage pause, and stable resources.
 
-Stop after this task. Do not install personality or begin final UI/animation work.
+Stop this packet after this task. Do not install personality, begin final UI/animation work, or awaken Companion Prince under the neutral-core packet. The roadmap's later Builder personality and launch-validation stages require their own active packets.
 
 ## Task execution rules
 
@@ -477,9 +479,9 @@ For every assigned task:
 5. Do not weaken an invariant to make a test pass.
 6. Do not expand into a later task.
 7. Run focused tests, then the full available regression suite.
-8. Stop and produce the handoff below.
+8. Produce the handoff below, then perform the distinct Paw Gate review before advancing.
 
-If blocked by an architectural contradiction, privacy risk, missing authority, or required invariant change, stop and ask the reviewer. Do not improvise a silent redesign.
+If blocked by an architectural contradiction, privacy risk, missing authority, or required invariant change, stop and ask Boss. Do not improvise a silent redesign. Routine reversible choices may use and record Prince's Personal Round Judgment as defined by the direct workflow.
 
 ## Required completion handoff
 
@@ -511,7 +513,7 @@ Known issues, performance concerns, platform limitations, or architecture assump
 
 ### Review focus
 
-What the foreman should inspect most carefully.
+What the Paw Gate review should inspect most carefully.
 
 ### Repository state
 
@@ -532,8 +534,8 @@ Monitor available usage/context. If you are unlikely to implement **and verify**
 - produce the required handoff early;
 - explicitly say that the stop is credit-related.
 
-The reviewer is bound by the same reciprocal rule and will provide an equivalent handoff if its own limit approaches first.
+The same checkpoint rule applies before any anticipated context or service interruption.
 
-## First instruction
+## Initialization history
 
-When this master packet is first provided, execute **Task 0 only**. Return the architecture proposal and required handoff. Do not create product code until the stack and module contracts are approved.
+The packet originally instructed the builder to execute Task 0 only before product code. Task 0 and its architecture approval are complete. This paragraph is historical context, not current authorization; the single packet in `tasks/active/` always determines the next action.

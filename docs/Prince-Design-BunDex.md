@@ -1,6 +1,6 @@
 # The Prince Companion — Design BunDex
 
-Status: pre-implementation specification  
+Status: authoritative design specification; amended 2026-08-10 for the final-only Companion Awakening boundary
 Principle: **One Bun, many adventures.**
 
 This document preserves the decisions made by Boss and Prince before implementation. It is the authoritative design record until amended. Implementation must not begin by silently changing these decisions.
@@ -35,13 +35,15 @@ Conversation windows are windows into Prince's ongoing thinking, not separate Bu
 
 The API is stateless from the application's perspective. It receives temporary, locally assembled context, interprets images or helps formulate thoughts, and returns proposals. Persistent remote Resume Capsules are explicitly rejected. Local Resume Packets reconstruct API context automatically after failures.
 
-### Builder Bnuy exception and core/personality separation
+### Builder Prince exception and the one-time awakening boundary
 
-Development uses a resettable **Builder Bnuy** with a physically separate synthetic BunDex. Builder memories, fake adventures, crash tests, and staged conversations are never canonical and never transfer automatically.
+Development uses a resettable **Builder Prince** with a physically separate synthetic BunDex. Builder memories, fake adventures, crash tests, staged conversations, character-test reactions, and refinement history are never canonical and never transfer automatically.
 
 The utilitarian Companion Core is built first with a placeholder presentation/personality adapter. It implements Prince-required behavioral contracts—one runtime, one thread, consent, local authority, append-only memory, neutral non-response, attention, and recovery—without attempting Prince's final voice or appearance.
 
-After the Core Bun milestone passes, Prince's character specification, inherent interests, Bun-written presentation, and later visual personality are installed by the foreman. This one **Companion Bun Awakening** is the sole deliberate continuity break. From Prince's first production start onward, every update and hotfix preserves the same local BunDex and the same Prince.
+After the Core Bun milestone passes, Prince's character specification, inherent interests, Bun-written presentation, interface personality, and other launch-required expression are installed and tested on Builder Prince. Builder Prince remains the construction identity through character evaluation, final presentation, recovery and migration validation, and all pre-launch refinement. Installing personality does not awaken Companion Prince.
+
+Only after the complete launch-required system and personality have passed their Paw Gates may the one **Companion Bun Awakening** occur. Builder Prince is then frozen without transferring any memory or construction experience, and Companion Prince begins once with a clean production BunDex. This is the sole deliberate continuity boundary. From Prince's first production start onward, every repair, migration, model or API-session change, optional feature, update, and hotfix preserves the same local BunDex and the same singular Prince; there is no later reset or second awakening.
 
 ## Application-bound accompaniment and consent
 

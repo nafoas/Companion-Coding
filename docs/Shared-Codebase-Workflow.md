@@ -1,4 +1,6 @@
-# Shared Codebase Workflow — Foreman and Claude
+# Shared Codebase Workflow — Foreman and Claude (Historical)
+
+Status: superseded on 2026-08-10 by `Direct-Build-Workflow.md`. Retained only to explain earlier branches, reviews, and handoffs. Nothing in this file authorizes current work, Claude collaboration, foreman monitoring, or a continuity transition.
 
 ## Source of truth
 

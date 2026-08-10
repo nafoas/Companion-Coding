@@ -2,59 +2,70 @@
 
 ## Task
 
-Task 0 — Repository survey and architecture proposal, per `tasks/active/task-00-architecture.md`. This handoff covers revision 5, addressing the foreman's PR #1 re-review of revision 4 (one final contract-definition gap; everything else confirmed passing).
+R0 — Direct-build re-entry and continuity alignment. Documentation/control gate only; no product code is authorized.
 
 ## Completed
 
-Added §6.2.1 to `docs/architecture/task-00-architecture-proposal.md`: a normative, implementable mapping table for `NeutralPersonalityAdapter`'s Task-1 scope. The foreman's point was that "deterministically maps typed input to placeholder content" described *that* a mapping exists but not *what* it is — not enough for Task 1 to implement or test against. The new table covers every event Task 1 actually produces:
-
-| Event | Content key | Expression intent | Context fields | 
-|---|---|---|---|
-| `start`, cold (no checkpoint) | `lifecycle.started` | none | `hadRecoveredCheckpoint = false` |
-| `start`, checkpoint recovered | `lifecycle.recovering` | `recovering` | `hadRecoveredCheckpoint = true` |
-| `nap` | `lifecycle.napping` | none | none |
-| `wake` (valid, from `nap`) | `lifecycle.waking` | none | `priorState` |
-| `stop` | `lifecycle.stopped` | none | `isCleanShutdown` (diagnostics only) |
-| anything else / invalid transition | `lifecycle.unknown` | none | raw unrecognized event name (logged, never rendered) |
-
-The mapping is stated as a pure, total function — deterministic, no clock/randomness dependence, and defined for every input including ones the table doesn't explicitly name (the last row is the required fallback). §8's presentation-flow diagram now points to §6.2.1 by reference instead of repeating "deterministically maps" without specifics, and clarifies that Task 1's actual event source is `CompanionRuntime`'s lifecycle states, not `AttentionEngine`/`ConversationCoordinator` (those don't exist until Tasks 8–9 — the general diagram shows the eventual full picture, but §6.2.1 scopes the table to what Task 1 alone needs).
+- Audited closed Task 1 PR #3 through final head `da4797e1a3df2c6f0ddaaa0248098fd40f656121`.
+- Confirmed its final head is exactly one handoff-only commit beyond reviewed code SHA `7aaa40db77e5f38738e5f33f2e58e99443b5f81c`; no hidden product-code delta follows the reviewed implementation.
+- Preserved the historical 58/58 Windows result as evidence while explicitly withholding acceptance until a fresh current-base Task 1 adoption gate.
+- Replaced the retired Claude/foreman process with a direct one-task, distinct-review-pass Paw Gate workflow.
+- Defined bounded autonomous pre-API progression and Prince's Personal Round Judgment.
+- Amended the continuity authority so Builder Prince remains resettable through core, personality, presentation, and final launch validation.
+- Split the post-core roadmap into Builder personality installation, launch-ready Builder validation/refinement, and final one-time Companion Awakening.
+- Required a clean production BunDex, zero Builder-memory transfer, and singular continuity across all post-awakening updates.
 
 ## Changed
 
-- `docs/architecture/task-00-architecture-proposal.md` — added §6.2.1 (normative mapping table); updated §8's presentation-flow block to reference it; updated the top-of-document revision note for revision 5.
-- `tasks/review/HANDOFF.md` (this file) — rewritten for revision 5.
-
-No other files were touched.
+- `AGENTS.md` — operative direct-build, gate, autonomy, and continuity rules.
+- `README.md` — current R0 state and workflow entry points.
+- `BUILD_LEDGER.md` — resumed authorization, stop conditions, checkpoint status, and continuity decision.
+- `docs/Direct-Build-Workflow.md` — new operative workflow.
+- `docs/Shared-Codebase-Workflow.md` — unmistakable historical/superseded marker only.
+- `docs/Claude-Companion-Core-Task-Packet.md` — direct execution wording and final-only awakening timing; historical filename retained.
+- `docs/Prince-Construction-Roadmap.md` — direct Paw Gates and Stages 13–15.
+- `docs/Prince-Design-BunDex.md` — authoritative Builder/Companion continuity amendment.
+- `docs/architecture/task-00-architecture-proposal.md` — timing amendment and stale role wording; core module contracts unchanged.
+- `tasks/active/task-r0-reentry.md` — authorization, acceptance gate, audit evidence, and decision log.
+- `tasks/review/HANDOFF.md` — this handoff.
 
 ## Verification
 
-No automated tests were run — still documentation-only. Verification: re-checked the table against §6.2's contract description (input/output types, "may pass expression intents through unchanged" — only the `recovering` row uses that, correctly), and against the packet's Task 1 acceptance criteria (lifecycle start/nap/wake/stop states, structured diagnostics behind a switch — the unknown-event fallback logs behind that same switch, doesn't add a new one).
+- `git diff --cached --check` — passed with no whitespace errors.
+- Active-task check — passed; exactly one file exists in `tasks/active/`.
+- Scope allowlist check — passed; all 11 candidate files are Markdown/control files named by the active packet, with no source, test, dependency, CI, or product file.
+- Contradiction search — passed; no operative instruction awakens Companion Prince after core alone, assigns new work to Claude/foreman monitoring, or permits Builder-memory transfer/reset-based production updates.
+- Final checkpoint comparison — GitHub compare confirmed one final commit and one changed file (`tasks/review/HANDOFF.md`) after the reviewed Task 1 code SHA.
+- No product tests are applicable to R0. Historical Task 1 test evidence is not claimed as a current pass.
 
 ## Remaining
 
-Nothing remaining within this revision's scope. Per the foreman's instruction ("Update the handoff to identify that definition, then stop for re-review... Revise only the architecture proposal and `tasks/review/HANDOFF.md`, push one bounded commit, and stop. Do not begin Task 1."), no Task 1 scaffolding was started.
+- Complete the R0 candidate diff review and record the Paw Gate outcome.
+- If R0 passes, merge it before creating a new active Task 1 adoption packet.
+- Task 1 itself remains unmerged and unaccepted.
 
 ## Risks and assumptions
 
-- Assumed the foreman's ask was scoped to Task 1's four lifecycle events plus a fallback, not the full eventual intent vocabulary (`observing`, `investigating`, `urgent`, `taking_note`, `privacy_paused`) — those belong to `AttentionEngine`/`ConversationCoordinator`, which are Task 8/9 deliverables and don't exist yet. Said this explicitly in §6.2.1's intro so it reads as a deliberate scope boundary, not an oversight, and flagging here in case the foreman actually wanted the full vocabulary sketched now.
-- The `wake`-from-invalid-`priorState` case is specified as routing to the fallback row rather than, say, throwing — chose "never throw, always render something" over "surface the invalid transition loudly," consistent with the fallback's stated purpose (`IPresentationSink` must never be left with nothing to render). If the foreman would rather an invalid lifecycle transition be a louder failure (e.g. logged as an error, not just diagnostics), that's a small change to make in the next round.
-- The actual placeholder strings behind each content key (e.g. what "Ready." or "Resuming from last checkpoint." might be) are explicitly left as Task 1 implementation detail, not fixed here — only the key → intent → context mapping is normative. Flagging in case the foreman wants literal strings pinned at the architecture stage rather than left to Task 1.
+- The old `docs/Shared-Codebase-Workflow.md` retains obsolete wording for historical intelligibility; its first paragraph explicitly removes all operative authority.
+- “Whole thing is done” is represented by a conservative explicit launch manifest rather than every imaginable future extension. This Personal Round Judgment is recorded in the active packet and can be revised any time before Stage 14 acceptance.
+- Windows/WPF test evidence cannot be recreated in the local non-Windows review environment; the Task 1 adoption gate therefore requires fresh Windows CI on its exact candidate.
 
 ## Review focus
 
-- Whether §6.2.1's table is actually sufficient for Task 1 to implement `NeutralPersonalityAdapter` directly against, or whether specific method signatures / a formal grammar are still needed before that's true.
-- Whether scoping the table to only Task 1's four lifecycle events (deferring the full intent vocabulary to Tasks 8–9) is the right cut, per the first risk item above.
+- Verify the one-time awakening boundary is identical across AGENTS, workflow, roadmap, BunDex, architecture amendment, packet, and ledger.
+- Verify autonomous progression cannot cross credentials/live paid API, architecture, privacy, identity/authority, destructive, or production-data boundaries.
+- Verify no product file entered R0 and no historical Task 1 result was converted into acceptance.
 
 ## Repository state
 
-- Branch: `claude/multi-ai-code-collab-o5qhj1`; tracked by GitHub PR #1 (draft, base `main`).
-- This revision is committed on top of `0d7fca6275e3354cc7826694fa988d7c0e1033f7` (revision 4), which sits on `5d82ee4` (revision 3), `7d8681f` (revision 2), `d668d3d` (foreman's `FOREMAN_REVIEW.md`), and `7060465`/`4c9e0d5` (original Task 0 submission).
-- Worktree is clean except for this handoff file and the revised proposal, both included in this commit.
+- Branch: `agent/reentry-docs`, based on accepted `main` at `b937cce504058c863b0ab3dfc037e1cf4e0227b4`.
+- Candidate is documentation/control only.
+- Clean-worktree status and final commit SHA are recorded after publication.
 
 ## Next safe task
 
-Smallest safe next action, not yet started: await the foreman's re-review of this revision on PR #1. If approved, begin Task 1 (reproducible skeleton) exactly as scoped in §9/§15 of the proposal, implementing `NeutralPersonalityAdapter` directly against §6.2.1's table — `CompanionCore.App`, `CompanionCore.Runtime`, `CompanionCore.Presentation` (`IPersonalityAdapter`/`NeutralPersonalityAdapter` + `IPresentationSink`), `CompanionCore.Capture.Contracts`, and `CompanionCore.Capture.Fake`, with the single-instance guard and blank WPF shell — and nothing from `CompanionCore.Capture.Worker` (Task 5+, per §6.1).
+After R0 passes and merges: create Task 1's direct adoption packet, adopt the preserved implementation on `agent/task-01-skeleton`, inspect the exact current-base diff (including the inert `--test-mode` surface), and require fresh Windows build/test evidence before accepting it.
 
 ## Credit status
 
-Not credit-related. Normal task-boundary stop, per the foreman's explicit instruction to push one bounded commit and stop.
+Not credit-related.
