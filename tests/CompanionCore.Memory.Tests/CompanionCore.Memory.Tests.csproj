@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\CompanionCore.Memory\CompanionCore.Memory.csproj" />
+    <ProjectReference Include="..\..\src\CompanionCore.Privacy\CompanionCore.Privacy.csproj" />
   </ItemGroup>
 
 </Project>

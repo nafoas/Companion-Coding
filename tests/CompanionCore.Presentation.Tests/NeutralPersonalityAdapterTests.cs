@@ -1,5 +1,6 @@
 using CompanionCore.Presentation;
 using CompanionCore.Runtime;
+using CompanionCore.TargetAuth;
 
 namespace CompanionCore.Presentation.Tests;
 
@@ -130,5 +131,58 @@ public sealed class NeutralPersonalityAdapterTests
         var second = _adapter.Map(transition);
 
         Assert.Equal(first, second);
+    }
+
+    [Theory]
+    [InlineData(TargetSessionEventKind.DiscoveryReady, NeutralPersonalityAdapter.TargetDiscoveryReadyKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.DiscoveryBlocked, NeutralPersonalityAdapter.TargetDiscoveryBlockedKey, ExpressionIntent.PrivacyPaused)]
+    [InlineData(TargetSessionEventKind.DiscoveryFailed, NeutralPersonalityAdapter.TargetDiscoveryFailedKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.ConsentRequired, NeutralPersonalityAdapter.TargetConsentRequiredKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.Denied, NeutralPersonalityAdapter.TargetDeniedKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.StandingAuthorizationAvailable, NeutralPersonalityAdapter.StandingAuthorizationAvailableKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.AnotherTargetActive, NeutralPersonalityAdapter.AnotherTargetActiveKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.Authorized, NeutralPersonalityAdapter.TargetAuthorizedKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.PrivacyPaused, NeutralPersonalityAdapter.TargetPrivacyPausedNoTargetKey, ExpressionIntent.PrivacyPaused)]
+    [InlineData(TargetSessionEventKind.PrivacyResumed, NeutralPersonalityAdapter.TargetPrivacyResumedKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.Resumed, NeutralPersonalityAdapter.TargetResumedKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.TargetEnded, NeutralPersonalityAdapter.TargetEndedKey, ExpressionIntent.None)]
+    [InlineData(TargetSessionEventKind.TargetUnavailable, NeutralPersonalityAdapter.TargetUnavailableKey, ExpressionIntent.PrivacyPaused)]
+    [InlineData(TargetSessionEventKind.Failed, NeutralPersonalityAdapter.TargetFailedKey, ExpressionIntent.None)]
+    public void TargetEvent_MapsDeterministicallyToNeutralContent(
+        TargetSessionEventKind kind,
+        string expectedKey,
+        ExpressionIntent expectedIntent)
+    {
+        var targetEvent = new TargetSessionEvent(kind, Candidate: null);
+
+        var content = _adapter.Map(targetEvent);
+
+        Assert.Equal(expectedKey, content.ContentKey);
+        Assert.Equal(expectedIntent, content.Intent);
+    }
+
+    [Fact]
+    public void PrivacyPausedWithTarget_MapsToExactTargetContent()
+    {
+        var targetEvent = new TargetSessionEvent(
+            TargetSessionEventKind.PrivacyPaused,
+            TargetAuthTestCandidate.Create());
+
+        var content = _adapter.Map(targetEvent);
+
+        Assert.Equal(NeutralPersonalityAdapter.TargetPrivacyPausedKey, content.ContentKey);
+        Assert.Equal(targetEvent.Candidate?.NeutralDisplayLabel, content.NeutralDetail);
+    }
+
+    private static class TargetAuthTestCandidate
+    {
+        internal static TargetCandidate Create() =>
+            new(
+                new CompanionCore.Capture.Contracts.CaptureTargetIdentity(
+                    42,
+                    20,
+                    "synthetic-game.exe",
+                    new string('A', 64)),
+                ApplicationCategory.Other);
     }
 }

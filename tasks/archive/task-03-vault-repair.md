@@ -1,11 +1,11 @@
 # Task 3 — Atomic Backup and Repair
 
-Status: **Paw Gate passed; PR #7 merge pending**
+Status: **Accepted and squash-merged to `main` as `f685dd2023a5844309c5b5fb7d0abd1bf54406b9`**
 Authorized: 2026-08-10 under the accepted direct-build workflow and Boss-approved Stage 2 split
 Accepted remote base: `44caa2fc6474b0952eaed5f086bfb3c49bf73c18`
 Accepted base tree: `2423473e0a0fb915bf40c2554947f7166cd7d9f4`
 Working branch: `agent/task-03-vault-repair`
-Reviewed remote head: `d4d7bddb35ae1a2b8f3b2fdb47e28d74322ef83a`; exact tree `324874f5b7c2d274732ff82c91aa9631fa587b57`; Windows CI and the distinct code/invariant/diff Paw Gate passed
+Reviewed remote head: `d4d7bddb35ae1a2b8f3b2fdb47e28d74322ef83a`; exact tree `324874f5b7c2d274732ff82c91aa9631fa587b57`; Windows CI and the distinct code/invariant/diff Paw Gate passed. The unchanged gate-record descendant was squash-merged through PR #7 and independently rechecked after merge.
 
 ## Objective
 

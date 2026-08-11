@@ -99,14 +99,28 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "companioncore.capture.contracts": {
+        "type": "Project"
+      },
       "companioncore.presentation": {
         "type": "Project",
         "dependencies": {
-          "CompanionCore.Runtime": "[1.0.0, )"
+          "CompanionCore.Runtime": "[1.0.0, )",
+          "CompanionCore.TargetAuth": "[1.0.0, )"
         }
+      },
+      "companioncore.privacy": {
+        "type": "Project"
       },
       "companioncore.runtime": {
         "type": "Project"
+      },
+      "companioncore.targetauth": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Capture.Contracts": "[1.0.0, )",
+          "CompanionCore.Privacy": "[1.0.0, )"
+        }
       }
     }
   }

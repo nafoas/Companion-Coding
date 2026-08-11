@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0-windows7.0": {
+      "companioncore.capture.contracts": {
+        "type": "Project"
+      },
+      "companioncore.privacy": {
+        "type": "Project"
+      },
+      "companioncore.targetauth": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Capture.Contracts": "[1.0.0, )",
+          "CompanionCore.Privacy": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

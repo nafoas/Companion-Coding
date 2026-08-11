@@ -87,7 +87,7 @@ public sealed class MemoryStoreSchemaTests
         }
 
         var exception = await Assert.ThrowsAsync<UnsupportedMemorySchemaException>(() =>
-            MemoryRepository.OpenAsync(directory.Location));
+            MemoryRepository.OpenAsync(directory.Location, directory.PrivacyState));
 
         Assert.Equal(99, exception.ActualVersion);
         Assert.False(File.Exists(directory.Location.JournalPath));
@@ -119,7 +119,7 @@ public sealed class MemoryStoreSchemaTests
         }
 
         await Assert.ThrowsAsync<MemoryIntegrityException>(() =>
-            MemoryRepository.OpenAsync(directory.Location));
+            MemoryRepository.OpenAsync(directory.Location, directory.PrivacyState));
         Assert.False(File.Exists(directory.Location.JournalPath));
     }
 }

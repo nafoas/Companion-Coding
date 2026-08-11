@@ -2,77 +2,167 @@
 
 ## Task
 
-Task 3 — Atomic Backup and Repair. The distinct Paw Gate passed on PR #7 reviewed head `d4d7bdd`; gate-record publication, unchanged exact-head CI, and merge remain.
+Task 4 — Consent and Target Isolation. Implementation is locally complete on
+`agent/task-04-consent-target-isolation`; publication, exact Windows CI, and the
+distinct Paw Gate review remain pending.
 
 ## Completed
 
-- Recovered the exact credit-stop state and confirmed no Task 3 product edit had begun or been omitted before the stop.
-- Implemented a pinned exact journal/SQLite cut, released the serial writer before `SqliteConnection.BackupDatabase`, and independently health-validates both the snapshot and current source.
-- Implemented the fixed `backups-v1/memory-vault-v1.zip` archive with exactly one snapshot, one canonical versioned manifest, and one manifest-checksum entry; database length/SHA-256 live inside the manifest.
-- Implemented validate-before-promote atomic replacement and post-promotion journal rotation with a versioned checksummed rotation-base frame, retained post-cut appends, latest checkpoint, and old-or-complete-new replacement outcomes.
-- Serialized complete backup attempts so a delayed older cut cannot regress a newer archive while ordinary post-cut writes remain unblocked.
-- Implemented an assembly-internal repair authority/service behind the repository's cross-process exclusive lease; no public, automated, app, raw-path, or production maintenance surface exists.
-- Implemented exact damaged DB/WAL/SHM/journal preservation in unique immutable bundles, a checksummed repair-state marker, byte-exact rollback after any post-marker fault, and interrupted-repair rollback before new cancellation is honored.
-- Repair validates the archive and a durable copy of the live journal before mutation, retains every canonical contiguous post-cut append, tolerates only the production parser's one trailing tear/checksum failure, rejects non-trailing corruption, and reopens through ordinary Task 2 idempotent recovery.
-- Added 31 focused Task 3 cases covering cut exclusion, concurrent backup ordering, source/candidate/archive health, canonical ZIP structure, promotion/rotation fault sides, cancellation fences, open-repository rejection, immutable completed damaged evidence, post-cut replay, tamper/version/path attacks, interrupted repair, rollback, and repeated idempotency.
-- Completed the distinct code/invariant/diff review. It found and corrected one preservation-boundary mismatch, then combined exact published-tree confirmation with passing Windows evidence to close the Paw Gate.
-- Published PR #7 from the actual accepted remote `main`, reproduced the reviewed local tree exactly, corrected one Windows-only read-sharing mismatch in the test harness without weakening the production journal handle, and passed the complete rerun.
+- Added a platform-neutral privacy-generation authority. Privacy stop revokes first,
+  pauses new live-write/frame admission, waits already-admitted work to drain, and
+  requires explicit fresh-generation resume.
+- Added a platform-neutral target-authorization core with exactly four categories,
+  conservative built-in sensitive classifications, hard browser denial, one exact
+  active target, per-session consent, explicit standing policy, and final handle/PID/
+  executable-fingerprint revalidation.
+- Added a versioned, canonical, checksummed, size/entry-bounded development/test policy
+  file with same-directory atomic promotion. It stores only fingerprint, filename,
+  authorization category, and content policy; corruption/version/size/tamper failures
+  discard all stored authority while retaining built-in denial.
+- Added a Windows-only metadata adapter that enumerates visible, unowned, uncloaked,
+  non-tool top-level windows; excludes this process and unprovable identities; and
+  queries no titles, foreground identity, command lines, accessibility content,
+  thumbnails, pixels, or capture APIs.
+- Replaced targetless synthetic worker start/restart with an unforgeable sealed grant.
+  Grant issue/resume/revoke operations and the grant stored in results/session state
+  are non-public, so ordinary callers cannot bypass the controller clear fence.
+- Added exact session/generation/target metadata admission, live current-policy denial,
+  one-display checks, and the Privacy Guard seam. Standard sensitive/unavailable input
+  fails closed; trusted-game policy bypasses only content filtering.
+- Added revocation-first controller orchestration, bounded one-attempt cleanup retry,
+  late-frame rejection, target-work cancellation, explicit target end/replacement,
+  explicit no-target runtime resume with no capture authority, and serialized disposal.
+  Worker-start caller cancellation now revokes synchronously before an ignoring worker
+  can emit, and reports the resulting privacy-paused state visibly.
+- Routed shipping policy mutation through the serialized controller. Denying the active
+  executable now revokes/cancels/stops/clears before persistence, while a failed save
+  retains the prior policy and leaves the runtime safely paused.
+- Added `Ctrl+Shift+F12` registration and WPF message wiring. Registration collision,
+  missing HWND/source, unexpected native failure, exact message ownership, and
+  deterministic unregister behavior are typed/visible; the chord is stop-only.
+- Added display-change handling that stops active target work without auto-resume and
+  frame-time topology checks that fail closed before the message handler runs.
+- Extended the neutral WPF shell with title-free target discovery/selection, policy,
+  consent, stop, explicit resume, end-target, exact current-session status, separate
+  selection status, and hotkey availability. No themed/final presentation was added.
+- Added the shared privacy admission seam to `LocalWriteGate`; an already-admitted
+  append may finish and is drained, while new/stale-generation writes are rejected.
+- Added synthetic race/negative/public-surface tests for stop-versus-resume,
+  end-versus-authorization, cancellation, stale/reused targets, policy tamper/failure,
+  wrong target/session/generation, policy becoming denied, monitor changes, worker
+  faults, live-write drainage, bounded metadata, and hotkey failure paths.
 
 ## Changed
 
-- `src/CompanionCore.Memory/**` — backup format/writer/validator/service, pinned snapshot, full health checks, rotation-base journal support, repository/maintenance lease, preservation/marker/repair transaction, bounded internal test seams, and cleanup guards.
-- `tests/CompanionCore.Memory.Tests/MemoryBackupTests.cs` — 10 focused backup cases plus a read-only Windows-compatible live-journal inspection helper.
-- `tests/CompanionCore.Memory.Tests/MemoryRepairTests.cs` — 21 repair/tamper cases, counting nine theory rows.
-- `tasks/active/task-03-vault-repair.md` — local checkpoint and Personal Round Judgments J3–J8.
-- `BUILD_LEDGER.md`, `README.md`, and this handoff — exact Paw Gate evidence and merge-pending state.
+- `src/CompanionCore.Privacy/**` and `tests/CompanionCore.Privacy.Tests/**` — shared
+  generation/admission authority and fail-closed local content-policy seam.
+- `src/CompanionCore.TargetAuth/**` and `tests/CompanionCore.TargetAuth.Tests/**` —
+  policy storage, discovery/authorization contracts, one-target session authority,
+  controller, admission gate, and synthetic acceptance/race tests.
+- `src/CompanionCore.TargetAuth.Windows/**` — minimal Win32 discovery, display topology,
+  and global-hotkey adapters.
+- `src/CompanionCore.Capture.Contracts/**`, `src/CompanionCore.Capture.Fake/**`, and
+  capture tests — sealed target grant, exact metadata, stop-and-clear, bounded buffer.
+- `src/CompanionCore.Memory/**` and memory tests — only the shared live-write privacy
+  admission lease and tests; schemas, journal, backup, and repair protocols are unchanged.
+- `src/CompanionCore.Presentation/**`, `src/CompanionCore.App/**`, and corresponding
+  tests — neutral typed status, shell controls, shared composition, WPF hotkey/display
+  boundary. Existing single-instance/runtime behavior remains shared and unchanged.
+- `CompanionCore.slnx`, affected project files/locks, `README.md`, `BUILD_LEDGER.md`,
+  Task 4/archived Task 3 control records, and this handoff.
 
-No project, package, lock, CI, app, capture, API, conversation, presentation, personality, architecture, roadmap, Design BunDex, prior task, screenshot, credential, production-data, or production-opener file changed.
+No CI workflow, architecture, roadmap, Design BunDex, accepted archive/repair protocol,
+production root, credential, network/API, semantic, conversation, personality, real
+capture, screenshot, pixel buffer, animation, audio, or private fixture was added.
 
 ## Verification
 
-- Code checkpoint rebased onto accepted remote `main` — feature commit `cbc0b5c91c679a693e732b105acd09268d1c7f5c`, evidence-retention correction `d64d5b7e071ff6ba43b434d4635525fa8ecaeeac`, and test-sharing correction `aa013712586b6259fb4a6bdae13e44b45cd28a1c`; final local tree `324874f5b7c2d274732ff82c91aa9631fa587b57`; 30 source/test paths, 4,461 additions, 33 deletions.
-- Locked restore — passed locally with exact SDK 10.0.302: `dotnet restore CompanionCore.slnx --locked-mode -p:EnableWindowsTargeting=true -m:1`.
-- Release build — passed for all 11 projects with 0 warnings and 0 errors: `dotnet build CompanionCore.slnx --no-restore --configuration Release -p:EnableWindowsTargeting=true -m:1`.
-- Runnable regression/focused suite — 121/121 passed through a temporary in-process reflection runner because this sandbox denies VSTest's local communication socket. Breakdown: 90 accepted non-Windows regressions plus 31 Task 3 cases.
-- First Windows run — run `31426116921`, job `93578112002`: restore, audit, and build passed; 124/125 tests passed. The sole failure was test-only `File.ReadAllBytesAsync` using Windows-incompatible symmetric sharing while the legitimate journal writer remained open. No product protocol changed.
-- Passing Windows run — run `31426524602`, job `93579415434`, reviewed head `d4d7bddb35ae1a2b8f3b2fdb47e28d74322ef83a`: locked restore passed; the permanent direct/transitive vulnerability audit passed; Release build passed with 0 warnings/errors; all 125 tests passed (Runtime 26, Presentation 19, Capture 11, WPF integration 4, Memory 65).
-- Passing artifact — `9077431137`, digest `sha256:12d71a91407ba3855173c445916fccff3c0635c98b0175bf2351a89bed473583`; TRX counters independently inspected and total exactly 125 passed, 0 failed.
-- Dependency graph — no project or lock file changed. Exact Windows CI audited the accepted locked versions, including Microsoft.Data.Sqlite 10.0.10 and every SQLitePCLRaw component at 2.1.12, with no vulnerable direct or transitive package.
-- Local review — clean: the complete diff passes `git diff --check`, all product/test changes are confined to the two authorized memory trees, project/dependency/lock/CI files are unchanged, exactly one task is active, and synthetic fixtures contain no credentials, network/API, capture, personality, or private content.
-- Authority surface — clean: reflection verifies no exported backup/repair/maintenance type, no public backup/repair/raw-path/production capability, and no app/runtime/capture/presentation reference to repair.
-- Formatting tool — `dotnet format --verify-no-changes` could not connect to its sandbox-blocked named pipe. Normal and full-solution compilers report zero warnings; no formatter result is claimed.
+- Accepted base: `f685dd2023a5844309c5b5fb7d0abd1bf54406b9`; Task 4 control commit
+  `de169b2` activates the sole current packet.
+- Locked restore passed for all 16 projects with exact SDK 10.0.302:
+  `dotnet restore CompanionCore.slnx --locked-mode -m:1 -p:RestoreDisableParallel=true -p:EnableWindowsTargeting=true`.
+- Release cross-build passed for all 16 projects with 0 warnings and 0 errors:
+  `dotnet build CompanionCore.slnx -c Release --no-restore -m:1 -p:BuildInParallel=false -p:EnableWindowsTargeting=true -p:UseSharedCompilation=false`.
+- The pre-review candidate passed all 226/226 locally runnable tests: Runtime 26,
+  Capture 14, Memory 68, Presentation 50, Privacy 13, and TargetAuth 55.
+- Actual-diff review then added two TargetAuth race cases (worker-start cancellation and
+  active-policy denial) and hardened the corresponding source. The refreshed execution
+  environment no longer contains the pinned `dotnet` SDK, so no post-hardening local
+  result is claimed; exact-candidate Windows CI must run all expected 240 cases.
+- The Windows-only app/integration assembly previously cross-built successfully and
+  declares 12 cases (four accepted real-WPF process regressions plus eight Task 4 Win32
+  adapter cases). Execution remains part of the pending Windows gate.
+- `git diff --check` passes. Static review finds only the allowlisted target metadata,
+  display, and hotkey native imports; there is no capture/title/foreground native API.
+- Local `dotnet package list --vulnerable --include-transitive` could not complete because
+  this environment cancelled its network approval before a decision. No clean local
+  vulnerability result is claimed; the unchanged permanent Windows CI audit is required.
+- `dotnet format --verify-no-changes` could not connect to its sandbox-denied Roslyn
+  build-host pipe (`SocketException: Permission denied`). No formatter result is claimed;
+  all compilers report zero warnings and `git diff --check` is clean.
 
 ## Remaining
 
-- Publish this gate record as a descendant of the reviewed tree, require its unchanged exact-head Windows workflow to remain green, and merge PR #7.
-- Archive Task 3 and record the merged SHA before activating the separately bounded Claude-cleanup housekeeping task. Do not begin Task 4.
+- Commit the reviewed implementation, publish a draft PR, and run the exact Windows
+  workflow at that immutable candidate head.
+- Require locked restore, the permanent direct/transitive vulnerability audit, Release
+  build with zero warnings/errors, and all expected 238 Windows tests including the
+  four real WPF process cases.
+- Perform the distinct actual-diff Paw Gate review against current accepted `main`, fix
+  any finding without weakening tests/invariants, and rerun affected/full gates.
+- Record exact head/tree/run/job/artifact evidence and the final 240-test breakdown in
+  this handoff and `BUILD_LEDGER.md`.
+  Task 4 must not be marked accepted or merged until those checks pass.
 
 ## Risks and assumptions
 
-- `File.Replace`, file-share exclusion, WPF process behavior, and the permanent vulnerability audit were exercised by the named Windows execution oracle; later changes to these paths require the same gate again.
-- The 8 GiB database/archive caps are explicit synthetic non-production safety bounds, not final production retention sizing.
-- Staging cleanup is deliberately best-effort: a uniquely named non-authoritative orphan may remain after cleanup I/O failure, but no cleanup path can target the promoted archive, committed DB/journal, or completed damaged-source bundle.
-- Production roots, session-end scheduling, user repair UI/ceremony, backup encryption, schema migration, identity/photograph expansion, and multi-generation/off-device retention remain deferred.
+- Real capture and pixels intentionally do not exist. WGC/minimized/fullscreen behavior,
+  out-of-process IPC, image buffers, and resource soaks remain Task 5.
+- Win32 enumeration, hotkey registration, WPF process launch, and Windows file semantics
+  are compiler-checked locally but require the named Windows execution oracle.
+- Executable-path fingerprint plus filename is the Task 4 development identity. Publisher/
+  code-signing hardening and production policy migration remain later security work.
+- Filename classification is conservative, not exhaustive. Unrecognized executables
+  remain `UnknownAsk`, so misses require consent and never become implicit authority.
+- The no-target Resume path reopens only runtime write admission after clear/topology
+  checks and creates no target, grant, worker start, or frame (Personal Round Judgment J5).
+- Repeated stop advances the paused generation to defeat an in-flight older resume while
+  remaining externally idempotent and strictly stop-only (J6).
 
 ## Review focus
 
-- Re-prove cut pinning and `BackupDatabase` page copy happen before promotion, with post-cut writes excluded from the snapshot but retained through rotation and repair.
-- Re-prove concurrent attempts cannot regress the archive and every failure leaves an old or new complete journal consistent with the authoritative promoted cut.
-- Re-prove archive/parser bounds, canonical manifest/checksums, exact entry set, SQLite/schema/content health, and tamper/path/version rejection before mutation.
-- Re-prove repair quiescence, capability isolation, immutable complete evidence, marker recovery, cancellation boundary, byte-exact rollback, and ordinary idempotent replay.
-- Re-run public-surface and changed-path checks for forbidden production, automated maintenance, Task 4+, personality, private fixture, or dependency drift.
+- Prove every worker start is downstream of explicit/standing authorization and a
+  hidden genuine grant, and every admitted frame matches the current target/session/
+  generation/policy/topology before downstream delivery.
+- Prove a stop, end, policy denial, stale handle, cancellation, validation error, monitor
+  change, or worker fault cannot leave or recreate current capture authority.
+- Recheck the review corrections: cancellation during an ignoring worker start must
+  revoke before its late frame, and an active executable's denial must revoke/clear in
+  the same serialized controller operation before the policy becomes live.
+- Prove stop is synchronous-revocation-first, cancels target work, clears bounded
+  metadata, drains admitted writes, rejects late work, and cannot toggle into resume.
+- Prove policy parsing/promotion is canonical, bounded, fail-closed, and path-free, with
+  browser/default-sensitive denial surviving invalid persisted state.
+- Review the native import list and public reflection tests for title, raw-path,
+  foreground, full-screen/capture, grant-issuer, and low-level resume leakage.
+- Recheck the actual changed-path set contains no Task 5+, API, personality, production,
+  credential, private-content, or unrelated accepted-protocol change.
 
 ## Repository state
 
-- Accepted remote base: `44caa2fc6474b0952eaed5f086bfb3c49bf73c18`; accepted tree `2423473e0a0fb915bf40c2554947f7166cd7d9f4`.
-- Current branch/publication target: `agent/task-03-vault-repair`; draft PR #7; preserved surrogate branch: `agent/task-03-vault-repair-local`.
-- Reviewed remote head: `d4d7bddb35ae1a2b8f3b2fdb47e28d74322ef83a`; exact local/remote tree `324874f5b7c2d274732ff82c91aa9631fa587b57`; this handoff is its gate-record descendant.
-- Existing obsolete Claude foreman automations remain paused under the accepted direct-build workflow; they were not resumed.
+- Branch: `agent/task-04-consent-target-isolation`.
+- Accepted base: `f685dd2023a5844309c5b5fb7d0abd1bf54406b9` (`origin/main`).
+- Control commit: `de169b2`; the reviewed implementation is not yet committed or
+  published at the time of this checkpoint.
+- Exactly one packet is active: `tasks/active/task-04-consent-target-isolation.md`.
+- No unrelated user changes were found in the fresh Task 4 worktree.
 
-## Next safe task
+## Next safe action
 
-Publish this gate record, require unchanged exact-head CI, merge PR #7, then create the separately bounded Claude-cleanup task requested by Boss. Stop before Task 4.
+Commit the exact local candidate, publish a draft PR, and require the full Windows gate
+before beginning the distinct Paw Gate review. Do not begin Task 5.
 
 ## Credit status
 
-Credits, GitHub publication, and Windows CI are available. PR #7 is published and its reviewed head passed the full gate; Task 3 acceptance is claimed only after the gate-record descendant remains green and the PR merges.
+No credit-related stop. Local construction and verification are complete; platform CI
+and review remain available.

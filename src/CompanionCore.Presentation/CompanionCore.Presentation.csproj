@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CompanionCore.Runtime\CompanionCore.Runtime.csproj" />
+    <ProjectReference Include="..\CompanionCore.TargetAuth\CompanionCore.TargetAuth.csproj" />
   </ItemGroup>
 
 </Project>

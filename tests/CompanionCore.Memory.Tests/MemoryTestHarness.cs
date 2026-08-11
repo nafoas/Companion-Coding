@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using CompanionCore.Privacy;
 
 namespace CompanionCore.Memory.Tests;
 
@@ -11,14 +12,17 @@ internal sealed class MemoryTestDirectory : IDisposable
             "CompanionCore.Memory.Tests",
             Guid.NewGuid().ToString("N"));
         Location = TestDataRootPolicy.Create(BasePath, Guid.NewGuid());
+        PrivacyState = new RuntimePrivacyState();
     }
 
     internal string BasePath { get; }
 
     internal MemoryStoreLocation Location { get; }
 
+    internal RuntimePrivacyState PrivacyState { get; }
+
     internal Task<MemoryRepository> OpenRepositoryAsync() =>
-        MemoryRepository.OpenAsync(Location);
+        MemoryRepository.OpenAsync(Location, PrivacyState);
 
     public void Dispose()
     {

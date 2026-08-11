@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\CompanionCore.Presentation\CompanionCore.Presentation.csproj" />
+    <ProjectReference Include="..\..\src\CompanionCore.TargetAuth\CompanionCore.TargetAuth.csproj" />
   </ItemGroup>
 
 </Project>

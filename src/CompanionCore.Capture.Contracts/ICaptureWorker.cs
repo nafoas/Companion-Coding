@@ -15,9 +15,11 @@ public interface ICaptureWorker : IDisposable
 
     event EventHandler<CaptureFrameMetadata>? FrameProduced;
 
-    Task StartAsync(CancellationToken cancellationToken);
+    Task StartAsync(CaptureAuthorizationGrant authorization, CancellationToken cancellationToken);
 
     Task StopAsync(CancellationToken cancellationToken);
 
-    Task RestartAsync(CancellationToken cancellationToken);
+    Task<CaptureStopResult> StopAndClearAsync(CancellationToken cancellationToken);
+
+    Task RestartAsync(CaptureAuthorizationGrant authorization, CancellationToken cancellationToken);
 }

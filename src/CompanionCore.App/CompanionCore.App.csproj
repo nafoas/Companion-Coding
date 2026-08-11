@@ -15,6 +15,9 @@
     <ProjectReference Include="..\CompanionCore.Presentation\CompanionCore.Presentation.csproj" />
     <ProjectReference Include="..\CompanionCore.Capture.Contracts\CompanionCore.Capture.Contracts.csproj" />
     <ProjectReference Include="..\CompanionCore.Capture.Fake\CompanionCore.Capture.Fake.csproj" />
+    <ProjectReference Include="..\CompanionCore.Privacy\CompanionCore.Privacy.csproj" />
+    <ProjectReference Include="..\CompanionCore.TargetAuth\CompanionCore.TargetAuth.csproj" />
+    <ProjectReference Include="..\CompanionCore.TargetAuth.Windows\CompanionCore.TargetAuth.Windows.csproj" />
   </ItemGroup>
 
 </Project>

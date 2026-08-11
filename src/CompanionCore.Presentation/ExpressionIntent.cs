@@ -1,13 +1,13 @@
 namespace CompanionCore.Presentation;
 
 /// <summary>
-/// Typed expression intents. Task 1's scope only ever emits <see cref="None"/> or
-/// <see cref="Recovering"/> — the fuller vocabulary (observing, investigating, urgent,
-/// taking_note, privacy_paused, ...) belongs to <c>AttentionEngine</c>/
-/// <c>ConversationCoordinator</c>, which do not exist until later tasks.
+/// Typed expression intents available in the neutral core. Task 4 adds only the
+/// privacy-paused state; the fuller observing/conversation vocabulary belongs to
+/// later subsystems that do not exist yet.
 /// </summary>
 public enum ExpressionIntent
 {
     None,
-    Recovering
+    Recovering,
+    PrivacyPaused
 }

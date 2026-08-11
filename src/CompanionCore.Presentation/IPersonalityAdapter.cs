@@ -1,4 +1,5 @@
 using CompanionCore.Runtime;
+using CompanionCore.TargetAuth;
 
 namespace CompanionCore.Presentation;
 
@@ -11,4 +12,6 @@ namespace CompanionCore.Presentation;
 public interface IPersonalityAdapter
 {
     PresentationContent Map(LifecycleTransitionResult transition);
+
+    PresentationContent Map(TargetSessionEvent targetEvent);
 }
