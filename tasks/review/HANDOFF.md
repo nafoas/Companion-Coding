@@ -2,9 +2,9 @@
 
 ## Task
 
-Task 4 — Consent and Target Isolation. Implementation is locally complete on
-`agent/task-04-consent-target-isolation`; publication, exact Windows CI, and the
-distinct Paw Gate review remain pending.
+Task 4 — Consent and Target Isolation. The implementation and distinct actual-diff
+Paw Gate are complete on `agent/task-04-consent-target-isolation`. Draft PR #9 contains
+the reviewed implementation; Task 5 remains inactive pending the Boss's next instruction.
 
 ## Completed
 
@@ -79,6 +79,9 @@ capture, screenshot, pixel buffer, animation, audio, or private fixture was adde
 
 - Accepted base: `f685dd2023a5844309c5b5fb7d0abd1bf54406b9`; Task 4 control commit
   `de169b2` activates the sole current packet.
+- Reviewed remote implementation head: `c68b673e72b5017d7f838b3cc0ab1f020d5d1f0b`;
+  exact tree `c83a4fe56b7eea21c4e9072bd126af2e02b3b2a6`. That tree is byte-identical
+  to the committed local implementation tree and is the head tested by draft PR #9.
 - Locked restore passed for all 16 projects with exact SDK 10.0.302:
   `dotnet restore CompanionCore.slnx --locked-mode -m:1 -p:RestoreDisableParallel=true -p:EnableWindowsTargeting=true`.
 - Release cross-build passed for all 16 projects with 0 warnings and 0 errors:
@@ -88,38 +91,36 @@ capture, screenshot, pixel buffer, animation, audio, or private fixture was adde
 - Actual-diff review then added two TargetAuth race cases (worker-start cancellation and
   active-policy denial) and hardened the corresponding source. The refreshed execution
   environment no longer contains the pinned `dotnet` SDK, so no post-hardening local
-  result is claimed; exact-candidate Windows CI must run all expected 240 cases.
-- The Windows-only app/integration assembly previously cross-built successfully and
-  declares 12 cases (four accepted real-WPF process regressions plus eight Task 4 Win32
-  adapter cases). Execution remains part of the pending Windows gate.
+  result is claimed; the exact-candidate Windows gate supplied the authoritative result.
+- Exact Windows run `31449205060`, job `93649850080`, passed locked restore, the permanent
+  direct/transitive dependency audit, all 16 Release builds with 0 warnings and 0 errors,
+  and 240/240 tests: Runtime 26, Capture 14, Memory 68, Presentation 50, Privacy 13,
+  TargetAuth 57, and App Integration 12. The integration count includes the four accepted
+  real-WPF process regressions and eight Task 4 Win32 adapter cases.
+- Test-results artifact `9085707445` is 51,456 bytes with digest
+  `sha256:d496d965d1e975ad36445c50f9e4ea03a561e2fb194d3b697a5ca106ed4ff8ea`.
 - `git diff --check` passes. Static review finds only the allowlisted target metadata,
   display, and hotkey native imports; there is no capture/title/foreground native API.
 - Local `dotnet package list --vulnerable --include-transitive` could not complete because
   this environment cancelled its network approval before a decision. No clean local
-  vulnerability result is claimed; the unchanged permanent Windows CI audit is required.
+  vulnerability result is claimed; the exact-candidate Windows audit passed instead.
 - `dotnet format --verify-no-changes` could not connect to its sandbox-denied Roslyn
   build-host pipe (`SocketException: Permission denied`). No formatter result is claimed;
   all compilers report zero warnings and `git diff --check` is clean.
 
 ## Remaining
 
-- Commit the reviewed implementation, publish a draft PR, and run the exact Windows
-  workflow at that immutable candidate head.
-- Require locked restore, the permanent direct/transitive vulnerability audit, Release
-  build with zero warnings/errors, and all expected 238 Windows tests including the
-  four real WPF process cases.
-- Perform the distinct actual-diff Paw Gate review against current accepted `main`, fix
-  any finding without weakening tests/invariants, and rerun affected/full gates.
-- Record exact head/tree/run/job/artifact evidence and the final 240-test breakdown in
-  this handoff and `BUILD_LEDGER.md`.
-  Task 4 must not be marked accepted or merged until those checks pass.
+- Publish this evidence record as a descendant of the reviewed implementation and require
+  its unchanged Windows workflow to remain green.
+- PR #9 integration and activation of any later packet are deliberately outside this
+  checkpoint. Stop and await the Boss's next instruction; do not begin Task 5.
 
 ## Risks and assumptions
 
 - Real capture and pixels intentionally do not exist. WGC/minimized/fullscreen behavior,
   out-of-process IPC, image buffers, and resource soaks remain Task 5.
 - Win32 enumeration, hotkey registration, WPF process launch, and Windows file semantics
-  are compiler-checked locally but require the named Windows execution oracle.
+  passed the named exact-candidate Windows execution oracle.
 - Executable-path fingerprint plus filename is the Task 4 development identity. Publisher/
   code-signing hardening and production policy migration remain later security work.
 - Filename classification is conservative, not exhaustive. Unrecognized executables
@@ -152,17 +153,19 @@ capture, screenshot, pixel buffer, animation, audio, or private fixture was adde
 
 - Branch: `agent/task-04-consent-target-isolation`.
 - Accepted base: `f685dd2023a5844309c5b5fb7d0abd1bf54406b9` (`origin/main`).
-- Control commit: `de169b2`; the reviewed implementation is not yet committed or
-  published at the time of this checkpoint.
+- Local control commit: `de169b2`; local implementation commit:
+  `d845c5d91ca2cd2c149bb01865e2209628552e1a`.
+- Reviewed remote implementation: `c68b673e72b5017d7f838b3cc0ab1f020d5d1f0b`, tree
+  `c83a4fe56b7eea21c4e9072bd126af2e02b3b2a6`, draft PR #9.
 - Exactly one packet is active: `tasks/active/task-04-consent-target-isolation.md`.
 - No unrelated user changes were found in the fresh Task 4 worktree.
 
 ## Next safe action
 
-Commit the exact local candidate, publish a draft PR, and require the full Windows gate
-before beginning the distinct Paw Gate review. Do not begin Task 5.
+Publish this evidence-only descendant, require its unchanged workflow to stay green,
+then stop. Await the Boss's next instruction and do not begin Task 5.
 
 ## Credit status
 
-No credit-related stop. Local construction and verification are complete; platform CI
-and review remain available.
+No credit-related stop. Construction, exact-platform verification, and the distinct Paw
+Gate review are complete.

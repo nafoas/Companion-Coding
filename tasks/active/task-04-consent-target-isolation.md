@@ -1,8 +1,10 @@
 # Task 4 — Consent and Target Isolation
 
-Status: **Active**
+Status: **Paw Gate passed at reviewed implementation head `c68b673e72b5017d7f838b3cc0ab1f020d5d1f0b`; draft PR #9 awaits the Boss's next instruction. Task 5 is not active.**
 Authorized: 2026-08-10 by Boss after Task 3 acceptance, under the accepted direct-build workflow
 Accepted base: `f685dd2023a5844309c5b5fb7d0abd1bf54406b9`
+Reviewed implementation tree: `c83a4fe56b7eea21c4e9072bd126af2e02b3b2a6`
+Exact Windows gate: run `31449205060`, job `93649850080`; 240/240 tests passed
 Working branch: `agent/task-04-consent-target-isolation`
 
 ## Objective

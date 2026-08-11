@@ -8,12 +8,12 @@
 | Entry criteria met | Yes; Task 3 passed, PR #7 squash-merged, and the accepted merge was independently rechecked |
 | Product code authorized | Yes, only within Task 4's metadata-only discovery, authorization, privacy fencing, neutral shell, and synthetic-test scope |
 | Live API authorized | No |
-| Automated tests | The pre-review Task 4 candidate passed locked restore, all 16 Release builds with 0 warnings/errors, and 226/226 locally runnable tests. The actual-diff review added two focused race tests and hardened the corresponding code; exact-candidate Windows CI is pending (expected complete total: 240). |
-| Manual gate | Task 3 accepted. Task 4 actual-diff review found and corrected worker-start cancellation and live-denial races; exact Windows CI and final evidence review remain pending. |
+| Automated tests | Exact Task 4 Windows run `31449205060`, job `93649850080`, passed locked restore, direct/transitive dependency audit, all 16 Release builds with 0 warnings/errors, and 240/240 tests. |
+| Manual gate | Task 4's distinct actual-diff Paw Gate passed at reviewed implementation head `c68b673e72b5017d7f838b3cc0ab1f020d5d1f0b`, exact tree `c83a4fe56b7eea21c4e9072bd126af2e02b3b2a6`. |
 | Accepted `main` baseline | `f685dd2023a5844309c5b5fb7d0abd1bf54406b9` — Task 3 atomic backup and guarded repair accepted and merged |
 | Known limitations | Task 4 remains metadata-only neutral core. Real WGC capture, multi-monitor accompaniment, pixel classification, production policy roots, and code-signing identity hardening are deferred. |
 | Deferred temptations | Task 5+ real capture/visual pipeline/API/conversation/personality work; production settings and final UI |
-| Approval | Task 4 explicitly started by Boss under autonomous pre-API Paw Gates |
+| Approval | Task 4 Paw Gate passed; draft PR #9 awaits the Boss's next instruction. Task 5 is not active. |
 
 ## Gate history
 
@@ -64,6 +64,17 @@
 - Merge: PR #7 squash-merged to `main` as `f685dd2023a5844309c5b5fb7d0abd1bf54406b9`.
 - Post-merge recheck: fresh locked restore passed; all 11 Release projects built with 0 warnings/errors; 121/121 locally runnable tests passed; accepted Windows run `31426920584` passed dependency audit and 125/125 tests including four WPF process tests.
 - Result: passed, merged, and accepted; Task 4 may become active through its own bounded packet.
+
+### Task 4 — Consent and target isolation
+
+- Candidate: draft PR #9 at reviewed implementation head `c68b673e72b5017d7f838b3cc0ab1f020d5d1f0b`, exact tree `c83a4fe56b7eea21c4e9072bd126af2e02b3b2a6`, based directly on accepted `main` `f685dd2023a5844309c5b5fb7d0abd1bf54406b9`.
+- Scope: 113 final changed paths; platform-neutral privacy and target-authorization cores, minimal Windows metadata/display/hotkey adapters, sealed synthetic capture grants, live-write and frame generation fences, neutral WPF control/status wiring, synthetic tests, solution/lock integration, and bounded control records. No Task 5 real capture or later-stage surface was added.
+- Local verification: locked restore and all 16 Release builds passed with 0 warnings/errors; the pre-review candidate passed 226/226 locally runnable tests. The refreshed environment lost the pinned SDK after two race-hardening corrections, so no post-hardening local result is claimed.
+- Exact Windows evidence: run `31449205060`, job `93649850080`; locked restore and the direct/transitive dependency audit passed, all 16 Release projects built with 0 warnings/errors, and 240/240 tests passed (Runtime 26, Capture 14, Memory 68, Presentation 50, Privacy 13, TargetAuth 57, App Integration 12). Artifact `9085707445`, 51,456 bytes, digest `sha256:d496d965d1e975ad36445c50f9e4ea03a561e2fb194d3b697a5ca106ed4ff8ea`.
+- Review: current-base whitespace, one-active-task state, 113-path scope allowlist, local/remote tree equality, consent-before-start, one-target authority, generation/target/frame admission, privacy stop ordering, live-write drainage, policy corruption/failure, monitor/hotkey failure, metadata minimization, and forbidden Task 5+/API/personality/production surfaces all passed.
+- Corrections: actual-diff review added synchronous revocation for caller cancellation during a misbehaving worker start and serialized active-executable denial through the controller. Both received focused adversarial tests without weakening existing invariants.
+- Personal Round Judgments J1–J8 record neutral/native separation, title-free descriptors, shared generation fencing, path-free policy identity, no-target resume, repeated-stop fencing, worker-start cancellation, and serialized live denial.
+- Result: Paw Gate passed. The evidence-record descendant must keep the unchanged Windows gate green; PR #9 integration and Task 5 activation await the Boss's next instruction.
 
 ### R0 — Direct-build re-entry and continuity alignment
 
