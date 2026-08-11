@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>CompanionCore.Capture.Spike</RootNamespace>
+    <AssemblyName>CompanionCore.Capture.Spike</AssemblyName>
+    <StartupObject>CompanionCore.Capture.Spike.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CompanionCore.Capture.Client\CompanionCore.Capture.Client.csproj" />
+    <ProjectReference Include="..\..\src\CompanionCore.Capture.Contracts\CompanionCore.Capture.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\CompanionCore.Capture.Worker\CompanionCore.Capture.Worker.csproj"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\src\CompanionCore.Privacy\CompanionCore.Privacy.csproj" />
+    <ProjectReference Include="..\..\src\CompanionCore.TargetAuth\CompanionCore.TargetAuth.csproj" />
+    <ProjectReference Include="..\..\src\CompanionCore.TargetAuth.Windows\CompanionCore.TargetAuth.Windows.csproj" />
+  </ItemGroup>
+
+  <Target Name="CopyDedicatedCaptureWorker" AfterTargets="Build">
+    <PropertyGroup>
+      <CaptureWorkerOutputDirectory>$(MSBuildProjectDirectory)\..\..\src\CompanionCore.Capture.Worker\bin\$(Configuration)\net10.0-windows10.0.19041.0</CaptureWorkerOutputDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\CompanionCore.Capture.Worker.exe" />
+      <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\CompanionCore.Capture.Worker.dll" />
+      <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\CompanionCore.Capture.Worker.deps.json" />
+      <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\CompanionCore.Capture.Worker.runtimeconfig.json" />
+      <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\Microsoft.Windows.SDK.NET.dll" />
+      <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\WinRT.Runtime.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(CaptureWorkerOutput)"
+          DestinationFolder="$(TargetDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('%(CaptureWorkerOutput.Identity)')" />
+  </Target>
+
+</Project>

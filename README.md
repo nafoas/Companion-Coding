@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, Task 2's append-only memory/journal spine, and Task 3's atomic backup/guarded repair are accepted. Task 4 is the sole active neutral-core task.
+Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, Task 2's append-only memory/journal spine, Task 3's atomic backup/guarded repair, and Task 4's consent/target-isolation boundary are accepted. Task 5 is the sole active neutral-core task.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, 
 
 ## Current task
 
-Task 4: consent and target isolation. Work is restricted to metadata-only executable/window discovery, four authorization categories, one exact target, authorization-required synthetic capture metadata, the stop-only privacy boundary, explicit resume, Privacy Guard policy seam, neutral target status, and a one-monitor guard. Real pixels/capture and all Task 5+ systems remain deferred.
+Task 5: bounded capture worker. Work is restricted to one exact authorized HWND, a restartable out-of-process Windows Graphics Capture worker, bounded RAM/queues/ring, deterministic disposal, honest no-signal handling, metrics, and private-safe capture tests. Regions, crops, attention sheets, semantic interpretation, conversation, ERPP implementation, personality, and all Task 6+ behavior remain deferred.
 
 ## Important boundaries
 

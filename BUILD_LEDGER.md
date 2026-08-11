@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 3 — consent shell and target isolation |
-| Active task | Task 4 — Consent and Target Isolation |
-| Working branch | `agent/task-04-consent-target-isolation`, based on accepted `main` |
-| Entry criteria met | Yes; Task 3 passed, PR #7 squash-merged, and the accepted merge was independently rechecked |
-| Product code authorized | Yes, only within Task 4's metadata-only discovery, authorization, privacy fencing, neutral shell, and synthetic-test scope |
+| Current stage | Stage 4 — local peepers and bounded visual pipeline (Task 5 worker slice) |
+| Active task | Task 5 — Bounded Capture Worker |
+| Working branch | `agent/task-05-bounded-capture-worker`, based on accepted `main` |
+| Entry criteria met | Yes; Task 4 passed its Paw Gate, final descendant rerun, merge, and exact-tree reconciliation |
+| Product code authorized | Yes, only within Task 5's exact-target out-of-process WGC worker, bounded RAM/queues, disposal, status, metrics, and private-safe tests |
 | Live API authorized | No |
-| Automated tests | Exact Task 4 Windows run `31449205060`, job `93649850080`, passed locked restore, direct/transitive dependency audit, all 16 Release builds with 0 warnings/errors, and 240/240 tests. |
-| Manual gate | Task 4's distinct actual-diff Paw Gate passed at reviewed implementation head `c68b673e72b5017d7f838b3cc0ab1f020d5d1f0b`, exact tree `c83a4fe56b7eea21c4e9072bd126af2e02b3b2a6`. |
-| Accepted `main` baseline | `f685dd2023a5844309c5b5fb7d0abd1bf54406b9` — Task 3 atomic backup and guarded repair accepted and merged |
-| Known limitations | Task 4 remains metadata-only neutral core. Real WGC capture, multi-monitor accompaniment, pixel classification, production policy roots, and code-signing identity hardening are deferred. |
-| Deferred temptations | Task 5+ real capture/visual pipeline/API/conversation/personality work; production settings and final UI |
-| Approval | Task 4 Paw Gate passed; draft PR #9 awaits the Boss's next instruction. Task 5 is not active. |
+| Automated tests | Pre-Windows candidate: locked restore passed; the direct/transitive audit found 0 vulnerable packages across 20 projects; all 20 Release projects built with 0 warnings/errors; 256/256 locally runnable tests passed, including 28 Task 5 worker tests and the 216,000-frame accelerated soak. Windows/WPF and real child-process execution remain pending CI. |
+| Manual gate | Implementation and actual-diff review complete; exact current-candidate Windows CI and final tree reconciliation remain pending. |
+| Accepted `main` baseline | `b0cbc37604519ef587b3dbce8f1c589ea561b268` — Task 4 consent and target isolation accepted and merged |
+| Known limitations | Minimized and exclusive-fullscreen capture remain unsupported absent actual target-PC spike evidence; Task 5 must report no signal honestly. Task 6 regions/attention sheets remain deferred. |
+| Deferred temptations | Task 6+ visual composition/API/conversation/ERPP/personality work; durable images, production settings, final UI |
+| Approval | Task 5 explicitly authorized by Boss on 2026-08-11; implementation complete and Paw Gate pending exact Windows evidence. |
 
 ## Gate history
 
@@ -74,7 +74,9 @@
 - Review: current-base whitespace, one-active-task state, 113-path scope allowlist, local/remote tree equality, consent-before-start, one-target authority, generation/target/frame admission, privacy stop ordering, live-write drainage, policy corruption/failure, monitor/hotkey failure, metadata minimization, and forbidden Task 5+/API/personality/production surfaces all passed.
 - Corrections: actual-diff review added synchronous revocation for caller cancellation during a misbehaving worker start and serialized active-executable denial through the controller. Both received focused adversarial tests without weakening existing invariants.
 - Personal Round Judgments J1–J8 record neutral/native separation, title-free descriptors, shared generation fencing, path-free policy identity, no-target resume, repeated-stop fencing, worker-start cancellation, and serialized live denial.
-- Result: Paw Gate passed. The evidence-record descendant must keep the unchanged Windows gate green; PR #9 integration and Task 5 activation await the Boss's next instruction.
+- Final descendant: ERPP-01 was recorded as a future Task 9 companion gate without product-code changes. Windows run `31470938172`, job `93713889217`, again passed locked restore, clean audit, all 16 Release builds with 0 warnings/errors, and 240/240 tests. Artifact `9093336297`, 50,776 bytes, digest `sha256:e223671a492e9c025e9718c9f506ec4ddde556e7292ffa9e411a4200426a952a`.
+- Merge: PR #9 squash-merged to `main` as `b0cbc37604519ef587b3dbce8f1c589ea561b268`; the accepted merge tree `4e0ae5bd7ca6961ce542611758ebf71174dfa0b0` exactly matched the final branch tree.
+- Result: passed, merged, and accepted; Task 5 may become active through its own bounded packet.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

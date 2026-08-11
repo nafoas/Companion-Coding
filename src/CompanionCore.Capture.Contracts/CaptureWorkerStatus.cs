@@ -5,5 +5,8 @@ public enum CaptureWorkerStatus
     Stopped,
     Starting,
     Running,
-    Restarting
+    Restarting,
+    PausedMinimized,
+    NoSignal,
+    Faulted
 }

@@ -2,7 +2,9 @@
   <Folder Name="/src/">
     <Project Path="src/CompanionCore.App/CompanionCore.App.csproj" />
     <Project Path="src/CompanionCore.Capture.Contracts/CompanionCore.Capture.Contracts.csproj" />
+    <Project Path="src/CompanionCore.Capture.Client/CompanionCore.Capture.Client.csproj" />
     <Project Path="src/CompanionCore.Capture.Fake/CompanionCore.Capture.Fake.csproj" />
+    <Project Path="src/CompanionCore.Capture.Worker/CompanionCore.Capture.Worker.csproj" />
     <Project Path="src/CompanionCore.Memory/CompanionCore.Memory.csproj" />
     <Project Path="src/CompanionCore.Presentation/CompanionCore.Presentation.csproj" />
     <Project Path="src/CompanionCore.Privacy/CompanionCore.Privacy.csproj" />
@@ -13,10 +15,14 @@
   <Folder Name="/tests/">
     <Project Path="tests/CompanionCore.App.IntegrationTests/CompanionCore.App.IntegrationTests.csproj" />
     <Project Path="tests/CompanionCore.Capture.Tests/CompanionCore.Capture.Tests.csproj" />
+    <Project Path="tests/CompanionCore.Capture.Worker.Tests/CompanionCore.Capture.Worker.Tests.csproj" />
     <Project Path="tests/CompanionCore.Memory.Tests/CompanionCore.Memory.Tests.csproj" />
     <Project Path="tests/CompanionCore.Presentation.Tests/CompanionCore.Presentation.Tests.csproj" />
     <Project Path="tests/CompanionCore.Privacy.Tests/CompanionCore.Privacy.Tests.csproj" />
     <Project Path="tests/CompanionCore.Runtime.Tests/CompanionCore.Runtime.Tests.csproj" />
     <Project Path="tests/CompanionCore.TargetAuth.Tests/CompanionCore.TargetAuth.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/CompanionCore.Capture.Spike/CompanionCore.Capture.Spike.csproj" />
   </Folder>
 </Solution>

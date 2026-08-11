@@ -12,7 +12,8 @@ public sealed record CaptureFrameMetadata
         long sequenceNumber,
         DateTimeOffset timestamp,
         int width,
-        int height)
+        int height,
+        long accountedBytes = 0)
     {
         ArgumentNullException.ThrowIfNull(authorization);
         if (sequenceNumber <= 0)
@@ -27,6 +28,11 @@ public sealed record CaptureFrameMetadata
                 "Synthetic frame dimensions must be positive.");
         }
 
+        if (accountedBytes < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(accountedBytes));
+        }
+
         TargetSessionId = authorization.TargetSessionId;
         Generation = authorization.Generation;
         Target = authorization.Target;
@@ -34,6 +40,7 @@ public sealed record CaptureFrameMetadata
         Timestamp = timestamp;
         Width = width;
         Height = height;
+        AccountedBytes = accountedBytes;
     }
 
     public Guid TargetSessionId { get; }
@@ -49,4 +56,10 @@ public sealed record CaptureFrameMetadata
     public int Width { get; }
 
     public int Height { get; }
+
+    /// <summary>
+    /// Capture-side raw-byte accounting for this source frame. Pixels remain inside
+    /// the worker process; this number is safe resource metadata only.
+    /// </summary>
+    public long AccountedBytes { get; }
 }

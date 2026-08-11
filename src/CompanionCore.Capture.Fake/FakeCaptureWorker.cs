@@ -15,6 +15,8 @@ public sealed class FakeCaptureWorker : ICaptureWorker
     private readonly ISystemClock _clock;
     private readonly Queue<CaptureFrameMetadata> _bufferedMetadata = new();
     private long _sequence;
+    private long _disposedMetadata;
+    private int _maximumBufferedMetadata;
     private bool _disposed;
 
     public FakeCaptureWorker(ISystemClock? clock = null)
@@ -67,6 +69,7 @@ public sealed class FakeCaptureWorker : ICaptureWorker
 
         SetStatus(CaptureWorkerStatus.Stopped);
         var count = _bufferedMetadata.Count;
+        _disposedMetadata += count;
         _bufferedMetadata.Clear();
         return Task.FromResult(new CaptureStopResult(count));
     }
@@ -101,10 +104,28 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         while (_bufferedMetadata.Count >= MaximumBufferedMetadata)
         {
             _bufferedMetadata.Dequeue();
+            _disposedMetadata++;
         }
 
         _bufferedMetadata.Enqueue(frame);
+        _maximumBufferedMetadata = Math.Max(_maximumBufferedMetadata, _bufferedMetadata.Count);
         FrameProduced?.Invoke(this, frame);
+    }
+
+    public Task<CaptureWorkerMetrics> GetMetricsAsync(CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new CaptureWorkerMetrics
+        {
+            Status = Status,
+            AcceptedFrames = _sequence,
+            DisposedFrames = _disposedMetadata,
+            RingFrameCount = _bufferedMetadata.Count,
+            QueueCapacity = 0,
+            CurrentSourceFrames = _bufferedMetadata.Count,
+            MaximumObservedSourceFrames = _maximumBufferedMetadata,
+        });
     }
 
     private void SetStatus(CaptureWorkerStatus status)
@@ -124,6 +145,7 @@ public sealed class FakeCaptureWorker : ICaptureWorker
 
         _disposed = true;
         Status = CaptureWorkerStatus.Stopped;
+        _disposedMetadata += _bufferedMetadata.Count;
         _bufferedMetadata.Clear();
     }
 }
