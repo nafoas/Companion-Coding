@@ -33,6 +33,7 @@
       finds CompanionCore.App.exe at test time.
     -->
     <ProjectReference Include="..\..\src\CompanionCore.App\CompanionCore.App.csproj" />
+    <ProjectReference Include="..\..\src\CompanionCore.TargetAuth.Windows\CompanionCore.TargetAuth.Windows.csproj" />
   </ItemGroup>
 
 </Project>

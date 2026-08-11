@@ -1,5 +1,7 @@
 namespace CompanionCore.Memory;
 
+using CompanionCore.Privacy;
+
 /// <summary>
 /// Owns the one local committed store and recovery journal for a validated non-production
 /// location. It exposes append proposals through LocalWriteGate and read-only retrieval.
@@ -19,6 +21,7 @@ public sealed class MemoryRepository : IAsyncDisposable
         MemoryStore store,
         SessionJournal journal,
         MemoryCommitCoordinator coordinator,
+        RuntimePrivacyState privacyState,
         MemoryStoreLocation location,
         MemoryRepositoryLease lease,
         bool ownsLease)
@@ -29,7 +32,7 @@ public sealed class MemoryRepository : IAsyncDisposable
         _location = location;
         _lease = lease;
         _ownsLease = ownsLease;
-        WriteGate = new LocalWriteGate(coordinator);
+        WriteGate = new LocalWriteGate(coordinator, privacyState);
     }
 
     public LocalWriteGate WriteGate { get; }
@@ -44,9 +47,11 @@ public sealed class MemoryRepository : IAsyncDisposable
 
     public static async Task<MemoryRepository> OpenAsync(
         MemoryStoreLocation location,
+        RuntimePrivacyState privacyState,
         CancellationToken cancellationToken = default) =>
         await OpenCoreAsync(
                 location,
+                privacyState,
                 existingLease: null,
                 ownsExistingLease: true,
                 allowRepairMarker: false,
@@ -59,6 +64,7 @@ public sealed class MemoryRepository : IAsyncDisposable
         CancellationToken cancellationToken) =>
         await OpenCoreAsync(
                 location,
+                new RuntimePrivacyState(),
                 lease,
                 ownsExistingLease: false,
                 allowRepairMarker: true,
@@ -67,12 +73,14 @@ public sealed class MemoryRepository : IAsyncDisposable
 
     private static async Task<MemoryRepository> OpenCoreAsync(
         MemoryStoreLocation location,
+        RuntimePrivacyState privacyState,
         MemoryRepositoryLease? existingLease,
         bool ownsExistingLease,
         bool allowRepairMarker,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(location);
+        ArgumentNullException.ThrowIfNull(privacyState);
         var lease = existingLease ?? MemoryRepositoryLease.Acquire(location);
         MemoryStore? store = null;
         SessionJournal? journal = null;
@@ -94,6 +102,7 @@ public sealed class MemoryRepository : IAsyncDisposable
                 store,
                 journal,
                 coordinator,
+                privacyState,
                 location,
                 lease,
                 ownsExistingLease);

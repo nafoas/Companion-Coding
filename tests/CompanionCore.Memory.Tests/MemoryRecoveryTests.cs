@@ -160,7 +160,7 @@ public sealed class MemoryRecoveryTests
             [(byte)'C', (byte)'C', (byte)'S', (byte)'J', 1, 0, 0, 0]);
 
         await Assert.ThrowsAsync<MemoryIntegrityException>(() =>
-            MemoryRepository.OpenAsync(directory.Location));
+            MemoryRepository.OpenAsync(directory.Location, directory.PrivacyState));
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public sealed class MemoryRecoveryTests
         }
 
         await Assert.ThrowsAsync<MemoryIntegrityException>(() =>
-            MemoryRepository.OpenAsync(directory.Location));
+            MemoryRepository.OpenAsync(directory.Location, directory.PrivacyState));
     }
 
     [Fact]

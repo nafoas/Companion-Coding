@@ -14,6 +14,7 @@ public enum WriteGateRejectionReason
     OperationNotAllowlisted = 1,
     InvalidProposal = 2,
     OperationConflict = 3,
+    PrivacyPausedOrStale = 4,
 }
 
 public sealed record WriteGateResult(

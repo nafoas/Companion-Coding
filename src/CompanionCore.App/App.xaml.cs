@@ -1,8 +1,11 @@
 using System.Windows;
 using CompanionCore.Capture.Fake;
 using CompanionCore.Presentation;
+using CompanionCore.Privacy;
 using CompanionCore.Runtime;
 using CompanionCore.Runtime.Diagnostics;
+using CompanionCore.TargetAuth;
+using CompanionCore.TargetAuth.Windows;
 
 namespace CompanionCore.App;
 
@@ -29,6 +32,7 @@ public partial class App : Application
 
     private SingleInstanceGuard? _instanceGuard;
     private CompanionRuntime? _runtime;
+    private TargetSessionController? _targetController;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -66,9 +70,29 @@ public partial class App : Application
 
         _runtime = CompanionRuntime.ClaimConstructionAuthority().Construct(diagnostics);
         var adapter = new NeutralPersonalityAdapter();
+        var privacyState = new RuntimePrivacyState();
+        var policyCatalog = TargetPolicyCatalog.OpenDevelopmentAsync()
+            .GetAwaiter()
+            .GetResult();
+        var targetAuthorization = new TargetAuthorizationService(
+            new WindowsTargetDiscovery(),
+            new WindowsDisplayTopology(),
+            policyCatalog,
+            privacyState);
         var captureWorker = new FakeCaptureWorker();
+        _targetController = new TargetSessionController(
+            targetAuthorization,
+            captureWorker,
+            privacyState,
+            new LocalPrivacyGuard());
 
-        var window = new MainWindow(_runtime, adapter, captureWorker);
+        var window = new MainWindow(
+            _runtime,
+            adapter,
+            targetAuthorization,
+            _targetController,
+            new WindowsGlobalHotkeyNativeApi(),
+            registerGlobalHotkey: true);
         MainWindow = window;
         window.Show();
 
@@ -77,11 +101,21 @@ public partial class App : Application
 
         if (testMode is not null)
         {
-            RunTestMode(testMode, window, adapter);
+            RunTestMode(
+                testMode,
+                window,
+                adapter,
+                targetAuthorization,
+                _targetController);
         }
     }
 
-    private void RunTestMode(string scenario, MainWindow firstWindow, IPersonalityAdapter adapter)
+    private void RunTestMode(
+        string scenario,
+        MainWindow firstWindow,
+        IPersonalityAdapter adapter,
+        TargetAuthorizationService targetAuthorization,
+        TargetSessionController targetController)
     {
         switch (scenario)
         {
@@ -95,11 +129,22 @@ public partial class App : Application
                 // reference rather than constructing their own — proving the "one
                 // runtime across windows" property end-to-end in a real process, not
                 // just via the construction-authority unit tests.
-                using (var secondCaptureWorker = new FakeCaptureWorker())
-                using (var thirdCaptureWorker = new FakeCaptureWorker())
                 {
-                    var second = new MainWindow(_runtime!, adapter, secondCaptureWorker);
-                    var third = new MainWindow(_runtime!, adapter, thirdCaptureWorker);
+                    var hotkeyApi = new WindowsGlobalHotkeyNativeApi();
+                    var second = new MainWindow(
+                        _runtime!,
+                        adapter,
+                        targetAuthorization,
+                        targetController,
+                        hotkeyApi,
+                        registerGlobalHotkey: false);
+                    var third = new MainWindow(
+                        _runtime!,
+                        adapter,
+                        targetAuthorization,
+                        targetController,
+                        hotkeyApi,
+                        registerGlobalHotkey: false);
                     second.Show();
                     third.Show();
                     Console.WriteLine($"WINDOWS:3 CONSTRUCTIONS:{CompanionRuntime.ConstructionCount}");
@@ -144,8 +189,18 @@ public partial class App : Application
     {
         // Idempotent: OnExit can run after an already-explicit Stop, or after none at
         // all if the window was closed directly.
-        _runtime?.Dispose();
-        _instanceGuard?.Dispose();
-        base.OnExit(e);
+        try
+        {
+            if (_targetController is not null)
+            {
+                _targetController.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
+        }
+        finally
+        {
+            _runtime?.Dispose();
+            _instanceGuard?.Dispose();
+            base.OnExit(e);
+        }
     }
 }

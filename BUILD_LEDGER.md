@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 2 — atomic backup, repair, and validated journal cuts |
-| Active task | Task 3 — Atomic Backup and Repair |
-| Working branch | `agent/task-03-vault-repair`, rebased onto accepted remote `main` |
-| Entry criteria met | Yes; Task 2 passed, was archived, and PR #6 squash-merged to accepted `main` |
-| Product code authorized | Yes, only within Task 3's neutral memory backup/repair and synthetic-test scope |
+| Current stage | Stage 3 — consent shell and target isolation |
+| Active task | Task 4 — Consent and Target Isolation |
+| Working branch | `agent/task-04-consent-target-isolation`, based on accepted `main` |
+| Entry criteria met | Yes; Task 3 passed, PR #7 squash-merged, and the accepted merge was independently rechecked |
+| Product code authorized | Yes, only within Task 4's metadata-only discovery, authorization, privacy fencing, neutral shell, and synthetic-test scope |
 | Live API authorized | No |
-| Automated tests | PR #7 reviewed head `d4d7bdd`: Windows CI run `31426524602` passed locked restore, clean direct/transitive audit, Release build with 0 warnings/errors, and 125/125 tests. |
-| Manual gate | Task 3's distinct Paw Gate passed on reviewed head `d4d7bdd`, exact tree `324874f5b7c2d274732ff82c91aa9631fa587b57`. Acceptance awaits the gate-record descendant's unchanged CI and PR #7 merge. |
-| Accepted `main` baseline | `44caa2fc6474b0952eaed5f086bfb3c49bf73c18` — Task 2 append-only memory/journal accepted and merged |
-| Known limitations | Backup/repair remains non-production neutral core: production roots, scheduling/UI, encryption, schema migration, and multi-generation retention are deferred. Local VSTest/formatter IPC is sandbox-blocked, so exact Windows CI remains the platform oracle. |
-| Deferred temptations | Task 4+ consent/capture/API/conversation/personality work; production backup/import, UI, encryption, and multi-generation retention |
-| Approval | Task 3 active under the Boss-approved Stage 2 split and autonomous pre-API Paw Gates |
+| Automated tests | Exact Task 4 Windows run `31449205060`, job `93649850080`, passed locked restore, direct/transitive dependency audit, all 16 Release builds with 0 warnings/errors, and 240/240 tests. |
+| Manual gate | Task 4's distinct actual-diff Paw Gate passed at reviewed implementation head `c68b673e72b5017d7f838b3cc0ab1f020d5d1f0b`, exact tree `c83a4fe56b7eea21c4e9072bd126af2e02b3b2a6`. |
+| Accepted `main` baseline | `f685dd2023a5844309c5b5fb7d0abd1bf54406b9` — Task 3 atomic backup and guarded repair accepted and merged |
+| Known limitations | Task 4 remains metadata-only neutral core. Real WGC capture, multi-monitor accompaniment, pixel classification, production policy roots, and code-signing identity hardening are deferred. |
+| Deferred temptations | Task 5+ real capture/visual pipeline/API/conversation/personality work; production settings and final UI |
+| Approval | Task 4 Paw Gate passed; draft PR #9 awaits the Boss's next instruction. Task 5 is not active. |
 
 ## Gate history
 
@@ -52,7 +52,7 @@
 - Merge: PR #6 squash-merged to `main` as `44caa2fc6474b0952eaed5f086bfb3c49bf73c18`.
 - Result: passed and merged; Task 3 may become active through its own bounded packet.
 
-### Task 3 — Atomic backup and repair (Paw Gate passed; merge pending)
+### Task 3 — Atomic backup and repair
 
 - Code checkpoint rebased onto accepted remote `main`: feature commit `cbc0b5c91c679a693e732b105acd09268d1c7f5c` plus evidence-retention correction `d64d5b7e071ff6ba43b434d4635525fa8ecaeeac`; resulting tree `e8bd0811f2b6ccd93892a7eec97778fa9e9fcaca`.
 - Scope: 30 memory source/test files; 4,461 additions and 33 deletions after the Windows-only test-harness correction. No project, dependency, lock, CI, app, capture, API, presentation, personality, or production-root file changed.
@@ -61,7 +61,20 @@
 - Windows correction: initial run `31426116921` passed restore/audit/build but exposed one test-only symmetric file-sharing mismatch. Production sharing remained strict; read-only test inspection was made Windows-compatible and the complete gate was rerun.
 - Exact Windows evidence: run `31426524602`, job `93579415434`; locked restore and clean direct/transitive audit passed, Release build passed with 0 warnings/errors, and 125/125 tests passed (Runtime 26, Presentation 19, Capture 11, WPF integration 4, Memory 65). Artifact `9077431137`, digest `sha256:12d71a91407ba3855173c445916fccff3c0635c98b0175bf2351a89bed473583`.
 - Review: published head `d4d7bddb35ae1a2b8f3b2fdb47e28d74322ef83a`, exact tree `324874f5b7c2d274732ff82c91aa9631fa587b57`; current-base path/scope, authority, atomicity, cancellation, cleanup, evidence, recovery, privacy, and forbidden-surface checks passed.
-- Result: distinct Paw Gate passed. PR #7 and its gate-record descendant must remain green before merge; Task 4 remains unauthorized.
+- Merge: PR #7 squash-merged to `main` as `f685dd2023a5844309c5b5fb7d0abd1bf54406b9`.
+- Post-merge recheck: fresh locked restore passed; all 11 Release projects built with 0 warnings/errors; 121/121 locally runnable tests passed; accepted Windows run `31426920584` passed dependency audit and 125/125 tests including four WPF process tests.
+- Result: passed, merged, and accepted; Task 4 may become active through its own bounded packet.
+
+### Task 4 — Consent and target isolation
+
+- Candidate: draft PR #9 at reviewed implementation head `c68b673e72b5017d7f838b3cc0ab1f020d5d1f0b`, exact tree `c83a4fe56b7eea21c4e9072bd126af2e02b3b2a6`, based directly on accepted `main` `f685dd2023a5844309c5b5fb7d0abd1bf54406b9`.
+- Scope: 113 final changed paths; platform-neutral privacy and target-authorization cores, minimal Windows metadata/display/hotkey adapters, sealed synthetic capture grants, live-write and frame generation fences, neutral WPF control/status wiring, synthetic tests, solution/lock integration, and bounded control records. No Task 5 real capture or later-stage surface was added.
+- Local verification: locked restore and all 16 Release builds passed with 0 warnings/errors; the pre-review candidate passed 226/226 locally runnable tests. The refreshed environment lost the pinned SDK after two race-hardening corrections, so no post-hardening local result is claimed.
+- Exact Windows evidence: run `31449205060`, job `93649850080`; locked restore and the direct/transitive dependency audit passed, all 16 Release projects built with 0 warnings/errors, and 240/240 tests passed (Runtime 26, Capture 14, Memory 68, Presentation 50, Privacy 13, TargetAuth 57, App Integration 12). Artifact `9085707445`, 51,456 bytes, digest `sha256:d496d965d1e975ad36445c50f9e4ea03a561e2fb194d3b697a5ca106ed4ff8ea`.
+- Review: current-base whitespace, one-active-task state, 113-path scope allowlist, local/remote tree equality, consent-before-start, one-target authority, generation/target/frame admission, privacy stop ordering, live-write drainage, policy corruption/failure, monitor/hotkey failure, metadata minimization, and forbidden Task 5+/API/personality/production surfaces all passed.
+- Corrections: actual-diff review added synchronous revocation for caller cancellation during a misbehaving worker start and serialized active-executable denial through the controller. Both received focused adversarial tests without weakening existing invariants.
+- Personal Round Judgments J1–J8 record neutral/native separation, title-free descriptors, shared generation fencing, path-free policy identity, no-target resume, repeated-stop fencing, worker-start cancellation, and serialized live denial.
+- Result: Paw Gate passed. The evidence-record descendant must keep the unchanged Windows gate green; PR #9 integration and Task 5 activation await the Boss's next instruction.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

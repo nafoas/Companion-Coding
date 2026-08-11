@@ -11,7 +11,9 @@ namespace CompanionCore.Capture.Fake;
 /// </summary>
 public sealed class FakeCaptureWorker : ICaptureWorker
 {
+    private const int MaximumBufferedMetadata = 3;
     private readonly ISystemClock _clock;
+    private readonly Queue<CaptureFrameMetadata> _bufferedMetadata = new();
     private long _sequence;
     private bool _disposed;
 
@@ -22,18 +24,28 @@ public sealed class FakeCaptureWorker : ICaptureWorker
 
     public CaptureWorkerStatus Status { get; private set; } = CaptureWorkerStatus.Stopped;
 
+    public int BufferedMetadataCount => _bufferedMetadata.Count;
+
     public event EventHandler<CaptureWorkerStatusChanged>? StatusChanged;
 
     public event EventHandler<CaptureFrameMetadata>? FrameProduced;
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(
+        CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(authorization);
         cancellationToken.ThrowIfCancellationRequested();
+
+        if (Status != CaptureWorkerStatus.Stopped)
+        {
+            throw new InvalidOperationException("The synthetic capture worker is already active.");
+        }
 
         SetStatus(CaptureWorkerStatus.Starting);
         SetStatus(CaptureWorkerStatus.Running);
-        EmitSyntheticFrame();
+        EmitSyntheticFrame(authorization);
         return Task.CompletedTask;
     }
 
@@ -48,7 +60,20 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         return Task.CompletedTask;
     }
 
-    public async Task RestartAsync(CancellationToken cancellationToken)
+    public Task<CaptureStopResult> StopAndClearAsync(CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        SetStatus(CaptureWorkerStatus.Stopped);
+        var count = _bufferedMetadata.Count;
+        _bufferedMetadata.Clear();
+        return Task.FromResult(new CaptureStopResult(count));
+    }
+
+    public async Task RestartAsync(
+        CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
         // StopAsync/StartAsync each independently validate the token and leave status
@@ -57,18 +82,28 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         await StopAsync(cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
         SetStatus(CaptureWorkerStatus.Restarting);
-        await StartAsync(cancellationToken).ConfigureAwait(false);
+        // StartAsync accepts only Stopped; Restarting is an observable transition, not
+        // an active state. Return to Stopped before entering the normal start path.
+        Status = CaptureWorkerStatus.Stopped;
+        await StartAsync(authorization, cancellationToken).ConfigureAwait(false);
     }
 
-    private void EmitSyntheticFrame()
+    private void EmitSyntheticFrame(CaptureAuthorizationGrant authorization)
     {
         // Fixed 1x1 synthetic dimensions: this is metadata proving the event fired, not
         // a real capture of anything.
         var frame = new CaptureFrameMetadata(
+            authorization,
             Interlocked.Increment(ref _sequence),
             _clock.UtcNow,
-            Width: 1,
-            Height: 1);
+            width: 1,
+            height: 1);
+        while (_bufferedMetadata.Count >= MaximumBufferedMetadata)
+        {
+            _bufferedMetadata.Dequeue();
+        }
+
+        _bufferedMetadata.Enqueue(frame);
         FrameProduced?.Invoke(this, frame);
     }
 
@@ -89,5 +124,6 @@ public sealed class FakeCaptureWorker : ICaptureWorker
 
         _disposed = true;
         Status = CaptureWorkerStatus.Stopped;
+        _bufferedMetadata.Clear();
     }
 }

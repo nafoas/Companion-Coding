@@ -147,9 +147,13 @@
       "companioncore.memory": {
         "type": "Project",
         "dependencies": {
+          "CompanionCore.Privacy": "[1.0.0, )",
           "Microsoft.Data.Sqlite": "[10.0.10, )",
           "SQLitePCLRaw.bundle_e_sqlite3": "[2.1.12, )"
         }
+      },
+      "companioncore.privacy": {
+        "type": "Project"
       }
     }
   }
