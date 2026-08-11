@@ -224,6 +224,19 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         await StartAsync(authorization, cancellationToken);
     }
 
+    public Task<CaptureWorkerMetrics> GetMetricsAsync(CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new CaptureWorkerMetrics
+        {
+            Status = Status,
+            RingFrameCount = _buffer.Count,
+            CurrentSourceFrames = _buffer.Count,
+            MaximumObservedSourceFrames = _buffer.Count,
+        });
+    }
+
     internal CaptureFrameMetadata Emit(CaptureAuthorizationGrant authorization)
     {
         var frame = new CaptureFrameMetadata(

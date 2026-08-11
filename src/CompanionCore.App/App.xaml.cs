@@ -1,5 +1,5 @@
 using System.Windows;
-using CompanionCore.Capture.Fake;
+using CompanionCore.Capture.Client;
 using CompanionCore.Presentation;
 using CompanionCore.Privacy;
 using CompanionCore.Runtime;
@@ -79,7 +79,7 @@ public partial class App : Application
             new WindowsDisplayTopology(),
             policyCatalog,
             privacyState);
-        var captureWorker = new FakeCaptureWorker();
+        var captureWorker = new OutOfProcessCaptureWorker();
         _targetController = new TargetSessionController(
             targetAuthorization,
             captureWorker,

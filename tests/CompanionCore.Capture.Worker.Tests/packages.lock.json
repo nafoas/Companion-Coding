@@ -99,18 +99,6 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
-      "companioncore.app": {
-        "type": "Project",
-        "dependencies": {
-          "CompanionCore.Capture.Client": "[1.0.0, )",
-          "CompanionCore.Capture.Contracts": "[1.0.0, )",
-          "CompanionCore.Presentation": "[1.0.0, )",
-          "CompanionCore.Privacy": "[1.0.0, )",
-          "CompanionCore.Runtime": "[1.0.0, )",
-          "CompanionCore.TargetAuth": "[1.0.0, )",
-          "CompanionCore.TargetAuth.Windows": "[1.0.0, )"
-        }
-      },
       "companioncore.capture.client": {
         "type": "Project",
         "dependencies": {
@@ -120,32 +108,14 @@
       "companioncore.capture.contracts": {
         "type": "Project"
       },
-      "companioncore.presentation": {
+      "companioncore.capture.worker": {
         "type": "Project",
         "dependencies": {
-          "CompanionCore.Runtime": "[1.0.0, )",
-          "CompanionCore.TargetAuth": "[1.0.0, )"
+          "CompanionCore.Capture.Contracts": "[1.0.0, )"
         }
-      },
-      "companioncore.privacy": {
-        "type": "Project"
       },
       "companioncore.runtime": {
         "type": "Project"
-      },
-      "companioncore.targetauth": {
-        "type": "Project",
-        "dependencies": {
-          "CompanionCore.Capture.Contracts": "[1.0.0, )",
-          "CompanionCore.Privacy": "[1.0.0, )"
-        }
-      },
-      "companioncore.targetauth.windows": {
-        "type": "Project",
-        "dependencies": {
-          "CompanionCore.Capture.Contracts": "[1.0.0, )",
-          "CompanionCore.TargetAuth": "[1.0.0, )"
-        }
       }
     }
   }

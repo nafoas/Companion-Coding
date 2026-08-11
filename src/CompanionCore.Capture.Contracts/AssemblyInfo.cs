@@ -5,3 +5,4 @@ using System.Runtime.CompilerServices;
 // an authorization capability directly.
 [assembly: InternalsVisibleTo("CompanionCore.TargetAuth")]
 [assembly: InternalsVisibleTo("CompanionCore.Capture.Tests")]
+[assembly: InternalsVisibleTo("CompanionCore.Capture.Worker.Tests")]
