@@ -8,12 +8,12 @@
 | Entry criteria met | Yes; Task 4 passed its Paw Gate, final descendant rerun, merge, and exact-tree reconciliation |
 | Product code authorized | Yes, only within Task 5's exact-target out-of-process WGC worker, bounded RAM/queues, disposal, status, metrics, and private-safe tests |
 | Live API authorized | No |
-| Automated tests | Pre-Windows candidate: locked restore passed; the direct/transitive audit found 0 vulnerable packages across 20 projects; all 20 Release projects built with 0 warnings/errors; 256/256 locally runnable tests passed, including 28 Task 5 worker tests and the 216,000-frame accelerated soak. Windows/WPF and real child-process execution remain pending CI. |
-| Manual gate | Implementation and actual-diff review complete; exact current-candidate Windows CI and final tree reconciliation remain pending. |
+| Automated tests | Implementation candidate Windows run `31477853767`, job `93735671804`: locked restore and clean direct/transitive audit passed; all 20 Release projects built with 0 warnings/errors; 269/269 tests passed. Artifact `9095997685`, 57,051 bytes, digest `sha256:14913ff10570e7ee632e5e4e71256a9571a0960e8d1fb40b0c09d20ae34613c2`. |
+| Manual gate | Implementation actual-diff review passed. Documentation-only evidence descendant, exact rerun, merge, and accepted-tree reconciliation remain. |
 | Accepted `main` baseline | `b0cbc37604519ef587b3dbce8f1c589ea561b268` — Task 4 consent and target isolation accepted and merged |
 | Known limitations | Minimized and exclusive-fullscreen capture remain unsupported absent actual target-PC spike evidence; Task 5 must report no signal honestly. Task 6 regions/attention sheets remain deferred. |
 | Deferred temptations | Task 6+ visual composition/API/conversation/ERPP/personality work; durable images, production settings, final UI |
-| Approval | Task 5 explicitly authorized by Boss on 2026-08-11; implementation complete and Paw Gate pending exact Windows evidence. |
+| Approval | Task 5 explicitly authorized by Boss on 2026-08-11; implementation evidence passed and Paw Gate awaits the exact documentation-descendant rerun/merge reconciliation. |
 
 ## Gate history
 
@@ -77,6 +77,17 @@
 - Final descendant: ERPP-01 was recorded as a future Task 9 companion gate without product-code changes. Windows run `31470938172`, job `93713889217`, again passed locked restore, clean audit, all 16 Release builds with 0 warnings/errors, and 240/240 tests. Artifact `9093336297`, 50,776 bytes, digest `sha256:e223671a492e9c025e9718c9f506ec4ddde556e7292ffa9e411a4200426a952a`.
 - Merge: PR #9 squash-merged to `main` as `b0cbc37604519ef587b3dbce8f1c589ea561b268`; the accepted merge tree `4e0ae5bd7ca6961ce542611758ebf71174dfa0b0` exactly matched the final branch tree.
 - Result: passed, merged, and accepted; Task 5 may become active through its own bounded packet.
+
+### Task 5 — Bounded capture worker
+
+- Candidate: draft PR #10 at implementation head `a274001d4c40ce003fcbd0087b70c103025b4b23`, exact tree `08b70eeb4a41147eb2f5f271fd6dc876f3c79ae0`, based directly on accepted `main` `b0cbc37604519ef587b3dbce8f1c589ea561b268`.
+- Scope: 57 final changed paths; protocol/metrics contract extensions, dedicated client and exact-HWND WGC worker, normal app composition, generated-buffer and process tests, private-safe WGC spike, locks/solution wiring, and bounded control records. No Task 6 visual composition, API/conversation/ERPP implementation, personality, durable image, or production-data surface was added.
+- Local verification: locked restore and all 20 Release builds passed with 0 warnings/errors; direct/transitive audit found 0 vulnerable packages; 256/256 locally runnable tests passed, including 28 worker tests and the 216,000-frame accelerated soak.
+- Exact Windows evidence: run `31477853767`, job `93735671804`; locked restore and audit passed, all 20 Release projects built with 0 warnings/errors, and 269/269 tests passed (App Integration 13, Capture Worker 28, Capture 14, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 57). Artifact `9095997685`, 57,051 bytes, digest `sha256:14913ff10570e7ee632e5e4e71256a9571a0960e8d1fb40b0c09d20ae34613c2`.
+- Process evidence: TRX durations prove Windows-only child cases executed, including twelve fresh process restarts/cleanup/handle checks (6.35 s), exact metadata/stop, unexpected crash recovery, and blocking-observer control isolation.
+- Review corrections: disposed an acquired WGC frame on concurrent stop; made terminal status synchronously close client admission; made malformed/current-target-mismatched/duplicate/out-of-order frame IPC tear down the child; unified the 256-bit nonce length; and removed product-assembly friendship to sealed grant issuance.
+- Personal Round Judgments J1–J8 record authority narrowing, IPC/epoch design, newest-preserving bounds, raw-byte accounting, revocation ordering, honest silence, nonblocking observers, and private-safe soak/spike evidence.
+- Remaining gate work: pass the documentation-only evidence descendant, reconcile its exact tree, merge PR #10, and verify accepted `main`. Actual target-PC minimized/exclusive WGC feasibility remains unsupported and deferred evidence, not a Task 5 gate failure.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

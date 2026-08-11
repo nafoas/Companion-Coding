@@ -2,7 +2,7 @@
 
 ## Task
 
-Task 5 — Bounded Capture Worker. Implementation is complete on the active branch; exact Windows CI and the final Paw Gate remain pending.
+Task 5 — Bounded Capture Worker. The exact implementation candidate passed Windows CI; this documentation-only evidence descendant and final Paw Gate reconciliation remain pending.
 
 ## Completed
 
@@ -31,13 +31,15 @@ Task 5 — Bounded Capture Worker. Implementation is complete on the active bran
 - Task 5 soak: 216,000 generated frames (six virtual hours at 10 fps), hard bounds preserved, zero owned frames/bytes after clear/dispose.
 - Structural review: worker references only Capture Contracts; no runtime/memory/target-discovery/presentation authority; client/worker cannot issue sealed grants; no foreground/enumeration/monitor/fallback/PrintWindow/BitBlt/Desktop Duplication/title/durable-image capability found.
 - `git diff --check`: passed.
-- Not claimed locally: WPF application integration and real `.exe` child-process cases require Windows and will run in CI.
+- Exact implementation candidate: published head `a274001d4c40ce003fcbd0087b70c103025b4b23`, tree `08b70eeb4a41147eb2f5f271fd6dc876f3c79ae0`.
+- Windows CI: run `31477853767`, job `93735671804`, passed restore/audit/build and 269/269 tests — App Integration 13, Capture Worker 28, Capture 14, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 57.
+- Windows process proof: TRX confirms twelve fresh restarts (6.35 s), exact metadata/stop, unexpected crash/restart, and blocking-observer metrics/stop cases executed and passed.
+- Artifact: `9095997685`, 57,051 bytes, digest `sha256:14913ff10570e7ee632e5e4e71256a9571a0960e8d1fb40b0c09d20ae34613c2`.
 
 ## Remaining
 
-- Publish the implementation commit and draft PR.
-- Pass exact-candidate Windows CI: locked restore, clean audit, 20-project zero-warning build, all 269 expected tests (including 13 App Integration and 28 Worker tests), and uploaded TRX evidence.
-- Record the exact head/tree/run/job/artifact evidence, rerun any documentation descendant, perform final exact-diff review, merge, and reconcile the accepted `main` tree.
+- Commit/publish this documentation-only evidence descendant and pass its exact Windows rerun.
+- Perform final exact-tree review, mark PR #10 ready, squash-merge, and reconcile accepted `main`.
 
 ## Risks and assumptions
 
@@ -55,11 +57,13 @@ Task 5 — Bounded Capture Worker. Implementation is complete on the active bran
 
 - Branch: `agent/task-05-bounded-capture-worker`
 - Base: `b0cbc37604519ef587b3dbce8f1c589ea561b268`
-- Implementation commit: pending after this handoff update.
+- Local implementation commit: `7b41822126470b2919bcc69b37a08f93a2f64e74`.
+- Published implementation head/tree: `a274001d4c40ce003fcbd0087b70c103025b4b23` / `08b70eeb4a41147eb2f5f271fd6dc876f3c79ae0`.
+- Evidence-descendant commit: pending this update.
 
 ## Next safe task
 
-- Publish and run the exact Windows candidate; do not begin Task 6.
+- Gate and merge the documentation-only descendant; do not begin Task 6.
 
 ## Credit status
 

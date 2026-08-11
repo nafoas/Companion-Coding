@@ -1,6 +1,6 @@
 # Task 5 — Bounded Capture Worker
 
-Status: **Active; authorized by Boss on 2026-08-11 after Task 4 acceptance. Task 6 is not active.**
+Status: **Active; implementation candidate passed Windows CI on 2026-08-11. A documentation-only evidence descendant and final Paw Gate reconciliation remain; Task 6 is not active.**
 Accepted base: `b0cbc37604519ef587b3dbce8f1c589ea561b268`
 Working branch: `agent/task-05-bounded-capture-worker`
 Roadmap slice: Stage 4, first packet — local peepers and bounded capture only
@@ -136,6 +136,15 @@ Task 5 passes only when:
 - **J6 — Silence is a state, never recycled vision.** A two-second virtual-time no-arrival threshold yields `NoSignal`; `IsIconic` yields distinct `PausedMinimized`. Both transitions synchronously clear retained leases, and a genuinely new frame is required to return to `Running`. Resize clears incompatible work before frame-pool recreation. Minimized and exclusive-fullscreen support remain unsupported until the optional harness modes are run on the actual target PC.
 - **J7 — Observers cannot obstruct capture control.** Worker notifications use a bounded newest-preserving channel separate from direct correlated command responses. The client has one sole IPC reader plus a separate bounded event dispatcher; slow or failing application observers cannot block metrics, stop, cleanup, or protocol fault handling.
 - **J8 — Evidence is synthetic and private-safe by construction.** Unit tests use generated buffers and virtual time; the accelerated soak offers 216,000 frames (six simulated hours at 10 fps) and requires bounded maxima plus zero outstanding leases. Windows process tests use only the explicit synthetic worker flag and fresh child processes. The manual WGC harness spawns and authorizes its own pulsing fixture, verifies visible/occluded metadata, optionally performs real minimized/DXGI-exclusive experiments, and never saves or exposes captured pixels.
+
+## Candidate evidence
+
+- Published implementation head `a274001d4c40ce003fcbd0087b70c103025b4b23`, exact tree `08b70eeb4a41147eb2f5f271fd6dc876f3c79ae0`, directly based on accepted Task 4 `main` `b0cbc37604519ef587b3dbce8f1c589ea561b268`.
+- Windows run `31477853767`, job `93735671804`, passed locked restore, clean direct/transitive audit, all 20 Release builds, and 269/269 tests: App Integration 13, Capture Worker 28, Capture 14, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 57.
+- TRX evidence confirms the Windows-only process cases executed: twelve fresh restarts/cleanup/handle checks (6.35 s), exact child metadata/stop, forced crash/restart, and blocking-observer protocol/stop isolation all passed.
+- Artifact `9095997685`, 57,051 bytes, digest `sha256:14913ff10570e7ee632e5e4e71256a9571a0960e8d1fb40b0c09d20ae34613c2`.
+- Actual-diff review found and corrected four pre-publication issues: acquired WGC-frame release during a concurrent stop, terminal-status closure of queued client frames, fail-closed current-target/sequence IPC handling, and structural removal of client/worker grant-issuance friendship. The shared 256-bit nonce length received an explicit regression after review caught a client/host length mismatch before Windows publication.
+- Minimized/exclusive behavior is still unsupported: neither CI nor the synthetic process source is actual target-PC WGC evidence.
 
 ## Deferred Findings
 
