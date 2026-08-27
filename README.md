@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, Task 2's append-only memory/journal spine, Task 3's atomic backup/guarded repair, Task 4's consent/target-isolation boundary, and Task 5's bounded capture worker are accepted. Task 6 is the sole active neutral-core task and the final packet of Stage 4.
+Task 0's architecture, the R0 direct-build controls, and Tasks 1–5 are accepted. Task 6's implementation is merged, and its final direct-owned-resource correction has passed both exact Windows event paths. The evidence descendant and accepted-`main` reconciliation remain the sole active neutral-core work and the last gate of Stage 4.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, 
 
 ## Current task
 
-Task 6: regions and attention sheets. Work is restricted to bounded local pixel readback inside the exact-target worker, normalized default/manual regions, local duplicate rejection, synchronized labeled PNG attention sheets, checksummed size-bounded RAM-only transport, Task 4 privacy correlation, and a provisional resource watchdog. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred. The corrected implementation, actual-diff review, publication, remote equality, and 309/309 Windows gate are complete; the evidence descendant, merge, and accepted-main reconciliation remain before Stage 4 is marked accepted.
+Task 6: regions and attention sheets. The implementation and PR #11 merge are complete. The replacement resource gate observes only the process and named-pipe handles owned by the capture client; published correction head `9ce4e592dc812a5740b49a033268386b8d7d8f13` passed both push and PR Windows paths at 309/309. Task 6 remains active only while that exact evidence is recorded, merged with a head fence, and reconciled to accepted `main`. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred.
 
 ## Important boundaries
 
