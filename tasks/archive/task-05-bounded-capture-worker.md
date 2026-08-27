@@ -1,6 +1,6 @@
 # Task 5 — Bounded Capture Worker
 
-Status: **Active; implementation candidate passed Windows CI on 2026-08-11. A documentation-only evidence descendant and final Paw Gate reconciliation remain; Task 6 is not active.**
+Status: **Accepted and merged on 2026-08-11 as `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`; Windows Paw Gate passed 269/269 tests.**
 Accepted base: `b0cbc37604519ef587b3dbce8f1c589ea561b268`
 Working branch: `agent/task-05-bounded-capture-worker`
 Roadmap slice: Stage 4, first packet — local peepers and bounded capture only

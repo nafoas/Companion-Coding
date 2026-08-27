@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Windows;
+using CompanionCore.Capture.Contracts;
 using CompanionCore.Presentation;
 using CompanionCore.Privacy;
 using CompanionCore.Runtime;
@@ -8,7 +10,8 @@ using CompanionCore.TargetAuth.Windows;
 namespace CompanionCore.App;
 
 /// <summary>
-/// The neutral shell needed to exercise lifecycle and Task 4 target-consent controls.
+/// The neutral shell needed to exercise lifecycle, target consent, and Task 6's
+/// normalized manual-region control.
 /// This window never constructs a <see cref="CompanionRuntime"/>; it only holds a
 /// reference to the one the composition root already built.
 /// </summary>
@@ -42,6 +45,7 @@ public partial class MainWindow : Window
         _targetController = targetController;
         AuthorizationCategoryCombo.ItemsSource = Enum.GetValues<AuthorizationCategory>();
         _targetController.SessionEvent += TargetController_SessionEvent;
+        _targetController.AttentionSheetAvailable += TargetController_AttentionSheetAvailable;
 
         if (registerGlobalHotkey)
         {
@@ -64,6 +68,7 @@ public partial class MainWindow : Window
         Closed += (_, _) =>
         {
             _targetController.SessionEvent -= TargetController_SessionEvent;
+            _targetController.AttentionSheetAvailable -= TargetController_AttentionSheetAvailable;
             _privacyHotkey?.Dispose();
         };
     }
@@ -162,6 +167,40 @@ public partial class MainWindow : Window
     private async void EndTargetButton_Click(object sender, RoutedEventArgs e) =>
         await _targetController.EndSessionAsync();
 
+    private async void ApplyManualRegionButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var region = new NormalizedRegion(
+                ParseNormalized(ManualXBox.Text),
+                ParseNormalized(ManualYBox.Text),
+                ParseNormalized(ManualWidthBox.Text),
+                ParseNormalized(ManualHeightBox.Text));
+            region.Validate(nameof(region));
+            await _targetController.SetManualRegionAsync(region);
+            AttentionStatusText.Text = "Manual region accepted; waiting for a current sheet.";
+        }
+        catch (Exception)
+        {
+            AttentionStatusText.Text =
+                "Manual region rejected; use finite fractions contained in 0–1 with an active target.";
+        }
+    }
+
+    private async void ClearManualRegionButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _targetController.SetManualRegionAsync(null);
+            AttentionStatusText.Text = "Manual region cleared.";
+        }
+        catch (Exception)
+        {
+            AttentionStatusText.Text =
+                "Manual region could not be cleared because no target is active.";
+        }
+    }
+
     private void TargetController_SessionEvent(object? sender, TargetSessionEvent targetEvent)
     {
         if (!Dispatcher.CheckAccess())
@@ -172,6 +211,24 @@ public partial class MainWindow : Window
 
         RenderTargetEvent(targetEvent);
     }
+
+    private void TargetController_AttentionSheetAvailable(
+        object? sender,
+        AttentionSheetMetadata metadata)
+    {
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.Invoke(() => TargetController_AttentionSheetAvailable(sender, metadata));
+            return;
+        }
+
+        AttentionStatusText.Text =
+            $"Attention sheet ready: {metadata.Kind}; source {metadata.SourceWidth}×{metadata.SourceHeight}; "
+            + $"{metadata.Regions.Length} labeled region(s).";
+    }
+
+    private static double ParseNormalized(string text) =>
+        double.Parse(text, NumberStyles.Float, CultureInfo.InvariantCulture);
 
     private void RenderTargetEvent(TargetSessionEvent targetEvent) =>
         _targetSink.Render(_adapter.Map(targetEvent));

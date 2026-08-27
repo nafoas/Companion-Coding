@@ -10,5 +10,7 @@ public enum CaptureWorkerStatusReason
     CaptureUnavailable,
     DeviceLost,
     ProtocolFailure,
-    WorkerExited
+    WorkerExited,
+    SourceResized,
+    ResourceBudgetExceeded
 }

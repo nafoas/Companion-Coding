@@ -7,6 +7,7 @@ namespace CompanionCore.Capture.Contracts;
 public sealed record CaptureWorkerMetrics
 {
     public const long ScreenshotBudgetBytes = 64L * 1024 * 1024;
+    public const long VisualWorkingBudgetBytes = 64L * 1024 * 1024;
     public const int MaximumSourceFrames = 3;
 
     public int WorkerProcessId { get; init; }
@@ -51,6 +52,32 @@ public sealed record CaptureWorkerMetrics
 
     public int NativeHandleCount { get; init; }
 
+    public long ChangedFrames { get; init; }
+
+    public long DuplicateFrames { get; init; }
+
+    public long ProducedAttentionSheets { get; init; }
+
+    public long ProducedOrientationSheets { get; init; }
+
+    public long DroppedAttentionSheets { get; init; }
+
+    public int CurrentAttentionSheets { get; init; }
+
+    public int MaximumObservedAttentionSheets { get; init; }
+
+    public long CurrentAttentionSheetBytes { get; init; }
+
+    public long MaximumObservedAttentionSheetBytes { get; init; }
+
+    public long CurrentVisualWorkingBytes { get; init; }
+
+    public long MaximumObservedVisualWorkingBytes { get; init; }
+
+    public double LastChangeScore { get; init; }
+
+    public long ResourceWatchdogTrips { get; init; }
+
     public static CaptureWorkerMetrics Empty { get; } = new();
 
     public bool IsProtocolSafe() =>
@@ -79,5 +106,24 @@ public sealed record CaptureWorkerMetrics
         && OldestFrameLifetime >= TimeSpan.Zero
         && WorkingSetBytes >= 0
         && PrivateMemoryBytes >= 0
-        && NativeHandleCount >= 0;
+        && NativeHandleCount >= 0
+        && ChangedFrames >= 0
+        && DuplicateFrames >= 0
+        && ProducedAttentionSheets >= 0
+        && ProducedOrientationSheets is >= 0 && ProducedOrientationSheets <= ProducedAttentionSheets
+        && DroppedAttentionSheets >= 0
+        && CurrentAttentionSheets is >= 0 and <= AttentionSheet.MaximumRetainedSheets
+        && MaximumObservedAttentionSheets is >= 0 and <= AttentionSheet.MaximumRetainedSheets
+        && CurrentAttentionSheets <= MaximumObservedAttentionSheets
+        && CurrentAttentionSheetBytes is >= 0
+            and <= AttentionSheet.MaximumEncodedBytes * AttentionSheet.MaximumRetainedSheets
+        && MaximumObservedAttentionSheetBytes is >= 0
+            and <= AttentionSheet.MaximumEncodedBytes * AttentionSheet.MaximumRetainedSheets
+        && CurrentAttentionSheetBytes <= MaximumObservedAttentionSheetBytes
+        && CurrentVisualWorkingBytes is >= 0 and <= VisualWorkingBudgetBytes
+        && MaximumObservedVisualWorkingBytes is >= 0 and <= VisualWorkingBudgetBytes
+        && CurrentVisualWorkingBytes <= MaximumObservedVisualWorkingBytes
+        && double.IsFinite(LastChangeScore)
+        && LastChangeScore is >= 0 and <= 1
+        && ResourceWatchdogTrips >= 0;
 }

@@ -13,6 +13,7 @@ internal sealed class SyntheticCaptureSource : IWorkerCaptureSource
     private readonly object _gate = new();
     private CancellationTokenSource? _captureLifetime;
     private Task? _producer;
+    private long _frameIndex;
     private bool _disposed;
 
     internal SyntheticCaptureSource(
@@ -95,12 +96,20 @@ internal sealed class SyntheticCaptureSource : IWorkerCaptureSource
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            var resource = new SyntheticFrameResource(_frameBytes);
+            const int width = 32;
+            var height = Math.Max(1, _frameBytes / (width * 4));
+            var exactBytes = checked(width * height * 4);
+            var frameIndex = Interlocked.Increment(ref _frameIndex);
+            var resource = new SyntheticFrameResource(
+                width,
+                height,
+                exactBytes,
+                pattern: checked((int)((frameIndex - 1) / 3)));
             var frame = new CaptureSourceFrame(
                 _clock.UtcNow,
-                width: 32,
-                height: Math.Max(1, _frameBytes / (32 * 4)),
-                accountedBytes: _frameBytes,
+                width,
+                height,
+                accountedBytes: exactBytes,
                 resource);
             var handler = FrameArrived;
             if (handler is null)
@@ -149,16 +158,41 @@ internal sealed class SyntheticCaptureSource : IWorkerCaptureSource
         }
     }
 
-    private sealed class SyntheticFrameResource : IDisposable
+    private sealed class SyntheticFrameResource : ICapturePixelSource
     {
         private byte[]? _buffer;
         private readonly int _length;
+        private readonly int _width;
+        private readonly int _height;
 
-        internal SyntheticFrameResource(int length)
+        internal SyntheticFrameResource(int width, int height, int length, int pattern)
         {
+            _width = width;
+            _height = height;
             _length = length;
             _buffer = ArrayPool<byte>.Shared.Rent(length);
-            _buffer.AsSpan(0, length).Clear();
+            var pixels = _buffer.AsSpan(0, length);
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var offset = checked((y * width + x) * 4);
+                    pixels[offset] = unchecked((byte)(x * 7 + pattern * 17));
+                    pixels[offset + 1] = unchecked((byte)(y * 9 + pattern * 11));
+                    pixels[offset + 2] = unchecked((byte)((x + y) * 5 + pattern * 23));
+                    pixels[offset + 3] = 255;
+                }
+            }
+        }
+
+        public ValueTask<OwnedBgra32Buffer> CopyPixelsAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var source = Volatile.Read(ref _buffer)
+                ?? throw new ObjectDisposedException(nameof(SyntheticFrameResource));
+            var copy = GC.AllocateUninitializedArray<byte>(_length);
+            source.AsSpan(0, _length).CopyTo(copy);
+            return ValueTask.FromResult(new OwnedBgra32Buffer(_width, _height, copy));
         }
 
         public void Dispose()

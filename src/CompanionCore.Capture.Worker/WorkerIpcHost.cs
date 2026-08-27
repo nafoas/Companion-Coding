@@ -35,6 +35,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         });
         _engine.FrameProduced += OnFrameProduced;
         _engine.StatusChanged += OnStatusChanged;
+        _engine.AttentionSheetProduced += OnAttentionSheetProduced;
     }
 
     internal async Task<int> RunAsync(CancellationToken cancellationToken)
@@ -59,6 +60,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
             || hello.ClearedFrameCount != 0
             || hello.ClearedBytes != 0
             || hello.ErrorCode != CaptureWorkerErrorCode.None
+            || HasVisualPayloadFields(hello)
             || !string.Equals(
                 hello.HandshakeNonce,
                 _options.HandshakeNonce,
@@ -171,6 +173,27 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
                         cancellationToken).ConfigureAwait(false);
                     return false;
 
+                case CaptureIpcMessageKind.SetManualRegion:
+                    if (command.Authorization is null)
+                    {
+                        throw new CaptureProtocolException(CaptureWorkerErrorCode.InvalidAuthorization);
+                    }
+
+                    using (var update = await _engine.BeginManualRegionUpdateAsync(
+                               command.Authorization,
+                               command.ClearManualRegion ? null : command.ManualRegion,
+                               cancellationToken)
+                           .ConfigureAwait(false))
+                    {
+                        // The pipeline remains paused until this response is on the
+                        // pipe. Pre-update sheets therefore precede the response and
+                        // post-update sheets necessarily follow it.
+                        await SendSuccessAsync(command, cancellationToken).ConfigureAwait(false);
+                        update.MarkResponseCommitted();
+                    }
+
+                    return false;
+
                 case CaptureIpcMessageKind.Shutdown:
                     if (_engine.Status != CaptureWorkerStatus.Stopped)
                     {
@@ -211,15 +234,22 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
 
     private static void ValidateCommandShape(CaptureIpcMessage command)
     {
-        var authorizationShapeIsValid = command.Kind == CaptureIpcMessageKind.Start
+        var authorizationShapeIsValid = command.Kind is (
+                CaptureIpcMessageKind.Start or CaptureIpcMessageKind.SetManualRegion)
             ? command.Authorization is not null
             : command.Authorization is null;
+        var manualShapeIsValid = command.Kind == CaptureIpcMessageKind.SetManualRegion
+            ? command.ClearManualRegion != command.ManualRegion.HasValue
+                && (command.ManualRegion is null || command.ManualRegion.Value.IsValid)
+            : command.ManualRegion is null && !command.ClearManualRegion;
         if (!authorizationShapeIsValid
+            || !manualShapeIsValid
             || command.Kind is not (
                 CaptureIpcMessageKind.Start
                 or CaptureIpcMessageKind.Stop
                 or CaptureIpcMessageKind.StopAndClear
                 or CaptureIpcMessageKind.GetMetrics
+                or CaptureIpcMessageKind.SetManualRegion
                 or CaptureIpcMessageKind.Shutdown)
             || command.HandshakeNonce is not null
             || command.SequenceNumber != 0
@@ -232,7 +262,10 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
             || command.Metrics is not null
             || command.ClearedFrameCount != 0
             || command.ClearedBytes != 0
-            || command.ErrorCode != CaptureWorkerErrorCode.None)
+            || command.ErrorCode != CaptureWorkerErrorCode.None
+            || command.AttentionSheet is not null
+            || command.PayloadLength != 0
+            || command.PayloadSha256 is not null)
         {
             throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
         }
@@ -267,13 +300,60 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
 
     private void OnStatusChanged(object? sender, CaptureWorkerStatusChanged change)
     {
-        _notifications.Writer.TryWrite(new CaptureIpcMessage
+        // Status is a fence, not best-effort telemetry. Write it synchronously so a
+        // resize/fault clear cannot be overtaken by a sheet from the recalibrated epoch.
+        WriteAsync(
+                new CaptureIpcMessage
+                {
+                    Kind = CaptureIpcMessageKind.StatusChanged,
+                    Status = change.Status,
+                    StatusReason = change.Reason,
+                    Timestamp = change.Timestamp,
+                },
+                _lifetime.Token)
+            .GetAwaiter()
+            .GetResult();
+    }
+
+    private void OnAttentionSheetProduced(object? sender, OwnedWorkerAttentionSheet sheet)
+    {
+        try
         {
-            Kind = CaptureIpcMessageKind.StatusChanged,
-            Status = change.Status,
-            StatusReason = change.Reason,
-            Timestamp = change.Timestamp,
-        });
+            WriteAttentionSheetAsync(sheet, _lifetime.Token).GetAwaiter().GetResult();
+        }
+        finally
+        {
+            sheet.Dispose();
+        }
+    }
+
+    private Task WriteAttentionSheetAsync(
+        OwnedWorkerAttentionSheet sheet,
+        CancellationToken cancellationToken)
+    {
+        var metadata = sheet.Metadata;
+        var target = metadata.Target
+            ?? throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
+        var authorization = new CaptureIpcAuthorization
+        {
+            TargetSessionId = metadata.TargetSessionId,
+            Generation = metadata.Generation,
+            WindowId = target.WindowId,
+            ProcessId = target.ProcessId,
+            ExecutableFileName = target.ExecutableFileName,
+            ExecutablePathFingerprint = target.ExecutablePathFingerprint,
+        };
+        return WriteAsync(
+            new CaptureIpcMessage
+            {
+                Kind = CaptureIpcMessageKind.AttentionSheetProduced,
+                Authorization = authorization,
+                AttentionSheet = metadata,
+                PayloadLength = metadata.EncodedByteLength,
+                PayloadSha256 = sheet.PayloadSha256,
+            },
+            sheet.EncodedImage,
+            cancellationToken);
     }
 
     private async Task WriteNotificationsAsync(CancellationToken cancellationToken)
@@ -297,6 +377,30 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         }
     }
 
+    private async Task WriteAsync(
+        CaptureIpcMessage message,
+        ReadOnlyMemory<byte> payload,
+        CancellationToken cancellationToken)
+    {
+        await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await CaptureIpcProtocol.WriteAsync(_pipe, message, payload, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
+    }
+
+    private static bool HasVisualPayloadFields(CaptureIpcMessage message) =>
+        message.ManualRegion is not null
+        || message.ClearManualRegion
+        || message.AttentionSheet is not null
+        || message.PayloadLength != 0
+        || message.PayloadSha256 is not null;
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
@@ -307,6 +411,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         _disposed = true;
         _engine.FrameProduced -= OnFrameProduced;
         _engine.StatusChanged -= OnStatusChanged;
+        _engine.AttentionSheetProduced -= OnAttentionSheetProduced;
         _notifications.Writer.TryComplete();
         _lifetime.Cancel();
         if (_notificationWriter is not null)

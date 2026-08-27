@@ -4,5 +4,7 @@ using System.Runtime.CompilerServices;
 // consume grants but cannot mint one, and ordinary app/runtime code cannot construct
 // an authorization capability directly.
 [assembly: InternalsVisibleTo("CompanionCore.TargetAuth")]
+[assembly: InternalsVisibleTo("CompanionCore.Capture.Fake")]
 [assembly: InternalsVisibleTo("CompanionCore.Capture.Tests")]
 [assembly: InternalsVisibleTo("CompanionCore.Capture.Worker.Tests")]
+[assembly: InternalsVisibleTo("CompanionCore.TargetAuth.Tests")]

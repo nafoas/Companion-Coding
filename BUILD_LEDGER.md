@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 4 — local peepers and bounded visual pipeline (Task 5 worker slice) |
-| Active task | Task 5 — Bounded Capture Worker |
-| Working branch | `agent/task-05-bounded-capture-worker`, based on accepted `main` |
-| Entry criteria met | Yes; Task 4 passed its Paw Gate, final descendant rerun, merge, and exact-tree reconciliation |
-| Product code authorized | Yes, only within Task 5's exact-target out-of-process WGC worker, bounded RAM/queues, disposal, status, metrics, and private-safe tests |
+| Current stage | Stage 4 — local peepers and bounded visual pipeline (final Task 6 packet) |
+| Active task | Task 6 — Regions and Attention Sheets |
+| Working branch | `agent/task-06-regions-attention-sheets`, based on accepted `main` `a257d5a1d70d03a77f27582b9f0bbecd0194e67d` |
+| Entry criteria met | Yes; Task 5 passed its Paw Gate, merged through PR #10, and was reconciled to accepted `main` |
+| Product code authorized | Yes, only within Task 6's bounded local readback, normalized regions, change detection, labeled attention-sheet composition, size-bounded payload transport, privacy correlation, manual-region plumbing, and provisional watchdog |
 | Live API authorized | No |
-| Automated tests | Implementation candidate Windows run `31477853767`, job `93735671804`: locked restore and clean direct/transitive audit passed; all 20 Release projects built with 0 warnings/errors; 269/269 tests passed. Artifact `9095997685`, 57,051 bytes, digest `sha256:14913ff10570e7ee632e5e4e71256a9571a0960e8d1fb40b0c09d20ae34613c2`. |
-| Manual gate | Implementation actual-diff review passed. Documentation-only evidence descendant, exact rerun, merge, and accepted-tree reconciliation remain. |
-| Accepted `main` baseline | `b0cbc37604519ef587b3dbce8f1c589ea561b268` — Task 4 consent and target isolation accepted and merged |
-| Known limitations | Minimized and exclusive-fullscreen capture remain unsupported absent actual target-PC spike evidence; Task 5 must report no signal honestly. Task 6 regions/attention sheets remain deferred. |
-| Deferred temptations | Task 6+ visual composition/API/conversation/ERPP/personality work; durable images, production settings, final UI |
-| Approval | Task 5 explicitly authorized by Boss on 2026-08-11; implementation evidence passed and Paw Gate awaits the exact documentation-descendant rerun/merge reconciliation. |
+| Automated tests | Corrected local pinned-SDK gate: locked restore and clean 20-project audit passed; all 20 Release projects built with 0 warnings/errors; 296/296 locally executable tests passed. Corrected Windows run `33027192357`, job `98371213540`, passed restore/audit/build and 309/309 tests, including real WPF/child-process execution. |
+| Manual gate | Separate actual-diff review and visual inspection passed. Published corrected head `660d7d9c4ffc4592cf0c725c3686ce68735dab18` has exact tree `2876d61439087ecd41b4d967761c3ff447246a44`; local/remote diff is empty. The evidence descendant, merge, and accepted-tree reconciliation remain. |
+| Accepted `main` baseline | `a257d5a1d70d03a77f27582b9f0bbecd0194e67d` — Task 5 bounded capture worker accepted and merged |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds are deliberately provisional until Stage 11 physical profiling. |
+| Deferred temptations | Task 7+ semantic bridge/attention meaning/API/conversation/ERPP/personality work; durable images, production settings, final UI |
+| Approval | Boss authorized completing and pushing all remaining Stage 4 work on 2026-08-26 and explicitly confirmed `https://github.com/nafoas/Companion-Coding.git` on 2026-08-27. Publication and the corrected Windows implementation gate are complete. |
 
 ## Gate history
 
@@ -87,7 +87,20 @@
 - Process evidence: TRX durations prove Windows-only child cases executed, including twelve fresh process restarts/cleanup/handle checks (6.35 s), exact metadata/stop, unexpected crash recovery, and blocking-observer control isolation.
 - Review corrections: disposed an acquired WGC frame on concurrent stop; made terminal status synchronously close client admission; made malformed/current-target-mismatched/duplicate/out-of-order frame IPC tear down the child; unified the 256-bit nonce length; and removed product-assembly friendship to sealed grant issuance.
 - Personal Round Judgments J1–J8 record authority narrowing, IPC/epoch design, newest-preserving bounds, raw-byte accounting, revocation ordering, honest silence, nonblocking observers, and private-safe soak/spike evidence.
-- Remaining gate work: pass the documentation-only evidence descendant, reconcile its exact tree, merge PR #10, and verify accepted `main`. Actual target-PC minimized/exclusive WGC feasibility remains unsupported and deferred evidence, not a Task 5 gate failure.
+- Merge: PR #10 squash-merged to `main` as `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`; accepted tree `b3a84d9a0a5be6cc81b4f517ac1b1fdb8537a23b` retained the gated behavior and evidence records.
+- Result: passed, merged, and accepted; Task 6 became the final Stage 4 packet. Actual target-PC minimized/exclusive WGC feasibility remains unsupported deferred evidence, not a Task 5 defect.
+
+### Task 6 — Regions and attention sheets
+
+- Corrected candidate: local head `018e99b1802673051c116df63e3e6bc4891f62cf`, published equivalent `660d7d9c4ffc4592cf0c725c3686ce68735dab18`, exact shared tree `2876d61439087ecd41b4d967761c3ff447246a44`, based directly on accepted Task 5 `main` `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`; draft PR #11.
+- Scope: the observer-neutral evidence descendant has 44 changed paths and 4,544 additions/190 deletions; strict capture contracts/IPC, worker-local readback/change/geometry/composition/encoding/watchdog logic, bounded client reception, Task 4 privacy correlation, neutral manual-region controls, focused tests, synthetic artifact upload, and bounded control records. No package, lock, solution, memory, runtime, semantic/API, conversation, ERPP implementation, personality, or production-data surface changed.
+- Behavior: one restart/resize-scoped orientation; normalized deterministic defaults and current-grant manual override; local luminance duplicate rejection; one-moment full context plus at most two labeled crops; deterministic lossless PNG; separate 8 MiB checksummed payload under an unchanged 64 KiB JSON ceiling; at most two sheets per worker/client owner; exact target/generation/source correlation through Privacy Guard; explicit 64 MiB visual accounting and a provisional sustained-growth watchdog.
+- Local verification: pinned .NET SDK 10.0.302 locked restore passed (serialized project graph with `EnableWindowsTargeting=true`); all 20 Release projects built with 0 warnings/errors; the direct/transitive audit examined all 20 projects with 0 vulnerable findings; 296/296 locally executable invocations passed (Capture 14, Capture Worker 61, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 64). The capture suite includes a 216,000-frame/six-hour accelerated visual soak.
+- Synthetic inspection: generated test-only PNG decoded structurally and was visually inspected at 792×621 RGBA with `FULL CONTEXT`, `CENTER`, and `LOWER / DIALOGUE` labels and synchronized crops; digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- Actual-diff corrections: restored sealed-grant assembly isolation; made payload ownership atomic and zeroing; bounded temporary WGC readback at 64 MiB; fenced resize/fault status ahead of new sheets; deferred start-time frames; coalesced newest sheet signals; held newer sheets until their own frame passed privacy; serialized manual-region response ordering; then rejected the initially green candidate until sheet dispatch followed source-frame dispatch, held payloads were disposed on resize/fault, exact source identity included timestamp/dimensions, and impossible BGRA geometry failed closed.
+- Evidence-run correction: the exact docs-head runs exposed a Task 5 parent-handle heuristic that measured shared-host runtime warmup, legitimate Windows PID reuse during the longer test, and a restart test that expected an older orientation from a newest-preserving queue. The isolated collection now uses warmup plus 12 measured restarts, release settling, a two-handle ceiling, and PID-plus-start-time identities checked without additional async waits; restart coverage independently proves fresh-orientation emission and fresh-epoch retained payload. Product behavior is untouched.
+- Corrected Windows evidence: run `33027192357`, job `98371213540`; locked restore, clean audit, all 20 Release builds, and 309/309 tests passed (App Integration 13, Capture 14, Capture Worker 61, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 64). Test-results artifact `9628886868` has digest `sha256:be57fa82e9bf07082417d931c4f7baee12be88156741c756c54c2456d888b388`; attention-sheet artifact `9628887307` has digest `sha256:f23f23afa38591f8378a645c0c829c5b677f240f2f0d7248e6dc14b75f578e43`.
+- Result: implementation Paw Gate passed with exact local/remote tree equality. The evidence-bearing descendant, PR #11 merge, and accepted-`main` reconciliation remain; Task 6 and Stage 4 are not yet marked accepted.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

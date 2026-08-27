@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using CompanionCore.Capture.Client;
 using CompanionCore.Capture.Contracts;
@@ -5,8 +6,19 @@ using CompanionCore.Runtime;
 
 namespace CompanionCore.Capture.Worker.Tests;
 
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class OutOfProcessCaptureWorkerCollection
+{
+    public const string Name = "Out-of-process capture worker";
+}
+
+[Collection(OutOfProcessCaptureWorkerCollection.Name)]
 public sealed class OutOfProcessCaptureWorkerTests
 {
+    private const int RestartWarmupCount = 12;
+    private const int MeasuredRestartCount = 12;
+    private const int MaximumParentHandleDrift = 2;
+
     [Fact]
     public async Task CancelledStart_NeverLaunchesAProcess()
     {
@@ -42,6 +54,7 @@ public sealed class OutOfProcessCaptureWorkerTests
 
         await worker.StartAsync(grant, CancellationToken.None);
         var processId = worker.WorkerProcessId;
+        var processIdentity = GetWorkerProcessIdentity(processId);
         var frame = await frameReady.Task.WaitAsync(TimeSpan.FromSeconds(10));
         var metrics = await worker.GetMetricsAsync(CancellationToken.None);
 
@@ -54,7 +67,7 @@ public sealed class OutOfProcessCaptureWorkerTests
 
         await worker.StopAndClearAsync(CancellationToken.None);
         Assert.Equal(0, worker.WorkerProcessId);
-        await AssertProcessExitedAsync(processId);
+        Assert.False(IsProcessIdentityAlive(processIdentity));
     }
 
     [Fact]
@@ -69,38 +82,58 @@ public sealed class OutOfProcessCaptureWorkerTests
         var grant = CaptureWorkerTestSupport.CreateGrant();
         var runtimeConstructionsBefore = CompanionRuntime.ConstructionCount;
         await worker.StartAsync(grant, CancellationToken.None);
-        var processIds = new List<int> { worker.WorkerProcessId };
-        var childHandleCounts = new List<int>();
-        var parentHandleCounts = new List<int>();
-
-        for (var attempt = 0; attempt < 12; attempt++)
+        var processIdentities = new List<WorkerProcessIdentity>
         {
-            var oldProcessId = worker.WorkerProcessId;
+            GetWorkerProcessIdentity(worker.WorkerProcessId),
+        };
+        var childHandleCounts = new List<int>();
+
+        for (var attempt = 0; attempt < RestartWarmupCount; attempt++)
+        {
+            var oldIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
             await worker.RestartAsync(grant, CancellationToken.None);
-            await AssertProcessExitedAsync(oldProcessId);
+            Assert.False(IsProcessIdentityAlive(oldIdentity));
             Assert.True(worker.WorkerProcessId > 0);
-            Assert.NotEqual(oldProcessId, worker.WorkerProcessId);
-            processIds.Add(worker.WorkerProcessId);
+            var currentIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
+            Assert.NotEqual(oldIdentity, currentIdentity);
+            processIdentities.Add(currentIdentity);
+        }
+
+        var parentHandleBaseline = GetParentHandleCount();
+        for (var attempt = 0; attempt < MeasuredRestartCount; attempt++)
+        {
+            var oldIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
+            await worker.RestartAsync(grant, CancellationToken.None);
+            Assert.False(IsProcessIdentityAlive(oldIdentity));
+            Assert.True(worker.WorkerProcessId > 0);
+            var currentIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
+            Assert.NotEqual(oldIdentity, currentIdentity);
+            processIdentities.Add(currentIdentity);
             var metrics = await worker.GetMetricsAsync(CancellationToken.None);
-            Assert.Equal(attempt + 1, metrics.RestartCount);
+            Assert.Equal(RestartWarmupCount + attempt + 1, metrics.RestartCount);
             Assert.True(metrics.MaximumObservedSourceFrames <= CaptureWorkerMetrics.MaximumSourceFrames);
             Assert.True(metrics.MaximumObservedAccountedBytes <= CaptureWorkerMetrics.ScreenshotBudgetBytes);
             Assert.True(metrics.NativeHandleCount > 0);
             Assert.True(metrics.WorkingSetBytes > 0);
             Assert.True(metrics.PrivateMemoryBytes > 0);
             childHandleCounts.Add(metrics.NativeHandleCount);
-            using var parent = Process.GetCurrentProcess();
-            parentHandleCounts.Add(parent.HandleCount);
         }
 
-        var finalProcessId = worker.WorkerProcessId;
+        var settledParentHandleCount = await WaitForParentHandlesAsync(
+            parentHandleBaseline + MaximumParentHandleDrift,
+            TimeSpan.FromSeconds(10));
+        var finalIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
         await worker.StopAndClearAsync(CancellationToken.None);
-        await AssertProcessExitedAsync(finalProcessId);
-        Assert.Equal(processIds.Count, processIds.Distinct().Count());
+        Assert.False(IsProcessIdentityAlive(finalIdentity));
+        Assert.Equal(processIdentities.Count, processIdentities.Distinct().Count());
         Assert.Equal(0, worker.WorkerProcessId);
         Assert.Equal(runtimeConstructionsBefore, CompanionRuntime.ConstructionCount);
         Assert.False(IsStrictlyIncreasing(childHandleCounts));
-        Assert.False(IsStrictlyIncreasing(parentHandleCounts));
+        Assert.True(
+            settledParentHandleCount <= parentHandleBaseline + MaximumParentHandleDrift,
+            $"Parent handles did not settle within the explicit drift ceiling. " +
+            $"Baseline: {parentHandleBaseline}; settled: {settledParentHandleCount}; " +
+            $"ceiling: {MaximumParentHandleDrift}.");
     }
 
     [Fact]
@@ -163,28 +196,183 @@ public sealed class OutOfProcessCaptureWorkerTests
         releaseObserver.Set();
     }
 
+    [Fact]
+    public async Task SyntheticWorker_ProducesBoundedOrientationAndManualRegionalSheets()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        var publishedFrames = new ConcurrentDictionary<long, byte>();
+        var attentionBeforeSourceFrame = 0;
+        var firstAttentionSignal = new TaskCompletionSource<AttentionSheetMetadata>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        worker.FrameProduced += (_, frame) => publishedFrames.TryAdd(frame.SequenceNumber, 0);
+        worker.AttentionSheetProduced += (_, metadata) =>
+        {
+            if (!publishedFrames.ContainsKey(metadata.SourceSequenceNumber))
+            {
+                Interlocked.Exchange(ref attentionBeforeSourceFrame, 1);
+            }
+
+            firstAttentionSignal.TrySetResult(metadata);
+        };
+        await worker.StartAsync(grant, CancellationToken.None);
+        await firstAttentionSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        AttentionSheet? orientation = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => (orientation = worker.TakeLatestAttentionSheet()) is not null,
+            TimeSpan.FromSeconds(10));
+        using (orientation)
+        {
+            Assert.Equal(AttentionSheetKind.Orientation, orientation!.Metadata.Kind);
+            Assert.True(orientation.Metadata.Matches(grant));
+            Assert.Equal(0, Volatile.Read(ref attentionBeforeSourceFrame));
+            await CaptureWorkerTestSupport.WaitUntilAsync(
+                () => publishedFrames.ContainsKey(orientation.Metadata.SourceSequenceNumber),
+                TimeSpan.FromSeconds(10));
+            var decoded = PngTestDecoder.Decode(orientation.EncodedImage.Span);
+            Assert.Equal(orientation.Metadata.SheetWidth, decoded.Width);
+            Assert.Equal(orientation.Metadata.SheetHeight, decoded.Height);
+        }
+
+        var manual = new NormalizedRegion(0.2, 0.2, 0.4, 0.5);
+        await worker.SetManualRegionAsync(grant, manual, CancellationToken.None);
+        AttentionSheet? regional = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => (regional = worker.TakeLatestAttentionSheet()) is not null
+                && regional.Metadata.Kind == AttentionSheetKind.Regional
+                && regional.Metadata.Regions.Any(
+                    region => region.Kind == AttentionRegionKind.ManualFocus),
+            TimeSpan.FromSeconds(10));
+        using (regional)
+        {
+            Assert.NotNull(regional);
+            Assert.Contains(
+                regional!.Metadata.Regions,
+                region => region.Kind == AttentionRegionKind.ManualFocus
+                    && region.NormalizedSource == manual);
+        }
+
+        var metrics = await worker.GetMetricsAsync(CancellationToken.None);
+        Assert.True(metrics.ProducedAttentionSheets >= 2);
+        Assert.Equal(1, metrics.ProducedOrientationSheets);
+        Assert.InRange(
+            metrics.MaximumObservedAttentionSheets,
+            1,
+            AttentionSheet.MaximumRetainedSheets);
+        Assert.InRange(
+            metrics.MaximumObservedVisualWorkingBytes,
+            1,
+            CaptureWorkerMetrics.VisualWorkingBudgetBytes);
+
+        await worker.StopAndClearAsync(CancellationToken.None);
+        Assert.Null(worker.TakeLatestAttentionSheet());
+    }
+
+    [Fact]
+    public async Task Restart_EmitsFreshOrientationAndRetainsOnlyFreshEpochSheets()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        var orientations = new ConcurrentQueue<AttentionSheetMetadata>();
+        worker.AttentionSheetProduced += (_, metadata) =>
+        {
+            if (metadata.Kind == AttentionSheetKind.Orientation)
+            {
+                orientations.Enqueue(metadata);
+            }
+        };
+
+        await worker.StartAsync(grant, CancellationToken.None);
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => orientations.Count >= 1,
+            TimeSpan.FromSeconds(10));
+
+        await worker.RestartAsync(grant, CancellationToken.None);
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => orientations.Count >= 2,
+            TimeSpan.FromSeconds(10));
+        var freshOrientation = orientations.Last();
+        Assert.Equal(AttentionSheetKind.Orientation, freshOrientation.Kind);
+        Assert.True(freshOrientation.Matches(grant));
+
+        AttentionSheet? latest = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => (latest = worker.TakeLatestAttentionSheet()) is not null,
+            TimeSpan.FromSeconds(10));
+        using (latest)
+        {
+            Assert.True(latest!.Metadata.Matches(grant));
+            Assert.True(latest.Metadata.SourceTimestamp >= freshOrientation.SourceTimestamp);
+        }
+
+        var metrics = await worker.GetMetricsAsync(CancellationToken.None);
+        Assert.Equal(1, metrics.ProducedOrientationSheets);
+
+        await worker.StopAndClearAsync(CancellationToken.None);
+        Assert.Null(worker.TakeLatestAttentionSheet());
+    }
+
     private static OutOfProcessCaptureWorker CreateWorker() =>
         new(CaptureWorkerLaunchOptions.ForPrivateSafeSyntheticTests());
 
-    private static async Task AssertProcessExitedAsync(int processId)
+    private static async Task<int> WaitForParentHandlesAsync(
+        int maximum,
+        TimeSpan timeout)
     {
-        await CaptureWorkerTestSupport.WaitUntilAsync(
-            () =>
-            {
-                try
-                {
-                    using var process = Process.GetProcessById(processId);
-                    return process.HasExited;
-                }
-                catch (ArgumentException)
-                {
-                    return true;
-                }
-            },
-            TimeSpan.FromSeconds(10));
+        var stopwatch = Stopwatch.StartNew();
+        var current = GetParentHandleCount();
+        while (current > maximum && stopwatch.Elapsed < timeout)
+        {
+            await Task.Delay(25);
+            current = GetParentHandleCount();
+        }
+
+        return current;
+    }
+
+    private static int GetParentHandleCount()
+    {
+        using var parent = Process.GetCurrentProcess();
+        return parent.HandleCount;
+    }
+
+    private static WorkerProcessIdentity GetWorkerProcessIdentity(int processId)
+    {
+        using var process = Process.GetProcessById(processId);
+        return new(process.Id, process.StartTime.ToUniversalTime());
+    }
+
+    private static bool IsProcessIdentityAlive(WorkerProcessIdentity identity)
+    {
+        try
+        {
+            using var process = Process.GetProcessById(identity.ProcessId);
+            return !process.HasExited
+                && process.StartTime.ToUniversalTime() == identity.StartTimeUtc;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
 
     private static bool IsStrictlyIncreasing(IReadOnlyList<int> values) =>
         values.Count > 1
         && values.Zip(values.Skip(1), (left, right) => right > left).All(increased => increased);
+
+    private readonly record struct WorkerProcessIdentity(int ProcessId, DateTime StartTimeUtc);
 }

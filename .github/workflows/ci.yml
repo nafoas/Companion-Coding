@@ -58,3 +58,11 @@ jobs:
         with:
           name: test-results
           path: "**/TestResults/*.trx"
+
+      - name: Upload synthetic attention-sheet inspection artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: task06-attention-sheet
+          path: "**/TestResults/task06-attention-sheet.png"
+          if-no-files-found: error

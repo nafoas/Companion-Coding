@@ -16,6 +16,11 @@ public sealed class TargetSessionController : IAsyncDisposable
     private readonly Func<CaptureFrameMetadata, PrivacyAssessment> _assessmentProvider;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
     private readonly object _workGate = new();
+    private readonly object _sheetGate = new();
+    private readonly SortedDictionary<long, CaptureFrameMetadata> _admittedVisualFrames = [];
+    private readonly Dictionary<long, AttentionSheetMetadata> _pendingVisualSheets = [];
+    private AttentionSheet? _heldAttentionSheet;
+    private long _visualAdmissionEpoch;
     private CancellationTokenSource? _targetWork;
     private bool _cleanupComplete = true;
     private bool _disposed;
@@ -34,12 +39,16 @@ public sealed class TargetSessionController : IAsyncDisposable
             privacyState ?? throw new ArgumentNullException(nameof(privacyState)),
             privacyGuard ?? throw new ArgumentNullException(nameof(privacyGuard)));
         _assessmentProvider = assessmentProvider ?? (_ => PrivacyAssessment.Clear);
+        _worker.StatusChanged += OnWorkerStatusChanged;
         _worker.FrameProduced += OnFrameProduced;
+        _worker.AttentionSheetProduced += OnAttentionSheetProduced;
     }
 
     public event EventHandler<CaptureFrameMetadata>? FrameAdmitted;
 
     public event EventHandler<TargetSessionEvent>? SessionEvent;
+
+    public event EventHandler<AttentionSheetMetadata>? AttentionSheetAvailable;
 
     public TargetSessionSnapshot CurrentSession => _authorization.CurrentSession;
 
@@ -361,6 +370,92 @@ public sealed class TargetSessionController : IAsyncDisposable
         return hadTargetSession;
     }
 
+    public async Task SetManualRegionAsync(
+        NormalizedRegion? region,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        region?.Validate(nameof(region));
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ThrowIfDisposed();
+            var grant = CurrentSession.Grant;
+            if (CurrentSession.Phase != TargetSessionPhase.Authorized
+                || grant is null
+                || !_authorization.IsCurrent(grant))
+            {
+                throw new InvalidOperationException("No current target can receive a manual region.");
+            }
+
+            ClearVisualAdmission();
+            await _worker.SetManualRegionAsync(grant, region, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
+    public AttentionSheet? TakeLatestAttentionSheet()
+    {
+        ThrowIfDisposed();
+        long visualEpoch;
+        lock (_sheetGate)
+        {
+            visualEpoch = _visualAdmissionEpoch;
+        }
+
+        var incoming = _worker.TakeLatestAttentionSheet();
+        var grant = CurrentSession.Grant;
+        var isCurrent = grant is not null
+            && _authorization.IsCurrent(grant)
+            && (incoming is null || incoming.Metadata.Matches(grant));
+        lock (_sheetGate)
+        {
+            if (!isCurrent || visualEpoch != _visualAdmissionEpoch)
+            {
+                incoming?.Dispose();
+                return null;
+            }
+
+            if (incoming is not null)
+            {
+                if (_heldAttentionSheet is null
+                    || incoming.Metadata.SourceSequenceNumber
+                        >= _heldAttentionSheet.Metadata.SourceSequenceNumber)
+                {
+                    _heldAttentionSheet?.Dispose();
+                    _heldAttentionSheet = incoming;
+                    incoming = null;
+                }
+
+                incoming?.Dispose();
+            }
+
+            if (_heldAttentionSheet is not { } ready
+                || !_admittedVisualFrames.Remove(
+                    ready.Metadata.SourceSequenceNumber,
+                    out var admittedFrame))
+            {
+                return null;
+            }
+
+            if (!MatchesSourceFrame(ready.Metadata, admittedFrame))
+            {
+                _heldAttentionSheet = null;
+                _pendingVisualSheets.Remove(ready.Metadata.SourceSequenceNumber);
+                ready.Dispose();
+                return null;
+            }
+
+            _heldAttentionSheet = null;
+            _pendingVisualSheets.Remove(ready.Metadata.SourceSequenceNumber);
+            return ready;
+        }
+    }
+
     public async Task EndSessionAsync()
     {
         ThrowIfDisposed();
@@ -397,7 +492,9 @@ public sealed class TargetSessionController : IAsyncDisposable
         _disposed = true;
         _authorization.EndSession();
         CancelTargetWork();
+        _worker.StatusChanged -= OnWorkerStatusChanged;
         _worker.FrameProduced -= OnFrameProduced;
+        _worker.AttentionSheetProduced -= OnAttentionSheetProduced;
         await _operationLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
@@ -488,11 +585,72 @@ public sealed class TargetSessionController : IAsyncDisposable
         _frameGate.TryAdmit(
             frame,
             assessment,
-            admitted => FrameAdmitted?.Invoke(this, admitted));
+            admitted =>
+            {
+                AttentionSheetMetadata? ready = null;
+                lock (_sheetGate)
+                {
+                    _admittedVisualFrames[admitted.SequenceNumber] = admitted;
+                    PruneVisualSequencesUnsafe();
+                    _pendingVisualSheets.Remove(admitted.SequenceNumber, out ready);
+                    if (ready is not null && !MatchesSourceFrame(ready, admitted))
+                    {
+                        ready = null;
+                    }
+                }
+
+                FrameAdmitted?.Invoke(this, admitted);
+                if (ready is not null)
+                {
+                    AttentionSheetAvailable?.Invoke(this, ready);
+                }
+            });
+    }
+
+    private void OnAttentionSheetProduced(object? sender, AttentionSheetMetadata metadata)
+    {
+        var grant = CurrentSession.Grant;
+        if (grant is null || !_authorization.IsCurrent(grant) || !metadata.Matches(grant))
+        {
+            return;
+        }
+
+        var publish = false;
+        lock (_sheetGate)
+        {
+            if (_admittedVisualFrames.TryGetValue(
+                    metadata.SourceSequenceNumber,
+                    out var admittedFrame))
+            {
+                publish = MatchesSourceFrame(metadata, admittedFrame);
+            }
+            else
+            {
+                _pendingVisualSheets[metadata.SourceSequenceNumber] = metadata;
+                PruneVisualSequencesUnsafe();
+            }
+        }
+
+        if (publish)
+        {
+            AttentionSheetAvailable?.Invoke(this, metadata);
+        }
+    }
+
+    private void OnWorkerStatusChanged(
+        object? sender,
+        CaptureWorkerStatusChanged change)
+    {
+        if (change.Status != CaptureWorkerStatus.Running
+            || change.Reason == CaptureWorkerStatusReason.SourceResized)
+        {
+            ClearVisualAdmission();
+        }
     }
 
     private void ReplaceTargetWorkToken()
     {
+        ClearVisualAdmission();
         lock (_workGate)
         {
             _targetWork?.Cancel();
@@ -503,6 +661,7 @@ public sealed class TargetSessionController : IAsyncDisposable
 
     private void CancelTargetWork()
     {
+        ClearVisualAdmission();
         lock (_workGate)
         {
             if (_targetWork is { IsCancellationRequested: false })
@@ -511,6 +670,39 @@ public sealed class TargetSessionController : IAsyncDisposable
             }
         }
     }
+
+    private void ClearVisualAdmission()
+    {
+        lock (_sheetGate)
+        {
+            _admittedVisualFrames.Clear();
+            _pendingVisualSheets.Clear();
+            _heldAttentionSheet?.Dispose();
+            _heldAttentionSheet = null;
+            _visualAdmissionEpoch = checked(_visualAdmissionEpoch + 1);
+        }
+    }
+
+    private void PruneVisualSequencesUnsafe()
+    {
+        while (_admittedVisualFrames.Count > 16)
+        {
+            _admittedVisualFrames.Remove(_admittedVisualFrames.Keys.First());
+        }
+
+        while (_pendingVisualSheets.Count > 16)
+        {
+            _pendingVisualSheets.Remove(_pendingVisualSheets.Keys.Min());
+        }
+    }
+
+    private static bool MatchesSourceFrame(
+        AttentionSheetMetadata sheet,
+        CaptureFrameMetadata frame) =>
+        sheet.SourceSequenceNumber == frame.SequenceNumber
+        && sheet.SourceTimestamp == frame.Timestamp
+        && sheet.SourceWidth == frame.Width
+        && sheet.SourceHeight == frame.Height;
 
     private async Task<bool> EnsureCleanupCompleteAsync()
     {

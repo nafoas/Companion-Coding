@@ -10,10 +10,11 @@ internal static class Program
             await using IWorkerCaptureSource source = options.UseSyntheticSource
                 ? new SyntheticCaptureSource()
                 : new WindowsGraphicsCaptureSource();
-            var pipeline = options.UseSyntheticSource
-                ? null
-                : new CaptureFramePipeline(maximumFrames: 2);
-            await using var engine = new CaptureWorkerEngine(source, pipeline);
+            await using var engine = new CaptureWorkerEngine(
+                source,
+                maximumFrames: options.UseSyntheticSource
+                    ? CompanionCore.Capture.Contracts.CaptureWorkerMetrics.MaximumSourceFrames
+                    : 2);
             await using var host = new WorkerIpcHost(options, engine);
             return await host.RunAsync(CancellationToken.None).ConfigureAwait(false);
         }
