@@ -15,6 +15,10 @@ public sealed class OutOfProcessCaptureWorkerCollection
 [Collection(OutOfProcessCaptureWorkerCollection.Name)]
 public sealed class OutOfProcessCaptureWorkerTests
 {
+    private const int RestartWarmupCount = 12;
+    private const int MeasuredRestartCount = 12;
+    private const int MaximumParentHandleDrift = 2;
+
     [Fact]
     public async Task CancelledStart_NeverLaunchesAProcess()
     {
@@ -79,9 +83,19 @@ public sealed class OutOfProcessCaptureWorkerTests
         await worker.StartAsync(grant, CancellationToken.None);
         var processIds = new List<int> { worker.WorkerProcessId };
         var childHandleCounts = new List<int>();
-        var parentHandleCounts = new List<int>();
 
-        for (var attempt = 0; attempt < 12; attempt++)
+        for (var attempt = 0; attempt < RestartWarmupCount; attempt++)
+        {
+            var oldProcessId = worker.WorkerProcessId;
+            await worker.RestartAsync(grant, CancellationToken.None);
+            await AssertProcessExitedAsync(oldProcessId);
+            Assert.True(worker.WorkerProcessId > 0);
+            Assert.NotEqual(oldProcessId, worker.WorkerProcessId);
+            processIds.Add(worker.WorkerProcessId);
+        }
+
+        var parentHandleBaseline = GetParentHandleCount();
+        for (var attempt = 0; attempt < MeasuredRestartCount; attempt++)
         {
             var oldProcessId = worker.WorkerProcessId;
             await worker.RestartAsync(grant, CancellationToken.None);
@@ -90,17 +104,18 @@ public sealed class OutOfProcessCaptureWorkerTests
             Assert.NotEqual(oldProcessId, worker.WorkerProcessId);
             processIds.Add(worker.WorkerProcessId);
             var metrics = await worker.GetMetricsAsync(CancellationToken.None);
-            Assert.Equal(attempt + 1, metrics.RestartCount);
+            Assert.Equal(RestartWarmupCount + attempt + 1, metrics.RestartCount);
             Assert.True(metrics.MaximumObservedSourceFrames <= CaptureWorkerMetrics.MaximumSourceFrames);
             Assert.True(metrics.MaximumObservedAccountedBytes <= CaptureWorkerMetrics.ScreenshotBudgetBytes);
             Assert.True(metrics.NativeHandleCount > 0);
             Assert.True(metrics.WorkingSetBytes > 0);
             Assert.True(metrics.PrivateMemoryBytes > 0);
             childHandleCounts.Add(metrics.NativeHandleCount);
-            using var parent = Process.GetCurrentProcess();
-            parentHandleCounts.Add(parent.HandleCount);
         }
 
+        var settledParentHandleCount = await WaitForParentHandlesAsync(
+            parentHandleBaseline + MaximumParentHandleDrift,
+            TimeSpan.FromSeconds(10));
         var finalProcessId = worker.WorkerProcessId;
         await worker.StopAndClearAsync(CancellationToken.None);
         await AssertProcessExitedAsync(finalProcessId);
@@ -108,7 +123,11 @@ public sealed class OutOfProcessCaptureWorkerTests
         Assert.Equal(0, worker.WorkerProcessId);
         Assert.Equal(runtimeConstructionsBefore, CompanionRuntime.ConstructionCount);
         Assert.False(IsStrictlyIncreasing(childHandleCounts));
-        Assert.False(IsStrictlyIncreasing(parentHandleCounts));
+        Assert.True(
+            settledParentHandleCount <= parentHandleBaseline + MaximumParentHandleDrift,
+            $"Parent handles did not settle within the explicit drift ceiling. " +
+            $"Baseline: {parentHandleBaseline}; settled: {settledParentHandleCount}; " +
+            $"ceiling: {MaximumParentHandleDrift}.");
     }
 
     [Fact]
@@ -316,6 +335,27 @@ public sealed class OutOfProcessCaptureWorkerTests
                 }
             },
             TimeSpan.FromSeconds(10));
+    }
+
+    private static async Task<int> WaitForParentHandlesAsync(
+        int maximum,
+        TimeSpan timeout)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var current = GetParentHandleCount();
+        while (current > maximum && stopwatch.Elapsed < timeout)
+        {
+            await Task.Delay(25);
+            current = GetParentHandleCount();
+        }
+
+        return current;
+    }
+
+    private static int GetParentHandleCount()
+    {
+        using var parent = Process.GetCurrentProcess();
+        return parent.HandleCount;
     }
 
     private static bool IsStrictlyIncreasing(IReadOnlyList<int> values) =>
