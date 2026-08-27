@@ -34,7 +34,11 @@ public sealed class FakeCaptureWorker : ICaptureWorker
 
     public event EventHandler<CaptureFrameMetadata>? FrameProduced;
 
-    public event EventHandler<AttentionSheetMetadata>? AttentionSheetProduced;
+    public event EventHandler<AttentionSheetMetadata>? AttentionSheetProduced
+    {
+        add { }
+        remove { }
+    }
 
     public Task StartAsync(
         CaptureAuthorizationGrant authorization,
@@ -186,6 +190,5 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         _bufferedMetadata.Clear();
         StatusChanged = null;
         FrameProduced = null;
-        AttentionSheetProduced = null;
     }
 }

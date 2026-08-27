@@ -143,6 +143,50 @@ public sealed class VisualObservationPipelineTests
         Assert.True(metrics.DuplicateFrames > 200_000);
     }
 
+    [Fact]
+    public async Task OversizedReadbackIsRejectedBeforePixelCopy()
+    {
+        using var pipeline = new VisualObservationPipeline();
+        var ownership = new PixelOwnershipCounter();
+        using var frame = new CaptureSourceFrame(
+            CaptureWorkerTestSupport.FixedTime,
+            width: 1,
+            height: 1,
+            accountedBytes: (CaptureWorkerMetrics.VisualWorkingBudgetBytes / 2) + 1,
+            new TestPixelResource(1, 1, pattern: 10, counter: ownership));
+        frame.AssignSequence(1);
+
+        var sheet = await pipeline.ProcessAsync(
+            frame,
+            CaptureWorkerTestSupport.CreateAuthorization(),
+            CancellationToken.None);
+
+        Assert.Null(sheet);
+        Assert.Equal(0, ownership.CopiesCreated);
+        var metrics = pipeline.Snapshot();
+        Assert.Equal(1, metrics.DroppedSheets);
+        Assert.Equal(0, metrics.CurrentWorkingBytes);
+    }
+
+    [Fact]
+    public async Task CancelledReadbackRestoresWorkingOwnershipToZero()
+    {
+        using var pipeline = new VisualObservationPipeline();
+        using var frame = CreateFrame(1, pattern: 10);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await pipeline.ProcessAsync(
+                frame,
+                CaptureWorkerTestSupport.CreateAuthorization(),
+                cancellation.Token));
+
+        var metrics = pipeline.Snapshot();
+        Assert.Equal(0, metrics.CurrentWorkingBytes);
+        Assert.Equal(1, metrics.DroppedSheets);
+    }
+
     private static CaptureSourceFrame CreateFrame(
         long sequence,
         int pattern,

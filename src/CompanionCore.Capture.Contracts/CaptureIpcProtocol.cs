@@ -50,21 +50,10 @@ public static class CaptureIpcProtocol
         }
 
         ValidatePayloadDescriptor(message, attachedPayload.Length);
-        if (!attachedPayload.IsEmpty)
+        if (!attachedPayload.IsEmpty
+            && !PayloadHashMatches(message.PayloadSha256, attachedPayload.Span))
         {
-            Span<byte> expected = stackalloc byte[SHA256.HashSizeInBytes];
-            if (!Convert.TryFromHexString(message.PayloadSha256, expected, out var written)
-                || written != expected.Length)
-            {
-                throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
-            }
-
-            Span<byte> actual = stackalloc byte[SHA256.HashSizeInBytes];
-            SHA256.HashData(attachedPayload.Span, actual);
-            if (!CryptographicOperations.FixedTimeEquals(expected, actual))
-            {
-                throw new CaptureProtocolException(CaptureWorkerErrorCode.PayloadIntegrityFailure);
-            }
+            throw new CaptureProtocolException(CaptureWorkerErrorCode.PayloadIntegrityFailure);
         }
 
         var header = JsonSerializer.SerializeToUtf8Bytes(message, SerializerOptions);
@@ -143,16 +132,7 @@ public static class CaptureIpcProtocol
         try
         {
             await stream.ReadExactlyAsync(attachedPayload, cancellationToken).ConfigureAwait(false);
-            Span<byte> expected = stackalloc byte[SHA256.HashSizeInBytes];
-            if (!Convert.TryFromHexString(message.PayloadSha256, expected, out var written)
-                || written != expected.Length)
-            {
-                throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
-            }
-
-            Span<byte> actual = stackalloc byte[SHA256.HashSizeInBytes];
-            SHA256.HashData(attachedPayload, actual);
-            if (!CryptographicOperations.FixedTimeEquals(expected, actual))
+            if (!PayloadHashMatches(message.PayloadSha256, attachedPayload))
             {
                 throw new CaptureProtocolException(CaptureWorkerErrorCode.PayloadIntegrityFailure);
             }
@@ -163,6 +143,43 @@ public static class CaptureIpcProtocol
         {
             CryptographicOperations.ZeroMemory(attachedPayload);
             throw;
+        }
+    }
+
+    private static bool PayloadHashMatches(string? encodedHash, ReadOnlySpan<byte> payload)
+    {
+        byte[]? expected = null;
+        byte[]? actual = null;
+        try
+        {
+            try
+            {
+                expected = Convert.FromHexString(encodedHash ?? string.Empty);
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+
+            if (expected.Length != SHA256.HashSizeInBytes)
+            {
+                return false;
+            }
+
+            actual = SHA256.HashData(payload);
+            return CryptographicOperations.FixedTimeEquals(expected, actual);
+        }
+        finally
+        {
+            if (expected is not null)
+            {
+                CryptographicOperations.ZeroMemory(expected);
+            }
+
+            if (actual is not null)
+            {
+                CryptographicOperations.ZeroMemory(actual);
+            }
         }
     }
 
@@ -207,11 +224,33 @@ public sealed class CaptureIpcEnvelope : IDisposable
 
     public int PayloadLength => Volatile.Read(ref _payload)?.Length ?? 0;
 
-    public ReadOnlyMemory<byte> Payload => Volatile.Read(ref _payload) ?? ReadOnlyMemory<byte>.Empty;
+    internal ReadOnlyMemory<byte> Payload =>
+        Volatile.Read(ref _payload) ?? ReadOnlyMemory<byte>.Empty;
 
-    internal byte[] TakePayload() =>
-        Interlocked.Exchange(ref _payload, null)
-        ?? throw new InvalidOperationException("The IPC envelope has no owned payload.");
+    /// <summary>
+    /// Atomically transfers the validated attention payload into its RAM-only owner.
+    /// The envelope no longer owns bytes after this succeeds.
+    /// </summary>
+    public AttentionSheet TakeAttentionSheet()
+    {
+        var payload = Interlocked.Exchange(ref _payload, null)
+            ?? throw new InvalidOperationException("The IPC envelope has no owned payload.");
+        try
+        {
+            if (Message.Kind != CaptureIpcMessageKind.AttentionSheetProduced
+                || Message.AttentionSheet is null)
+            {
+                throw new CaptureProtocolException(CaptureWorkerErrorCode.UnexpectedPayload);
+            }
+
+            return new AttentionSheet(Message.AttentionSheet, payload);
+        }
+        catch
+        {
+            CryptographicOperations.ZeroMemory(payload);
+            throw;
+        }
+    }
 
     public void Dispose()
     {

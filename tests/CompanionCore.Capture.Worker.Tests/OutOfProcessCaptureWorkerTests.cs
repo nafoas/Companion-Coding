@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using CompanionCore.Capture.Client;
 using CompanionCore.Capture.Contracts;
@@ -173,6 +174,8 @@ public sealed class OutOfProcessCaptureWorkerTests
 
         using var worker = CreateWorker();
         var grant = CaptureWorkerTestSupport.CreateGrant();
+        var publishedFrames = new ConcurrentDictionary<long, byte>();
+        worker.FrameProduced += (_, frame) => publishedFrames.TryAdd(frame.SequenceNumber, 0);
         await worker.StartAsync(grant, CancellationToken.None);
         AttentionSheet? orientation = null;
         await CaptureWorkerTestSupport.WaitUntilAsync(
@@ -182,6 +185,9 @@ public sealed class OutOfProcessCaptureWorkerTests
         {
             Assert.Equal(AttentionSheetKind.Orientation, orientation!.Metadata.Kind);
             Assert.True(orientation.Metadata.Matches(grant));
+            await CaptureWorkerTestSupport.WaitUntilAsync(
+                () => publishedFrames.ContainsKey(orientation.Metadata.SourceSequenceNumber),
+                TimeSpan.FromSeconds(10));
             var decoded = PngTestDecoder.Decode(orientation.EncodedImage.Span);
             Assert.Equal(orientation.Metadata.SheetWidth, decoded.Width);
             Assert.Equal(orientation.Metadata.SheetHeight, decoded.Height);

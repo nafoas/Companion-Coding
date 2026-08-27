@@ -8,6 +8,9 @@ namespace CompanionCore.Capture.Contracts;
 /// </summary>
 public sealed class AttentionSheet : IDisposable
 {
+    private static ReadOnlySpan<byte> PngSignature =>
+        [137, 80, 78, 71, 13, 10, 26, 10];
+
     public const int MaximumEncodedBytes = 8 * 1024 * 1024;
     public const int MaximumRetainedSheets = 2;
     public const string MediaType = "image/png";
@@ -16,16 +19,20 @@ public sealed class AttentionSheet : IDisposable
 
     internal AttentionSheet(AttentionSheetMetadata metadata, byte[] encodedImage)
     {
-        Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
-        _encodedImage = encodedImage ?? throw new ArgumentNullException(nameof(encodedImage));
-        if (!metadata.IsProtocolSafe()
+        ArgumentNullException.ThrowIfNull(encodedImage);
+        if (metadata is null
+            || !metadata.IsProtocolSafe()
             || encodedImage.Length != metadata.EncodedByteLength
-            || encodedImage.Length > MaximumEncodedBytes)
+            || encodedImage.Length > MaximumEncodedBytes
+            || encodedImage.Length < PngSignature.Length
+            || !encodedImage.AsSpan(0, PngSignature.Length).SequenceEqual(PngSignature))
         {
             CryptographicOperations.ZeroMemory(encodedImage);
-            _encodedImage = null;
             throw new ArgumentException("Attention-sheet payload does not match its metadata.");
         }
+
+        Metadata = metadata;
+        _encodedImage = encodedImage;
     }
 
     public AttentionSheetMetadata Metadata { get; }

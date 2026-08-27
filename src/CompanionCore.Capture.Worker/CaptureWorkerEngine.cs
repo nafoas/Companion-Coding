@@ -20,6 +20,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
     private long _faultCount;
     private long _watchdogTrips;
     private int _watchdogFaultPending;
+    private Task _watchdogCleanup = Task.CompletedTask;
     private bool _disposed;
 
     internal CaptureWorkerEngine(
@@ -185,10 +186,15 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             ResourceWatchdogTrips = Interlocked.Read(ref _watchdogTrips),
         };
         EvaluateWatchdog(metrics);
-        return metrics;
+        return metrics with
+        {
+            Status = _status,
+            FaultCount = _faultCount,
+            ResourceWatchdogTrips = Interlocked.Read(ref _watchdogTrips),
+        };
     }
 
-    internal async Task SetManualRegionAsync(
+    internal async Task<ManualRegionUpdateFence> BeginManualRegionUpdateAsync(
         CaptureIpcAuthorization authorization,
         NormalizedRegion? region,
         CancellationToken cancellationToken)
@@ -197,6 +203,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(authorization);
         region?.Validate(nameof(region));
         await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var returnFence = false;
         try
         {
             if (_status != CaptureWorkerStatus.Running
@@ -206,8 +213,43 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
                 throw new InvalidOperationException("The manual region does not match the active capture grant.");
             }
 
+            _pipeline.Pause();
+            await _pipeline.ClearAsync(CancellationToken.None).ConfigureAwait(false);
             _visual.SetManualRegion(region);
             VisualStateReset?.Invoke(this, EventArgs.Empty);
+            var fence = new ManualRegionUpdateFence(this, authorization);
+            returnFence = true;
+            return fence;
+        }
+        finally
+        {
+            if (!returnFence)
+            {
+                if (_status == CaptureWorkerStatus.Running
+                    && _authorization is not null
+                    && _authorization.Matches(authorization))
+                {
+                    _pipeline.Resume();
+                }
+
+                _operationLock.Release();
+            }
+        }
+    }
+
+    private void CompleteManualRegionUpdate(
+        CaptureIpcAuthorization authorization,
+        bool responseCommitted)
+    {
+        try
+        {
+            if (responseCommitted
+                && _status == CaptureWorkerStatus.Running
+                && _authorization is not null
+                && _authorization.Matches(authorization))
+            {
+                _pipeline.Resume();
+            }
         }
         finally
         {
@@ -303,10 +345,12 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         }
 
         OwnedWorkerAttentionSheet? sheet = null;
+        var visualCompleted = false;
         try
         {
             sheet = await _visual.ProcessAsync(frame, authorization, cancellationToken)
                 .ConfigureAwait(false);
+            visualCompleted = true;
             if (sheet is null)
             {
                 return;
@@ -339,7 +383,10 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         catch (Exception)
         {
             sheet?.Dispose();
-            _visual.RecordTransportDrop();
+            if (visualCompleted)
+            {
+                _visual.RecordTransportDrop();
+            }
         }
         finally
         {
@@ -404,18 +451,31 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             _visual.Reset();
             VisualStateReset?.Invoke(this, EventArgs.Empty);
             SetStatus(CaptureWorkerStatus.Faulted, CaptureWorkerStatusReason.ResourceBudgetExceeded);
-            _ = ClearAfterWatchdogTripAsync();
+            _watchdogCleanup = ClearAfterWatchdogTripAsync();
         }
     }
 
     private async Task ClearAfterWatchdogTripAsync()
     {
+        await _operationLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
+            try
+            {
+                await _source.StopAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+            }
+
             await _pipeline.ClearAsync(CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception)
         {
+        }
+        finally
+        {
+            _operationLock.Release();
         }
     }
 
@@ -463,10 +523,41 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         }
 
         await _pipeline.DisposeAsync().ConfigureAwait(false);
+        try
+        {
+            await _watchdogCleanup.ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+        }
+
         _visual.Dispose();
         await _source.DisposeAsync().ConfigureAwait(false);
         _operationLock.Dispose();
         _status = CaptureWorkerStatus.Stopped;
+    }
+
+    internal sealed class ManualRegionUpdateFence : IDisposable
+    {
+        private CaptureWorkerEngine? _owner;
+        private readonly CaptureIpcAuthorization _authorization;
+        private bool _responseCommitted;
+
+        internal ManualRegionUpdateFence(
+            CaptureWorkerEngine owner,
+            CaptureIpcAuthorization authorization)
+        {
+            _owner = owner;
+            _authorization = authorization;
+        }
+
+        internal void MarkResponseCommitted() => _responseCommitted = true;
+
+        public void Dispose()
+        {
+            var owner = Interlocked.Exchange(ref _owner, null);
+            owner?.CompleteManualRegionUpdate(_authorization, _responseCommitted);
+        }
     }
 }
 

@@ -99,7 +99,10 @@ public sealed record AttentionSheetMetadata
             || Regions is null
             || Regions.Length is < 1 or > MaximumRegions
             || Regions[0].Kind != AttentionRegionKind.FullContext
-            || (Kind == AttentionSheetKind.Orientation && Regions.Length != 1))
+            || Regions[0].NormalizedSource != new NormalizedRegion(0, 0, 1, 1)
+            || Regions[0].SourcePixels != new PixelRect(0, 0, SourceWidth, SourceHeight)
+            || (Kind == AttentionSheetKind.Orientation && Regions.Length != 1)
+            || (Kind == AttentionSheetKind.Regional && Regions.Length < 2))
         {
             return false;
         }

@@ -137,6 +137,32 @@ public sealed class TargetSessionControllerTests
     }
 
     [Fact]
+    public async Task NewerUnadmittedSheet_IsHeldUntilItsOwnFramePassesPrivacy()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(harness, worker);
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+        var available = new List<AttentionSheetMetadata>();
+        controller.AttentionSheetAvailable += (_, metadata) => available.Add(metadata);
+        var grant = worker.LastGrant!;
+
+        var alreadyAdmitted = worker.EmitSheet(grant, sourceSequenceNumber: 1);
+        var awaitingFrame = worker.EmitSheet(grant, sourceSequenceNumber: 2);
+        Assert.Equal(alreadyAdmitted, Assert.Single(available));
+
+        // The worker's newest-preserving pull returns sequence 2. The controller must
+        // retain it, not discard it in response to sequence 1's availability signal.
+        Assert.Null(controller.TakeLatestAttentionSheet());
+        worker.Emit(grant);
+
+        Assert.Equal(awaitingFrame, available[1]);
+        using var taken = controller.TakeLatestAttentionSheet();
+        Assert.NotNull(taken);
+        Assert.Equal(awaitingFrame, taken!.Metadata);
+    }
+
+    [Fact]
     public async Task PrivacyStop_RevokesFirst_CancelsWork_ClearsBuffer_DropsLateFrame_AndIsIdempotent()
     {
         await using var harness = await TargetAuthTestHarness.CreateAsync();

@@ -18,16 +18,14 @@ internal sealed class OwnedBgra32Buffer : IDisposable
 
     internal OwnedBgra32Buffer(int width, int height, byte[] pixels)
     {
-        if (width <= 0 || height <= 0)
+        ArgumentNullException.ThrowIfNull(pixels);
+        var expected = (long)width * height * 4;
+        if (width <= 0
+            || height <= 0
+            || expected > CaptureWorkerMetrics.VisualWorkingBudgetBytes
+            || expected != pixels.Length)
         {
-            throw new ArgumentOutOfRangeException(width <= 0 ? nameof(width) : nameof(height));
-        }
-
-        var expected = checked(width * height * 4);
-        if (expected > CaptureWorkerMetrics.VisualWorkingBudgetBytes
-            || pixels is null
-            || pixels.Length != expected)
-        {
+            CryptographicOperations.ZeroMemory(pixels);
             throw new ArgumentException("BGRA32 storage must exactly match bounded dimensions.", nameof(pixels));
         }
 

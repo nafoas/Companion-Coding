@@ -562,8 +562,14 @@ internal sealed class WindowsGraphicsCaptureSource : IWorkerCaptureSource
             access.GetBuffer(out var sourcePointer, out var capacity);
             var plane = bitmapBuffer.GetPlaneDescription(0);
             var rowBytes = checked(bitmap.PixelWidth * 4);
-            var required = checked(plane.StartIndex + ((bitmap.PixelHeight - 1) * plane.Stride) + rowBytes);
-            if (sourcePointer == IntPtr.Zero || required > capacity)
+            var required = checked(
+                (long)plane.StartIndex
+                + ((long)bitmap.PixelHeight - 1) * plane.Stride
+                + rowBytes);
+            if (sourcePointer == IntPtr.Zero
+                || plane.StartIndex < 0
+                || plane.Stride < rowBytes
+                || required > capacity)
             {
                 throw new InvalidOperationException("WGC readback buffer is incomplete.");
             }

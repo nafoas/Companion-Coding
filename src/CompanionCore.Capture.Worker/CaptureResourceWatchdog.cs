@@ -58,10 +58,10 @@ internal sealed class CaptureResourceWatchdog
 
         var memoryGrowth = values[^1].PrivateMemoryBytes - values[0].PrivateMemoryBytes;
         var handleGrowth = values[^1].NativeHandleCount - values[0].NativeHandleCount;
-        if (risingMemory >= GrowthWindowSamples - 2
-            && memoryGrowth >= PrivateMemoryGrowthThreshold
-            || risingHandles >= GrowthWindowSamples - 2
-            && handleGrowth >= HandleGrowthThreshold)
+        if ((risingMemory >= GrowthWindowSamples - 2
+             && memoryGrowth >= PrivateMemoryGrowthThreshold)
+            || (risingHandles >= GrowthWindowSamples - 2
+                && handleGrowth >= HandleGrowthThreshold))
         {
             _tripped = true;
             return true;
@@ -79,13 +79,7 @@ internal sealed class CaptureResourceWatchdog
     }
 
     private static bool ViolatesHardBounds(CaptureWorkerMetrics metrics) =>
-        metrics.CurrentSourceFrames > CaptureWorkerMetrics.MaximumSourceFrames
-        || metrics.CurrentAccountedBytes > CaptureWorkerMetrics.ScreenshotBudgetBytes
-        || metrics.QueueDepth > metrics.QueueCapacity
-        || metrics.CurrentAttentionSheets > AttentionSheet.MaximumRetainedSheets
-        || metrics.CurrentAttentionSheetBytes
-            > AttentionSheet.MaximumEncodedBytes * AttentionSheet.MaximumRetainedSheets
-        || metrics.CurrentVisualWorkingBytes > CaptureWorkerMetrics.VisualWorkingBudgetBytes;
+        !metrics.IsProtocolSafe();
 
     private readonly record struct ResourceSample(long PrivateMemoryBytes, int NativeHandleCount);
 }

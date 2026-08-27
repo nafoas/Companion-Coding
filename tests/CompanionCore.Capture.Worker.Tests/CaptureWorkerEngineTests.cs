@@ -120,6 +120,36 @@ public sealed class CaptureWorkerEngineTests
         Assert.Equal(0, engine.GetMetrics().CurrentSourceFrames);
     }
 
+    [Fact]
+    public async Task ManualRegionFence_DropsFramesUntilResponseIsCommitted()
+    {
+        await using var source = new ControllableCaptureSource();
+        await using var engine = new CaptureWorkerEngine(source);
+        var authorization = CaptureWorkerTestSupport.CreateAuthorization();
+        var produced = 0;
+        engine.FrameProduced += (_, _) => Interlocked.Increment(ref produced);
+        await engine.StartAsync(authorization, CancellationToken.None);
+
+        using var fence = await engine.BeginManualRegionUpdateAsync(
+            authorization,
+            new NormalizedRegion(0.2, 0.2, 0.4, 0.4),
+            CancellationToken.None);
+        var beforeResponse = new TrackingResource();
+        source.Emit(CreateFrame(beforeResponse));
+        Assert.Equal(1, beforeResponse.DisposeCount);
+        Assert.Equal(0, Volatile.Read(ref produced));
+
+        fence.MarkResponseCommitted();
+        fence.Dispose();
+        var afterResponse = new TrackingResource();
+        source.Emit(CreateFrame(afterResponse));
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => Volatile.Read(ref produced) == 1);
+
+        await engine.StopAndClearAsync(CancellationToken.None);
+        Assert.Equal(1, afterResponse.DisposeCount);
+    }
+
     private static CaptureSourceFrame CreateFrame(
         IDisposable resource,
         int width = 32,

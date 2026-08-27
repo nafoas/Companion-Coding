@@ -6,6 +6,8 @@ namespace CompanionCore.Capture.Worker;
 internal sealed class VisualObservationPipeline : IDisposable
 {
     private const long CompositionReserveBytes = 16L * 1024 * 1024;
+    private const long MaximumPixelCopyBytes =
+        CaptureWorkerMetrics.VisualWorkingBudgetBytes / 2;
 
     private readonly object _gate = new();
     private readonly FrameChangeDetector _changeDetector = new();
@@ -41,13 +43,7 @@ internal sealed class VisualObservationPipeline : IDisposable
             return null;
         }
 
-        using var pixels = await frame.CopyPixelsAsync(cancellationToken).ConfigureAwait(false);
-        if (pixels is null || pixels.Width != frame.Width || pixels.Height != frame.Height)
-        {
-            throw new InvalidOperationException("Source pixel geometry does not match frame metadata.");
-        }
-
-        if (pixels.ByteLength > CaptureWorkerMetrics.VisualWorkingBudgetBytes - CompositionReserveBytes)
+        if (frame.AccountedBytes > MaximumPixelCopyBytes)
         {
             lock (_gate)
             {
@@ -57,46 +53,59 @@ internal sealed class VisualObservationPipeline : IDisposable
             return null;
         }
 
-        SetWorkingBytes(pixels.ByteLength);
-        long stateVersion;
-        bool orientation;
-        IReadOnlyList<VisualRegion> regions;
-        FrameChangeResult change;
-        lock (_gate)
-        {
-            if (_currentSheets >= AttentionSheet.MaximumRetainedSheets)
-            {
-                _droppedSheets++;
-                SetWorkingBytesUnsafe(0);
-                return null;
-            }
-
-            change = _changeDetector.Evaluate(pixels);
-            _lastChangeScore = change.Score;
-            if (change.GeometryChanged)
-            {
-                _orientationPending = true;
-                _scheduler.Reset();
-            }
-
-            orientation = _orientationPending;
-            if (change.IsDuplicate && !orientation && !_forceNextSheet)
-            {
-                _duplicateFrames++;
-                SetWorkingBytesUnsafe(0);
-                return null;
-            }
-
-            _changedFrames++;
-            stateVersion = _stateVersion;
-            regions = orientation ? [] : _scheduler.TakeNext(_manualRegion);
-            _orientationPending = false;
-            _forceNextSheet = false;
-        }
-
+        OwnedBgra32Buffer? pixels = null;
         ComposedAttentionSheet? composed = null;
+        long stateVersion = 0;
+        var orientation = false;
+        var stateCaptured = false;
         try
         {
+            // WGC readback briefly owns a SoftwareBitmap plus the tightly packed copy.
+            // Account both conservatively before the asynchronous copy begins.
+            SetWorkingBytes(checked(frame.AccountedBytes * 2));
+            pixels = await frame.CopyPixelsAsync(cancellationToken).ConfigureAwait(false);
+            if (pixels is null
+                || pixels.Width != frame.Width
+                || pixels.Height != frame.Height
+                || pixels.ByteLength > MaximumPixelCopyBytes)
+            {
+                throw new InvalidOperationException("Source pixel geometry exceeds its visual contract.");
+            }
+
+            SetWorkingBytes(pixels.ByteLength);
+            IReadOnlyList<VisualRegion> regions;
+            FrameChangeResult change;
+            lock (_gate)
+            {
+                if (_currentSheets >= AttentionSheet.MaximumRetainedSheets)
+                {
+                    _droppedSheets++;
+                    return null;
+                }
+
+                change = _changeDetector.Evaluate(pixels);
+                _lastChangeScore = change.Score;
+                if (change.GeometryChanged)
+                {
+                    _orientationPending = true;
+                    _scheduler.Reset();
+                }
+
+                orientation = _orientationPending;
+                if (change.IsDuplicate && !orientation && !_forceNextSheet)
+                {
+                    _duplicateFrames++;
+                    return null;
+                }
+
+                _changedFrames++;
+                stateVersion = _stateVersion;
+                stateCaptured = true;
+                regions = orientation ? [] : _scheduler.TakeNext(_manualRegion);
+                _orientationPending = false;
+                _forceNextSheet = false;
+            }
+
             composed = AttentionSheetComposer.Compose(
                 pixels,
                 orientation ? AttentionSheetKind.Orientation : AttentionSheetKind.Regional,
@@ -164,12 +173,13 @@ internal sealed class VisualObservationPipeline : IDisposable
         {
             lock (_gate)
             {
-                if (!_disposed && stateVersion == _stateVersion)
+                if (!_disposed && stateCaptured && stateVersion == _stateVersion)
                 {
                     _orientationPending |= orientation;
                     _forceNextSheet |= !orientation;
-                    _droppedSheets++;
                 }
+
+                _droppedSheets++;
             }
 
             throw;
@@ -177,6 +187,7 @@ internal sealed class VisualObservationPipeline : IDisposable
         finally
         {
             composed?.Dispose();
+            pixels?.Dispose();
             SetWorkingBytes(0);
         }
     }
@@ -310,7 +321,18 @@ internal sealed class OwnedWorkerAttentionSheet : IDisposable
         Metadata = metadata;
         _encodedImage = encodedImage;
         _release = release;
-        PayloadSha256 = Convert.ToHexString(SHA256.HashData(encodedImage));
+        try
+        {
+            PayloadSha256 = Convert.ToHexString(SHA256.HashData(encodedImage));
+        }
+        catch
+        {
+            _encodedImage = null;
+            _release = null;
+            CryptographicOperations.ZeroMemory(encodedImage);
+            release(encodedImage.Length);
+            throw;
+        }
     }
 
     internal AttentionSheetMetadata Metadata { get; }

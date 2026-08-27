@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 using System.Security.Cryptography;
+using CompanionCore.Capture.Client;
 using CompanionCore.Capture.Contracts;
 
 namespace CompanionCore.Capture.Worker.Tests;
@@ -87,7 +88,7 @@ public sealed class CaptureIpcProtocolTests
         stream.Position = 0;
         using var envelope = await CaptureIpcProtocol.ReadEnvelopeAsync(stream, CancellationToken.None);
 
-        Assert.Equal(message, envelope.Message);
+        Assert.Equivalent(message, envelope.Message, strict: true);
         Assert.Equal(payload, envelope.Payload.ToArray());
         Assert.True(stream.Position <= sizeof(int) + CaptureIpcProtocol.MaximumMessageBytes + payload.Length);
     }
@@ -107,6 +108,70 @@ public sealed class CaptureIpcProtocolTests
             CaptureIpcProtocol.ReadEnvelopeAsync(corrupted, CancellationToken.None));
 
         Assert.Equal(CaptureWorkerErrorCode.PayloadIntegrityFailure, exception.ErrorCode);
+    }
+
+    [Fact]
+    public async Task TruncatedAttentionPayload_FailsClosed()
+    {
+        var payload = Enumerable.Range(0, 512).Select(index => (byte)index).ToArray();
+        var message = CreateAttentionMessage(payload);
+        await using var stream = new MemoryStream();
+        await CaptureIpcProtocol.WriteAsync(stream, message, payload, CancellationToken.None);
+        stream.SetLength(stream.Length - 1);
+        stream.Position = 0;
+
+        await Assert.ThrowsAsync<EndOfStreamException>(() =>
+            CaptureIpcProtocol.ReadEnvelopeAsync(stream, CancellationToken.None));
+    }
+
+    [Fact]
+    public void AttentionAdmission_RejectsStaleOrTargetMismatchedMetadata()
+    {
+        var payload = Enumerable.Range(0, 64).Select(index => (byte)index).ToArray();
+        var currentGrant = CaptureWorkerTestSupport.CreateGrant();
+        var valid = CreateAttentionMessage(payload);
+        var stale = valid with
+        {
+            Authorization = CaptureWorkerTestSupport.CreateAuthorization(generation: 6),
+            AttentionSheet = valid.AttentionSheet! with { Generation = 6 },
+        };
+        var targetMismatch = valid with
+        {
+            Authorization = valid.Authorization! with { WindowId = 43 },
+        };
+
+        OutOfProcessCaptureWorker.ValidateAttentionSheetNotificationShape(valid, payload.Length);
+        OutOfProcessCaptureWorker.ValidateAttentionSheetAdmission(
+            valid,
+            currentGrant,
+            lastAttentionSheetSequence: 0);
+        Assert.Throws<CaptureProtocolException>(() =>
+            OutOfProcessCaptureWorker.ValidateAttentionSheetAdmission(
+                stale,
+                currentGrant,
+                lastAttentionSheetSequence: 0));
+        Assert.Throws<CaptureProtocolException>(() =>
+            OutOfProcessCaptureWorker.ValidateAttentionSheetAdmission(
+                targetMismatch,
+                currentGrant,
+                lastAttentionSheetSequence: 0));
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void AttentionAdmission_RejectsDuplicateAndOutOfOrderSequence(long lastSequence)
+    {
+        var payload = Enumerable.Range(0, 64).Select(index => (byte)index).ToArray();
+        var message = CreateAttentionMessage(payload);
+
+        var exception = Assert.Throws<CaptureProtocolException>(() =>
+            OutOfProcessCaptureWorker.ValidateAttentionSheetAdmission(
+                message,
+                CaptureWorkerTestSupport.CreateGrant(),
+                lastSequence));
+
+        Assert.Equal(CaptureWorkerErrorCode.MalformedMessage, exception.ErrorCode);
     }
 
     [Fact]

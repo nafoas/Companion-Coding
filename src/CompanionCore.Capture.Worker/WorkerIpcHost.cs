@@ -179,12 +179,19 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
                         throw new CaptureProtocolException(CaptureWorkerErrorCode.InvalidAuthorization);
                     }
 
-                    await _engine.SetManualRegionAsync(
-                            command.Authorization,
-                            command.ClearManualRegion ? null : command.ManualRegion,
-                            cancellationToken)
-                        .ConfigureAwait(false);
-                    await SendSuccessAsync(command, cancellationToken).ConfigureAwait(false);
+                    using (var update = await _engine.BeginManualRegionUpdateAsync(
+                               command.Authorization,
+                               command.ClearManualRegion ? null : command.ManualRegion,
+                               cancellationToken)
+                           .ConfigureAwait(false))
+                    {
+                        // The pipeline remains paused until this response is on the
+                        // pipe. Pre-update sheets therefore precede the response and
+                        // post-update sheets necessarily follow it.
+                        await SendSuccessAsync(command, cancellationToken).ConfigureAwait(false);
+                        update.MarkResponseCommitted();
+                    }
+
                     return false;
 
                 case CaptureIpcMessageKind.Shutdown:
@@ -293,13 +300,19 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
 
     private void OnStatusChanged(object? sender, CaptureWorkerStatusChanged change)
     {
-        _notifications.Writer.TryWrite(new CaptureIpcMessage
-        {
-            Kind = CaptureIpcMessageKind.StatusChanged,
-            Status = change.Status,
-            StatusReason = change.Reason,
-            Timestamp = change.Timestamp,
-        });
+        // Status is a fence, not best-effort telemetry. Write it synchronously so a
+        // resize/fault clear cannot be overtaken by a sheet from the recalibrated epoch.
+        WriteAsync(
+                new CaptureIpcMessage
+                {
+                    Kind = CaptureIpcMessageKind.StatusChanged,
+                    Status = change.Status,
+                    StatusReason = change.Reason,
+                    Timestamp = change.Timestamp,
+                },
+                _lifetime.Token)
+            .GetAwaiter()
+            .GetResult();
     }
 
     private void OnAttentionSheetProduced(object? sender, OwnedWorkerAttentionSheet sheet)

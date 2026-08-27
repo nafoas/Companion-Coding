@@ -19,6 +19,8 @@ public sealed class TargetSessionController : IAsyncDisposable
     private readonly object _sheetGate = new();
     private readonly SortedSet<long> _admittedVisualSequences = [];
     private readonly Dictionary<long, AttentionSheetMetadata> _pendingVisualSheets = [];
+    private AttentionSheet? _heldAttentionSheet;
+    private long _visualAdmissionEpoch;
     private CancellationTokenSource? _targetWork;
     private bool _cleanupComplete = true;
     private bool _disposed;
@@ -398,27 +400,48 @@ public sealed class TargetSessionController : IAsyncDisposable
     public AttentionSheet? TakeLatestAttentionSheet()
     {
         ThrowIfDisposed();
-        var sheet = _worker.TakeLatestAttentionSheet();
-        if (sheet is null)
+        long visualEpoch;
+        lock (_sheetGate)
         {
-            return null;
+            visualEpoch = _visualAdmissionEpoch;
         }
 
+        var incoming = _worker.TakeLatestAttentionSheet();
         var grant = CurrentSession.Grant;
         var isCurrent = grant is not null
             && _authorization.IsCurrent(grant)
-            && sheet.Metadata.Matches(grant);
+            && (incoming is null || incoming.Metadata.Matches(grant));
         lock (_sheetGate)
         {
-            if (!isCurrent
-                || !_admittedVisualSequences.Remove(sheet.Metadata.SourceSequenceNumber))
+            if (!isCurrent || visualEpoch != _visualAdmissionEpoch)
             {
-                sheet.Dispose();
+                incoming?.Dispose();
                 return null;
             }
 
-            _pendingVisualSheets.Remove(sheet.Metadata.SourceSequenceNumber);
-            return sheet;
+            if (incoming is not null)
+            {
+                if (_heldAttentionSheet is null
+                    || incoming.Metadata.SourceSequenceNumber
+                        >= _heldAttentionSheet.Metadata.SourceSequenceNumber)
+                {
+                    _heldAttentionSheet?.Dispose();
+                    _heldAttentionSheet = incoming;
+                    incoming = null;
+                }
+
+                incoming?.Dispose();
+            }
+
+            if (_heldAttentionSheet is not { } ready
+                || !_admittedVisualSequences.Remove(ready.Metadata.SourceSequenceNumber))
+            {
+                return null;
+            }
+
+            _heldAttentionSheet = null;
+            _pendingVisualSheets.Remove(ready.Metadata.SourceSequenceNumber);
+            return ready;
         }
     }
 
@@ -625,6 +648,9 @@ public sealed class TargetSessionController : IAsyncDisposable
         {
             _admittedVisualSequences.Clear();
             _pendingVisualSheets.Clear();
+            _heldAttentionSheet?.Dispose();
+            _heldAttentionSheet = null;
+            _visualAdmissionEpoch = checked(_visualAdmissionEpoch + 1);
         }
     }
 

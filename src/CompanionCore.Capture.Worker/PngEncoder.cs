@@ -16,63 +16,69 @@ internal static class PngEncoder
         ArgumentNullException.ThrowIfNull(canvas);
         var rawLength = checked((canvas.Width * 4 + 1) * canvas.Height);
         using var compressed = new MemoryStream(capacity: Math.Min(rawLength, AttentionSheet.MaximumEncodedBytes));
-        using (var zlib = new ZLibStream(compressed, CompressionLevel.Fastest, leaveOpen: true))
+        MemoryStream? output = null;
+        try
         {
-            var row = GC.AllocateUninitializedArray<byte>(checked(canvas.Width * 4 + 1));
-            try
+            using (var zlib = new ZLibStream(compressed, CompressionLevel.Fastest, leaveOpen: true))
             {
-                row[0] = 0;
-                var source = canvas.ReadOnlySpan;
-                for (var y = 0; y < canvas.Height; y++)
+                var row = GC.AllocateUninitializedArray<byte>(checked(canvas.Width * 4 + 1));
+                try
                 {
-                    var sourceRow = source.Slice(y * canvas.Stride, canvas.Stride);
-                    for (var x = 0; x < canvas.Width; x++)
+                    row[0] = 0;
+                    var source = canvas.ReadOnlySpan;
+                    for (var y = 0; y < canvas.Height; y++)
                     {
-                        var sourceOffset = x * 4;
-                        var outputOffset = 1 + sourceOffset;
-                        row[outputOffset] = sourceRow[sourceOffset + 2];
-                        row[outputOffset + 1] = sourceRow[sourceOffset + 1];
-                        row[outputOffset + 2] = sourceRow[sourceOffset];
-                        row[outputOffset + 3] = sourceRow[sourceOffset + 3];
-                    }
+                        var sourceRow = source.Slice(y * canvas.Stride, canvas.Stride);
+                        for (var x = 0; x < canvas.Width; x++)
+                        {
+                            var sourceOffset = x * 4;
+                            var outputOffset = 1 + sourceOffset;
+                            row[outputOffset] = sourceRow[sourceOffset + 2];
+                            row[outputOffset + 1] = sourceRow[sourceOffset + 1];
+                            row[outputOffset + 2] = sourceRow[sourceOffset];
+                            row[outputOffset + 3] = sourceRow[sourceOffset + 3];
+                        }
 
-                    zlib.Write(row);
+                        zlib.Write(row);
+                    }
+                }
+                finally
+                {
+                    CryptographicOperations.ZeroMemory(row);
                 }
             }
-            finally
+
+            if (compressed.Length <= 0 || compressed.Length > AttentionSheet.MaximumEncodedBytes)
             {
-                CryptographicOperations.ZeroMemory(row);
+                throw new InvalidOperationException("The encoded attention sheet exceeds its hard bound.");
+            }
+
+            output = new MemoryStream(capacity: checked((int)compressed.Length + 128));
+            output.Write(Signature);
+            Span<byte> ihdr = stackalloc byte[13];
+            BinaryPrimitives.WriteInt32BigEndian(ihdr, canvas.Width);
+            BinaryPrimitives.WriteInt32BigEndian(ihdr[4..], canvas.Height);
+            ihdr[8] = 8;
+            ihdr[9] = 6;
+            WriteChunk(output, "IHDR", ihdr);
+            WriteChunk(output, "IDAT", compressed.GetBuffer().AsSpan(0, checked((int)compressed.Length)));
+            WriteChunk(output, "IEND", ReadOnlySpan<byte>.Empty);
+            if (output.Length > AttentionSheet.MaximumEncodedBytes)
+            {
+                throw new InvalidOperationException("The encoded attention sheet exceeds its hard bound.");
+            }
+
+            return output.ToArray();
+        }
+        finally
+        {
+            ZeroStreamBuffer(compressed);
+            if (output is not null)
+            {
+                ZeroStreamBuffer(output);
+                output.Dispose();
             }
         }
-
-        if (compressed.Length <= 0 || compressed.Length > AttentionSheet.MaximumEncodedBytes)
-        {
-            ZeroStreamBuffer(compressed);
-            throw new InvalidOperationException("The encoded attention sheet exceeds its hard bound.");
-        }
-
-        using var output = new MemoryStream(
-            capacity: checked((int)compressed.Length + 128));
-        output.Write(Signature);
-        Span<byte> ihdr = stackalloc byte[13];
-        BinaryPrimitives.WriteInt32BigEndian(ihdr, canvas.Width);
-        BinaryPrimitives.WriteInt32BigEndian(ihdr[4..], canvas.Height);
-        ihdr[8] = 8;
-        ihdr[9] = 6;
-        WriteChunk(output, "IHDR", ihdr);
-        WriteChunk(output, "IDAT", compressed.GetBuffer().AsSpan(0, checked((int)compressed.Length)));
-        WriteChunk(output, "IEND", ReadOnlySpan<byte>.Empty);
-        if (output.Length > AttentionSheet.MaximumEncodedBytes)
-        {
-            ZeroStreamBuffer(compressed);
-            ZeroStreamBuffer(output);
-            throw new InvalidOperationException("The encoded attention sheet exceeds its hard bound.");
-        }
-
-        var result = output.ToArray();
-        ZeroStreamBuffer(compressed);
-        ZeroStreamBuffer(output);
-        return result;
     }
 
     private static void WriteChunk(Stream output, string type, ReadOnlySpan<byte> data)
