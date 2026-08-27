@@ -2,68 +2,83 @@
 
 ## Task
 
-Task 5 — Bounded Capture Worker. The exact implementation candidate passed Windows CI; this documentation-only evidence descendant and final Paw Gate reconciliation remain pending.
+Task 6 — Regions and Attention Sheets, the final Stage 4 packet. Local implementation and actual-diff review passed; publication, Windows CI, remote equality, merge, and accepted-main reconciliation remain blocking Paw Gate evidence.
 
 ## Completed
 
-- Added a dedicated out-of-process capture client/worker boundary; constructing the client launches nothing, while an authorized start creates one exact disposable child and same-user bounded pipe.
-- Implemented WGC for only the authorized HWND with PID/executable revalidation, no enumeration or fallback capability, honest minimized/no-signal/fault status, resize clearing, and deterministic WGC/D3D/frame/process ownership.
-- Implemented version-1 strict IPC with a 64 KiB ceiling, a random pipe and 256-bit nonce, correlated/serialized commands, monotonic control sequences, metadata-only notifications, terminal fail-closed behavior, and a second late-event admission fence.
-- Implemented the 64 MiB/three-source-frame hard limits, queue capacity two with oldest-pending eviction, byte-bounded retained ring, exact-once disposal, immutable metrics, and a client event dispatcher that cannot block protocol responses.
-- Wired the normal WPF app to `OutOfProcessCaptureWorker`; the in-process fake remains test-only.
-- Added 28 worker/protocol/pipeline/engine/isolation/process tests, including a 216,000-frame accelerated six-hour soak, twelve fresh-child restarts, crash recovery, blocking-observer control isolation, and unchanged runtime-construction count.
-- Added a private-safe WGC harness that authorizes only its own synthetic pulsing window, verifies visible/occluded metadata, and exposes optional real minimized/exclusive experiments without persisting pixels.
-- Recorded Personal Round Judgments J1–J8; Task 6, conversation, ERPP implementation, personality, API, durable images, and production data remain absent.
+- Extended the exact-target worker with bounded BGRA32 readback, a tiny local luminance signature, near-duplicate rejection, normalized region remapping, deterministic staggering, and a current-grant manual override.
+- Added one orientation sheet after authorization/restart/resize and ordinary one-moment sheets containing a labeled full-context panel plus at most two labeled focus crops.
+- Added a deterministic lossless PNG encoder and strict metadata carrying exact target session, privacy generation, target identity, source sequence/time/dimensions, sheet geometry, region geometry, kind, and change score.
+- Upgraded capture IPC to version 2 while retaining the 64 KiB control-JSON ceiling. Only `AttentionSheetProduced` may carry one separately framed payload, capped at 8 MiB and verified with SHA-256 before atomic ownership transfer.
+- Preserved sealed-grant isolation: neither client nor worker can issue capture grants. Worker readback/composition has no runtime, memory, discovery, presentation, network, semantic, conversation, or persistence authority.
+- Bounded source ownership at Task 5's three frames/64 MiB, processing at capacity two, temporary visual work at 64 MiB, and final worker/client sheets at two. All raw, signature, canvas, encoder, payload, evicted, stale, and disposed buffers have deterministic zero/release paths.
+- Added a provisional sampled watchdog for invalid hard bounds or sustained private-memory/native-handle growth; a trip revokes visual admission, stops the source, clears work, and reports `ResourceBudgetExceeded`.
+- Correlated sheets through Task 4's exact source-frame Privacy Guard. A newer pulled sheet is held until its own frame is admitted; rejection/revocation/stop/manual reset clears held work.
+- Closed ordering races found during separate review: deferred start-time frames, synchronous resize/fault status fences, coalesced newest-sheet events, and a pause/drain/response/resume fence around manual-region changes.
+- Added neutral WPF controls for applying/clearing a normalized manual region and displaying only privacy-safe sheet metadata. No final character wording, artwork, semantic output, or image display was added.
+- Added 32 capture-worker and 4 target-authorization tests over the accepted Task 5 baseline, including strict payload negatives, geometry/labels, manual barriers, privacy correlation, watchdog behavior, ownership cleanup, deterministic artifact decoding, and a 216,000-frame accelerated six-hour visual soak.
 
 ## Changed
 
-- Capture contract extensions plus new `CompanionCore.Capture.Client` and `CompanionCore.Capture.Worker` projects.
-- Normal app composition/build-copy wiring and test-only fake compatibility.
-- New worker tests, one app composition regression, and `CompanionCore.Capture.Spike`.
-- Solution/project/lock integration and bounded Task 5 control-record updates only; no Task 6+ files or accepted design authorities changed.
+- 41 paths relative to accepted Task 5 `main`: 4,149 additions and 106 deletions.
+- Capture Contracts, Client, Worker, Fake, Target Authorization controller, and the minimal neutral App controls.
+- Capture Worker and Target Authorization tests.
+- CI synthetic-artifact upload plus Task/README/Ledger/Handoff control records.
+- No package, lock, solution, memory, runtime, semantic/API, conversation, ERPP implementation, personality, production-root, or durable product-image path changed.
 
 ## Verification
 
-- Locked restore: passed across all 20 projects with the pinned .NET 10.0.302 SDK and `EnableWindowsTargeting=true`.
-- Dependency audit: 20 projects examined; 0 direct/transitive vulnerable-package findings.
-- Release build: all 20 projects passed with 0 warnings and 0 errors.
-- Locally runnable tests: 256/256 passed — Capture 14, Capture Worker 28, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 57.
-- Task 5 soak: 216,000 generated frames (six virtual hours at 10 fps), hard bounds preserved, zero owned frames/bytes after clear/dispose.
-- Structural review: worker references only Capture Contracts; no runtime/memory/target-discovery/presentation authority; client/worker cannot issue sealed grants; no foreground/enumeration/monitor/fallback/PrintWindow/BitBlt/Desktop Duplication/title/durable-image capability found.
-- `git diff --check`: passed.
-- Exact implementation candidate: published head `a274001d4c40ce003fcbd0087b70c103025b4b23`, tree `08b70eeb4a41147eb2f5f271fd6dc876f3c79ae0`.
-- Windows CI: run `31477853767`, job `93735671804`, passed restore/audit/build and 269/269 tests — App Integration 13, Capture Worker 28, Capture 14, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 57.
-- Windows process proof: TRX confirms twelve fresh restarts (6.35 s), exact metadata/stop, unexpected crash/restart, and blocking-observer metrics/stop cases executed and passed.
-- Artifact: `9095997685`, 57,051 bytes, digest `sha256:14913ff10570e7ee632e5e4e71256a9571a0960e8d1fb40b0c09d20ae34613c2`.
+- SDK: exact pinned .NET 10.0.302 installed locally for the gate.
+- Locked restore: `dotnet restore CompanionCore.slnx --locked-mode --disable-parallel /m:1 /p:EnableWindowsTargeting=true`; passed. Serialization avoided an SDK project-graph race that otherwise returned failure with zero diagnostics.
+- Dependency audit: `EnableWindowsTargeting=true dotnet package list --project CompanionCore.slnx --vulnerable --include-transitive --no-restore --format json --output-version 1`; passed across all 20 projects with no vulnerable package entries.
+- Strict Release build: `dotnet build CompanionCore.slnx -c Release --no-restore /m:1 /p:EnableWindowsTargeting=true /warnaserror`; all 20 projects passed with 0 warnings and 0 errors.
+- Focused suites: Capture Worker 60/60 and Target Authorization 61/61 passed after the final ordering/resource corrections.
+- Full locally executable suite: 292/292 invocations passed — Capture 14, Capture Worker 60, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 61.
+- Accelerated visual soak: 216,000 generated frames (six hours at 10 fps), over 200,000 duplicate rejections, bounded maxima, and zero current sheet/working ownership at completion.
+- Synthetic artifact: decoded PNG, 792×621, 8-bit RGBA, non-interlaced; visual inspection confirmed `FULL CONTEXT`, `CENTER`, and `LOWER / DIALOGUE` labels and synchronized source crops. Digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- Structural/static review: `git diff --check` passed; worker still references only Capture Contracts; sealed-grant isolation test passed; no added network/API, runtime/memory authority, target enumeration/fallback, production image write, semantic/conversation/ERPP/personality, or unrelated data surface was found. The sole added image write is the generated test artifact beneath `TestResults`.
+- Auxiliary formatter: `dotnet format --verify-no-changes` could not launch its Roslyn build-host pipe in this restricted Linux environment (`SocketException: Permission denied`). It is not a Task 6 Paw Gate command; strict compiler/analyzer and diff-whitespace gates passed.
 
 ## Remaining
 
-- Commit/publish this documentation-only evidence descendant and pass its exact Windows rerun.
-- Perform final exact-tree review, mark PR #10 ready, squash-merge, and reconcile accepted `main`.
+- Obtain exact-destination confirmation required by the environment's external-write reviewer, then publish `agent/task-06-regions-attention-sheets` to `https://github.com/nafoas/Companion-Coding`.
+- Run the exact candidate on Windows CI. Expected complete count from the accepted 269-test baseline plus 36 Task 6 tests is 305; the result must be reported, not assumed.
+- Inspect the uploaded synthetic PNG and Windows TRX to prove the child-process/WPF branches actually executed.
+- Correct any Windows-only defect without weakening an invariant; rerun the entire gate after any code correction.
+- Reconcile exact local/remote tree equality, record the Windows run/job/artifact evidence, archive Task 6, mark Stage 4 accepted, merge, and verify accepted `main` before opening Task 7.
 
 ## Risks and assumptions
 
-- Minimized and exclusive-fullscreen support remain unproven without actual target-PC spike evidence and are deliberately reported unsupported/no-signal by default.
-- CI can exercise private-safe synthetic child processes but cannot establish real target-PC WGC behavior. The visible/occluded/minimized/exclusive harness must be run later on the actual machine before support claims change.
-- The Linux environment cannot execute the WindowsDesktop app tests; no result is inferred for them before the Windows gate.
+- Linux cross-builds Windows projects but cannot launch `Microsoft.WindowsDesktop.App`; real WPF integration and Windows child/WGC execution remain unverified until CI.
+- Minimized and exclusive-fullscreen WGC remain explicitly unsupported without actual target-PC evidence. CI cannot change that claim.
+- The watchdog's growth thresholds are intentionally conservative and provisional until Stage 11 physical profiling; hard byte/count limits are not provisional.
+- Product code retains no images. A caller that takes ownership of an `AttentionSheet` must dispose it; controller/client-owned sheets are zeroed automatically on revocation and teardown.
+- The configured `git push` was attempted under Boss's explicit authorization but rejected before execution by the external-write reviewer because it required exact destination confirmation. No alternate or credential-bypassing route was attempted.
+
+## Personal Round Judgments
+
+J1–J9 are recorded in the active packet. They cover worker-only nonsemantic pixels, deterministic normalized defaults, PNG/size bounds, separate payload framing, exact-frame privacy correlation, manual response fencing, provisional watchdog thresholds, synthetic-only durable evidence, and bounded coalesced event behavior. Every choice is reversible without changing identity, memory, privacy authority, or later-stage semantics.
 
 ## Review focus
 
-- Verify all Windows process tests actually execute (not merely discover), including exact metadata, twelve fresh restarts, parent/child handle non-growth, unexpected crash recovery, blocking observer, and child cleanup.
-- Recheck grant-issuance isolation, same-user pipe/nonce length, malformed/current-target-mismatched teardown, acquired-WGC-frame disposal on concurrent stop, and terminal-status late-event closure.
-- Recheck the 64 MiB/three-frame global accounting, queue capacity two, production WGC retention ceiling two, no raw pixel IPC/disk path, exact HWND-only interop, and no Task 6+/ERPP/personality/API surface.
+- Recheck WGC `SoftwareBitmap` stride/capacity arithmetic and the conservative two-copy visual accounting on Windows.
+- Verify start/resize/fault/manual response ordering from TRX and ensure the first post-start/post-resize orientation has a published exact source frame.
+- Verify valid/truncated/corrupt/oversize/unexpected/stale/mismatched/duplicate/out-of-order payload cases terminate or reject the disposable worker epoch as specified.
+- Verify stop, privacy stop, manual reset, resize, fault, crash, restart, and disposal return source/signature/canvas/encoder/worker-sheet/client-sheet ownership to zero.
+- Recheck the 41-path scope against accepted Task 5 and scan again for Task 7+, API, semantic attention, conversation, ERPP implementation, personality, durable product images, and production data.
 
 ## Repository state
 
-- Branch: `agent/task-05-bounded-capture-worker`
-- Base: `b0cbc37604519ef587b3dbce8f1c589ea561b268`
-- Local implementation commit: `7b41822126470b2919bcc69b37a08f93a2f64e74`.
-- Published implementation head/tree: `a274001d4c40ce003fcbd0087b70c103025b4b23` / `08b70eeb4a41147eb2f5f271fd6dc876f3c79ae0`.
-- Evidence-descendant commit: pending this update.
+- Branch: `agent/task-06-regions-attention-sheets`.
+- Accepted base: `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`, tree `b3a84d9a0a5be6cc81b4f517ac1b1fdb8537a23b`.
+- Local implementation head: `550e81304ff5e3cc3a722eb02e2a4b7ffc984f53`, tree `44e9fcd2dab03f563a09158076751e650f349483`.
+- Documentation/evidence descendant: pending this update.
+- Remote branch: not created; the attempted push was rejected before execution by the environment gate.
+- Accepted remote `main`: unchanged at Task 5.
 
 ## Next safe task
 
-- Gate and merge the documentation-only descendant; do not begin Task 6.
+Publish this exact Stage 4 candidate once the external destination gate is satisfied, then require a clean Windows Paw Gate. Do not archive Task 6, mark Stage 4 accepted, merge, or open Task 7 before that evidence exists.
 
 ## Credit status
 

@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 4 — local peepers and bounded visual pipeline (Task 5 worker slice) |
-| Active task | Task 5 — Bounded Capture Worker |
-| Working branch | `agent/task-05-bounded-capture-worker`, based on accepted `main` |
-| Entry criteria met | Yes; Task 4 passed its Paw Gate, final descendant rerun, merge, and exact-tree reconciliation |
-| Product code authorized | Yes, only within Task 5's exact-target out-of-process WGC worker, bounded RAM/queues, disposal, status, metrics, and private-safe tests |
+| Current stage | Stage 4 — local peepers and bounded visual pipeline (final Task 6 packet) |
+| Active task | Task 6 — Regions and Attention Sheets |
+| Working branch | `agent/task-06-regions-attention-sheets`, based on accepted `main` `a257d5a1d70d03a77f27582b9f0bbecd0194e67d` |
+| Entry criteria met | Yes; Task 5 passed its Paw Gate, merged through PR #10, and was reconciled to accepted `main` |
+| Product code authorized | Yes, only within Task 6's bounded local readback, normalized regions, change detection, labeled attention-sheet composition, size-bounded payload transport, privacy correlation, manual-region plumbing, and provisional watchdog |
 | Live API authorized | No |
-| Automated tests | Implementation candidate Windows run `31477853767`, job `93735671804`: locked restore and clean direct/transitive audit passed; all 20 Release projects built with 0 warnings/errors; 269/269 tests passed. Artifact `9095997685`, 57,051 bytes, digest `sha256:14913ff10570e7ee632e5e4e71256a9571a0960e8d1fb40b0c09d20ae34613c2`. |
-| Manual gate | Implementation actual-diff review passed. Documentation-only evidence descendant, exact rerun, merge, and accepted-tree reconciliation remain. |
-| Accepted `main` baseline | `b0cbc37604519ef587b3dbce8f1c589ea561b268` — Task 4 consent and target isolation accepted and merged |
-| Known limitations | Minimized and exclusive-fullscreen capture remain unsupported absent actual target-PC spike evidence; Task 5 must report no signal honestly. Task 6 regions/attention sheets remain deferred. |
-| Deferred temptations | Task 6+ visual composition/API/conversation/ERPP/personality work; durable images, production settings, final UI |
-| Approval | Task 5 explicitly authorized by Boss on 2026-08-11; implementation evidence passed and Paw Gate awaits the exact documentation-descendant rerun/merge reconciliation. |
+| Automated tests | Local pinned-SDK gate: locked restore passed; direct/transitive audit examined all 20 projects with 0 vulnerable findings; all 20 Release projects built with 0 warnings/errors; 292/292 available non-WindowsDesktop test invocations passed (Capture 14, Capture Worker 60, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 61). The WindowsDesktop integration project requires Windows CI. |
+| Manual gate | Local implementation and actual-diff review passed, including visual inspection of the deterministic 792×621 RGBA PNG (`sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`). Publish, Windows CI, remote equality, merge, and accepted-tree reconciliation remain. |
+| Accepted `main` baseline | `a257d5a1d70d03a77f27582b9f0bbecd0194e67d` — Task 5 bounded capture worker accepted and merged |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds are deliberately provisional until Stage 11 physical profiling. Windows-only WPF/child-process execution remains pending the Task 6 Windows gate. |
+| Deferred temptations | Task 7+ semantic bridge/attention meaning/API/conversation/ERPP/personality work; durable images, production settings, final UI |
+| Approval | Boss explicitly authorized completing and pushing all remaining Stage 4 work on 2026-08-26. Local implementation is complete; the environment's external-write gate blocked publication pending exact-destination confirmation. |
 
 ## Gate history
 
@@ -87,7 +87,18 @@
 - Process evidence: TRX durations prove Windows-only child cases executed, including twelve fresh process restarts/cleanup/handle checks (6.35 s), exact metadata/stop, unexpected crash recovery, and blocking-observer control isolation.
 - Review corrections: disposed an acquired WGC frame on concurrent stop; made terminal status synchronously close client admission; made malformed/current-target-mismatched/duplicate/out-of-order frame IPC tear down the child; unified the 256-bit nonce length; and removed product-assembly friendship to sealed grant issuance.
 - Personal Round Judgments J1–J8 record authority narrowing, IPC/epoch design, newest-preserving bounds, raw-byte accounting, revocation ordering, honest silence, nonblocking observers, and private-safe soak/spike evidence.
-- Remaining gate work: pass the documentation-only evidence descendant, reconcile its exact tree, merge PR #10, and verify accepted `main`. Actual target-PC minimized/exclusive WGC feasibility remains unsupported and deferred evidence, not a Task 5 gate failure.
+- Merge: PR #10 squash-merged to `main` as `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`; accepted tree `b3a84d9a0a5be6cc81b4f517ac1b1fdb8537a23b` retained the gated behavior and evidence records.
+- Result: passed, merged, and accepted; Task 6 became the final Stage 4 packet. Actual target-PC minimized/exclusive WGC feasibility remains unsupported deferred evidence, not a Task 5 defect.
+
+### Task 6 — Regions and attention sheets
+
+- Local implementation candidate: head `550e81304ff5e3cc3a722eb02e2a4b7ffc984f53`, exact tree `44e9fcd2dab03f563a09158076751e650f349483`, based directly on accepted Task 5 `main` `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`.
+- Scope: 41 changed paths and 4,149 additions/106 deletions; strict capture contracts/IPC, worker-local readback/change/geometry/composition/encoding/watchdog logic, bounded client reception, Task 4 privacy correlation, neutral manual-region controls, focused tests, synthetic artifact upload, and bounded control records. No package, lock, solution, memory, runtime, semantic/API, conversation, ERPP implementation, personality, or production-data surface changed.
+- Behavior: one restart/resize-scoped orientation; normalized deterministic defaults and current-grant manual override; local luminance duplicate rejection; one-moment full context plus at most two labeled crops; deterministic lossless PNG; separate 8 MiB checksummed payload under an unchanged 64 KiB JSON ceiling; at most two sheets per worker/client owner; exact target/generation/source correlation through Privacy Guard; explicit 64 MiB visual accounting and a provisional sustained-growth watchdog.
+- Local verification: pinned .NET SDK 10.0.302 locked restore passed (serialized project graph with `EnableWindowsTargeting=true`); all 20 Release projects built with 0 warnings/errors; the direct/transitive audit examined all 20 projects with 0 vulnerable findings; 292/292 locally executable invocations passed (Capture 14, Capture Worker 60, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 61). The capture suite includes a 216,000-frame/six-hour accelerated visual soak.
+- Synthetic inspection: generated test-only PNG decoded structurally and was visually inspected at 792×621 RGBA with `FULL CONTEXT`, `CENTER`, and `LOWER / DIALOGUE` labels and synchronized crops; digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- Actual-diff corrections: restored sealed-grant assembly isolation; made payload ownership atomic and zeroing; bounded temporary WGC readback at 64 MiB; fenced resize/fault status ahead of new sheets; deferred start-time frames; coalesced newest sheet signals; held newer sheets until their own frame passed privacy; and serialized manual-region response ordering so stale sheets cannot cross the new configuration boundary.
+- Platform gate: the Linux environment cannot execute the WindowsDesktop integration host or genuine WGC/child-process branches. Publication to the configured GitHub repository was rejected by the external-write reviewer because the exact destination was not explicitly confirmed to that gate. Windows CI, remote equality, merge, and accepted-`main` reconciliation therefore remain required; Task 6 and Stage 4 are not yet marked accepted.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

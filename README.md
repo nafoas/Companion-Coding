@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, Task 2's append-only memory/journal spine, Task 3's atomic backup/guarded repair, and Task 4's consent/target-isolation boundary are accepted. Task 5 is the sole active neutral-core task.
+Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, Task 2's append-only memory/journal spine, Task 3's atomic backup/guarded repair, Task 4's consent/target-isolation boundary, and Task 5's bounded capture worker are accepted. Task 6 is the sole active neutral-core task and the final packet of Stage 4.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, 
 
 ## Current task
 
-Task 5: bounded capture worker. Work is restricted to one exact authorized HWND, a restartable out-of-process Windows Graphics Capture worker, bounded RAM/queues/ring, deterministic disposal, honest no-signal handling, metrics, and private-safe capture tests. Regions, crops, attention sheets, semantic interpretation, conversation, ERPP implementation, personality, and all Task 6+ behavior remain deferred.
+Task 6: regions and attention sheets. Work is restricted to bounded local pixel readback inside the exact-target worker, normalized default/manual regions, local duplicate rejection, synchronized labeled PNG attention sheets, checksummed size-bounded RAM-only transport, Task 4 privacy correlation, and a provisional resource watchdog. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred. The local candidate is complete; Windows CI and accepted-main reconciliation are still required before Stage 4 is marked accepted.
 
 ## Important boundaries
 

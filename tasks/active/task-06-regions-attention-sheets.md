@@ -1,6 +1,6 @@
 # Task 6 — Regions and Attention Sheets
 
-Status: **Active; authorized by Boss on 2026-08-26 as the remainder of Stage 4.**
+Status: **Active; local implementation/review passed on 2026-08-26, but publication, Windows CI, merge, and accepted-main reconciliation remain.**
 Accepted base: `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`
 Working branch: `agent/task-06-regions-attention-sheets`
 Roadmap slice: Stage 4, final packet — bounded local visual composition only
@@ -119,7 +119,27 @@ Task 6 and Stage 4 pass only when:
 
 ## Personal Round Judgments
 
-Record routine reversible Task 6 choices here before the gate. No judgment may weaken the invariants or cross a stop condition.
+- **J1 — Pixel work remains child-owned and nonsemantic.** WGC readback, luminance signatures, normalized crops, canvas composition, and PNG encoding live only in the disposable capture worker. The main process receives only a final bounded sheet plus strict geometry/authentication metadata. Reversal: remove the Task 6 visual pipeline and retain Task 5 metadata-only behavior.
+- **J2 — Normalized defaults are small, deterministic, and content-relative.** Six neutral default focus regions cover center, lower UI/dialogue, upper corners, and sides. Ordinary sheets stagger two at a time; a current-grant manual override occupies the first focus slot. Movement of the target window cannot affect mapping. Reversal: revise the constant normalized layout without changing authority or persistence.
+- **J3 — PNG is the bounded inspection format.** Sheets use deterministic, lossless, non-interlaced 8-bit RGBA PNG, at most 8 MiB, with one orientation/full panel or a moderate full panel plus at most two focus crops. Labels exist in pixels and enum metadata. Reversal: substitute another deterministic lossless codec only through a separately gated protocol-version change.
+- **J4 — Payloads are separate from control JSON.** Protocol version 2 retains the 64 KiB JSON frame and permits an attached payload only on `AttentionSheetProduced`, with declared length and SHA-256 checked before ownership transfer. At most two final sheets exist per worker/client owner and every discarded byte array is zeroed. Reversal: return to version 1 metadata-only transport.
+- **J5 — Privacy admission follows the exact source frame.** Sheet metadata carries target session, privacy generation, target identity, source sequence/time/dimensions. The controller publishes availability only after that exact sequence passes the accepted Task 4 gate, and temporarily holds a newer pulled sheet until its own frame is admitted. Reversal: disable sheet exposure while retaining worker-local composition tests.
+- **J6 — Manual changes use a response fence.** The worker pauses and drains visual work, installs the new normalized override, writes the correlated response, and only then resumes. The client clears pre-change sheets while consuming that response, preventing either side of the boundary from racing stale configuration. Reversal: remove the neutral manual control and retain default staggering.
+- **J7 — Resource thresholds are explicit and provisional.** Source ownership remains Task 5's three frames/64 MiB. Temporary WGC readback accounts the software copy plus tight copy within a separate 64 MiB visual ceiling; final sheets cap at two. The watchdog samples after warmup and trips on an invalid hard bound or sustained 128 MiB private-memory/128-handle rise, then revokes admission, stops the source, and clears. Reversal: tune thresholds during Stage 11 physical profiling without weakening hard count/byte ceilings.
+- **J8 — Synthetic evidence is the only durable image.** Product code has no image-file path. One deterministic generated sheet is decoded in tests, written only beneath test output, uploaded by CI, visually inspected, and zeroed in the test process after writing. Reversal: remove the artifact-write assertion without affecting product behavior.
+- **J9 — Slow-event safety favors bounded coalescing.** Start-time frame metadata is deferred within the existing three-frame ceiling, while attention notifications coalesce to the newest retained sheet. This preserves the first usable orientation through the start handshake without an unbounded observer queue. Reversal: adjust the bounded dispatch policy while preserving exact-frame privacy correlation.
+
+## Local candidate evidence
+
+- Implementation head `550e81304ff5e3cc3a722eb02e2a4b7ffc984f53`, exact tree `44e9fcd2dab03f563a09158076751e650f349483`, directly based on accepted Task 5 `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`.
+- Locked restore passed with pinned .NET SDK 10.0.302, serialized graph restore, and `EnableWindowsTargeting=true`; package locks did not change.
+- Direct/transitive vulnerability audit examined all 20 projects and returned no vulnerable packages.
+- All 20 Release projects cross-built with 0 warnings and 0 errors. The locally executable suite passed 292/292 invocations: Capture 14, Capture Worker 60, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 61.
+- The 60-test capture-worker suite includes the 216,000-frame/six-hour visual soak, strict payload negative paths, worker/client bounds, manual response fencing, watchdog injection, restart/clear cases, and synthetic sheet decode. Windows-only child/WGC paths still require Windows CI.
+- The deterministic test PNG is 792×621, 8-bit RGBA, non-interlaced, and `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`; visual inspection confirmed its three expected labels and synchronized regions.
+- `git diff --check`, 41-path scope review, worker dependency/isolation tests, durable-image scan, and Task 7+/semantic/API/conversation/ERPP/personality surface scans passed.
+- `dotnet format --verify-no-changes` was not a gate command and could not start its Roslyn build-host pipe in this restricted Linux environment (`SocketException: Permission denied`); strict compiler/analyzer and whitespace gates passed independently.
+- Publication was attempted under Boss's explicit authorization, but the external-write reviewer rejected the configured remote as insufficiently destination-confirmed. No alternate route was used. Windows CI, remote equality, merge, and accepted-tree reconciliation remain blocking evidence.
 
 ## Deferred findings
 
