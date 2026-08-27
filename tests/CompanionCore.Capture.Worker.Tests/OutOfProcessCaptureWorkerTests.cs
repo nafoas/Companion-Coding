@@ -15,9 +15,7 @@ public sealed class OutOfProcessCaptureWorkerCollection
 [Collection(OutOfProcessCaptureWorkerCollection.Name)]
 public sealed class OutOfProcessCaptureWorkerTests
 {
-    private const int RestartWarmupCount = 12;
-    private const int MeasuredRestartCount = 12;
-    private const int MaximumParentHandleDrift = 2;
+    private const int RestartEvidenceCount = 24;
 
     [Fact]
     public async Task CancelledStart_NeverLaunchesAProcess()
@@ -86,31 +84,25 @@ public sealed class OutOfProcessCaptureWorkerTests
         {
             GetWorkerProcessIdentity(worker.WorkerProcessId),
         };
+        var ownedResources = worker.ObserveOwnedResources();
+        Assert.True(ownedResources.HasExpectedOpenHandles);
         var childHandleCounts = new List<int>();
 
-        for (var attempt = 0; attempt < RestartWarmupCount; attempt++)
+        for (var attempt = 0; attempt < RestartEvidenceCount; attempt++)
         {
             var oldIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
+            var oldResources = ownedResources;
             await worker.RestartAsync(grant, CancellationToken.None);
             Assert.False(IsProcessIdentityAlive(oldIdentity));
+            Assert.True(oldResources.AllObservedHandlesClosed);
             Assert.True(worker.WorkerProcessId > 0);
             var currentIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
             Assert.NotEqual(oldIdentity, currentIdentity);
             processIdentities.Add(currentIdentity);
-        }
-
-        var parentHandleBaseline = GetParentHandleCount();
-        for (var attempt = 0; attempt < MeasuredRestartCount; attempt++)
-        {
-            var oldIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
-            await worker.RestartAsync(grant, CancellationToken.None);
-            Assert.False(IsProcessIdentityAlive(oldIdentity));
-            Assert.True(worker.WorkerProcessId > 0);
-            var currentIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
-            Assert.NotEqual(oldIdentity, currentIdentity);
-            processIdentities.Add(currentIdentity);
+            ownedResources = worker.ObserveOwnedResources();
+            Assert.True(ownedResources.HasExpectedOpenHandles);
             var metrics = await worker.GetMetricsAsync(CancellationToken.None);
-            Assert.Equal(RestartWarmupCount + attempt + 1, metrics.RestartCount);
+            Assert.Equal(attempt + 1, metrics.RestartCount);
             Assert.True(metrics.MaximumObservedSourceFrames <= CaptureWorkerMetrics.MaximumSourceFrames);
             Assert.True(metrics.MaximumObservedAccountedBytes <= CaptureWorkerMetrics.ScreenshotBudgetBytes);
             Assert.True(metrics.NativeHandleCount > 0);
@@ -119,21 +111,16 @@ public sealed class OutOfProcessCaptureWorkerTests
             childHandleCounts.Add(metrics.NativeHandleCount);
         }
 
-        var settledParentHandleCount = await WaitForParentHandlesAsync(
-            parentHandleBaseline + MaximumParentHandleDrift,
-            TimeSpan.FromSeconds(10));
         var finalIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
+        var finalResources = ownedResources;
         await worker.StopAndClearAsync(CancellationToken.None);
         Assert.False(IsProcessIdentityAlive(finalIdentity));
+        Assert.True(finalResources.AllObservedHandlesClosed);
+        Assert.True(worker.ObserveOwnedResources().IsEmpty);
         Assert.Equal(processIdentities.Count, processIdentities.Distinct().Count());
         Assert.Equal(0, worker.WorkerProcessId);
         Assert.Equal(runtimeConstructionsBefore, CompanionRuntime.ConstructionCount);
         Assert.False(IsStrictlyIncreasing(childHandleCounts));
-        Assert.True(
-            settledParentHandleCount <= parentHandleBaseline + MaximumParentHandleDrift,
-            $"Parent handles did not settle within the explicit drift ceiling. " +
-            $"Baseline: {parentHandleBaseline}; settled: {settledParentHandleCount}; " +
-            $"ceiling: {MaximumParentHandleDrift}.");
     }
 
     [Fact]
@@ -324,27 +311,6 @@ public sealed class OutOfProcessCaptureWorkerTests
 
     private static OutOfProcessCaptureWorker CreateWorker() =>
         new(CaptureWorkerLaunchOptions.ForPrivateSafeSyntheticTests());
-
-    private static async Task<int> WaitForParentHandlesAsync(
-        int maximum,
-        TimeSpan timeout)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        var current = GetParentHandleCount();
-        while (current > maximum && stopwatch.Elapsed < timeout)
-        {
-            await Task.Delay(25);
-            current = GetParentHandleCount();
-        }
-
-        return current;
-    }
-
-    private static int GetParentHandleCount()
-    {
-        using var parent = Process.GetCurrentProcess();
-        return parent.HandleCount;
-    }
 
     private static WorkerProcessIdentity GetWorkerProcessIdentity(int processId)
     {

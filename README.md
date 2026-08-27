@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, Task 2's append-only memory/journal spine, Task 3's atomic backup/guarded repair, Task 4's consent/target-isolation boundary, and Task 5's bounded capture worker are accepted. Task 6 is the sole active neutral-core task and the final packet of Stage 4.
+Task 0's architecture, the R0 direct-build controls, and Tasks 1–5 are accepted. Task 6's implementation is merged, but its final resource-evidence correction remains the sole active neutral-core task and the last gate of Stage 4.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, 
 
 ## Current task
 
-Task 6: regions and attention sheets. Work is restricted to bounded local pixel readback inside the exact-target worker, normalized default/manual regions, local duplicate rejection, synchronized labeled PNG attention sheets, checksummed size-bounded RAM-only transport, Task 4 privacy correlation, and a provisional resource watchdog. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred. The corrected implementation, actual-diff review, publication, remote equality, and 309/309 Windows gate are complete; the evidence descendant, merge, and accepted-main reconciliation remain before Stage 4 is marked accepted.
+Task 6: regions and attention sheets. The implementation, actual-diff review, exact publication, PR #11 merge, and one 309/309 exact-head Windows gate are complete. A duplicate same-head run exposed a testhost-wide handle heuristic that cannot attribute resources to the capture client, so acceptance remains blocked while the reviewed direct-owned-handle correction awaits exact Windows evidence. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred.
 
 ## Important boundaries
 

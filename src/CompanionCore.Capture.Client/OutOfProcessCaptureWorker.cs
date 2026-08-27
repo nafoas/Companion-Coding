@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading.Channels;
 using CompanionCore.Capture.Contracts;
@@ -80,6 +81,16 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     public event EventHandler<CaptureFrameMetadata>? FrameProduced;
 
     public event EventHandler<AttentionSheetMetadata>? AttentionSheetProduced;
+
+    internal CaptureWorkerOwnedResourceObservation ObserveOwnedResources()
+    {
+        lock (_stateGate)
+        {
+            return new CaptureWorkerOwnedResourceObservation(
+                _process?.SafeHandle,
+                _pipe?.SafePipeHandle);
+        }
+    }
 
     public async Task StartAsync(
         CaptureAuthorizationGrant authorization,
@@ -1357,4 +1368,23 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         long WorkerEpoch,
         CaptureAuthorizationGrant Grant,
         AttentionSheetMetadata Metadata) : ClientEvent(WorkerEpoch);
+}
+
+internal sealed class CaptureWorkerOwnedResourceObservation(
+    SafeHandle? processHandle,
+    SafeHandle? pipeHandle)
+{
+    internal bool HasExpectedOpenHandles =>
+        IsOpen(processHandle) && IsOpen(pipeHandle);
+
+    internal bool AllObservedHandlesClosed =>
+        IsClosed(processHandle) && IsClosed(pipeHandle);
+
+    internal bool IsEmpty => processHandle is null && pipeHandle is null;
+
+    private static bool IsOpen(SafeHandle? handle) =>
+        handle is not null && !handle.IsClosed && !handle.IsInvalid;
+
+    private static bool IsClosed(SafeHandle? handle) =>
+        handle is null || handle.IsClosed || handle.IsInvalid;
 }
