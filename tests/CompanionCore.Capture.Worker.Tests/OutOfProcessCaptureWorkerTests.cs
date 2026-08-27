@@ -6,6 +6,13 @@ using CompanionCore.Runtime;
 
 namespace CompanionCore.Capture.Worker.Tests;
 
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class OutOfProcessCaptureWorkerCollection
+{
+    public const string Name = "Out-of-process capture worker";
+}
+
+[Collection(OutOfProcessCaptureWorkerCollection.Name)]
 public sealed class OutOfProcessCaptureWorkerTests
 {
     [Fact]
@@ -242,7 +249,7 @@ public sealed class OutOfProcessCaptureWorkerTests
     }
 
     [Fact]
-    public async Task StopAndRestart_ClearQueuedSheetsAndCreateFreshOrientation()
+    public async Task Restart_EmitsFreshOrientationAndRetainsOnlyFreshEpochSheets()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -251,22 +258,40 @@ public sealed class OutOfProcessCaptureWorkerTests
 
         using var worker = CreateWorker();
         var grant = CaptureWorkerTestSupport.CreateGrant();
+        var orientations = new ConcurrentQueue<AttentionSheetMetadata>();
+        worker.AttentionSheetProduced += (_, metadata) =>
+        {
+            if (metadata.Kind == AttentionSheetKind.Orientation)
+            {
+                orientations.Enqueue(metadata);
+            }
+        };
+
         await worker.StartAsync(grant, CancellationToken.None);
         await CaptureWorkerTestSupport.WaitUntilAsync(
-            () => worker.GetMetricsAsync(CancellationToken.None).GetAwaiter().GetResult()
-                .ProducedAttentionSheets > 0,
+            () => orientations.Count >= 1,
             TimeSpan.FromSeconds(10));
 
         await worker.RestartAsync(grant, CancellationToken.None);
-        Assert.Null(worker.TakeLatestAttentionSheet());
-        AttentionSheet? fresh = null;
         await CaptureWorkerTestSupport.WaitUntilAsync(
-            () => (fresh = worker.TakeLatestAttentionSheet()) is not null,
+            () => orientations.Count >= 2,
             TimeSpan.FromSeconds(10));
-        using (fresh)
+        var freshOrientation = orientations.Last();
+        Assert.Equal(AttentionSheetKind.Orientation, freshOrientation.Kind);
+        Assert.True(freshOrientation.Matches(grant));
+
+        AttentionSheet? latest = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => (latest = worker.TakeLatestAttentionSheet()) is not null,
+            TimeSpan.FromSeconds(10));
+        using (latest)
         {
-            Assert.Equal(AttentionSheetKind.Orientation, fresh!.Metadata.Kind);
+            Assert.True(latest!.Metadata.Matches(grant));
+            Assert.True(latest.Metadata.SourceTimestamp >= freshOrientation.SourceTimestamp);
         }
+
+        var metrics = await worker.GetMetricsAsync(CancellationToken.None);
+        Assert.Equal(1, metrics.ProducedOrientationSheets);
 
         await worker.StopAndClearAsync(CancellationToken.None);
         Assert.Null(worker.TakeLatestAttentionSheet());

@@ -16,12 +16,13 @@ Task 6 — Regions and Attention Sheets, the final Stage 4 packet. Corrected imp
 - Correlated sheets through Task 4's exact source-frame Privacy Guard. A newer pulled sheet is held until its own frame is admitted; rejection/revocation/stop/manual reset clears held work.
 - Closed ordering races found during separate review: deferred start-time frames, synchronous resize/fault status fences, coalesced newest-sheet events, and a pause/drain/response/resume fence around manual-region changes.
 - Rejected the initially green published candidate during actual-diff review and added a second correction layer: sheet availability cannot precede source-frame dispatch; held transferred payloads are disposed on resize/fault; admission matches source sequence, timestamp, and dimensions; and impossible BGRA geometry fails protocol validation before allocation.
+- The exact evidence run and repeat exposed two test-harness assumptions. The accepted Task 5 parent-handle heuristic observes the entire xUnit host, so the out-of-process collection is now explicitly nonparallel while retaining the original leak assertions. The restart test required a newest-preserving queue to return an older orientation after a regional sheet could supersede it; it now proves the fresh orientation event and fresh-epoch retained payload independently. All product code and invariants remain unchanged.
 - Added neutral WPF controls for applying/clearing a normalized manual region and displaying only privacy-safe sheet metadata. No final character wording, artwork, semantic output, or image display was added.
 - Added 33 capture-worker and 7 target-authorization tests over the accepted Task 5 baseline, including strict payload negatives, geometry/labels, manual barriers, privacy correlation, watchdog behavior, ownership cleanup, deterministic artifact decoding, and a 216,000-frame accelerated six-hour visual soak.
 
 ## Changed
 
-- 44 paths relative to accepted Task 5 `main`: 4,432 additions and 160 deletions on the evidence descendant.
+- 44 paths relative to accepted Task 5 `main`: 4,460 additions and 160 deletions on the isolated-test evidence descendant.
 - Capture Contracts, Client, Worker, Fake, Target Authorization controller, and the minimal neutral App controls.
 - Capture Worker and Target Authorization tests.
 - CI synthetic-artifact upload plus Task/README/Ledger/Handoff control records.
@@ -45,7 +46,7 @@ Task 6 — Regions and Attention Sheets, the final Stage 4 packet. Corrected imp
 
 ## Remaining
 
-- Publish this evidence-bearing documentation descendant and require its exact head to repeat the Windows gate.
+- Publish the isolated-test evidence descendant and require its exact head to repeat the entire Windows gate.
 - Mark PR #11 ready only after that final descendant passes, then merge with an expected-head fence.
 - Verify the merge tree on remote `main`, publish a bounded post-merge acceptance reconciliation that archives Task 6 and marks Stage 4 accepted, gate and merge that reconciliation, and verify final `main` before opening Task 7.
 
