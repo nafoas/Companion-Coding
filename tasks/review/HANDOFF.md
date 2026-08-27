@@ -21,7 +21,7 @@ Task 6 — Regions and Attention Sheets, the final Stage 4 packet. Corrected imp
 
 ## Changed
 
-- 44 paths relative to accepted Task 5 `main`: 4,427 additions and 160 deletions.
+- 44 paths relative to accepted Task 5 `main`: 4,432 additions and 160 deletions on the evidence descendant.
 - Capture Contracts, Client, Worker, Fake, Target Authorization controller, and the minimal neutral App controls.
 - Capture Worker and Target Authorization tests.
 - CI synthetic-artifact upload plus Task/README/Ledger/Handoff control records.
