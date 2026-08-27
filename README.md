@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, and Tasks 1–5 are accepted. Task 6's implementation is merged, but its final resource-evidence correction remains the sole active neutral-core task and the last gate of Stage 4.
+Task 0's architecture, the R0 direct-build controls, and Tasks 1–5 are accepted. Task 6's implementation is merged, and its final direct-owned-resource correction has passed both exact Windows event paths. The evidence descendant and accepted-`main` reconciliation remain the sole active neutral-core work and the last gate of Stage 4.
 
 ## Builder workflow
 
@@ -17,7 +17,7 @@ Task 0's architecture, the R0 direct-build controls, and Tasks 1–5 are accepte
 
 ## Current task
 
-Task 6: regions and attention sheets. The implementation, actual-diff review, exact publication, PR #11 merge, and one 309/309 exact-head Windows gate are complete. A duplicate same-head run exposed a testhost-wide handle heuristic that cannot attribute resources to the capture client, so acceptance remains blocked while the reviewed direct-owned-handle correction awaits exact Windows evidence. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred.
+Task 6: regions and attention sheets. The implementation and PR #11 merge are complete. The replacement resource gate observes only the process and named-pipe handles owned by the capture client; published correction head `9ce4e592dc812a5740b49a033268386b8d7d8f13` passed both push and PR Windows paths at 309/309. Task 6 remains active only while that exact evidence is recorded, merged with a head fence, and reconciled to accepted `main`. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred.
 
 ## Important boundaries
 

@@ -2,7 +2,7 @@
 
 ## Task
 
-Task 6 — Regions and Attention Sheets, the final Stage 4 packet. The implementation merged through PR #11, but a post-merge duplicate run exposed a non-attributable resource heuristic. A bounded direct-owned-handle evidence correction is active; Stage 4 is not yet accepted.
+Task 6 — Regions and Attention Sheets, the final Stage 4 packet. The implementation merged through PR #11. The bounded direct-owned-handle correction in PR #13 has passed both exact Windows event paths; its evidence descendant, fenced merge, and accepted-`main` reconciliation remain before Stage 4 acceptance.
 
 ## Completed
 
@@ -49,12 +49,15 @@ Task 6 — Regions and Attention Sheets, the final Stage 4 packet. The implement
 - Blocked acceptance evidence: PR #12 exact-head run `33030534763` passed; same-head push run `33030508085` failed the host-global handle heuristic twice at 504→513 and 434→443. PR #12 was documented and closed without merge.
 - Active correction local evidence: locked restore remained unchanged; all 20 serialized Release projects passed with warnings-as-errors at 0 warnings/0 errors; 296/296 locally executable tests passed (Capture 14, Capture Worker 61, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 64); `git diff --check` passed. The local vulnerability command was network-blocked, so no new local audit is claimed; the unchanged locked graph was clean in prior exact evidence and the Windows gate must audit it again.
 - Active correction actual-diff review: six allowed paths only; the observation exposes booleans while keeping both safe handles private, cannot close/transfer a handle, and is callable only through existing friend assemblies. No product flow calls it. No behavior, workflow, package/lock, solution, API/network, semantic, conversation, ERPP implementation, personality, production-data, or durable-image surface changed.
+- Published correction identity: local head `56767ccda7d315b966ba8db9434ec3f4a8b1a343`, PR #13 head `9ce4e592dc812a5740b49a033268386b8d7d8f13`, exact shared tree `aea3bd99744e07452a9db0412be6754928baa941`; independent fetched-tree comparison was empty.
+- Exact correction gates: push run `33031810624`, successful rerun job `98386519846`, and PR run `33031854365`, job `98385948525`, each passed locked restore, the clean 20-project dependency audit, all 20 Release builds with 0 warnings/errors, and 309/309 tests. The first push attempt timed out only two legacy App-integration cases under runner saturation while Capture Worker passed 61/61; its exact-head rerun passed completely.
+- Successful evidence artifacts were downloaded and hash-verified. Push: test results `9630630196` (`sha256:c21c09498058bcc5d31ba718b502a5c219ea17cf5e61c06c987bffd344205e2b`) and sheet `9630630604` (`sha256:58bf55eabd208127f35fc5a7d9c3a9d7b99a40d6b3f3123d75f87da70cacf55f`). PR: test results `9630555630` (`sha256:f09f7b109e5a73adc5a0e65388febb485655297924d5ce24f1b2689e25b91af1`) and sheet `9630556307` (`sha256:b26190678d4cbf881d00cb9244a1eb826a1c23826147edcda597b44c4d38f723`). Both TRX sets total 309 passed with no failures/errors/timeouts/skips; both PNGs retain the reviewed digest and 792×621 RGBA geometry.
 - Auxiliary formatter: `dotnet format --verify-no-changes` could not launch its Roslyn build-host pipe in this restricted Linux environment (`SocketException: Permission denied`). It is not a Task 6 Paw Gate command; strict compiler/analyzer and diff-whitespace gates passed.
 
 ## Remaining
 
-- Publish the correction and require both its push-triggered and PR-triggered Windows runs to pass the exact 309-test gate.
-- Publish a bounded evidence descendant, archive Task 6 only after that descendant passes, merge with an expected-head fence, and verify final remote `main` identity/tree before opening Task 7.
+- Publish and gate this bounded evidence descendant on PR #13, merge it with an expected-head fence, and verify the exact correction tree on remote `main`.
+- Publish a docs-only accepted-main reconciliation, archive Task 6 only after its gate passes, and verify final remote `main` identity/tree. Do not open Task 7.
 
 ## Risks and assumptions
 
@@ -83,11 +86,11 @@ J1–J11 are recorded in the active packet. J11 replaces a whole-testhost resour
 - Final implementation head/tree: `1e41ecfb69abbecb0c90c0215616470c864e4525` / `77590a151ef87b3725472cde3892ba4b6ec53754`.
 - Implementation merge on remote `main`: `8d14fe945871ce1f92dde987087147befa4a60b2`, exact tree retained.
 - Premature acceptance PR #12: closed, unmerged.
-- Correction publication: pending after completed local gate and actual-diff review.
+- Correction publication: PR #13 at `9ce4e592dc812a5740b49a033268386b8d7d8f13`, tree `aea3bd99744e07452a9db0412be6754928baa941`; both exact Windows event paths passed.
 
 ## Next safe task
 
-Finish and publish the bounded direct-owned-handle correction. Do not archive Task 6, mark Stage 4 accepted, or open Task 7 until both exact Windows event paths and the final accepted-main reconciliation pass.
+Finish the bounded PR #13 evidence descendant and expected-head merge, then perform the docs-only accepted-main reconciliation. Do not archive Task 6, mark Stage 4 accepted, or open Task 7 before that reconciliation passes.
 
 ## Credit status
 
