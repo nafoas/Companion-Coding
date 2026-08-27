@@ -1,8 +1,9 @@
 # Task 6 — Regions and Attention Sheets
 
-Status: **Active; corrected implementation, separate actual-diff review, publication, remote equality, and Windows CI passed on 2026-08-27. The exact evidence descendant, merge, and accepted-main reconciliation remain.**
+Status: **Accepted and archived on 2026-08-27; PR #11 merged to `main` as `8d14fe945871ce1f92dde987087147befa4a60b2`, exact tree `77590a151ef87b3725472cde3892ba4b6ec53754`.**
 Accepted base: `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`
 Working branch: `agent/task-06-regions-attention-sheets`
+Final evidence head: `1e41ecfb69abbecb0c90c0215616470c864e4525`
 Roadmap slice: Stage 4, final packet — bounded local visual composition only
 
 ## Objective
@@ -133,7 +134,7 @@ Task 6 and Stage 4 pass only when:
 ## Candidate evidence
 
 - Corrected local implementation head `018e99b1802673051c116df63e3e6bc4891f62cf`, published equivalent head `660d7d9c4ffc4592cf0c725c3686ce68735dab18`, and exact shared tree `2876d61439087ecd41b4d967761c3ff447246a44`, directly based on accepted Task 5 `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`. The differing commit IDs are connector authorship metadata only; an independent fetch and empty local/remote diff prove content identity.
-- Draft PR #11 targets `main` from `agent/task-06-regions-attention-sheets`. The observer-neutral evidence descendant contains 4,544 additions and 190 deletions across the same 44 paths; its Target Authorization tests are directly necessary to prove exact-frame Privacy Guard correlation and reset disposal, not expanded product authority.
+- Final PR #11 head `1e41ecfb69abbecb0c90c0215616470c864e4525` has exact tree `77590a151ef87b3725472cde3892ba4b6ec53754`. The observer-neutral evidence descendant contains 4,544 additions and 190 deletions across the same 44 paths; its Target Authorization tests are directly necessary to prove exact-frame Privacy Guard correlation and reset disposal, not expanded product authority.
 - Separate actual-diff review rejected the initially green candidate and added four fail-closed corrections: sheet events cannot precede their source-frame dispatch; held transferred sheets are disposed on resize/fault; Privacy Guard admission matches sequence, timestamp, and dimensions; and impossible source/sheet pixel geometry is rejected before allocation.
 - The exact evidence-head runs exposed gate assumptions, not product regressions. The accepted Task 5 parent-handle heuristic sampled the shared host during runtime warmup; the isolated process collection now warms the exact workload, repeats 12 measured restarts, waits for release, and enforces an explicit two-handle steady-state drift ceiling. The longer run also demonstrated legitimate non-adjacent Windows PID reuse, so global freshness is proven with PID-plus-start-time identities and old-identity absence checks that add no test-side async wait registrations. The restart test separately proves fresh-orientation emission and that the retained latest sheet belongs to that fresh epoch. Product behavior and all invariants remain unchanged.
 - Locked restore passed with pinned .NET SDK 10.0.302, serialized graph restore, and `EnableWindowsTargeting=true`; package locks did not change. The direct/transitive vulnerability audit examined all 20 projects and returned no vulnerable packages.
@@ -141,9 +142,10 @@ Task 6 and Stage 4 pass only when:
 - Corrected Windows PR run `33027192357`, job `98371213540`, checked out head `660d7d9c4ffc4592cf0c725c3686ce68735dab18` over the unchanged accepted base. Locked restore, clean dependency audit, strict Release build, and 309/309 tests passed: App Integration 13, Capture 14, Capture Worker 61, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 64.
 - Windows TRX proves execution of the genuine child-process ordering test and the new impossible-geometry, resize/fault disposal, and exact-source-identity regressions. Test-results artifact `9628886868` is 67,006 bytes with archive digest `sha256:be57fa82e9bf07082417d931c4f7baee12be88156741c756c54c2456d888b388`.
 - Synthetic attention-sheet artifact `9628887307` is 619,254 bytes with archive digest `sha256:f23f23afa38591f8378a645c0c829c5b677f240f2f0d7248e6dc14b75f578e43`. Its PNG is 792×621, 8-bit RGBA, non-interlaced, and `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`; visual inspection confirmed `FULL CONTEXT`, `CENTER`, and `LOWER / DIALOGUE` labels and synchronized regions.
+- Final exact Windows run `33029731700`, job `98379224949`, passed locked restore, clean audit, all 20 Release builds with 0 warnings/errors, and 309/309 tests with 0 failures/skips. Test-results artifact `9629786117` has archive digest `sha256:5505256b5a7bb59aa6277fa15f8423350eec311b2acf61d6501f1a7a4bd60ba2`; attention-sheet artifact `9629786499` has archive digest `sha256:48cf1a03cb4889db532f7d948c9462f10021428e7db3e86c6d3fc4aef6330eed`; the extracted PNG retained its exact digest and passed visual reinspection.
 - `git diff --check`, exact local/remote tree equality, 44-path scope review, worker dependency/isolation tests, durable-image scan, and Task 7+/semantic/API/conversation/ERPP/personality surface scans passed.
 - `dotnet format --verify-no-changes` was not a gate command and could not start its Roslyn build-host pipe in this restricted Linux environment (`SocketException: Permission denied`); strict compiler/analyzer and whitespace gates passed independently.
-- The implementation Paw Gate passed before the isolated-test correction. Task 6 remains active until the corrected evidence-bearing descendant passes its own Windows run, PR #11 merges, and accepted `main` is reconciled and verified; Task 7 remains unopened.
+- The complete Task 6 Paw Gate passed. PR #11 was marked ready only after the exact final evidence head passed, then squash-merged with an expected-head fence; fetched `main` retained the exact candidate tree. Task 6 and Stage 4 are accepted; Task 7 remains unopened.
 
 ## Deferred findings
 

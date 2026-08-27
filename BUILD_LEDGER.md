@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 4 — local peepers and bounded visual pipeline (final Task 6 packet) |
-| Active task | Task 6 — Regions and Attention Sheets |
-| Working branch | `agent/task-06-regions-attention-sheets`, based on accepted `main` `a257d5a1d70d03a77f27582b9f0bbecd0194e67d` |
-| Entry criteria met | Yes; Task 5 passed its Paw Gate, merged through PR #10, and was reconciled to accepted `main` |
-| Product code authorized | Yes, only within Task 6's bounded local readback, normalized regions, change detection, labeled attention-sheet composition, size-bounded payload transport, privacy correlation, manual-region plumbing, and provisional watchdog |
+| Current stage | Stage 4 — local peepers and bounded visual pipeline — **accepted and complete**; Stage 5 not started |
+| Active task | None; Task 7 remains unopened |
+| Working branch | None after this acceptance reconciliation; Task 6 used `agent/task-06-regions-attention-sheets` |
+| Entry criteria met | Stage 4 exit criteria met. Stage 5 entry is not activated until Task 7 receives its own bounded packet. |
+| Product code authorized | No; there is no active task |
 | Live API authorized | No |
-| Automated tests | Corrected local pinned-SDK gate: locked restore and clean 20-project audit passed; all 20 Release projects built with 0 warnings/errors; 296/296 locally executable tests passed. Corrected Windows run `33027192357`, job `98371213540`, passed restore/audit/build and 309/309 tests, including real WPF/child-process execution. |
-| Manual gate | Separate actual-diff review and visual inspection passed. Published corrected head `660d7d9c4ffc4592cf0c725c3686ce68735dab18` has exact tree `2876d61439087ecd41b4d967761c3ff447246a44`; local/remote diff is empty. The evidence descendant, merge, and accepted-tree reconciliation remain. |
-| Accepted `main` baseline | `a257d5a1d70d03a77f27582b9f0bbecd0194e67d` — Task 5 bounded capture worker accepted and merged |
+| Automated tests | Final exact Windows run `33029731700`, job `98379224949`: locked restore and clean 20-project audit passed; all 20 Release projects built with 0 warnings/errors; 309/309 tests passed with 0 failures/skips, including strengthened 24-restart process evidence and real WPF/child-process execution. Local gate passed 296/296 executable tests. |
+| Manual gate | Separate actual-diff review, exact local/remote/merge-ref tree equality, TRX inspection, and visual/structural PNG inspection passed. PR #11 merged with an expected-head fence; accepted implementation tree is `77590a151ef87b3725472cde3892ba4b6ec53754`. |
+| Accepted `main` baseline | `8d14fe945871ce1f92dde987087147befa4a60b2` — Task 6 and the Stage 4 implementation accepted and merged through PR #11; tree `77590a151ef87b3725472cde3892ba4b6ec53754` |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds are deliberately provisional until Stage 11 physical profiling. |
 | Deferred temptations | Task 7+ semantic bridge/attention meaning/API/conversation/ERPP/personality work; durable images, production settings, final UI |
-| Approval | Boss authorized completing and pushing all remaining Stage 4 work on 2026-08-26 and explicitly confirmed `https://github.com/nafoas/Companion-Coding.git` on 2026-08-27. Publication and the corrected Windows implementation gate are complete. |
+| Approval | Boss authorized completing and pushing all remaining Stage 4 work on 2026-08-26 and explicitly confirmed `https://github.com/nafoas/Companion-Coding.git` on 2026-08-27. Task 6 and Stage 4 are complete. |
 
 ## Gate history
 
@@ -92,7 +92,7 @@
 
 ### Task 6 — Regions and attention sheets
 
-- Corrected candidate: local head `018e99b1802673051c116df63e3e6bc4891f62cf`, published equivalent `660d7d9c4ffc4592cf0c725c3686ce68735dab18`, exact shared tree `2876d61439087ecd41b4d967761c3ff447246a44`, based directly on accepted Task 5 `main` `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`; draft PR #11.
+- Corrected implementation: local head `018e99b1802673051c116df63e3e6bc4891f62cf`, published equivalent `660d7d9c4ffc4592cf0c725c3686ce68735dab18`, exact shared tree `2876d61439087ecd41b4d967761c3ff447246a44`, based directly on accepted Task 5 `main` `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`.
 - Scope: the observer-neutral evidence descendant has 44 changed paths and 4,544 additions/190 deletions; strict capture contracts/IPC, worker-local readback/change/geometry/composition/encoding/watchdog logic, bounded client reception, Task 4 privacy correlation, neutral manual-region controls, focused tests, synthetic artifact upload, and bounded control records. No package, lock, solution, memory, runtime, semantic/API, conversation, ERPP implementation, personality, or production-data surface changed.
 - Behavior: one restart/resize-scoped orientation; normalized deterministic defaults and current-grant manual override; local luminance duplicate rejection; one-moment full context plus at most two labeled crops; deterministic lossless PNG; separate 8 MiB checksummed payload under an unchanged 64 KiB JSON ceiling; at most two sheets per worker/client owner; exact target/generation/source correlation through Privacy Guard; explicit 64 MiB visual accounting and a provisional sustained-growth watchdog.
 - Local verification: pinned .NET SDK 10.0.302 locked restore passed (serialized project graph with `EnableWindowsTargeting=true`); all 20 Release projects built with 0 warnings/errors; the direct/transitive audit examined all 20 projects with 0 vulnerable findings; 296/296 locally executable invocations passed (Capture 14, Capture Worker 61, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 64). The capture suite includes a 216,000-frame/six-hour accelerated visual soak.
@@ -100,7 +100,10 @@
 - Actual-diff corrections: restored sealed-grant assembly isolation; made payload ownership atomic and zeroing; bounded temporary WGC readback at 64 MiB; fenced resize/fault status ahead of new sheets; deferred start-time frames; coalesced newest sheet signals; held newer sheets until their own frame passed privacy; serialized manual-region response ordering; then rejected the initially green candidate until sheet dispatch followed source-frame dispatch, held payloads were disposed on resize/fault, exact source identity included timestamp/dimensions, and impossible BGRA geometry failed closed.
 - Evidence-run correction: the exact docs-head runs exposed a Task 5 parent-handle heuristic that measured shared-host runtime warmup, legitimate Windows PID reuse during the longer test, and a restart test that expected an older orientation from a newest-preserving queue. The isolated collection now uses warmup plus 12 measured restarts, release settling, a two-handle ceiling, and PID-plus-start-time identities checked without additional async waits; restart coverage independently proves fresh-orientation emission and fresh-epoch retained payload. Product behavior is untouched.
 - Corrected Windows evidence: run `33027192357`, job `98371213540`; locked restore, clean audit, all 20 Release builds, and 309/309 tests passed (App Integration 13, Capture 14, Capture Worker 61, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 64). Test-results artifact `9628886868` has digest `sha256:be57fa82e9bf07082417d931c4f7baee12be88156741c756c54c2456d888b388`; attention-sheet artifact `9628887307` has digest `sha256:f23f23afa38591f8378a645c0c829c5b677f240f2f0d7248e6dc14b75f578e43`.
-- Result: implementation Paw Gate passed with exact local/remote tree equality. The evidence-bearing descendant, PR #11 merge, and accepted-`main` reconciliation remain; Task 6 and Stage 4 are not yet marked accepted.
+- Final evidence descendant: published head `1e41ecfb69abbecb0c90c0215616470c864e4525`, exact tree `77590a151ef87b3725472cde3892ba4b6ec53754`, 44 paths and 4,544 additions/190 deletions. Its merge ref `c6a3e783aa523f8a17c1c742d433d2865868c4b7` retained that exact tree over unchanged Task 5 `main`.
+- Final Windows evidence: run `33029731700`, job `98379224949`; restore, clean audit, all 20 Release builds with 0 warnings/errors, and 309/309 tests passed with 0 failures/skips. Test-results artifact `9629786117`, 66,422 bytes, archive digest `sha256:5505256b5a7bb59aa6277fa15f8423350eec311b2acf61d6501f1a7a4bd60ba2`; attention-sheet artifact `9629786499`, 619,254 bytes, archive digest `sha256:48cf1a03cb4889db532f7d948c9462f10021428e7db3e86c6d3fc4aef6330eed`. The extracted PNG retained digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd` and passed visual inspection.
+- Merge: PR #11 was marked ready only after the exact final gate, then squash-merged with expected head `1e41ecfb69abbecb0c90c0215616470c864e4525` to `main` as `8d14fe945871ce1f92dde987087147befa4a60b2`; the merge tree exactly matched `77590a151ef87b3725472cde3892ba4b6ec53754`.
+- Result: passed, merged, and accepted; Task 6 is archived, Stage 4 is complete, and Task 7 remains unopened.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

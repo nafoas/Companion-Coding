@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, Task 2's append-only memory/journal spine, Task 3's atomic backup/guarded repair, Task 4's consent/target-isolation boundary, and Task 5's bounded capture worker are accepted. Task 6 is the sole active neutral-core task and the final packet of Stage 4.
+Task 0's architecture, the R0 direct-build controls, and Tasks 1–6 are accepted. Stage 4's local peepers and bounded visual pipeline are complete.
 
 ## Builder workflow
 
@@ -15,9 +15,9 @@ Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, 
 7. Complete `tasks/review/HANDOFF.md` and perform a separate evidence-based Paw Gate review.
 8. Advance only after the current gate is recorded as passed.
 
-## Current task
+## Current state
 
-Task 6: regions and attention sheets. Work is restricted to bounded local pixel readback inside the exact-target worker, normalized default/manual regions, local duplicate rejection, synchronized labeled PNG attention sheets, checksummed size-bounded RAM-only transport, Task 4 privacy correlation, and a provisional resource watchdog. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred. The corrected implementation, actual-diff review, publication, remote equality, and 309/309 Windows gate are complete; the evidence descendant, merge, and accepted-main reconciliation remain before Stage 4 is marked accepted.
+No task is active. Task 6 and Stage 4 passed their Paw Gate and were merged through PR #11. Task 7 and Stage 5 remain unopened; semantic interpretation, provider/API work, attention meaning, conversation, ERPP implementation, personality, durable images, and other later-stage behavior remain deferred until a separately bounded task packet is activated.
 
 ## Important boundaries
 
