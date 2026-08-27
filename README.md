@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, and Tasks 1–5 are accepted. Task 6's implementation is merged, and its final direct-owned-resource correction has passed both exact Windows event paths. The evidence descendant and accepted-`main` reconciliation remain the sole active neutral-core work and the last gate of Stage 4.
+Task 0's architecture, the R0 direct-build controls, and Tasks 1–6 are accepted. Stage 4's local peepers and bounded visual pipeline are complete. No task is active, and Task 7 remains unopened.
 
 ## Builder workflow
 
@@ -15,9 +15,9 @@ Task 0's architecture, the R0 direct-build controls, and Tasks 1–5 are accepte
 7. Complete `tasks/review/HANDOFF.md` and perform a separate evidence-based Paw Gate review.
 8. Advance only after the current gate is recorded as passed.
 
-## Current task
+## Current checkpoint
 
-Task 6: regions and attention sheets. The implementation and PR #11 merge are complete. The replacement resource gate observes only the process and named-pipe handles owned by the capture client; published correction head `9ce4e592dc812a5740b49a033268386b8d7d8f13` passed both push and PR Windows paths at 309/309. Task 6 remains active only while that exact evidence is recorded, merged with a head fence, and reconciled to accepted `main`. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred.
+Task 6: regions and attention sheets. The bounded worker-side pixel pipeline, exact-frame privacy admission, deterministic labeled PNG sheets, size-bounded RAM-only transport, manual region fence, resource watchdog, direct-owned-handle restart evidence, exact-tree review, and both Windows event gates passed. PR #13 merged the final evidence tree as `779ed4b0fab9cce8fdf978add388b6282010974a`. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable product images, and all Task 7+ behavior remain deferred.
 
 ## Important boundaries
 
