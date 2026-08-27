@@ -17,7 +17,7 @@ Task 0's architecture, the R0 direct-build controls, Task 1's neutral skeleton, 
 
 ## Current task
 
-Task 6: regions and attention sheets. Work is restricted to bounded local pixel readback inside the exact-target worker, normalized default/manual regions, local duplicate rejection, synchronized labeled PNG attention sheets, checksummed size-bounded RAM-only transport, Task 4 privacy correlation, and a provisional resource watchdog. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred. The local candidate is complete; Windows CI and accepted-main reconciliation are still required before Stage 4 is marked accepted.
+Task 6: regions and attention sheets. Work is restricted to bounded local pixel readback inside the exact-target worker, normalized default/manual regions, local duplicate rejection, synchronized labeled PNG attention sheets, checksummed size-bounded RAM-only transport, Task 4 privacy correlation, and a provisional resource watchdog. Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable images, and all Task 7+ behavior remain deferred. The corrected implementation, actual-diff review, publication, remote equality, and 309/309 Windows gate are complete; the evidence descendant, merge, and accepted-main reconciliation remain before Stage 4 is marked accepted.
 
 ## Important boundaries
 

@@ -1,6 +1,6 @@
 # Task 6 — Regions and Attention Sheets
 
-Status: **Active; local implementation/review passed on 2026-08-26, but publication, Windows CI, merge, and accepted-main reconciliation remain.**
+Status: **Active; corrected implementation, separate actual-diff review, publication, remote equality, and Windows CI passed on 2026-08-27. The exact evidence descendant, merge, and accepted-main reconciliation remain.**
 Accepted base: `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`
 Working branch: `agent/task-06-regions-attention-sheets`
 Roadmap slice: Stage 4, final packet — bounded local visual composition only
@@ -101,7 +101,7 @@ This packet completes Stage 4. It does not interpret images, choose focus semant
 - `src/CompanionCore.Capture.Client/**` for bounded verified sheet reception, stale admission, ownership transfer, and cleanup;
 - `src/CompanionCore.Capture.Fake/**` only to satisfy the expanded capture contract with deterministic bounded behavior;
 - `src/CompanionCore.TargetAuth/**` and `src/CompanionCore.App/**` only if minimal current-grant/manual-region plumbing is required; no final UI or wording;
-- `tests/CompanionCore.Capture.Worker.Tests/**`, `tests/CompanionCore.Capture.Tests/**`, and `tests/CompanionCore.App.IntegrationTests/**` for focused and regression coverage;
+- `tests/CompanionCore.Capture.Worker.Tests/**`, `tests/CompanionCore.Capture.Tests/**`, `tests/CompanionCore.TargetAuth.Tests/**`, and `tests/CompanionCore.App.IntegrationTests/**` for focused and regression coverage; Target Authorization coverage is directly necessary to prove the required exact-frame Privacy Guard correlation and reset disposal;
 - `.github/workflows/ci.yml` only to retain the synthetic inspection artifact;
 - solution/project/lock files only if a bounded Task 6 project split is demonstrably necessary;
 - `README.md`, `BUILD_LEDGER.md`, `tasks/**`, and directly necessary Stage 4 control-document corrections.
@@ -128,18 +128,21 @@ Task 6 and Stage 4 pass only when:
 - **J7 — Resource thresholds are explicit and provisional.** Source ownership remains Task 5's three frames/64 MiB. Temporary WGC readback accounts the software copy plus tight copy within a separate 64 MiB visual ceiling; final sheets cap at two. The watchdog samples after warmup and trips on an invalid hard bound or sustained 128 MiB private-memory/128-handle rise, then revokes admission, stops the source, and clears. Reversal: tune thresholds during Stage 11 physical profiling without weakening hard count/byte ceilings.
 - **J8 — Synthetic evidence is the only durable image.** Product code has no image-file path. One deterministic generated sheet is decoded in tests, written only beneath test output, uploaded by CI, visually inspected, and zeroed in the test process after writing. Reversal: remove the artifact-write assertion without affecting product behavior.
 - **J9 — Slow-event safety favors bounded coalescing.** Start-time frame metadata is deferred within the existing three-frame ceiling, while attention notifications coalesce to the newest retained sheet. This preserves the first usable orientation through the start handshake without an unbounded observer queue. Reversal: adjust the bounded dispatch policy while preserving exact-frame privacy correlation.
+- **J10 — Sheet exposure is exact-source and reset-fenced.** The client cannot signal a sheet before its source frame crosses process dispatch. The controller matches sequence, timestamp, and dimensions to the admitted frame, and resize/fault status synchronously disposes any transferred-but-unadmitted payload. Protocol validation rejects source or sheet geometry whose BGRA footprint cannot fit its applicable 64 MiB ceiling. Reversal: disable Task 6 sheet exposure and retain Task 5 metadata-only behavior.
 
-## Local candidate evidence
+## Candidate evidence
 
-- Implementation head `550e81304ff5e3cc3a722eb02e2a4b7ffc984f53`, exact tree `44e9fcd2dab03f563a09158076751e650f349483`, directly based on accepted Task 5 `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`.
-- Locked restore passed with pinned .NET SDK 10.0.302, serialized graph restore, and `EnableWindowsTargeting=true`; package locks did not change.
-- Direct/transitive vulnerability audit examined all 20 projects and returned no vulnerable packages.
-- All 20 Release projects cross-built with 0 warnings and 0 errors. The locally executable suite passed 292/292 invocations: Capture 14, Capture Worker 60, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 61.
-- The 60-test capture-worker suite includes the 216,000-frame/six-hour visual soak, strict payload negative paths, worker/client bounds, manual response fencing, watchdog injection, restart/clear cases, and synthetic sheet decode. Windows-only child/WGC paths still require Windows CI.
-- The deterministic test PNG is 792×621, 8-bit RGBA, non-interlaced, and `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`; visual inspection confirmed its three expected labels and synchronized regions.
-- `git diff --check`, 41-path scope review, worker dependency/isolation tests, durable-image scan, and Task 7+/semantic/API/conversation/ERPP/personality surface scans passed.
+- Corrected local implementation head `018e99b1802673051c116df63e3e6bc4891f62cf`, published equivalent head `660d7d9c4ffc4592cf0c725c3686ce68735dab18`, and exact shared tree `2876d61439087ecd41b4d967761c3ff447246a44`, directly based on accepted Task 5 `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`. The differing commit IDs are connector authorship metadata only; an independent fetch and empty local/remote diff prove content identity.
+- Draft PR #11 targets `main` from `agent/task-06-regions-attention-sheets`. The corrected 44-path candidate contains 4,427 additions and 160 deletions; its Target Authorization tests are directly necessary to prove exact-frame Privacy Guard correlation and reset disposal, not expanded product authority.
+- Separate actual-diff review rejected the initially green candidate and added four fail-closed corrections: sheet events cannot precede their source-frame dispatch; held transferred sheets are disposed on resize/fault; Privacy Guard admission matches sequence, timestamp, and dimensions; and impossible source/sheet pixel geometry is rejected before allocation.
+- Locked restore passed with pinned .NET SDK 10.0.302, serialized graph restore, and `EnableWindowsTargeting=true`; package locks did not change. The direct/transitive vulnerability audit examined all 20 projects and returned no vulnerable packages.
+- All 20 Release projects cross-built with 0 warnings and 0 errors. The corrected locally executable suite passed 296/296 invocations: Capture 14, Capture Worker 61, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 64.
+- Corrected Windows PR run `33027192357`, job `98371213540`, checked out head `660d7d9c4ffc4592cf0c725c3686ce68735dab18` over the unchanged accepted base. Locked restore, clean dependency audit, strict Release build, and 309/309 tests passed: App Integration 13, Capture 14, Capture Worker 61, Memory 68, Presentation 50, Privacy 13, Runtime 26, Target Authorization 64.
+- Windows TRX proves execution of the genuine child-process ordering test and the new impossible-geometry, resize/fault disposal, and exact-source-identity regressions. Test-results artifact `9628886868` is 67,006 bytes with archive digest `sha256:be57fa82e9bf07082417d931c4f7baee12be88156741c756c54c2456d888b388`.
+- Synthetic attention-sheet artifact `9628887307` is 619,254 bytes with archive digest `sha256:f23f23afa38591f8378a645c0c829c5b677f240f2f0d7248e6dc14b75f578e43`. Its PNG is 792×621, 8-bit RGBA, non-interlaced, and `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`; visual inspection confirmed `FULL CONTEXT`, `CENTER`, and `LOWER / DIALOGUE` labels and synchronized regions.
+- `git diff --check`, exact local/remote tree equality, 44-path scope review, worker dependency/isolation tests, durable-image scan, and Task 7+/semantic/API/conversation/ERPP/personality surface scans passed.
 - `dotnet format --verify-no-changes` was not a gate command and could not start its Roslyn build-host pipe in this restricted Linux environment (`SocketException: Permission denied`); strict compiler/analyzer and whitespace gates passed independently.
-- Publication was attempted under Boss's explicit authorization, but the external-write reviewer rejected the configured remote as insufficiently destination-confirmed. No alternate route was used. Windows CI, remote equality, merge, and accepted-tree reconciliation remain blocking evidence.
+- The implementation Paw Gate has passed. Task 6 remains active until this evidence-bearing descendant passes its own Windows run, PR #11 merges, and accepted `main` is reconciled and verified; Task 7 remains unopened.
 
 ## Deferred findings
 
