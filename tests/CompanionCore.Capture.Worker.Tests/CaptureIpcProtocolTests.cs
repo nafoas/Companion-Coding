@@ -211,6 +211,50 @@ public sealed class CaptureIpcProtocolTests
         Assert.Equal(0, stream.Length);
     }
 
+    [Fact]
+    public void AttentionMetadata_RejectsImpossibleSourceAndSheetPixelGeometry()
+    {
+        var payload = Enumerable.Range(0, 64).Select(index => (byte)index).ToArray();
+        var valid = CreateAttentionMessage(payload).AttentionSheet!;
+        var oversizedSourceWidth = checked(
+            (int)(CaptureWorkerMetrics.ScreenshotBudgetBytes / 4) + 1);
+        var oversizedSheetWidth = checked(
+            (int)(CaptureWorkerMetrics.VisualWorkingBudgetBytes / 4) + 1);
+        var oversizedSource = valid with
+        {
+            SourceWidth = oversizedSourceWidth,
+            Regions =
+            [
+                valid.Regions[0] with
+                {
+                    SourcePixels = new PixelRect(
+                        0,
+                        0,
+                        oversizedSourceWidth,
+                        valid.SourceHeight),
+                },
+            ],
+        };
+        var oversizedSheet = valid with
+        {
+            SheetWidth = oversizedSheetWidth,
+            Regions =
+            [
+                valid.Regions[0] with
+                {
+                    SheetPixels = new PixelRect(
+                        0,
+                        0,
+                        oversizedSheetWidth,
+                        valid.SheetHeight),
+                },
+            ],
+        };
+
+        Assert.False(oversizedSource.IsProtocolSafe());
+        Assert.False(oversizedSheet.IsProtocolSafe());
+    }
+
     private static CaptureIpcMessage CreateAttentionMessage(byte[] payload)
     {
         var authorization = CaptureWorkerTestSupport.CreateAuthorization();

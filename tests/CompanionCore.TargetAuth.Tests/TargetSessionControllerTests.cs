@@ -162,6 +162,56 @@ public sealed class TargetSessionControllerTests
         Assert.Equal(awaitingFrame, taken!.Metadata);
     }
 
+    [Theory]
+    [InlineData(CaptureWorkerStatus.Running, CaptureWorkerStatusReason.SourceResized)]
+    [InlineData(CaptureWorkerStatus.Faulted, CaptureWorkerStatusReason.ResourceBudgetExceeded)]
+    public async Task VisualResetStatus_DropsTransferredUnadmittedSheet(
+        CaptureWorkerStatus status,
+        CaptureWorkerStatusReason reason)
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(harness, worker);
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+        var available = 0;
+        controller.AttentionSheetAvailable += (_, _) => available++;
+        var grant = worker.LastGrant!;
+
+        worker.EmitSheet(grant, sourceSequenceNumber: 2);
+        Assert.Null(controller.TakeLatestAttentionSheet());
+        var transferredPayload = Assert.IsType<byte[]>(worker.LastSheetPayload);
+        Assert.Contains(transferredPayload, value => value != 0);
+
+        worker.EmitStatus(status, reason);
+
+        Assert.All(transferredPayload, value => Assert.Equal(0, value));
+        worker.Emit(grant);
+        Assert.Equal(0, available);
+        Assert.Null(controller.TakeLatestAttentionSheet());
+    }
+
+    [Fact]
+    public async Task AttentionSheet_SourceIdentityMustMatchItsAdmittedFrame()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(harness, worker);
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+        var available = 0;
+        controller.AttentionSheetAvailable += (_, _) => available++;
+        var grant = worker.LastGrant!;
+
+        worker.EmitSheet(
+            grant,
+            sourceSequenceNumber: 1,
+            sourceWidth: 2,
+            sourceHeight: 1);
+
+        Assert.Equal(0, available);
+        Assert.Null(controller.TakeLatestAttentionSheet());
+        Assert.All(worker.LastSheetPayload!, value => Assert.Equal(0, value));
+    }
+
     [Fact]
     public async Task PrivacyStop_RevokesFirst_CancelsWork_ClearsBuffer_DropsLateFrame_AndIsIdempotent()
     {

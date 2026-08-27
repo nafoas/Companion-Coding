@@ -90,8 +90,16 @@ public sealed record AttentionSheetMetadata
             || SourceTimestamp == default
             || SourceWidth <= 0
             || SourceHeight <= 0
+            || !FitsBgraBudget(
+                SourceWidth,
+                SourceHeight,
+                CaptureWorkerMetrics.ScreenshotBudgetBytes)
             || SheetWidth <= 0
             || SheetHeight <= 0
+            || !FitsBgraBudget(
+                SheetWidth,
+                SheetHeight,
+                CaptureWorkerMetrics.VisualWorkingBudgetBytes)
             || EncodedByteLength is <= 0 or > AttentionSheet.MaximumEncodedBytes
             || !Enum.IsDefined(Kind)
             || !double.IsFinite(ChangeScore)
@@ -120,5 +128,16 @@ public sealed record AttentionSheetMetadata
         }
 
         return Regions.Select(region => region.Kind).Distinct().Count() == Regions.Length;
+    }
+
+    private static bool FitsBgraBudget(int width, int height, long byteBudget)
+    {
+        if (width <= 0 || height <= 0 || byteBudget <= 0)
+        {
+            return false;
+        }
+
+        var rowBytes = (long)width * 4;
+        return rowBytes <= byteBudget && height <= byteBudget / rowBytes;
     }
 }

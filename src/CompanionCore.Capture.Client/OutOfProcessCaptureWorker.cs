@@ -1230,6 +1230,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 || _currentGrant is null
                 || _latestAttentionMetadata is not { } latest
                 || !latest.Matches(_currentGrant)
+                || latest.SourceSequenceNumber > _lastDispatchedSequence
                 || latest.SourceSequenceNumber <= _lastDispatchedAttentionSheetSequence)
             {
                 return;

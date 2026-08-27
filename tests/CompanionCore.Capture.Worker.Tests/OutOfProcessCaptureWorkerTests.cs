@@ -175,8 +175,21 @@ public sealed class OutOfProcessCaptureWorkerTests
         using var worker = CreateWorker();
         var grant = CaptureWorkerTestSupport.CreateGrant();
         var publishedFrames = new ConcurrentDictionary<long, byte>();
+        var attentionBeforeSourceFrame = 0;
+        var firstAttentionSignal = new TaskCompletionSource<AttentionSheetMetadata>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         worker.FrameProduced += (_, frame) => publishedFrames.TryAdd(frame.SequenceNumber, 0);
+        worker.AttentionSheetProduced += (_, metadata) =>
+        {
+            if (!publishedFrames.ContainsKey(metadata.SourceSequenceNumber))
+            {
+                Interlocked.Exchange(ref attentionBeforeSourceFrame, 1);
+            }
+
+            firstAttentionSignal.TrySetResult(metadata);
+        };
         await worker.StartAsync(grant, CancellationToken.None);
+        await firstAttentionSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
         AttentionSheet? orientation = null;
         await CaptureWorkerTestSupport.WaitUntilAsync(
             () => (orientation = worker.TakeLatestAttentionSheet()) is not null,
@@ -185,6 +198,7 @@ public sealed class OutOfProcessCaptureWorkerTests
         {
             Assert.Equal(AttentionSheetKind.Orientation, orientation!.Metadata.Kind);
             Assert.True(orientation.Metadata.Matches(grant));
+            Assert.Equal(0, Volatile.Read(ref attentionBeforeSourceFrame));
             await CaptureWorkerTestSupport.WaitUntilAsync(
                 () => publishedFrames.ContainsKey(orientation.Metadata.SourceSequenceNumber),
                 TimeSpan.FromSeconds(10));

@@ -160,6 +160,8 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
 
     internal NormalizedRegion? ManualRegion { get; private set; }
 
+    internal byte[]? LastSheetPayload { get; private set; }
+
     internal int BufferedCount => _buffer.Count;
 
     public event EventHandler<CaptureWorkerStatusChanged>? StatusChanged;
@@ -296,9 +298,12 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
 
     internal AttentionSheetMetadata EmitSheet(
         CaptureAuthorizationGrant authorization,
-        long sourceSequenceNumber)
+        long sourceSequenceNumber,
+        int sourceWidth = 1,
+        int sourceHeight = 1)
     {
         var bytes = new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 };
+        LastSheetPayload = bytes;
         var metadata = new AttentionSheetMetadata
         {
             TargetSessionId = authorization.TargetSessionId,
@@ -306,8 +311,8 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
             Target = authorization.Target,
             SourceSequenceNumber = sourceSequenceNumber,
             SourceTimestamp = new DateTimeOffset(2026, 8, 10, 12, 0, 0, TimeSpan.Zero),
-            SourceWidth = 1,
-            SourceHeight = 1,
+            SourceWidth = sourceWidth,
+            SourceHeight = sourceHeight,
             SheetWidth = 1,
             SheetHeight = 1,
             EncodedByteLength = bytes.Length,
@@ -319,7 +324,7 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
                 {
                     Kind = AttentionRegionKind.FullContext,
                     NormalizedSource = new NormalizedRegion(0, 0, 1, 1),
-                    SourcePixels = new PixelRect(0, 0, 1, 1),
+                    SourcePixels = new PixelRect(0, 0, sourceWidth, sourceHeight),
                     SheetPixels = new PixelRect(0, 0, 1, 1),
                 },
             ],
@@ -333,6 +338,11 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         AttentionSheetProduced?.Invoke(this, metadata);
         return metadata;
     }
+
+    internal void EmitStatus(
+        CaptureWorkerStatus status,
+        CaptureWorkerStatusReason reason) =>
+        SetStatus(status, reason);
 
     public void Dispose()
     {
@@ -356,14 +366,17 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         }
     }
 
-    private void SetStatus(CaptureWorkerStatus status)
+    private void SetStatus(
+        CaptureWorkerStatus status,
+        CaptureWorkerStatusReason reason = CaptureWorkerStatusReason.None)
     {
         Status = status;
         StatusChanged?.Invoke(
             this,
             new CaptureWorkerStatusChanged(
                 status,
-                new DateTimeOffset(2026, 8, 10, 12, 0, 0, TimeSpan.Zero)));
+                new DateTimeOffset(2026, 8, 10, 12, 0, 0, TimeSpan.Zero),
+                reason));
     }
 }
 
