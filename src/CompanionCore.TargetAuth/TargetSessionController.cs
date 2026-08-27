@@ -16,6 +16,9 @@ public sealed class TargetSessionController : IAsyncDisposable
     private readonly Func<CaptureFrameMetadata, PrivacyAssessment> _assessmentProvider;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
     private readonly object _workGate = new();
+    private readonly object _sheetGate = new();
+    private readonly SortedSet<long> _admittedVisualSequences = [];
+    private readonly Dictionary<long, AttentionSheetMetadata> _pendingVisualSheets = [];
     private CancellationTokenSource? _targetWork;
     private bool _cleanupComplete = true;
     private bool _disposed;
@@ -35,11 +38,14 @@ public sealed class TargetSessionController : IAsyncDisposable
             privacyGuard ?? throw new ArgumentNullException(nameof(privacyGuard)));
         _assessmentProvider = assessmentProvider ?? (_ => PrivacyAssessment.Clear);
         _worker.FrameProduced += OnFrameProduced;
+        _worker.AttentionSheetProduced += OnAttentionSheetProduced;
     }
 
     public event EventHandler<CaptureFrameMetadata>? FrameAdmitted;
 
     public event EventHandler<TargetSessionEvent>? SessionEvent;
+
+    public event EventHandler<AttentionSheetMetadata>? AttentionSheetAvailable;
 
     public TargetSessionSnapshot CurrentSession => _authorization.CurrentSession;
 
@@ -361,6 +367,61 @@ public sealed class TargetSessionController : IAsyncDisposable
         return hadTargetSession;
     }
 
+    public async Task SetManualRegionAsync(
+        NormalizedRegion? region,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        region?.Validate(nameof(region));
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ThrowIfDisposed();
+            var grant = CurrentSession.Grant;
+            if (CurrentSession.Phase != TargetSessionPhase.Authorized
+                || grant is null
+                || !_authorization.IsCurrent(grant))
+            {
+                throw new InvalidOperationException("No current target can receive a manual region.");
+            }
+
+            ClearVisualAdmission();
+            await _worker.SetManualRegionAsync(grant, region, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
+    public AttentionSheet? TakeLatestAttentionSheet()
+    {
+        ThrowIfDisposed();
+        var sheet = _worker.TakeLatestAttentionSheet();
+        if (sheet is null)
+        {
+            return null;
+        }
+
+        var grant = CurrentSession.Grant;
+        var isCurrent = grant is not null
+            && _authorization.IsCurrent(grant)
+            && sheet.Metadata.Matches(grant);
+        lock (_sheetGate)
+        {
+            if (!isCurrent
+                || !_admittedVisualSequences.Remove(sheet.Metadata.SourceSequenceNumber))
+            {
+                sheet.Dispose();
+                return null;
+            }
+
+            _pendingVisualSheets.Remove(sheet.Metadata.SourceSequenceNumber);
+            return sheet;
+        }
+    }
+
     public async Task EndSessionAsync()
     {
         ThrowIfDisposed();
@@ -398,6 +459,7 @@ public sealed class TargetSessionController : IAsyncDisposable
         _authorization.EndSession();
         CancelTargetWork();
         _worker.FrameProduced -= OnFrameProduced;
+        _worker.AttentionSheetProduced -= OnAttentionSheetProduced;
         await _operationLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
@@ -488,11 +550,55 @@ public sealed class TargetSessionController : IAsyncDisposable
         _frameGate.TryAdmit(
             frame,
             assessment,
-            admitted => FrameAdmitted?.Invoke(this, admitted));
+            admitted =>
+            {
+                AttentionSheetMetadata? ready = null;
+                lock (_sheetGate)
+                {
+                    _admittedVisualSequences.Add(admitted.SequenceNumber);
+                    PruneVisualSequencesUnsafe();
+                    _pendingVisualSheets.Remove(admitted.SequenceNumber, out ready);
+                }
+
+                FrameAdmitted?.Invoke(this, admitted);
+                if (ready is not null)
+                {
+                    AttentionSheetAvailable?.Invoke(this, ready);
+                }
+            });
+    }
+
+    private void OnAttentionSheetProduced(object? sender, AttentionSheetMetadata metadata)
+    {
+        var grant = CurrentSession.Grant;
+        if (grant is null || !_authorization.IsCurrent(grant) || !metadata.Matches(grant))
+        {
+            return;
+        }
+
+        var publish = false;
+        lock (_sheetGate)
+        {
+            if (_admittedVisualSequences.Contains(metadata.SourceSequenceNumber))
+            {
+                publish = true;
+            }
+            else
+            {
+                _pendingVisualSheets[metadata.SourceSequenceNumber] = metadata;
+                PruneVisualSequencesUnsafe();
+            }
+        }
+
+        if (publish)
+        {
+            AttentionSheetAvailable?.Invoke(this, metadata);
+        }
     }
 
     private void ReplaceTargetWorkToken()
     {
+        ClearVisualAdmission();
         lock (_workGate)
         {
             _targetWork?.Cancel();
@@ -503,12 +609,35 @@ public sealed class TargetSessionController : IAsyncDisposable
 
     private void CancelTargetWork()
     {
+        ClearVisualAdmission();
         lock (_workGate)
         {
             if (_targetWork is { IsCancellationRequested: false })
             {
                 _targetWork.Cancel();
             }
+        }
+    }
+
+    private void ClearVisualAdmission()
+    {
+        lock (_sheetGate)
+        {
+            _admittedVisualSequences.Clear();
+            _pendingVisualSheets.Clear();
+        }
+    }
+
+    private void PruneVisualSequencesUnsafe()
+    {
+        while (_admittedVisualSequences.Count > 16)
+        {
+            _admittedVisualSequences.Remove(_admittedVisualSequences.Min);
+        }
+
+        while (_pendingVisualSheets.Count > 16)
+        {
+            _pendingVisualSheets.Remove(_pendingVisualSheets.Keys.Min());
         }
     }
 

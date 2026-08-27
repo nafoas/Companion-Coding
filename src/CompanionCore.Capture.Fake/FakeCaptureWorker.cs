@@ -17,6 +17,8 @@ public sealed class FakeCaptureWorker : ICaptureWorker
     private long _sequence;
     private long _disposedMetadata;
     private int _maximumBufferedMetadata;
+    private CaptureAuthorizationGrant? _currentAuthorization;
+    private NormalizedRegion? _manualRegion;
     private bool _disposed;
 
     public FakeCaptureWorker(ISystemClock? clock = null)
@@ -32,6 +34,8 @@ public sealed class FakeCaptureWorker : ICaptureWorker
 
     public event EventHandler<CaptureFrameMetadata>? FrameProduced;
 
+    public event EventHandler<AttentionSheetMetadata>? AttentionSheetProduced;
+
     public Task StartAsync(
         CaptureAuthorizationGrant authorization,
         CancellationToken cancellationToken)
@@ -46,6 +50,8 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         }
 
         SetStatus(CaptureWorkerStatus.Starting);
+        _currentAuthorization = authorization;
+        _manualRegion = null;
         SetStatus(CaptureWorkerStatus.Running);
         EmitSyntheticFrame(authorization);
         return Task.CompletedTask;
@@ -58,6 +64,8 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         // via cancellation, not requested a state change we should still apply.
         cancellationToken.ThrowIfCancellationRequested();
 
+        _currentAuthorization = null;
+        _manualRegion = null;
         SetStatus(CaptureWorkerStatus.Stopped);
         return Task.CompletedTask;
     }
@@ -67,6 +75,8 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
 
+        _currentAuthorization = null;
+        _manualRegion = null;
         SetStatus(CaptureWorkerStatus.Stopped);
         var count = _bufferedMetadata.Count;
         _disposedMetadata += count;
@@ -89,6 +99,31 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         // an active state. Return to Stopped before entering the normal start path.
         Status = CaptureWorkerStatus.Stopped;
         await StartAsync(authorization, cancellationToken).ConfigureAwait(false);
+    }
+
+    public Task SetManualRegionAsync(
+        CaptureAuthorizationGrant authorization,
+        NormalizedRegion? region,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(authorization);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!ReferenceEquals(authorization, _currentAuthorization)
+            || Status != CaptureWorkerStatus.Running)
+        {
+            throw new InvalidOperationException("The manual region does not match the active grant.");
+        }
+
+        region?.Validate(nameof(region));
+        _manualRegion = region;
+        return Task.CompletedTask;
+    }
+
+    public AttentionSheet? TakeLatestAttentionSheet()
+    {
+        ThrowIfDisposed();
+        return null;
     }
 
     private void EmitSyntheticFrame(CaptureAuthorizationGrant authorization)
@@ -144,8 +179,13 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         }
 
         _disposed = true;
+        _currentAuthorization = null;
+        _manualRegion = null;
         Status = CaptureWorkerStatus.Stopped;
         _disposedMetadata += _bufferedMetadata.Count;
         _bufferedMetadata.Clear();
+        StatusChanged = null;
+        FrameProduced = null;
+        AttentionSheetProduced = null;
     }
 }

@@ -70,6 +70,73 @@ public sealed class TargetSessionControllerTests
     }
 
     [Fact]
+    public async Task ManualRegion_UsesOnlyTheCurrentSealedGrant()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(harness, worker);
+        var manual = new NormalizedRegion(0.2, 0.25, 0.3, 0.4);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            controller.SetManualRegionAsync(manual));
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+        await controller.SetManualRegionAsync(manual);
+
+        Assert.Equal(1, worker.ManualRegionSetCount);
+        Assert.Equal(manual, worker.ManualRegion);
+        await controller.PrivacyStopAsync();
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            controller.SetManualRegionAsync(null));
+    }
+
+    [Fact]
+    public async Task AttentionSheet_IsExposedOnlyAfterItsExactSourceFramePassesPrivacyAdmission()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(harness, worker);
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+        var available = new List<AttentionSheetMetadata>();
+        controller.AttentionSheetAvailable += (_, metadata) => available.Add(metadata);
+        var grant = worker.LastGrant!;
+
+        var first = worker.EmitSheet(grant, sourceSequenceNumber: 1);
+        Assert.Equal(first, Assert.Single(available));
+        using (var taken = controller.TakeLatestAttentionSheet())
+        {
+            Assert.NotNull(taken);
+            Assert.Equal(first, taken!.Metadata);
+        }
+
+        var second = worker.EmitSheet(grant, sourceSequenceNumber: 2);
+        Assert.Single(available);
+        worker.Emit(grant);
+        Assert.Equal(second, available[1]);
+        using var secondTaken = controller.TakeLatestAttentionSheet();
+        Assert.NotNull(secondTaken);
+        Assert.Equal(second, secondTaken!.Metadata);
+    }
+
+    [Fact]
+    public async Task PrivacyRejectedFrame_NeverExposesItsAttentionSheet()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(
+            harness,
+            worker,
+            _ => PrivacyAssessment.ClearlySensitive(SensitiveContentKind.Credential));
+        var available = 0;
+        controller.AttentionSheetAvailable += (_, _) => available++;
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+
+        worker.EmitSheet(worker.LastGrant!, sourceSequenceNumber: 1);
+
+        Assert.Equal(0, available);
+        Assert.Null(controller.TakeLatestAttentionSheet());
+    }
+
+    [Fact]
     public async Task PrivacyStop_RevokesFirst_CancelsWork_ClearsBuffer_DropsLateFrame_AndIsIdempotent()
     {
         await using var harness = await TargetAuthTestHarness.CreateAsync();

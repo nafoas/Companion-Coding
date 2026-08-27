@@ -1,7 +1,10 @@
 using CompanionCore.Capture.Contracts;
+using System.Runtime.InteropServices;
+using Windows.Graphics.Imaging;
 using Windows.Graphics;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX;
+using WinRT;
 
 namespace CompanionCore.Capture.Worker;
 
@@ -203,7 +206,7 @@ internal sealed class WindowsGraphicsCaptureSource : IWorkerCaptureSource
                 frame = null;
                 PublishStatus(new CaptureSourceStatusChanged(
                     CaptureWorkerStatus.Running,
-                    CaptureWorkerStatusReason.None,
+                    CaptureWorkerStatusReason.SourceResized,
                     ClearRetainedFrames: true,
                     IsResize: true));
                 WinRtD3DDeviceLease? device;
@@ -526,7 +529,7 @@ internal sealed class WindowsGraphicsCaptureSource : IWorkerCaptureSource
         CancellationTokenSource Lifetime,
         Task? Task);
 
-    private sealed class WgcFrameLease : IDisposable
+    private sealed class WgcFrameLease : ICapturePixelSource
     {
         private Direct3D11CaptureFrame? _frame;
 
@@ -535,6 +538,66 @@ internal sealed class WindowsGraphicsCaptureSource : IWorkerCaptureSource
             _frame = frame ?? throw new ArgumentNullException(nameof(frame));
         }
 
+        public async ValueTask<OwnedBgra32Buffer> CopyPixelsAsync(
+            CancellationToken cancellationToken)
+        {
+            var frame = Volatile.Read(ref _frame)
+                ?? throw new ObjectDisposedException(nameof(WgcFrameLease));
+            cancellationToken.ThrowIfCancellationRequested();
+            using var bitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(
+                    frame.Surface,
+                    BitmapAlphaMode.Premultiplied)
+                .AsTask(cancellationToken)
+                .ConfigureAwait(false);
+            if (bitmap.BitmapPixelFormat != BitmapPixelFormat.Bgra8
+                || bitmap.PixelWidth != frame.ContentSize.Width
+                || bitmap.PixelHeight != frame.ContentSize.Height)
+            {
+                throw new InvalidOperationException("WGC readback returned incompatible pixels.");
+            }
+
+            using var bitmapBuffer = bitmap.LockBuffer(BitmapBufferAccessMode.Read);
+            using var reference = bitmapBuffer.CreateReference();
+            var access = reference.As<IMemoryBufferByteAccess>();
+            access.GetBuffer(out var sourcePointer, out var capacity);
+            var plane = bitmapBuffer.GetPlaneDescription(0);
+            var rowBytes = checked(bitmap.PixelWidth * 4);
+            var required = checked(plane.StartIndex + ((bitmap.PixelHeight - 1) * plane.Stride) + rowBytes);
+            if (sourcePointer == IntPtr.Zero || required > capacity)
+            {
+                throw new InvalidOperationException("WGC readback buffer is incomplete.");
+            }
+
+            var pixels = OwnedBgra32Buffer.Allocate(bitmap.PixelWidth, bitmap.PixelHeight);
+            try
+            {
+                unsafe
+                {
+                    var source = (byte*)sourcePointer + plane.StartIndex;
+                    for (var row = 0; row < bitmap.PixelHeight; row++)
+                    {
+                        new ReadOnlySpan<byte>(source + (row * plane.Stride), rowBytes)
+                            .CopyTo(pixels.Span.Slice(row * rowBytes, rowBytes));
+                    }
+                }
+
+                return pixels;
+            }
+            catch
+            {
+                pixels.Dispose();
+                throw;
+            }
+        }
+
         public void Dispose() => Interlocked.Exchange(ref _frame, null)?.Dispose();
+    }
+
+    [ComImport]
+    [Guid("5B0D3235-4DBA-4D44-8654-1F0337B16D0B")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IMemoryBufferByteAccess
+    {
+        void GetBuffer(out IntPtr value, out uint capacity);
     }
 }

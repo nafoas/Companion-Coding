@@ -55,6 +55,22 @@ internal static class CaptureWorkerTestSupport
             await Task.Delay(5).ConfigureAwait(false);
         }
     }
+
+    internal static CaptureSourceFrame CreatePixelFrame(
+        int width,
+        int height,
+        int pattern,
+        DateTimeOffset? timestamp = null,
+        PixelOwnershipCounter? counter = null)
+    {
+        var resource = new TestPixelResource(width, height, pattern, counter);
+        return new CaptureSourceFrame(
+            timestamp ?? FixedTime,
+            width,
+            height,
+            checked((long)width * height * 4),
+            resource);
+    }
 }
 
 internal sealed class ManualClock(DateTimeOffset initial) : ISystemClock
@@ -106,6 +122,79 @@ internal sealed class CountedResource : IDisposable
         if (Interlocked.Exchange(ref _disposed, 1) == 0)
         {
             Interlocked.Increment(ref _counter.Disposed);
+        }
+    }
+}
+
+internal sealed class PixelOwnershipCounter
+{
+    internal long SourcesCreated;
+    internal long SourcesDisposed;
+    internal long CopiesCreated;
+}
+
+internal sealed class TestPixelResource : ICapturePixelSource
+{
+    private byte[]? _pixels;
+    private readonly int _width;
+    private readonly int _height;
+    private readonly PixelOwnershipCounter? _counter;
+
+    internal TestPixelResource(
+        int width,
+        int height,
+        int pattern,
+        PixelOwnershipCounter? counter = null)
+    {
+        _width = width;
+        _height = height;
+        _counter = counter;
+        _pixels = GC.AllocateUninitializedArray<byte>(checked(width * height * 4));
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var offset = (y * width + x) * 4;
+                _pixels[offset] = unchecked((byte)(pattern + x));
+                _pixels[offset + 1] = unchecked((byte)(pattern * 3 + y));
+                _pixels[offset + 2] = unchecked((byte)(pattern * 7 + x + y));
+                _pixels[offset + 3] = 255;
+            }
+        }
+
+        if (counter is not null)
+        {
+            Interlocked.Increment(ref counter.SourcesCreated);
+        }
+    }
+
+    public ValueTask<OwnedBgra32Buffer> CopyPixelsAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var pixels = Volatile.Read(ref _pixels)
+            ?? throw new ObjectDisposedException(nameof(TestPixelResource));
+        var copy = GC.AllocateUninitializedArray<byte>(pixels.Length);
+        pixels.CopyTo(copy, 0);
+        if (_counter is not null)
+        {
+            Interlocked.Increment(ref _counter.CopiesCreated);
+        }
+
+        return ValueTask.FromResult(new OwnedBgra32Buffer(_width, _height, copy));
+    }
+
+    public void Dispose()
+    {
+        var pixels = Interlocked.Exchange(ref _pixels, null);
+        if (pixels is null)
+        {
+            return;
+        }
+
+        System.Security.Cryptography.CryptographicOperations.ZeroMemory(pixels);
+        if (_counter is not null)
+        {
+            Interlocked.Increment(ref _counter.SourcesDisposed);
         }
     }
 }

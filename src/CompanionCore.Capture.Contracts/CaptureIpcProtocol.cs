@@ -1,17 +1,18 @@
 using System.Buffers.Binary;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace CompanionCore.Capture.Contracts;
 
 /// <summary>
-/// Bounded, versioned transport for the dedicated local capture process. These data
-/// shapes carry no grant-issuance authority; only an already-issued sealed grant can
-/// be converted by the client into a start message.
+/// Bounded, versioned transport for the dedicated local capture process. Control JSON
+/// retains its 64 KiB ceiling. Task 6 attention pixels use one separately framed,
+/// checksummed payload and are never embedded as base64 or accepted on any other shape.
 /// </summary>
 public static class CaptureIpcProtocol
 {
-    public const int Version = 1;
+    public const int Version = 2;
     public const int MaximumMessageBytes = 64 * 1024;
     public const int HandshakeNonceHexLength = 64;
 
@@ -22,29 +23,65 @@ public static class CaptureIpcProtocol
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     };
 
-    public static async Task WriteAsync(
+    public static Task WriteAsync(
         Stream stream,
         CaptureIpcMessage message,
+        CancellationToken cancellationToken) =>
+        WriteCoreAsync(stream, message, ReadOnlyMemory<byte>.Empty, cancellationToken);
+
+    public static Task WriteAsync(
+        Stream stream,
+        CaptureIpcMessage message,
+        ReadOnlyMemory<byte> attachedPayload,
+        CancellationToken cancellationToken) =>
+        WriteCoreAsync(stream, message, attachedPayload, cancellationToken);
+
+    private static async Task WriteCoreAsync(
+        Stream stream,
+        CaptureIpcMessage message,
+        ReadOnlyMemory<byte> attachedPayload,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(message);
-
         if (message.ProtocolVersion != Version)
         {
             throw new CaptureProtocolException(CaptureWorkerErrorCode.UnsupportedProtocol);
         }
 
-        var payload = JsonSerializer.SerializeToUtf8Bytes(message, SerializerOptions);
-        if (payload.Length is <= 0 or > MaximumMessageBytes)
+        ValidatePayloadDescriptor(message, attachedPayload.Length);
+        if (!attachedPayload.IsEmpty)
+        {
+            Span<byte> expected = stackalloc byte[SHA256.HashSizeInBytes];
+            if (!Convert.TryFromHexString(message.PayloadSha256, expected, out var written)
+                || written != expected.Length)
+            {
+                throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
+            }
+
+            Span<byte> actual = stackalloc byte[SHA256.HashSizeInBytes];
+            SHA256.HashData(attachedPayload.Span, actual);
+            if (!CryptographicOperations.FixedTimeEquals(expected, actual))
+            {
+                throw new CaptureProtocolException(CaptureWorkerErrorCode.PayloadIntegrityFailure);
+            }
+        }
+
+        var header = JsonSerializer.SerializeToUtf8Bytes(message, SerializerOptions);
+        if (header.Length is <= 0 or > MaximumMessageBytes)
         {
             throw new CaptureProtocolException(CaptureWorkerErrorCode.OversizedMessage);
         }
 
         var prefix = new byte[sizeof(int)];
-        BinaryPrimitives.WriteInt32LittleEndian(prefix, payload.Length);
+        BinaryPrimitives.WriteInt32LittleEndian(prefix, header.Length);
         await stream.WriteAsync(prefix, cancellationToken).ConfigureAwait(false);
-        await stream.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
+        await stream.WriteAsync(header, cancellationToken).ConfigureAwait(false);
+        if (!attachedPayload.IsEmpty)
+        {
+            await stream.WriteAsync(attachedPayload, cancellationToken).ConfigureAwait(false);
+        }
+
         await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -52,28 +89,38 @@ public static class CaptureIpcProtocol
         Stream stream,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        using var envelope = await ReadEnvelopeAsync(stream, cancellationToken).ConfigureAwait(false);
+        if (envelope.PayloadLength != 0)
+        {
+            throw new CaptureProtocolException(CaptureWorkerErrorCode.UnexpectedPayload);
+        }
 
+        return envelope.Message;
+    }
+
+    public static async Task<CaptureIpcEnvelope> ReadEnvelopeAsync(
+        Stream stream,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
         var prefix = new byte[sizeof(int)];
         await stream.ReadExactlyAsync(prefix, cancellationToken).ConfigureAwait(false);
-        var length = BinaryPrimitives.ReadInt32LittleEndian(prefix);
-        if (length is <= 0 or > MaximumMessageBytes)
+        var headerLength = BinaryPrimitives.ReadInt32LittleEndian(prefix);
+        if (headerLength is <= 0 or > MaximumMessageBytes)
         {
             throw new CaptureProtocolException(CaptureWorkerErrorCode.OversizedMessage);
         }
 
-        var payload = new byte[length];
-        await stream.ReadExactlyAsync(payload, cancellationToken).ConfigureAwait(false);
+        var header = new byte[headerLength];
+        await stream.ReadExactlyAsync(header, cancellationToken).ConfigureAwait(false);
         CaptureIpcMessage? message;
         try
         {
-            message = JsonSerializer.Deserialize<CaptureIpcMessage>(payload, SerializerOptions);
+            message = JsonSerializer.Deserialize<CaptureIpcMessage>(header, SerializerOptions);
         }
         catch (JsonException exception)
         {
-            throw new CaptureProtocolException(
-                CaptureWorkerErrorCode.MalformedMessage,
-                exception);
+            throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage, exception);
         }
 
         if (message is null)
@@ -86,7 +133,93 @@ public static class CaptureIpcProtocol
             throw new CaptureProtocolException(CaptureWorkerErrorCode.UnsupportedProtocol);
         }
 
-        return message;
+        ValidatePayloadDescriptor(message, message.PayloadLength);
+        if (message.PayloadLength == 0)
+        {
+            return new CaptureIpcEnvelope(message, null);
+        }
+
+        var attachedPayload = new byte[message.PayloadLength];
+        try
+        {
+            await stream.ReadExactlyAsync(attachedPayload, cancellationToken).ConfigureAwait(false);
+            Span<byte> expected = stackalloc byte[SHA256.HashSizeInBytes];
+            if (!Convert.TryFromHexString(message.PayloadSha256, expected, out var written)
+                || written != expected.Length)
+            {
+                throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
+            }
+
+            Span<byte> actual = stackalloc byte[SHA256.HashSizeInBytes];
+            SHA256.HashData(attachedPayload, actual);
+            if (!CryptographicOperations.FixedTimeEquals(expected, actual))
+            {
+                throw new CaptureProtocolException(CaptureWorkerErrorCode.PayloadIntegrityFailure);
+            }
+
+            return new CaptureIpcEnvelope(message, attachedPayload);
+        }
+        catch
+        {
+            CryptographicOperations.ZeroMemory(attachedPayload);
+            throw;
+        }
+    }
+
+    private static void ValidatePayloadDescriptor(CaptureIpcMessage message, int actualLength)
+    {
+        if (message.PayloadLength < 0
+            || message.PayloadLength > AttentionSheet.MaximumEncodedBytes
+            || actualLength != message.PayloadLength)
+        {
+            throw new CaptureProtocolException(CaptureWorkerErrorCode.OversizedPayload);
+        }
+
+        var hasPayload = message.PayloadLength > 0;
+        if (hasPayload != !string.IsNullOrEmpty(message.PayloadSha256)
+            || hasPayload != (message.Kind == CaptureIpcMessageKind.AttentionSheetProduced)
+            || hasPayload != (message.AttentionSheet is not null))
+        {
+            throw new CaptureProtocolException(CaptureWorkerErrorCode.UnexpectedPayload);
+        }
+
+        if (hasPayload
+            && (message.AttentionSheet!.EncodedByteLength != message.PayloadLength
+                || !message.AttentionSheet.IsProtocolSafe()
+                || message.PayloadSha256!.Length != SHA256.HashSizeInBytes * 2))
+        {
+            throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
+        }
+    }
+}
+
+public sealed class CaptureIpcEnvelope : IDisposable
+{
+    private byte[]? _payload;
+
+    internal CaptureIpcEnvelope(CaptureIpcMessage message, byte[]? payload)
+    {
+        Message = message;
+        _payload = payload;
+    }
+
+    public CaptureIpcMessage Message { get; }
+
+    public int PayloadLength => Volatile.Read(ref _payload)?.Length ?? 0;
+
+    public ReadOnlyMemory<byte> Payload => Volatile.Read(ref _payload) ?? ReadOnlyMemory<byte>.Empty;
+
+    internal byte[] TakePayload() =>
+        Interlocked.Exchange(ref _payload, null)
+        ?? throw new InvalidOperationException("The IPC envelope has no owned payload.");
+
+    public void Dispose()
+    {
+        var payload = Interlocked.Exchange(ref _payload, null);
+        if (payload is not null)
+        {
+            CryptographicOperations.ZeroMemory(payload);
+        }
     }
 }
 
@@ -99,10 +232,12 @@ public enum CaptureIpcMessageKind
     StopAndClear,
     GetMetrics,
     Shutdown,
+    SetManualRegion,
     CommandSucceeded,
     CommandFailed,
     FrameProduced,
     StatusChanged,
+    AttentionSheetProduced,
 }
 
 public enum CaptureWorkerErrorCode
@@ -110,6 +245,9 @@ public enum CaptureWorkerErrorCode
     None,
     MalformedMessage,
     OversizedMessage,
+    OversizedPayload,
+    UnexpectedPayload,
+    PayloadIntegrityFailure,
     UnsupportedProtocol,
     InvalidHandshake,
     InvalidState,
@@ -125,15 +263,10 @@ public enum CaptureWorkerErrorCode
 public sealed record CaptureIpcAuthorization
 {
     public Guid TargetSessionId { get; init; }
-
     public long Generation { get; init; }
-
     public long WindowId { get; init; }
-
     public int ProcessId { get; init; }
-
     public string ExecutableFileName { get; init; } = string.Empty;
-
     public string ExecutablePathFingerprint { get; init; } = string.Empty;
 
     public static CaptureIpcAuthorization FromGrant(CaptureAuthorizationGrant grant)
@@ -155,58 +288,48 @@ public sealed record CaptureIpcAuthorization
         && Generation == grant.Generation
         && WindowId == grant.Target.WindowId
         && ProcessId == grant.Target.ProcessId
-        && string.Equals(
-            ExecutableFileName,
-            grant.Target.ExecutableFileName,
-            StringComparison.OrdinalIgnoreCase)
-        && string.Equals(
-            ExecutablePathFingerprint,
-            grant.Target.ExecutablePathFingerprint,
-            StringComparison.OrdinalIgnoreCase);
+        && string.Equals(ExecutableFileName, grant.Target.ExecutableFileName, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(ExecutablePathFingerprint, grant.Target.ExecutablePathFingerprint, StringComparison.OrdinalIgnoreCase);
+
+    public bool Matches(CaptureIpcAuthorization other) =>
+        other is not null
+        && TargetSessionId == other.TargetSessionId
+        && Generation == other.Generation
+        && WindowId == other.WindowId
+        && ProcessId == other.ProcessId
+        && string.Equals(ExecutableFileName, other.ExecutableFileName, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(ExecutablePathFingerprint, other.ExecutablePathFingerprint, StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed record CaptureIpcMessage
 {
     public int ProtocolVersion { get; init; } = CaptureIpcProtocol.Version;
-
     public CaptureIpcMessageKind Kind { get; init; }
-
     public Guid CorrelationId { get; init; }
-
     public long ControlSequence { get; init; }
-
     public string? HandshakeNonce { get; init; }
-
     public CaptureIpcAuthorization? Authorization { get; init; }
-
     public long SequenceNumber { get; init; }
-
     public DateTimeOffset Timestamp { get; init; }
-
     public int Width { get; init; }
-
     public int Height { get; init; }
-
     public long AccountedBytes { get; init; }
-
     public CaptureWorkerStatus Status { get; init; }
-
     public CaptureWorkerStatusReason StatusReason { get; init; }
-
     public CaptureWorkerMetrics? Metrics { get; init; }
-
     public int ClearedFrameCount { get; init; }
-
     public long ClearedBytes { get; init; }
-
     public CaptureWorkerErrorCode ErrorCode { get; init; }
+    public NormalizedRegion? ManualRegion { get; init; }
+    public bool ClearManualRegion { get; init; }
+    public AttentionSheetMetadata? AttentionSheet { get; init; }
+    public int PayloadLength { get; init; }
+    public string? PayloadSha256 { get; init; }
 }
 
 public sealed class CaptureProtocolException : Exception
 {
-    public CaptureProtocolException(
-        CaptureWorkerErrorCode errorCode,
-        Exception? innerException = null)
+    public CaptureProtocolException(CaptureWorkerErrorCode errorCode, Exception? innerException = null)
         : base($"Capture worker protocol failure ({errorCode}).", innerException)
     {
         ErrorCode = errorCode;

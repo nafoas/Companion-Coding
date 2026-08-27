@@ -163,6 +163,95 @@ public sealed class OutOfProcessCaptureWorkerTests
         releaseObserver.Set();
     }
 
+    [Fact]
+    public async Task SyntheticWorker_ProducesBoundedOrientationAndManualRegionalSheets()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        await worker.StartAsync(grant, CancellationToken.None);
+        AttentionSheet? orientation = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => (orientation = worker.TakeLatestAttentionSheet()) is not null,
+            TimeSpan.FromSeconds(10));
+        using (orientation)
+        {
+            Assert.Equal(AttentionSheetKind.Orientation, orientation!.Metadata.Kind);
+            Assert.True(orientation.Metadata.Matches(grant));
+            var decoded = PngTestDecoder.Decode(orientation.EncodedImage.Span);
+            Assert.Equal(orientation.Metadata.SheetWidth, decoded.Width);
+            Assert.Equal(orientation.Metadata.SheetHeight, decoded.Height);
+        }
+
+        var manual = new NormalizedRegion(0.2, 0.2, 0.4, 0.5);
+        await worker.SetManualRegionAsync(grant, manual, CancellationToken.None);
+        AttentionSheet? regional = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => (regional = worker.TakeLatestAttentionSheet()) is not null
+                && regional.Metadata.Kind == AttentionSheetKind.Regional
+                && regional.Metadata.Regions.Any(
+                    region => region.Kind == AttentionRegionKind.ManualFocus),
+            TimeSpan.FromSeconds(10));
+        using (regional)
+        {
+            Assert.NotNull(regional);
+            Assert.Contains(
+                regional!.Metadata.Regions,
+                region => region.Kind == AttentionRegionKind.ManualFocus
+                    && region.NormalizedSource == manual);
+        }
+
+        var metrics = await worker.GetMetricsAsync(CancellationToken.None);
+        Assert.True(metrics.ProducedAttentionSheets >= 2);
+        Assert.Equal(1, metrics.ProducedOrientationSheets);
+        Assert.InRange(
+            metrics.MaximumObservedAttentionSheets,
+            1,
+            AttentionSheet.MaximumRetainedSheets);
+        Assert.InRange(
+            metrics.MaximumObservedVisualWorkingBytes,
+            1,
+            CaptureWorkerMetrics.VisualWorkingBudgetBytes);
+
+        await worker.StopAndClearAsync(CancellationToken.None);
+        Assert.Null(worker.TakeLatestAttentionSheet());
+    }
+
+    [Fact]
+    public async Task StopAndRestart_ClearQueuedSheetsAndCreateFreshOrientation()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        await worker.StartAsync(grant, CancellationToken.None);
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => worker.GetMetricsAsync(CancellationToken.None).GetAwaiter().GetResult()
+                .ProducedAttentionSheets > 0,
+            TimeSpan.FromSeconds(10));
+
+        await worker.RestartAsync(grant, CancellationToken.None);
+        Assert.Null(worker.TakeLatestAttentionSheet());
+        AttentionSheet? fresh = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => (fresh = worker.TakeLatestAttentionSheet()) is not null,
+            TimeSpan.FromSeconds(10));
+        using (fresh)
+        {
+            Assert.Equal(AttentionSheetKind.Orientation, fresh!.Metadata.Kind);
+        }
+
+        await worker.StopAndClearAsync(CancellationToken.None);
+        Assert.Null(worker.TakeLatestAttentionSheet());
+    }
+
     private static OutOfProcessCaptureWorker CreateWorker() =>
         new(CaptureWorkerLaunchOptions.ForPrivateSafeSyntheticTests());
 

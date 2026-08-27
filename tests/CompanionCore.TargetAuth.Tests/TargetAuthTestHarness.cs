@@ -141,6 +141,7 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
 {
     private long _sequence;
     private readonly Queue<CaptureFrameMetadata> _buffer = new();
+    private readonly Queue<AttentionSheet> _sheets = new();
     private bool _disposed;
 
     public CaptureWorkerStatus Status { get; private set; } = CaptureWorkerStatus.Stopped;
@@ -155,11 +156,17 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
 
     internal CaptureAuthorizationGrant? LastGrant { get; private set; }
 
+    internal int ManualRegionSetCount { get; private set; }
+
+    internal NormalizedRegion? ManualRegion { get; private set; }
+
     internal int BufferedCount => _buffer.Count;
 
     public event EventHandler<CaptureWorkerStatusChanged>? StatusChanged;
 
     public event EventHandler<CaptureFrameMetadata>? FrameProduced;
+
+    public event EventHandler<AttentionSheetMetadata>? AttentionSheetProduced;
 
     internal Func<CaptureAuthorizationGrant, CancellationToken, Task>? StartHandler { get; set; }
 
@@ -197,6 +204,7 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         ObjectDisposedException.ThrowIf(_disposed, this);
         cancellationToken.ThrowIfCancellationRequested();
         SetStatus(CaptureWorkerStatus.Stopped);
+        ClearSheets();
         return Task.CompletedTask;
     }
 
@@ -213,6 +221,7 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         SetStatus(CaptureWorkerStatus.Stopped);
         var count = _buffer.Count;
         _buffer.Clear();
+        ClearSheets();
         return Task.FromResult(new CaptureStopResult(count));
     }
 
@@ -222,6 +231,37 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
     {
         await StopAsync(cancellationToken);
         await StartAsync(authorization, cancellationToken);
+    }
+
+    public Task SetManualRegionAsync(
+        CaptureAuthorizationGrant authorization,
+        NormalizedRegion? region,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(authorization);
+        cancellationToken.ThrowIfCancellationRequested();
+        region?.Validate(nameof(region));
+        if (Status != CaptureWorkerStatus.Running || !ReferenceEquals(authorization, LastGrant))
+        {
+            throw new InvalidOperationException("Grant is not active.");
+        }
+
+        ManualRegionSetCount++;
+        ManualRegion = region;
+        ClearSheets();
+        return Task.CompletedTask;
+    }
+
+    public AttentionSheet? TakeLatestAttentionSheet()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        while (_sheets.Count > 1)
+        {
+            _sheets.Dequeue().Dispose();
+        }
+
+        return _sheets.Count == 0 ? null : _sheets.Dequeue();
     }
 
     public Task<CaptureWorkerMetrics> GetMetricsAsync(CancellationToken cancellationToken)
@@ -234,6 +274,10 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
             RingFrameCount = _buffer.Count,
             CurrentSourceFrames = _buffer.Count,
             MaximumObservedSourceFrames = _buffer.Count,
+            CurrentAttentionSheets = _sheets.Count,
+            MaximumObservedAttentionSheets = _sheets.Count,
+            CurrentAttentionSheetBytes = _sheets.Sum(sheet => sheet.Length),
+            MaximumObservedAttentionSheetBytes = _sheets.Sum(sheet => sheet.Length),
         });
     }
 
@@ -250,6 +294,46 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         return frame;
     }
 
+    internal AttentionSheetMetadata EmitSheet(
+        CaptureAuthorizationGrant authorization,
+        long sourceSequenceNumber)
+    {
+        var bytes = new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 };
+        var metadata = new AttentionSheetMetadata
+        {
+            TargetSessionId = authorization.TargetSessionId,
+            Generation = authorization.Generation,
+            Target = authorization.Target,
+            SourceSequenceNumber = sourceSequenceNumber,
+            SourceTimestamp = new DateTimeOffset(2026, 8, 10, 12, 0, 0, TimeSpan.Zero),
+            SourceWidth = 1,
+            SourceHeight = 1,
+            SheetWidth = 1,
+            SheetHeight = 1,
+            EncodedByteLength = bytes.Length,
+            Kind = AttentionSheetKind.Orientation,
+            ChangeScore = 1,
+            Regions =
+            [
+                new AttentionSheetRegionMetadata
+                {
+                    Kind = AttentionRegionKind.FullContext,
+                    NormalizedSource = new NormalizedRegion(0, 0, 1, 1),
+                    SourcePixels = new PixelRect(0, 0, 1, 1),
+                    SheetPixels = new PixelRect(0, 0, 1, 1),
+                },
+            ],
+        };
+        while (_sheets.Count >= AttentionSheet.MaximumRetainedSheets)
+        {
+            _sheets.Dequeue().Dispose();
+        }
+
+        _sheets.Enqueue(new AttentionSheet(metadata, bytes));
+        AttentionSheetProduced?.Invoke(this, metadata);
+        return metadata;
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -259,7 +343,17 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
 
         _disposed = true;
         _buffer.Clear();
+        ClearSheets();
+        AttentionSheetProduced = null;
         Status = CaptureWorkerStatus.Stopped;
+    }
+
+    private void ClearSheets()
+    {
+        while (_sheets.Count > 0)
+        {
+            _sheets.Dequeue().Dispose();
+        }
     }
 
     private void SetStatus(CaptureWorkerStatus status)

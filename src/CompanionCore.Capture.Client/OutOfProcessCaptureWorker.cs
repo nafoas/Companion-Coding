@@ -8,8 +8,9 @@ using CompanionCore.Capture.Contracts;
 namespace CompanionCore.Capture.Client;
 
 /// <summary>
-/// Main-process control proxy. It never captures or owns pixels; a dedicated child
-/// owns WGC/native resources. All starts still require Task 4's sealed grant.
+/// Main-process control proxy. It never captures or owns raw source pixels; a dedicated
+/// child owns WGC/native resources and composition. It may briefly own at most two
+/// checksummed final attention sheets until a consumer takes or clears them.
 /// </summary>
 public sealed class OutOfProcessCaptureWorker : ICaptureWorker
 {
@@ -19,6 +20,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private readonly SemaphoreSlim _operationLock = new(1, 1);
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private readonly object _stateGate = new();
+    private readonly Queue<AttentionSheet> _attentionSheets = new();
     private readonly ConcurrentDictionary<Guid, TaskCompletionSource<CaptureIpcMessage>> _pending = new();
     private readonly Channel<ClientEvent> _events = Channel.CreateBounded<ClientEvent>(
         new BoundedChannelOptions(64)
@@ -41,6 +43,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private long _restartCount;
     private long _workerEpoch;
     private long _lastDispatchedSequence;
+    private long _lastAttentionSheetSequence;
     private bool _admitFrames;
     private bool _expectedExit;
     private bool _disposed;
@@ -70,6 +73,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     public event EventHandler<CaptureWorkerStatusChanged>? StatusChanged;
 
     public event EventHandler<CaptureFrameMetadata>? FrameProduced;
+
+    public event EventHandler<AttentionSheetMetadata>? AttentionSheetProduced;
 
     public async Task StartAsync(
         CaptureAuthorizationGrant authorization,
@@ -142,6 +147,69 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         }
     }
 
+    public async Task SetManualRegionAsync(
+        CaptureAuthorizationGrant authorization,
+        NormalizedRegion? region,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(authorization);
+        region?.Validate(nameof(region));
+        cancellationToken.ThrowIfCancellationRequested();
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            lock (_stateGate)
+            {
+                if (Status != CaptureWorkerStatus.Running
+                    || !_admitFrames
+                    || _currentGrant is null
+                    || !GrantsMatch(_currentGrant, authorization))
+                {
+                    throw new InvalidOperationException(
+                        "The manual region does not match the active capture grant.");
+                }
+
+                ClearAttentionSheetsUnsafe();
+                _lastAttentionSheetSequence = 0;
+            }
+
+            var response = await SendCommandAsync(
+                new CaptureIpcMessage
+                {
+                    Kind = CaptureIpcMessageKind.SetManualRegion,
+                    Authorization = CaptureIpcAuthorization.FromGrant(authorization),
+                    ManualRegion = region,
+                    ClearManualRegion = region is null,
+                },
+                cancellationToken).ConfigureAwait(false);
+            UpdateMetrics(response.Metrics);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
+    public AttentionSheet? TakeLatestAttentionSheet()
+    {
+        ThrowIfDisposed();
+        lock (_stateGate)
+        {
+            if (_attentionSheets.Count == 0)
+            {
+                return null;
+            }
+
+            while (_attentionSheets.Count > 1)
+            {
+                _attentionSheets.Dequeue().Dispose();
+            }
+
+            return _attentionSheets.Dequeue();
+        }
+    }
+
     public async Task<CaptureWorkerMetrics> GetMetricsAsync(CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
@@ -160,6 +228,9 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                     QueueDepth = 0,
                     CurrentSourceFrames = 0,
                     CurrentAccountedBytes = 0,
+                    CurrentAttentionSheets = 0,
+                    CurrentAttentionSheetBytes = 0,
+                    CurrentVisualWorkingBytes = 0,
                     OldestFrameLifetime = TimeSpan.Zero,
                     WorkingSetBytes = 0,
                     PrivateMemoryBytes = 0,
@@ -213,6 +284,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 _currentGrant = authorization;
                 _lastSequence = 0;
                 _lastDispatchedSequence = 0;
+                _lastAttentionSheetSequence = 0;
+                ClearAttentionSheetsUnsafe();
                 _admitFrames = false;
             }
 
@@ -379,7 +452,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             || response.Metrics is not null
             || response.ClearedFrameCount != 0
             || response.ClearedBytes != 0
-            || response.ErrorCode != CaptureWorkerErrorCode.None)
+            || response.ErrorCode != CaptureWorkerErrorCode.None
+            || HasVisualPayloadFields(response))
         {
             throw new CaptureProtocolException(CaptureWorkerErrorCode.InvalidHandshake);
         }
@@ -455,8 +529,9 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             var pipe = _pipe ?? throw new InvalidOperationException("Reader started without a pipe.");
             while (!cancellationToken.IsCancellationRequested && pipe.IsConnected)
             {
-                var message = await CaptureIpcProtocol.ReadAsync(pipe, cancellationToken)
+                using var envelope = await CaptureIpcProtocol.ReadEnvelopeAsync(pipe, cancellationToken)
                     .ConfigureAwait(false);
+                var message = envelope.Message;
                 switch (message.Kind)
                 {
                     case CaptureIpcMessageKind.CommandSucceeded:
@@ -477,6 +552,10 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
 
                     case CaptureIpcMessageKind.StatusChanged:
                         ApplyWorkerStatus(message, workerEpoch);
+                        break;
+
+                    case CaptureIpcMessageKind.AttentionSheetProduced:
+                        PublishAttentionSheetIfCurrent(message, envelope, workerEpoch);
                         break;
 
                     default:
@@ -523,7 +602,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 || message.Metrics is not null
                 || message.ClearedFrameCount != 0
                 || message.ClearedBytes != 0
-                || message.ErrorCode != CaptureWorkerErrorCode.None)
+                || message.ErrorCode != CaptureWorkerErrorCode.None
+                || HasVisualPayloadFields(message))
             {
                 throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
             }
@@ -558,6 +638,94 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             message.Height,
             message.AccountedBytes);
         _events.Writer.TryWrite(new FrameClientEvent(workerEpoch, grant, frame));
+    }
+
+    private void PublishAttentionSheetIfCurrent(
+        CaptureIpcMessage message,
+        CaptureIpcEnvelope envelope,
+        long workerEpoch)
+    {
+        CaptureAuthorizationGrant? grant;
+        AttentionSheet? sheet = null;
+        lock (_stateGate)
+        {
+            grant = _currentGrant;
+            if (workerEpoch != _workerEpoch)
+            {
+                return;
+            }
+
+            if (message.CorrelationId != Guid.Empty
+                || message.ControlSequence != 0
+                || message.HandshakeNonce is not null
+                || message.Authorization is null
+                || message.SequenceNumber != 0
+                || message.Timestamp != default
+                || message.Width != 0
+                || message.Height != 0
+                || message.AccountedBytes != 0
+                || message.Status != CaptureWorkerStatus.Stopped
+                || message.StatusReason != CaptureWorkerStatusReason.None
+                || message.Metrics is not null
+                || message.ClearedFrameCount != 0
+                || message.ClearedBytes != 0
+                || message.ErrorCode != CaptureWorkerErrorCode.None
+                || message.ManualRegion is not null
+                || message.ClearManualRegion
+                || message.AttentionSheet is null
+                || !message.AttentionSheet.IsProtocolSafe()
+                || envelope.PayloadLength != message.PayloadLength
+                || message.PayloadLength != message.AttentionSheet.EncodedByteLength)
+            {
+                throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
+            }
+
+            if (grant is null
+                || Status is not (CaptureWorkerStatus.Starting or CaptureWorkerStatus.Running)
+                || (!_admitFrames && Status != CaptureWorkerStatus.Starting))
+            {
+                return;
+            }
+
+            if (!message.Authorization.Matches(grant)
+                || !message.AttentionSheet.Matches(grant)
+                || message.AttentionSheet.SourceSequenceNumber <= _lastAttentionSheetSequence)
+            {
+                throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
+            }
+
+            var payload = envelope.TakePayload();
+            try
+            {
+                if (payload.Length < 8
+                    || !payload.AsSpan(0, 8).SequenceEqual(
+                        new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }))
+                {
+                    throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
+                }
+
+                sheet = new AttentionSheet(message.AttentionSheet, payload);
+                payload = null!;
+            }
+            finally
+            {
+                if (payload is not null)
+                {
+                    CryptographicOperations.ZeroMemory(payload);
+                }
+            }
+
+            while (_attentionSheets.Count >= AttentionSheet.MaximumRetainedSheets)
+            {
+                _attentionSheets.Dequeue().Dispose();
+            }
+
+            _attentionSheets.Enqueue(sheet!);
+            _lastAttentionSheetSequence = message.AttentionSheet.SourceSequenceNumber;
+        }
+
+        _events.Writer.TryWrite(
+            new AttentionSheetClientEvent(workerEpoch, grant!, sheet!.Metadata));
     }
 
     private async Task RequestShutdownAndTearDownAsync()
@@ -604,6 +772,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             _lastSequence = 0;
             _admitFrames = false;
             _lastDispatchedSequence = 0;
+            _lastAttentionSheetSequence = 0;
+            ClearAttentionSheetsUnsafe();
             _workerEpoch = checked(_workerEpoch + 1);
         }
 
@@ -668,6 +838,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             }
 
             _currentGrant = null;
+            ClearAttentionSheetsUnsafe();
             workerEpoch = _workerEpoch;
         }
 
@@ -745,6 +916,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             _currentGrant = null;
             _lastSequence = 0;
             _lastDispatchedSequence = 0;
+            _lastAttentionSheetSequence = 0;
+            ClearAttentionSheetsUnsafe();
             _admitFrames = false;
         }
     }
@@ -797,7 +970,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             || message.Metrics is null
             || message.ClearedFrameCount < 0
             || message.ClearedBytes < 0
-            || !errorShapeIsValid)
+            || !errorShapeIsValid
+            || HasVisualPayloadFields(message))
         {
             throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
         }
@@ -823,7 +997,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             || message.Metrics is not null
             || message.ClearedFrameCount != 0
             || message.ClearedBytes != 0
-            || message.ErrorCode != CaptureWorkerErrorCode.None)
+            || message.ErrorCode != CaptureWorkerErrorCode.None
+            || HasVisualPayloadFields(message))
         {
             throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
         }
@@ -847,7 +1022,15 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 _currentGrant = null;
                 _lastSequence = 0;
                 _lastDispatchedSequence = 0;
+                _lastAttentionSheetSequence = 0;
+                ClearAttentionSheetsUnsafe();
                 _admitFrames = false;
+            }
+            else if (message.Status is CaptureWorkerStatus.NoSignal or CaptureWorkerStatus.PausedMinimized
+                     || message.StatusReason == CaptureWorkerStatusReason.SourceResized)
+            {
+                _lastAttentionSheetSequence = 0;
+                ClearAttentionSheetsUnsafe();
             }
         }
 
@@ -952,6 +1135,33 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                         }
 
                         break;
+
+                    case AttentionSheetClientEvent sheetEvent:
+                        lock (_stateGate)
+                        {
+                            if (sheetEvent.WorkerEpoch != _workerEpoch
+                                || !_admitFrames
+                                || !ReferenceEquals(sheetEvent.Grant, _currentGrant))
+                            {
+                                continue;
+                            }
+                        }
+
+                        foreach (EventHandler<AttentionSheetMetadata> handler in
+                                 AttentionSheetProduced?.GetInvocationList()
+                                     .Cast<EventHandler<AttentionSheetMetadata>>()
+                                 ?? [])
+                        {
+                            try
+                            {
+                                handler(this, sheetEvent.Metadata);
+                            }
+                            catch (Exception)
+                            {
+                            }
+                        }
+
+                        break;
                 }
             }
         }
@@ -978,6 +1188,28 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     }
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
+
+    private static bool HasVisualPayloadFields(CaptureIpcMessage message) =>
+        message.ManualRegion is not null
+        || message.ClearManualRegion
+        || message.AttentionSheet is not null
+        || message.PayloadLength != 0
+        || message.PayloadSha256 is not null;
+
+    private static bool GrantsMatch(
+        CaptureAuthorizationGrant left,
+        CaptureAuthorizationGrant right) =>
+        left.TargetSessionId == right.TargetSessionId
+        && left.Generation == right.Generation
+        && left.Target == right.Target;
+
+    private void ClearAttentionSheetsUnsafe()
+    {
+        while (_attentionSheets.Count > 0)
+        {
+            _attentionSheets.Dequeue().Dispose();
+        }
+    }
 
     public void Dispose()
     {
@@ -1030,4 +1262,9 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private sealed record StatusClientEvent(
         long WorkerEpoch,
         CaptureWorkerStatusChanged Change) : ClientEvent(WorkerEpoch);
+
+    private sealed record AttentionSheetClientEvent(
+        long WorkerEpoch,
+        CaptureAuthorizationGrant Grant,
+        AttentionSheetMetadata Metadata) : ClientEvent(WorkerEpoch);
 }
