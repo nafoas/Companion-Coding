@@ -54,8 +54,7 @@ public sealed class OutOfProcessCaptureWorkerTests
 
         await worker.StartAsync(grant, CancellationToken.None);
         var processId = worker.WorkerProcessId;
-        using var process = Process.GetProcessById(processId);
-        _ = GetWorkerProcessIdentity(process);
+        var processIdentity = GetWorkerProcessIdentity(processId);
         var frame = await frameReady.Task.WaitAsync(TimeSpan.FromSeconds(10));
         var metrics = await worker.GetMetricsAsync(CancellationToken.None);
 
@@ -68,7 +67,7 @@ public sealed class OutOfProcessCaptureWorkerTests
 
         await worker.StopAndClearAsync(CancellationToken.None);
         Assert.Equal(0, worker.WorkerProcessId);
-        await AssertProcessExitedAsync(process);
+        Assert.False(IsProcessIdentityAlive(processIdentity));
     }
 
     [Fact]
@@ -83,23 +82,19 @@ public sealed class OutOfProcessCaptureWorkerTests
         var grant = CaptureWorkerTestSupport.CreateGrant();
         var runtimeConstructionsBefore = CompanionRuntime.ConstructionCount;
         await worker.StartAsync(grant, CancellationToken.None);
-        var processIdentities = new List<WorkerProcessIdentity>();
-        using (var initialProcess = Process.GetProcessById(worker.WorkerProcessId))
+        var processIdentities = new List<WorkerProcessIdentity>
         {
-            processIdentities.Add(GetWorkerProcessIdentity(initialProcess));
-        }
-
+            GetWorkerProcessIdentity(worker.WorkerProcessId),
+        };
         var childHandleCounts = new List<int>();
 
         for (var attempt = 0; attempt < RestartWarmupCount; attempt++)
         {
-            using var oldProcess = Process.GetProcessById(worker.WorkerProcessId);
-            var oldIdentity = GetWorkerProcessIdentity(oldProcess);
+            var oldIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
             await worker.RestartAsync(grant, CancellationToken.None);
-            await AssertProcessExitedAsync(oldProcess);
+            Assert.False(IsProcessIdentityAlive(oldIdentity));
             Assert.True(worker.WorkerProcessId > 0);
-            using var currentProcess = Process.GetProcessById(worker.WorkerProcessId);
-            var currentIdentity = GetWorkerProcessIdentity(currentProcess);
+            var currentIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
             Assert.NotEqual(oldIdentity, currentIdentity);
             processIdentities.Add(currentIdentity);
         }
@@ -107,13 +102,11 @@ public sealed class OutOfProcessCaptureWorkerTests
         var parentHandleBaseline = GetParentHandleCount();
         for (var attempt = 0; attempt < MeasuredRestartCount; attempt++)
         {
-            using var oldProcess = Process.GetProcessById(worker.WorkerProcessId);
-            var oldIdentity = GetWorkerProcessIdentity(oldProcess);
+            var oldIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
             await worker.RestartAsync(grant, CancellationToken.None);
-            await AssertProcessExitedAsync(oldProcess);
+            Assert.False(IsProcessIdentityAlive(oldIdentity));
             Assert.True(worker.WorkerProcessId > 0);
-            using var currentProcess = Process.GetProcessById(worker.WorkerProcessId);
-            var currentIdentity = GetWorkerProcessIdentity(currentProcess);
+            var currentIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
             Assert.NotEqual(oldIdentity, currentIdentity);
             processIdentities.Add(currentIdentity);
             var metrics = await worker.GetMetricsAsync(CancellationToken.None);
@@ -129,10 +122,9 @@ public sealed class OutOfProcessCaptureWorkerTests
         var settledParentHandleCount = await WaitForParentHandlesAsync(
             parentHandleBaseline + MaximumParentHandleDrift,
             TimeSpan.FromSeconds(10));
-        using var finalProcess = Process.GetProcessById(worker.WorkerProcessId);
-        _ = GetWorkerProcessIdentity(finalProcess);
+        var finalIdentity = GetWorkerProcessIdentity(worker.WorkerProcessId);
         await worker.StopAndClearAsync(CancellationToken.None);
-        await AssertProcessExitedAsync(finalProcess);
+        Assert.False(IsProcessIdentityAlive(finalIdentity));
         Assert.Equal(processIdentities.Count, processIdentities.Distinct().Count());
         Assert.Equal(0, worker.WorkerProcessId);
         Assert.Equal(runtimeConstructionsBefore, CompanionRuntime.ConstructionCount);
@@ -333,17 +325,6 @@ public sealed class OutOfProcessCaptureWorkerTests
     private static OutOfProcessCaptureWorker CreateWorker() =>
         new(CaptureWorkerLaunchOptions.ForPrivateSafeSyntheticTests());
 
-    private static async Task AssertProcessExitedAsync(Process process)
-    {
-        ArgumentNullException.ThrowIfNull(process);
-        if (!process.HasExited)
-        {
-            await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
-        }
-
-        Assert.True(process.HasExited);
-    }
-
     private static async Task<int> WaitForParentHandlesAsync(
         int maximum,
         TimeSpan timeout)
@@ -365,8 +346,29 @@ public sealed class OutOfProcessCaptureWorkerTests
         return parent.HandleCount;
     }
 
-    private static WorkerProcessIdentity GetWorkerProcessIdentity(Process process) =>
-        new(process.Id, process.StartTime.ToUniversalTime());
+    private static WorkerProcessIdentity GetWorkerProcessIdentity(int processId)
+    {
+        using var process = Process.GetProcessById(processId);
+        return new(process.Id, process.StartTime.ToUniversalTime());
+    }
+
+    private static bool IsProcessIdentityAlive(WorkerProcessIdentity identity)
+    {
+        try
+        {
+            using var process = Process.GetProcessById(identity.ProcessId);
+            return !process.HasExited
+                && process.StartTime.ToUniversalTime() == identity.StartTimeUtc;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
 
     private static bool IsStrictlyIncreasing(IReadOnlyList<int> values) =>
         values.Count > 1

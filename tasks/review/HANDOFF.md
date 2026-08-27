@@ -16,13 +16,13 @@ Task 6 — Regions and Attention Sheets, the final Stage 4 packet. Corrected imp
 - Correlated sheets through Task 4's exact source-frame Privacy Guard. A newer pulled sheet is held until its own frame is admitted; rejection/revocation/stop/manual reset clears held work.
 - Closed ordering races found during separate review: deferred start-time frames, synchronous resize/fault status fences, coalesced newest-sheet events, and a pause/drain/response/resume fence around manual-region changes.
 - Rejected the initially green published candidate during actual-diff review and added a second correction layer: sheet availability cannot precede source-frame dispatch; held transferred payloads are disposed on resize/fault; admission matches source sequence, timestamp, and dimensions; and impossible BGRA geometry fails protocol validation before allocation.
-- The exact evidence runs exposed test-harness assumptions. The accepted Task 5 parent-handle heuristic observed shared-host runtime warmup; the isolated collection now runs a full warmup plus 12 measured restarts, waits for release, and enforces a two-handle steady-state drift ceiling. The longer run demonstrated legitimate non-adjacent Windows PID reuse, so global freshness uses PID-plus-start-time identities and captured old-process handles. Restart coverage proves the fresh orientation event and fresh-epoch retained payload independently. All product code and invariants remain unchanged.
+- The exact evidence runs exposed test-harness assumptions. The accepted Task 5 parent-handle heuristic observed shared-host runtime warmup; the isolated collection now runs a full warmup plus 12 measured restarts, waits for release, and enforces a two-handle steady-state drift ceiling. The longer run demonstrated legitimate non-adjacent Windows PID reuse, so global freshness uses PID-plus-start-time identities and old-identity absence checks without test-side async wait registrations. Restart coverage proves the fresh orientation event and fresh-epoch retained payload independently. All product code and invariants remain unchanged.
 - Added neutral WPF controls for applying/clearing a normalized manual region and displaying only privacy-safe sheet metadata. No final character wording, artwork, semantic output, or image display was added.
 - Added 33 capture-worker and 7 target-authorization tests over the accepted Task 5 baseline, including strict payload negatives, geometry/labels, manual barriers, privacy correlation, watchdog behavior, ownership cleanup, deterministic artifact decoding, and a 216,000-frame accelerated six-hour visual soak.
 
 ## Changed
 
-- 44 paths relative to accepted Task 5 `main`: 4,542 additions and 190 deletions on the process-identity evidence descendant.
+- 44 paths relative to accepted Task 5 `main`: 4,544 additions and 190 deletions on the observer-neutral evidence descendant.
 - Capture Contracts, Client, Worker, Fake, Target Authorization controller, and the minimal neutral App controls.
 - Capture Worker and Target Authorization tests.
 - CI synthetic-artifact upload plus Task/README/Ledger/Handoff control records.
