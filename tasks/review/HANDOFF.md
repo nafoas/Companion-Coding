@@ -2,7 +2,7 @@
 
 ## Task
 
-Task 6 — Regions and Attention Sheets, the final Stage 4 packet. The implementation merged through PR #11. The bounded direct-owned-handle correction in PR #13 has passed both exact Windows event paths; its evidence descendant, fenced merge, and accepted-`main` reconciliation remain before Stage 4 acceptance.
+Task 6 — Regions and Attention Sheets, the final Stage 4 packet. Accepted and archived. The implementation merged through PR #11; the attributable resource correction and final evidence descendant passed both exact Windows event paths and merged through PR #13 with an expected-head fence. Stage 4 is complete.
 
 ## Completed
 
@@ -52,12 +52,15 @@ Task 6 — Regions and Attention Sheets, the final Stage 4 packet. The implement
 - Published correction identity: local head `56767ccda7d315b966ba8db9434ec3f4a8b1a343`, PR #13 head `9ce4e592dc812a5740b49a033268386b8d7d8f13`, exact shared tree `aea3bd99744e07452a9db0412be6754928baa941`; independent fetched-tree comparison was empty.
 - Exact correction gates: push run `33031810624`, successful rerun job `98386519846`, and PR run `33031854365`, job `98385948525`, each passed locked restore, the clean 20-project dependency audit, all 20 Release builds with 0 warnings/errors, and 309/309 tests. The first push attempt timed out only two legacy App-integration cases under runner saturation while Capture Worker passed 61/61; its exact-head rerun passed completely.
 - Successful evidence artifacts were downloaded and hash-verified. Push: test results `9630630196` (`sha256:c21c09498058bcc5d31ba718b502a5c219ea17cf5e61c06c987bffd344205e2b`) and sheet `9630630604` (`sha256:58bf55eabd208127f35fc5a7d9c3a9d7b99a40d6b3f3123d75f87da70cacf55f`). PR: test results `9630555630` (`sha256:f09f7b109e5a73adc5a0e65388febb485655297924d5ce24f1b2689e25b91af1`) and sheet `9630556307` (`sha256:b26190678d4cbf881d00cb9244a1eb826a1c23826147edcda597b44c4d38f723`). Both TRX sets total 309 passed with no failures/errors/timeouts/skips; both PNGs retain the reviewed digest and 792×621 RGBA geometry.
+- Final evidence identity and gates: head `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf`, tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`; push run `33032555656`, job `98388150311`, and PR run `33032557593`, job `98388156701`, each passed locked restore, the clean audit, all 20 Release builds with 0 warnings/errors, 309/309 tests, and both artifact uploads on the first attempt.
+- Final evidence artifacts were downloaded and hash-verified. Push: test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`). PR: test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Both TRX sets total 309 passed with no failures/errors/timeouts/skips; both PNGs retain digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`, 792×621 RGBA geometry, and the visually inspected synchronized labels.
+- PR #13 merge-ref review proved exact parents, head, and tree. The PR was marked ready and squash-merged with expected head `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`.
 - Auxiliary formatter: `dotnet format --verify-no-changes` could not launch its Roslyn build-host pipe in this restricted Linux environment (`SocketException: Permission denied`). It is not a Task 6 Paw Gate command; strict compiler/analyzer and diff-whitespace gates passed.
 
 ## Remaining
 
-- Publish and gate this bounded evidence descendant on PR #13, merge it with an expected-head fence, and verify the exact correction tree on remote `main`.
-- Publish a docs-only accepted-main reconciliation, archive Task 6 only after its gate passes, and verify final remote `main` identity/tree. Do not open Task 7.
+- No Stage 4 implementation work remains. This docs-only acceptance reconciliation must pass its exact event gates and expected-head merge before the next packet is opened.
+- Keep Task 7 unopened; any later work begins through its own bounded active packet.
 
 ## Risks and assumptions
 
@@ -69,28 +72,29 @@ Task 6 — Regions and Attention Sheets, the final Stage 4 packet. The implement
 
 ## Personal Round Judgments
 
-J1–J11 are recorded in the active packet. J11 replaces a whole-testhost resource heuristic with direct observation of the process and pipe handles the capture client actually owns. Every choice is reversible without changing identity, memory, privacy authority, or later-stage semantics.
+J1–J11 are recorded in the archived packet. J11 replaces a whole-testhost resource heuristic with direct observation of the process and pipe handles the capture client actually owns. Every choice is reversible without changing identity, memory, privacy authority, or later-stage semantics.
 
 ## Review focus
 
-- Verify the retained safe-handle observations are non-owning, cannot close or transfer a live handle, and see each old process/pipe pair closed only by production teardown.
-- Require both GitHub event paths to execute 309/309 and generate both artifacts on the exact correction head.
-- Recheck the correction against implementation `main` for any behavior, authority, workflow, package, Task 7+, API, semantic attention, conversation, ERPP implementation, personality, durable-image, or production-data expansion.
+- Confirm this reconciliation changes only the three standing control records plus the Task 6 active-to-archive rename/content update.
+- Require both GitHub event paths to execute 309/309 and generate both artifacts on the exact reconciliation head.
+- Confirm `tasks/active/` is empty, Task 7 is absent, and remote `main` retains the exact accepted tree after the expected-head merge.
 
 ## Repository state
 
-- Branch: `agent/task-06-resource-gate-correction`.
+- Stage 4 acceptance branch: `agent/task-06-stage4-acceptance-final`, a docs-only descendant of accepted product/evidence `main`.
 - Accepted base: `a257d5a1d70d03a77f27582b9f0bbecd0194e67d`, tree `b3a84d9a0a5be6cc81b4f517ac1b1fdb8537a23b`.
 - Corrected local implementation head: `018e99b1802673051c116df63e3e6bc4891f62cf`.
 - Published equivalent head: `660d7d9c4ffc4592cf0c725c3686ce68735dab18`; exact shared tree `2876d61439087ecd41b4d967761c3ff447246a44`.
 - Final implementation head/tree: `1e41ecfb69abbecb0c90c0215616470c864e4525` / `77590a151ef87b3725472cde3892ba4b6ec53754`.
 - Implementation merge on remote `main`: `8d14fe945871ce1f92dde987087147befa4a60b2`, exact tree retained.
 - Premature acceptance PR #12: closed, unmerged.
-- Correction publication: PR #13 at `9ce4e592dc812a5740b49a033268386b8d7d8f13`, tree `aea3bd99744e07452a9db0412be6754928baa941`; both exact Windows event paths passed.
+- Final correction/evidence merge: PR #13 as `779ed4b0fab9cce8fdf978add388b6282010974a`, exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`.
+- Task 6 packet: archived. Active-task count: zero. Task 7: unopened.
 
 ## Next safe task
 
-Finish the bounded PR #13 evidence descendant and expected-head merge, then perform the docs-only accepted-main reconciliation. Do not archive Task 6, mark Stage 4 accepted, or open Task 7 before that reconciliation passes.
+Gate and merge this docs-only Stage 4 acceptance reconciliation, then verify exact remote `main`. Do not open Task 7 within this packet.
 
 ## Credit status
 
