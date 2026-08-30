@@ -66,6 +66,41 @@ public sealed class CaptureFramePipelineTests
     }
 
     [Fact]
+    public async Task ProducerPressure_DoesNotAccumulateWakeSignalsForEvictedFrames()
+    {
+        const int pressuredFrames = 4096;
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var ownership = new SharedDisposalCounter();
+        await using var pipeline = new CaptureFramePipeline(
+            processor: async (_, cancellationToken) =>
+            {
+                entered.TrySetResult();
+                await release.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            });
+        pipeline.Resume();
+
+        Assert.True(pipeline.TryOffer(CreateCountedFrame(ownership)));
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        for (var index = 0; index < pressuredFrames; index++)
+        {
+            Assert.True(pipeline.TryOffer(CreateCountedFrame(ownership)));
+        }
+
+        var pressured = CaptureWorkerTestSupport.Snapshot(pipeline);
+        Assert.Equal(CaptureFramePipeline.ProcessingQueueCapacity, pressured.QueueDepth);
+        Assert.InRange(
+            pipeline.PendingWakeSignalCount,
+            0,
+            CaptureFramePipeline.ProcessingQueueCapacity);
+
+        release.TrySetResult();
+        await pipeline.ClearAsync(CancellationToken.None);
+        Assert.Equal(pressuredFrames + 1, Interlocked.Read(ref ownership.Created));
+        Assert.Equal(pressuredFrames + 1, Interlocked.Read(ref ownership.Disposed));
+    }
+
+    [Fact]
     public async Task BytePressure_EvictsOldestAndStaysBelowSixtyFourMiB()
     {
         await using var pipeline = new CaptureFramePipeline();
@@ -215,4 +250,7 @@ public sealed class CaptureFramePipelineTests
             height: 32,
             accountedBytes: bytes,
             resource);
+
+    private static CaptureSourceFrame CreateCountedFrame(SharedDisposalCounter ownership) =>
+        CreateFrame(new CountedResource(ownership), 4096);
 }

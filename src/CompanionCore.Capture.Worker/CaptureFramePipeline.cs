@@ -45,6 +45,8 @@ internal sealed class CaptureFramePipeline : IAsyncDisposable
 
     internal event EventHandler<CaptureSourceFrame>? FrameReady;
 
+    internal int PendingWakeSignalCount => _available.CurrentCount;
+
     internal void Resume()
     {
         lock (_gate)
