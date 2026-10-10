@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, KEEP-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. Stage 10's keepsake photographs (KEEP-01) are accepted. No task is active; KEEP-02 (Vault inclusion and complete recovery) is next.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, KEEP-01, KEEP-02, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. Stage 10's keepsakes and complete recovery (KEEP-01, KEEP-02) are complete. No task is active; Stage 11 calibration and Stage 12 live API await Boss.
 
 ## Builder workflow
 
@@ -65,7 +65,9 @@ It passed both Windows gates at 546/546 and merged as `0fe0932aaa54039fafd709e2c
 
 **KEEP-01** (PR #35) added `CompanionCore.Keepsakes`, the only durable-image path. Each write is paired with a visible camera action, admitted only for the authorized target and current privacy generation, compressed, verified on inspection, and deletable only on Boss's explicit request. It passed both Windows gates at 710/710 and merged as `05c5bbb7a6f9a0517a7b06a2abeb2becfcb45f08`.
 
-KEEP-02 (Vault inclusion and complete recovery) comes next. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**KEEP-02** (PR #37) added `CompanionCore.Vault`. Da Bun Vault now carries photographs, settings, and the active checkpoint beside the unchanged memory archive, and one recovery path restores everything and reports honestly. It passed both Windows gates at 744/744 and merged as `e59b46b809f19325b425614e7e62d78b2a9c2b80`. Stage 10 is complete.
+
+Stage 11 (calibration on the target PC) and Stage 12 (credentials and live API) require Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 

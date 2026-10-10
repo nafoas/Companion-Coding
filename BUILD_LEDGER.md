@@ -2,17 +2,17 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 10 — keepsakes and complete memory recovery — **part 1 accepted** (KEEP-01 keepsake photographs); KEEP-02 Vault inclusion and complete recovery pending |
-| Active task | None; KEEP-02 (Da Bun Vault inclusion of photographs, settings, and active checkpoint; complete recovery) is next |
-| Working branch | Accepted product/evidence baseline on `main`: `05c5bbb7a6f9a0517a7b06a2abeb2becfcb45f08` (KEEP-01) |
-| Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
+| Current stage | Stage 10 — keepsakes and complete memory recovery — **accepted and complete** (KEEP-01 + KEEP-02) |
+| Active task | None. Roadmap boundary: Stage 11 calibration needs target-PC evidence and Stage 12 (Task 12) needs credentials and live API, both requiring Boss |
+| Working branch | Accepted product/evidence baseline on `main`: `e59b46b809f19325b425614e7e62d78b2a9c2b80` (KEEP-02) |
+| Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | KEEP-01 gate head `7febbf676bded32ee10a684a721e300ae9c8e985`, tree `e700562cbc2b9cb7eec843e667cca28bdc3fff41`, passed push run `38060811488` and PR run `38060814801`; fix head `25e6178` passed push run `38060543707` and PR run `38060546479`. Each run passed locked restore, the clean 34-project audit, a 0-warning/0-error Release build, 710/710 tests (Keepsakes 23), and both artifact uploads with verified digests. The first candidate `8dc845f` failed one test-only, file-system-dependent assertion (NTFS case-insensitivity), corrected without product change. The local gate passed 697/697. Task 11 closure post-merge `main` run `38058826534` passed. |
-| Manual gate | KEEP-01 actual-diff, allowlist, durable-write admission, no-cleanup/no-public-delete, record-retention, and mutation review passed. 52 mutants: 48 killed, 4 equivalent; three first-run gaps were closed with tests. PR #35 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `05c5bbb7a6f9a0517a7b06a2abeb2becfcb45f08` — KEEP-01 keepsake photographs (PR #35), Stage 10 part 1 |
+| Automated tests | KEEP-02 gate head `04e06490848dc1de489a8b42fbcf060c7108c480`, tree `7f9cc0e22d01fc55562211aff3db2e75e8854a23`, passed push run `38062794018` and PR run `38062797018`; fix head `25d5785` passed push run `38062566372` and PR run `38062568915`. Each run passed locked restore, the clean 36-project audit, a 0-warning/0-error Release build, 744/744 tests (Vault 32, Memory 87), and both artifact uploads with verified digests. The first candidate `91fbcb8` failed one test-only Windows assumption (hashing the exclusively held journal), corrected without product change. The local gate passed 731/731. KEEP-01 closure post-merge `main` run `38061297520` passed. |
+| Manual gate | KEEP-02 actual-diff, allowlist, accepted-memory-format preservation, promotion-atomicity, restoration-policy, and mutation review passed. 37 mutants: 34 killed, 3 equivalent (defense in depth). PR #37 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `e59b46b809f19325b425614e7e62d78b2a9c2b80` — KEEP-02 Vault inclusion and complete recovery (PR #37), completing Stage 10 |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The bridge, attention engine, coordinator, transcript, recall, and Watchbun engine are not yet wired to each other, capture, presentation, or the app. Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; real OS foreground/input/process/lock hooks await wiring; Recall is not yet wired to the app. Consolidation idempotency requires the caller to persist the operation time (Task 10 J3). |
-| Deferred temptations | Keepsake listing paging (KEEP-01 D1); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
+| Deferred temptations | Single-file Vault export and a public backup/repair command (KEEP-02 D1); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
 ## Gate history
@@ -108,6 +108,26 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### KEEP-02 — Da Bun Vault inclusion and complete recovery (Stage 10, part 2)
+
+- Builder: Claude. Opened on 2026-10-10 under Boss's standing direction as the second Stage 10 packet.
+- Scope: 26 allowlisted paths, comprising:
+  - minimal internal Memory changes (a companion hook, the companion archive path, read-only keyset paging);
+  - the new `CompanionCore.Vault` project and `CompanionCore.Vault.Tests`;
+  - Memory paging tests;
+  - friend lines;
+  - solution wiring and control records.
+- Delivered:
+  - a companion archive of photographs and checksummed state (settings and the active checkpoint) beside the unchanged memory archive, built and validated before any promotion, with companion-first promotion;
+  - complete restoration: companion validation, the accepted memory repair, then photograph and state restoration against the restored records, with damaged copies preserved and an honest report;
+  - keyset paging, which resolves KEEP-01 D1.
+- Personal Round Judgments J1–J7. Deferred finding D1: single-file export and a public command at wiring.
+- Evidence:
+  - The first candidate's single test-only Windows failure was corrected in `25d5785`.
+  - Fix head `25d5785` (runs `38062566372` and `38062568915`) and gate head `04e0649` (runs `38062794018` and `38062797018`) each passed 744/744 with verified artifacts.
+- Merge: the merge ref had exact parents and an equal tree. PR #37 squash-merged through the expected-head fence as `e59b46b809f19325b425614e7e62d78b2a9c2b80`.
+- Result: passed and accepted. **Stage 10 is complete.**
 
 ### KEEP-01 — Keepsake photographs (Stage 10, part 1)
 
