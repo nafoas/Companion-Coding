@@ -142,6 +142,7 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
     private long _sequence;
     private readonly Queue<CaptureFrameMetadata> _buffer = new();
     private readonly Queue<AttentionSheet> _sheets = new();
+    private AttentionSheet? _pinnedOrientation;
     private bool _disposed;
 
     public CaptureWorkerStatus Status { get; private set; } = CaptureWorkerStatus.Stopped;
@@ -255,9 +256,40 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         return Task.CompletedTask;
     }
 
+    public int OrientationRequestCount { get; private set; }
+
+    public Exception? OrientationRequestFailure { get; set; }
+
+    public Task RequestOrientationAsync(
+        CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(authorization);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (Status != CaptureWorkerStatus.Running || !ReferenceEquals(authorization, LastGrant))
+        {
+            throw new InvalidOperationException("Grant is not active.");
+        }
+
+        OrientationRequestCount++;
+        return OrientationRequestFailure is { } failure
+            ? Task.FromException(failure)
+            : Task.CompletedTask;
+    }
+
     public AttentionSheet? TakeLatestAttentionSheet()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+
+        // Mirrors the ICaptureWorker contract: an undelivered orientation first,
+        // otherwise the newest regional sheet.
+        if (_pinnedOrientation is { } orientation)
+        {
+            _pinnedOrientation = null;
+            return orientation;
+        }
+
         while (_sheets.Count > 1)
         {
             _sheets.Dequeue().Dispose();
@@ -300,7 +332,8 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         CaptureAuthorizationGrant authorization,
         long sourceSequenceNumber,
         int sourceWidth = 1,
-        int sourceHeight = 1)
+        int sourceHeight = 1,
+        AttentionSheetKind kind = AttentionSheetKind.Orientation)
     {
         var bytes = new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 };
         LastSheetPayload = bytes;
@@ -316,28 +349,51 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
             SheetWidth = 1,
             SheetHeight = 1,
             EncodedByteLength = bytes.Length,
-            Kind = AttentionSheetKind.Orientation,
+            Kind = kind,
             ChangeScore = 1,
-            Regions =
-            [
-                new AttentionSheetRegionMetadata
-                {
-                    Kind = AttentionRegionKind.FullContext,
-                    NormalizedSource = new NormalizedRegion(0, 0, 1, 1),
-                    SourcePixels = new PixelRect(0, 0, sourceWidth, sourceHeight),
-                    SheetPixels = new PixelRect(0, 0, 1, 1),
-                },
-            ],
+            Regions = kind == AttentionSheetKind.Regional
+                ? [FullContext(sourceWidth, sourceHeight), CenterFocus(sourceWidth, sourceHeight)]
+                : [FullContext(sourceWidth, sourceHeight)],
         };
-        while (_sheets.Count >= AttentionSheet.MaximumRetainedSheets)
+        var sheet = new AttentionSheet(metadata, bytes);
+        if (kind == AttentionSheetKind.Orientation)
+        {
+            _pinnedOrientation?.Dispose();
+            _pinnedOrientation = sheet;
+        }
+        else
+        {
+            _sheets.Enqueue(sheet);
+        }
+
+        var regionalCapacity = AttentionSheet.MaximumRetainedSheets
+            - (_pinnedOrientation is null ? 0 : 1);
+        while (_sheets.Count > regionalCapacity)
         {
             _sheets.Dequeue().Dispose();
         }
 
-        _sheets.Enqueue(new AttentionSheet(metadata, bytes));
         AttentionSheetProduced?.Invoke(this, metadata);
         return metadata;
     }
+
+    private static AttentionSheetRegionMetadata FullContext(int sourceWidth, int sourceHeight) =>
+        new()
+        {
+            Kind = AttentionRegionKind.FullContext,
+            NormalizedSource = new NormalizedRegion(0, 0, 1, 1),
+            SourcePixels = new PixelRect(0, 0, sourceWidth, sourceHeight),
+            SheetPixels = new PixelRect(0, 0, 1, 1),
+        };
+
+    private static AttentionSheetRegionMetadata CenterFocus(int sourceWidth, int sourceHeight) =>
+        new()
+        {
+            Kind = AttentionRegionKind.CenterEnvironment,
+            NormalizedSource = new NormalizedRegion(0, 0, 1, 1),
+            SourcePixels = new PixelRect(0, 0, sourceWidth, sourceHeight),
+            SheetPixels = new PixelRect(0, 0, 1, 1),
+        };
 
     internal void EmitStatus(
         CaptureWorkerStatus status,
@@ -364,6 +420,9 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         {
             _sheets.Dequeue().Dispose();
         }
+
+        _pinnedOrientation?.Dispose();
+        _pinnedOrientation = null;
     }
 
     private void SetStatus(

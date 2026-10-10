@@ -30,8 +30,19 @@ public interface ICaptureWorker : IDisposable
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Transfers ownership of the newest available sheet to the caller and disposes
-    /// any older queued sheet. Returns null when no current sheet is available.
+    /// Asks the worker to emit a fresh orientation sheet from its next usable frame.
+    /// Consumers use this only as a bounded failsafe when an orientation could not be
+    /// delivered; it requires the active grant.
+    /// </summary>
+    Task RequestOrientationAsync(
+        CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Transfers ownership of the next sheet the caller must see. An undelivered
+    /// orientation is handed over first and is never displaced by newer regional
+    /// sheets; otherwise the newest sheet is returned and any older queued sheet is
+    /// disposed. Returns null when no current sheet is available.
     /// </summary>
     AttentionSheet? TakeLatestAttentionSheet();
 

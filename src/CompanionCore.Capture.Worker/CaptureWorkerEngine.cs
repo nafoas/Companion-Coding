@@ -237,6 +237,35 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Re-arms the one orientation sheet for the active grant. The next usable frame,
+    /// even a duplicate, becomes a fresh orientation. Consumers use this only as a
+    /// bounded failsafe when an orientation could not be delivered.
+    /// </summary>
+    internal async Task RequestOrientationAsync(
+        CaptureIpcAuthorization authorization,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(authorization);
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_status != CaptureWorkerStatus.Running
+                || _authorization is null
+                || !_authorization.Matches(authorization))
+            {
+                throw new InvalidOperationException("The orientation request does not match the active capture grant.");
+            }
+
+            _visual.RequestOrientation();
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
     private void CompleteManualRegionUpdate(
         CaptureIpcAuthorization authorization,
         bool responseCommitted)

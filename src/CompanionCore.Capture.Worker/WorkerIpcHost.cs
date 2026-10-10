@@ -194,6 +194,17 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
 
                     return false;
 
+                case CaptureIpcMessageKind.RequestOrientation:
+                    if (command.Authorization is null)
+                    {
+                        throw new CaptureProtocolException(CaptureWorkerErrorCode.InvalidAuthorization);
+                    }
+
+                    await _engine.RequestOrientationAsync(command.Authorization, cancellationToken)
+                        .ConfigureAwait(false);
+                    await SendSuccessAsync(command, cancellationToken).ConfigureAwait(false);
+                    return false;
+
                 case CaptureIpcMessageKind.Shutdown:
                     if (_engine.Status != CaptureWorkerStatus.Stopped)
                     {
@@ -232,10 +243,12 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         }
     }
 
-    private static void ValidateCommandShape(CaptureIpcMessage command)
+    internal static void ValidateCommandShape(CaptureIpcMessage command)
     {
         var authorizationShapeIsValid = command.Kind is (
-                CaptureIpcMessageKind.Start or CaptureIpcMessageKind.SetManualRegion)
+                CaptureIpcMessageKind.Start
+                or CaptureIpcMessageKind.SetManualRegion
+                or CaptureIpcMessageKind.RequestOrientation)
             ? command.Authorization is not null
             : command.Authorization is null;
         var manualShapeIsValid = command.Kind == CaptureIpcMessageKind.SetManualRegion
@@ -250,6 +263,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
                 or CaptureIpcMessageKind.StopAndClear
                 or CaptureIpcMessageKind.GetMetrics
                 or CaptureIpcMessageKind.SetManualRegion
+                or CaptureIpcMessageKind.RequestOrientation
                 or CaptureIpcMessageKind.Shutdown)
             || command.HandshakeNonce is not null
             || command.SequenceNumber != 0

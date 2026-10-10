@@ -19,8 +19,27 @@ public sealed class TargetSessionController : IAsyncDisposable
     private readonly object _sheetGate = new();
     private readonly SortedDictionary<long, CaptureFrameMetadata> _admittedVisualFrames = [];
     private readonly Dictionary<long, AttentionSheetMetadata> _pendingVisualSheets = [];
+    /// <summary>
+    /// Admitted frames that may pass while an orientation is outstanding before the
+    /// failsafe asks the worker to retake it. Counting admitted frames scales with
+    /// the capture cadence and needs no timer.
+    /// </summary>
+    internal const int OrientationDeliveryFrameBudget = 8;
+
+    /// <summary>Bounded retakes per outstanding orientation; never an unbounded loop.</summary>
+    internal const int MaximumOrientationRetakes = 3;
+
     private AttentionSheet? _heldAttentionSheet;
+    private AttentionSheet? _heldOrientation;
     private long _visualAdmissionEpoch;
+    private CaptureWorkerStatus _lastWorkerStatus = CaptureWorkerStatus.Stopped;
+    private bool _orientationOutstanding;
+    private int _framesSinceOrientationOutstanding;
+    private int _orientationRetakesForOutstanding;
+    private int _orientationRequestInFlight;
+    private int _orientationRetakeRequests;
+    private int _orientationDeliveryFailures;
+    private Task _orientationRetake = Task.CompletedTask;
     private CancellationTokenSource? _targetWork;
     private bool _cleanupComplete = true;
     private bool _disposed;
@@ -422,38 +441,57 @@ public sealed class TargetSessionController : IAsyncDisposable
 
             if (incoming is not null)
             {
-                if (_heldAttentionSheet is null
+                // The orientation has its own slot so a newer regional sheet can
+                // never displace it before it is delivered.
+                ref var slot = ref incoming.Metadata.Kind == AttentionSheetKind.Orientation
+                    ? ref _heldOrientation
+                    : ref _heldAttentionSheet;
+                if (slot is null
                     || incoming.Metadata.SourceSequenceNumber
-                        >= _heldAttentionSheet.Metadata.SourceSequenceNumber)
+                        >= slot.Metadata.SourceSequenceNumber)
                 {
-                    _heldAttentionSheet?.Dispose();
-                    _heldAttentionSheet = incoming;
+                    slot?.Dispose();
+                    slot = incoming;
                     incoming = null;
                 }
 
                 incoming?.Dispose();
             }
 
-            if (_heldAttentionSheet is not { } ready
-                || !_admittedVisualFrames.Remove(
-                    ready.Metadata.SourceSequenceNumber,
-                    out var admittedFrame))
+            if (TryReleaseHeldUnsafe(ref _heldOrientation) is { } orientation)
             {
-                return null;
+                return orientation;
             }
 
-            if (!MatchesSourceFrame(ready.Metadata, admittedFrame))
-            {
-                _heldAttentionSheet = null;
-                _pendingVisualSheets.Remove(ready.Metadata.SourceSequenceNumber);
-                ready.Dispose();
-                return null;
-            }
-
-            _heldAttentionSheet = null;
-            _pendingVisualSheets.Remove(ready.Metadata.SourceSequenceNumber);
-            return ready;
+            return TryReleaseHeldUnsafe(ref _heldAttentionSheet);
         }
+    }
+
+    internal int OrientationRetakeRequests => Volatile.Read(ref _orientationRetakeRequests);
+
+    internal int OrientationDeliveryFailures => Volatile.Read(ref _orientationDeliveryFailures);
+
+    private AttentionSheet? TryReleaseHeldUnsafe(ref AttentionSheet? slot)
+    {
+        if (slot is not { } ready
+            || !_admittedVisualFrames.Remove(
+                ready.Metadata.SourceSequenceNumber,
+                out var admittedFrame))
+        {
+            return null;
+        }
+
+        if (!MatchesSourceFrame(ready.Metadata, admittedFrame))
+        {
+            slot = null;
+            _pendingVisualSheets.Remove(ready.Metadata.SourceSequenceNumber);
+            ready.Dispose();
+            return null;
+        }
+
+        slot = null;
+        _pendingVisualSheets.Remove(ready.Metadata.SourceSequenceNumber);
+        return ready;
     }
 
     public async Task EndSessionAsync()
@@ -602,8 +640,11 @@ public sealed class TargetSessionController : IAsyncDisposable
                 FrameAdmitted?.Invoke(this, admitted);
                 if (ready is not null)
                 {
+                    NoteSheetAvailable(ready);
                     AttentionSheetAvailable?.Invoke(this, ready);
                 }
+
+                CountFrameTowardOrientationBudget();
             });
     }
 
@@ -633,6 +674,7 @@ public sealed class TargetSessionController : IAsyncDisposable
 
         if (publish)
         {
+            NoteSheetAvailable(metadata);
             AttentionSheetAvailable?.Invoke(this, metadata);
         }
     }
@@ -645,6 +687,114 @@ public sealed class TargetSessionController : IAsyncDisposable
             || change.Reason == CaptureWorkerStatusReason.SourceResized)
         {
             ClearVisualAdmission();
+        }
+
+        lock (_sheetGate)
+        {
+            // The worker re-arms its one orientation whenever it (re)enters Running
+            // or recalibrates after a resize, so exactly then one is owed.
+            if (change.Status == CaptureWorkerStatus.Running
+                && (_lastWorkerStatus != CaptureWorkerStatus.Running
+                    || change.Reason == CaptureWorkerStatusReason.SourceResized))
+            {
+                _orientationOutstanding = true;
+                _framesSinceOrientationOutstanding = 0;
+                _orientationRetakesForOutstanding = 0;
+            }
+            else if (change.Status != CaptureWorkerStatus.Running)
+            {
+                _orientationOutstanding = false;
+            }
+
+            _lastWorkerStatus = change.Status;
+        }
+    }
+
+    private void NoteSheetAvailable(AttentionSheetMetadata metadata)
+    {
+        if (metadata.Kind != AttentionSheetKind.Orientation)
+        {
+            return;
+        }
+
+        lock (_sheetGate)
+        {
+            _orientationOutstanding = false;
+            _framesSinceOrientationOutstanding = 0;
+        }
+    }
+
+    private void CountFrameTowardOrientationBudget()
+    {
+        lock (_sheetGate)
+        {
+            if (!_orientationOutstanding)
+            {
+                return;
+            }
+
+            _framesSinceOrientationOutstanding++;
+            if (_framesSinceOrientationOutstanding < OrientationDeliveryFrameBudget)
+            {
+                return;
+            }
+
+            _framesSinceOrientationOutstanding = 0;
+            if (_orientationRetakesForOutstanding >= MaximumOrientationRetakes)
+            {
+                // Honest, bounded failure: stop asking until the next epoch.
+                _orientationOutstanding = false;
+                _orientationDeliveryFailures++;
+                return;
+            }
+
+            if (Interlocked.CompareExchange(ref _orientationRequestInFlight, 1, 0) != 0)
+            {
+                return;
+            }
+
+            _orientationRetakesForOutstanding++;
+            _orientationRetakeRequests++;
+        }
+
+        // Never perform worker I/O inside the privacy admission lease that is
+        // running this callback: privacy stop waits for leases to drain.
+        var token = CurrentTargetWorkToken;
+        var retake = Task.Run(() => RequestOrientationRetakeAsync(token));
+        lock (_sheetGate)
+        {
+            _orientationRetake = retake;
+        }
+    }
+
+    /// <summary>Test seam: completes when the most recent retake request settles.</summary>
+    internal Task OrientationRetakeSettled()
+    {
+        lock (_sheetGate)
+        {
+            return _orientationRetake;
+        }
+    }
+
+    private async Task RequestOrientationRetakeAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var grant = CurrentSession.Grant;
+            if (grant is null || !_authorization.IsCurrent(grant))
+            {
+                return;
+            }
+
+            await _worker.RequestOrientationAsync(grant, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            // A failed retake is one bounded attempt; the next budget may try again.
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _orientationRequestInFlight, 0);
         }
     }
 
@@ -679,6 +829,8 @@ public sealed class TargetSessionController : IAsyncDisposable
             _pendingVisualSheets.Clear();
             _heldAttentionSheet?.Dispose();
             _heldAttentionSheet = null;
+            _heldOrientation?.Dispose();
+            _heldOrientation = null;
             _visualAdmissionEpoch = checked(_visualAdmissionEpoch + 1);
         }
     }

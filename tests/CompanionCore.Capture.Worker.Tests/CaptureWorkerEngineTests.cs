@@ -150,6 +150,28 @@ public sealed class CaptureWorkerEngineTests
         Assert.Equal(1, afterResponse.DisposeCount);
     }
 
+    [Fact]
+    public async Task RequestOrientation_RequiresTheActiveGrantOfARunningWorker()
+    {
+        await using var source = new ControllableCaptureSource();
+        await using var engine = new CaptureWorkerEngine(source);
+        var authorization = CaptureWorkerTestSupport.CreateAuthorization();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            engine.RequestOrientationAsync(authorization, CancellationToken.None));
+
+        await engine.StartAsync(authorization, CancellationToken.None);
+        await engine.RequestOrientationAsync(authorization, CancellationToken.None);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            engine.RequestOrientationAsync(
+                CaptureWorkerTestSupport.CreateAuthorization(generation: 8),
+                CancellationToken.None));
+
+        await engine.StopAndClearAsync(CancellationToken.None);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            engine.RequestOrientationAsync(authorization, CancellationToken.None));
+    }
+
     private static CaptureSourceFrame CreateFrame(
         IDisposable resource,
         int width = 32,

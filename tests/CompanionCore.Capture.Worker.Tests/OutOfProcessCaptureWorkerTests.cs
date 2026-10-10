@@ -405,6 +405,63 @@ public sealed class OutOfProcessCaptureWorkerTests
         await worker.StopAndClearAsync(CancellationToken.None);
     }
 
+    [Fact]
+    public async Task RequestOrientation_RetakesThroughTheWorkerProcessForTheActiveGrantOnly()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        var orientations = new ConcurrentQueue<AttentionSheetMetadata>();
+        worker.AttentionSheetProduced += (_, metadata) =>
+        {
+            if (metadata.Kind == AttentionSheetKind.Orientation)
+            {
+                orientations.Enqueue(metadata);
+            }
+        };
+
+        await worker.StartAsync(grant, CancellationToken.None);
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => orientations.Count >= 1,
+            TimeSpan.FromSeconds(10));
+        using (var first = worker.TakeLatestAttentionSheet())
+        {
+            Assert.Equal(AttentionSheetKind.Orientation, first!.Metadata.Kind);
+        }
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            worker.RequestOrientationAsync(
+                CaptureWorkerTestSupport.CreateGrant(generation: 8),
+                CancellationToken.None));
+
+        await worker.RequestOrientationAsync(grant, CancellationToken.None);
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => orientations.Count >= 2,
+            TimeSpan.FromSeconds(10));
+        AttentionSheet? retaken = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => (retaken = worker.TakeLatestAttentionSheet()) is not null,
+            TimeSpan.FromSeconds(10));
+        using (retaken)
+        {
+            Assert.Equal(AttentionSheetKind.Orientation, retaken!.Metadata.Kind);
+            Assert.True(retaken.Metadata.Matches(grant));
+            Assert.True(
+                retaken.Metadata.SourceSequenceNumber
+                > orientations.First().SourceSequenceNumber);
+        }
+
+        var metrics = await worker.GetMetricsAsync(CancellationToken.None);
+        Assert.Equal(2, metrics.ProducedOrientationSheets);
+        await worker.StopAndClearAsync(CancellationToken.None);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            worker.RequestOrientationAsync(grant, CancellationToken.None));
+    }
+
     private static OutOfProcessCaptureWorker CreateWorker() =>
         new(CaptureWorkerLaunchOptions.ForPrivateSafeSyntheticTests());
 
