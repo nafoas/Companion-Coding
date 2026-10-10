@@ -1,0 +1,37 @@
+{
+  "fixtureVersion": 1,
+  "name": "orientation-basic",
+  "match": {
+    "operationKind": "interpretAttentionSheet",
+    "sheetKind": "orientation",
+    "regionKinds": ["fullContext"],
+    "subjects": []
+  },
+  "replies": [
+    {
+      "kind": "success",
+      "response": {
+        "schemaVersion": 1,
+        "operationId": "00000000-0000-0000-0000-000000000000",
+        "interpretation": {
+          "summary": "Replayed synthetic orientation summary.",
+          "observations": [
+            { "region": "fullContext", "label": "synthetic scene", "confidence": 0.8 }
+          ]
+        },
+        "memoryProposals": [
+          {
+            "operation": "memory.append.v1",
+            "scope": "session",
+            "sourceKind": "observed",
+            "confidence": 0.7,
+            "subjectKey": "synthetic.replay.scene",
+            "entityReferences": ["synthetic.entity"],
+            "recollection": "Replayed synthetic recollection."
+          }
+        ],
+        "usage": { "inputUnits": 120, "outputUnits": 40 }
+      }
+    }
+  ]
+}
