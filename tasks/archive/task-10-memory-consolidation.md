@@ -1,10 +1,13 @@
 # Task 10 — Memory Consolidation and Retrieval Mechanics
 
-Status: **active — Paw Gate review**
+Status: **accepted — Paw Gate passed 2026-10-10**. Stage 8 is complete.
 Authorized: 2026-10-10 under Boss's standing direction to continue autonomously through the pre-API tasks under the Paw Gate model
 Accepted remote base: `6f27392840f9b2c38e7570848921944a8dbdca98`
 Working branch: `agent/task-10-memory-consolidation`
 Builder: Claude
+Accepted gate head: `033eef6f79ed30572f1d3134729f13a52e8b55ae`, tree `c200f164ce1ac92b63b60fb26a5a2fcc0e412e29`
+Pull request: #31, squash-merged as `e529eb679a17dcc6059d2f83d33d850dc6a80c2f`
+Final CI: push run `38056657903`, PR run `38056660572`, each 621/621
 
 ## Objective
 
@@ -122,7 +125,20 @@ It references only Memory and produces append proposals committed only through `
 
 ## Paw Gate
 
-Candidate evidence (pending merge-ref check and acceptance):
+Gate result: **PASS** on 2026-10-10.
+
+**Actual-diff review.**
+- The 21-path change is allowlisted.
+- Recall exposes no update, delete, or compaction path, which a reflection test guards.
+- Every write is an append proposal through `LocalWriteGate`.
+- `MemoryQuery` SQL is built only from fixed fragments plus bound parameters.
+- No schema or maintenance change.
+
+**Merge.**
+- PR #31's merge ref had exact parents `6f27392` (main) and `033eef6` (head), and a tree equal to the head tree `c200f16`.
+- It was marked ready and squash-merged through the expected-head fence as `e529eb6`, with the tree unchanged.
+
+**Evidence.**
 
 - Gate head `755f8d3`:
   - push run `38056481599` and PR run `38056494760` each passed **621/621** (13 projects, Recall 41, Memory 85, App Integration 13);
