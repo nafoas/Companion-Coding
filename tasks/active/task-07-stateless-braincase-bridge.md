@@ -258,3 +258,4 @@ One gap the pass exposed (budget-nap buffer release before the notice) gained an
 2. Bridge diagnostics and usage estimates into Stage 11 "Show Da Technical Thinks" diagnostics, alongside the Stage 4 orientation-failsafe counters.
 3. Persistent OS-protected credential storage and the live provider adapter (Task 12, stop condition).
 4. Conversation and text-formulation request kinds when the conversation thread exists (Task 10).
+5. **Legacy App-integration shutdown timeout:** `AppProcessTests.Shutdown_StopThenClose_ExitsCleanlyWithStoppedStateAndNoLeftoverProcess` exceeded its 30-second exit bound on Task 7's PR run `38031390951`, attempt 1. The push run `38031379455` on the identical commit passed 453/453. Neither the App nor anything it references changed. The Build Ledger records earlier App-integration timeouts under runner saturation (Task 5). This flake recurs, so it gets its own root-cause packet (R5) before Task 8, rather than repeated reruns.
