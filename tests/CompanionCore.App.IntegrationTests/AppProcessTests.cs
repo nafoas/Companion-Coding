@@ -1,3 +1,5 @@
+using Xunit.Abstractions;
+
 namespace CompanionCore.App.IntegrationTests;
 
 /// <summary>
@@ -10,6 +12,22 @@ namespace CompanionCore.App.IntegrationTests;
 /// </summary>
 public sealed class AppProcessTests
 {
+    private readonly ITestOutputHelper _output;
+
+    public AppProcessTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
+
+    private AppProcess.Result Run(string testMode)
+    {
+        var result = AppProcess.Run(testMode);
+        _output.WriteLine(
+            $"{testMode}: startup {result.StartupDuration.TotalSeconds:F3} s (bound {AppProcess.StartupTimeout.TotalSeconds:F0} s), "
+            + $"exit {result.ExitDuration.TotalSeconds:F3} s (bound {AppProcess.ExitTimeout.TotalSeconds:F0} s)");
+        return result;
+    }
+
     [Fact]
     public void Ready_LaunchesWithNoKeyNetworkOrCapture_AndReachesReadyState()
     {
@@ -18,7 +36,7 @@ public sealed class AppProcessTests
         // prove the process actually launches, constructs its one runtime, reaches the
         // ready lifecycle state, and exits cleanly, none of which code review alone can
         // confirm about the real compiled artifact.
-        var result = AppProcess.Run("ready");
+        var result = Run("ready");
 
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("READY", result.StdOut);
@@ -28,7 +46,7 @@ public sealed class AppProcessTests
     [Fact]
     public void MultiWindow_ThreeRealWindows_ShareExactlyOneRuntimeConstruction()
     {
-        var result = AppProcess.Run("multiwindow");
+        var result = Run("multiwindow");
 
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("WINDOWS:3", result.StdOut);
@@ -38,13 +56,14 @@ public sealed class AppProcessTests
     [Fact]
     public void Shutdown_StopThenClose_ExitsCleanlyWithStoppedStateAndNoLeftoverProcess()
     {
-        var result = AppProcess.Run("shutdown");
+        var result = Run("shutdown");
 
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("SHUTDOWN:Stopped", result.StdOut);
-        // AppProcess.Run itself already proves the process exited (WaitForExit
-        // succeeded rather than timing out into a kill) — a hang here would have
-        // thrown TimeoutException before this assertion is ever reached.
+        // AppProcess.Run itself already proves the process exited within the exit bound,
+        // timed from the SHUTDOWN marker — a shutdown hang here would have thrown
+        // TimeoutException before this assertion is ever reached.
+        Assert.True(result.ExitDuration < AppProcess.ExitTimeout);
     }
 
     [Fact]
@@ -53,11 +72,11 @@ public sealed class AppProcessTests
         using var first = AppProcess.Start("--test-mode=hold");
         try
         {
-            var holdingLine = AppProcess.ReadLineWithTimeout(first.StandardOutput);
+            var holdingLine = AppProcess.ReadLineWithTimeout(first.StandardOutput)!;
             Assert.StartsWith("HOLDING", holdingLine);
             Assert.Contains("CONSTRUCTIONS:1", holdingLine);
 
-            var second = AppProcess.Run("ready");
+            var second = Run("ready");
 
             Assert.Equal(2, second.ExitCode);
             Assert.Contains("SECOND_INSTANCE:REJECTED", second.StdOut);
@@ -74,7 +93,7 @@ public sealed class AppProcessTests
             // shutdown behavior as a side effect.
             first.StandardInput.WriteLine();
             first.StandardInput.Flush();
-            if (!first.WaitForExit((int)AppProcess.DefaultTimeout.TotalMilliseconds))
+            if (!first.WaitForExit((int)AppProcess.ExitTimeout.TotalMilliseconds))
             {
                 AppProcess.TryKill(first);
             }
