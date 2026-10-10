@@ -1,10 +1,13 @@
 # Task 8 — Attention Engine
 
-Status: **active — implementation**
+Status: **accepted — Paw Gate passed 2026-10-10**
 Authorized: 2026-10-10 under Boss's standing direction to continue autonomously through the pre-API tasks under the Paw Gate model
 Accepted remote base: `8ec0a270ee4297562b766b06ee7e8af211398a0e`
 Working branch: `agent/task-08-attention-engine`
 Builder: Claude
+Accepted gate head: `5294cfdd4546e612a01ed71eb51980b69817e586`, tree `d6b15b28dc673b5529538bf9afc07235fe0cc3cd`
+Pull request: #25, squash-merged as `3d63147a153d3e957ae97f2bff71ccf08ac0c5f6`
+Final CI: push run `38035136125`, PR run `38035139305`, each 502/502
 
 ## Objective
 
@@ -140,15 +143,28 @@ The engine emits typed, abstract intents only. Every number is a configuration v
 
 ## Paw Gate
 
-Pending. The gate requires:
+Gate result: **PASS** on 2026-10-10. The separate review confirmed:
 
-- every acceptance scenario;
-- a strict build with 0 warnings;
-- the full local suite;
-- both Windows CI paths with verified artifacts;
-- actual-diff review;
-- an exact merge-ref check;
-- recorded judgments and every provisional threshold.
+**Acceptance.** Scenarios 1–11 and all six Roadmap Stage 6 Paw Gate scenarios pass through 49 deterministic synthetic-stream tests.
+
+**Actual-diff review.**
+- The 13-path change is allowlisted.
+- The engine references only Capture.Contracts and has no I/O, clock, or wiring.
+- Urgent exemptions, stepwise transitions, corroboration bookkeeping, false-alarm scope, and table bounds were verified.
+
+**Bug hunt.** J3 and J4 were fixed before publication. 23 of 23 key-guard mutations are killed.
+
+**Local gate.**
+- Locked restore and a clean audit on 24 projects.
+- Strict build with 0 warnings and 0 errors.
+- 489/489 executable tests.
+
+**Windows CI.**
+- Implementation head `6101fe1`: push run `38034930893` and PR run `38034940743`.
+- Gate head `5294cfd`: push run `38035136125` (job `114163895813`) and PR run `38035139305` (job `114163904782`).
+- Every run passed 502/502 on the first attempt, with verified artifacts and the accepted attention-sheet digest.
+
+**Merge ref.** Exact parents (`8ec0a27`, `5294cfd`) and a tree equal to the head tree.
 
 ## Personal Round Judgments
 

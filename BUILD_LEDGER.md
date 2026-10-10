@@ -2,17 +2,17 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 5 — stateless faraway Braincase bridge (mock/replay only) — **accepted**; App integration timing corrected (R5) |
-| Active task | None; Task 8 (attention engine, Stage 6) is next |
-| Working branch | Accepted product/evidence baseline on `main`: `3c078f58a46daf8f2f66e97592c39cf18d120f98` (R5) |
-| Entry criteria met | Complete; Tasks 4–7, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
+| Current stage | Stage 6 — attention ladder (neutral engine) — **accepted** |
+| Active task | None; Task 9 (conversation coordinator and seed banks, Stage 7) is next |
+| Working branch | Accepted product/evidence baseline on `main`: `3d63147a153d3e957ae97f2bff71ccf08ac0c5f6` (Task 8) |
+| Entry criteria met | Complete; Tasks 4–8, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | R5 gate head `5054f088bb7bf1ab1fc9c10d3dd5378b54b0554a`, tree `4d207ec0824eff49c3683074d40aa006a601e747`, passed push run `38033372491` (job `114158709568`) and PR run `38033375072` (job `114158717229`) on their first attempts. Each passed locked restore, the clean 22-project audit, a 0-warning/0-error Release build, 453/453 tests, and both artifact uploads. The App integration tests now log per-phase startup and exit durations. |
-| Manual gate | R5 actual-diff and bound review passed. Candidate evidence confirmed the diagnosis: a 28.983 s cold start plus a 2.026 s exit would have failed the old single 30 s bound and now passes, with shutdown measured precisely. PR #23 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `3c078f58a46daf8f2f66e97592c39cf18d120f98` — R5 App integration cold-start bounds (PR #23), on the Task 7 product tree |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, the eight-frame orientation budget, the three-retake bound, and the Task 7 bridge bounds and usage estimate are provisional until Stage 11 physical profiling and the final API gate. The synthetic capture source cannot emit `SourceResized`. The bridge is not yet composed into the WPF app. A cold first App launch on a shared CI runner can take about 30 s, and the App's `shutdown` scenario exit phase takes about 2 s; both are recorded for Stage 11 profiling. |
-| Deferred temptations | Task 8+ attention meaning/conversation/ERPP/personality work; live API and credentials (Task 12); durable images, production settings, final UI |
+| Automated tests | Task 8 gate head `5294cfdd4546e612a01ed71eb51980b69817e586`, tree `d6b15b28dc673b5529538bf9afc07235fe0cc3cd`, passed push run `38035136125` (job `114163895813`) and PR run `38035139305` (job `114163904782`) on their first attempts. Each passed locked restore, the clean 24-project audit, a 0-warning/0-error Release build, 502/502 tests (Attention 49), and both artifact uploads. The local gate passed the strict build and 489/489 executable tests. |
+| Manual gate | Task 8 actual-diff, allowlist, urgent-exemption, transition, corroboration, and bounds review passed. The Builder's bug hunt fixed two engine defects (J3, J4), and all 23 key-guard mutations are killed. PR #25 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `3d63147a153d3e957ae97f2bff71ccf08ac0c5f6` — Task 8 attention engine (PR #25) |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, the orientation budgets, the Task 7 bridge bounds and usage estimate, the App startup liveness bound, and every Task 8 attention number are provisional until Stage 11 physical profiling and calibration. The synthetic capture source cannot emit `SourceResized`. The bridge and the attention engine are not yet wired to capture, conversation, or presentation. |
+| Deferred temptations | Task 9+ conversation/ERPP/personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
 ## Gate history
@@ -108,6 +108,44 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### Task 8 — Attention engine
+
+- Builder: Claude, under Boss's standing direction to continue autonomously through the pre-API tasks (2026-10-10).
+- Scope: 13 allowlisted paths, comprising:
+  - the new `CompanionCore.Attention` project and `CompanionCore.Attention.Tests`;
+  - solution wiring;
+  - control records.
+
+  No other source changed.
+- Delivered: a deterministic, I/O-free `AttentionEngine`, comprising:
+  - the Noticing, Engaged, High Attention, and Afterglow states, with hysteresis and dwell;
+  - stepwise, level-dependent decay;
+  - corroboration of weak evidence from independent sources;
+  - decisive bypass;
+  - deduplication of global transitions;
+  - habituation with recovery;
+  - location familiarity, explicit or learned, that never suppresses urgent danger;
+  - adaptive, bounded Afterglow with one opening and suppression of unrelated initiated conversations;
+  - false-alarm correction;
+  - typed abstract intents and attention-event records;
+  - validated configuration and inputs, and bounded tables.
+- Personal Round Judgments J1–J9 record:
+  - neutral state names;
+  - provisional calibration, including the corroboration bonus raised to 2.0;
+  - exposure-based habituation;
+  - stepwise evaluation;
+  - the weak-evidence hold;
+  - always-signaled urgent evidence;
+  - sticky explicit familiarity;
+  - false alarms without Afterglow;
+  - bounded test loops.
+- Evidence:
+  - Two engine defects were found and fixed by the Builder's bug hunt, and 23 of 23 key-guard mutations are killed.
+  - The implementation and gate heads each passed both Windows paths at 502/502 with verified artifacts.
+  - The merge ref had exact parents and an equal tree.
+- Merge: PR #25 squash-merged with the expected-head fence as `3d63147a153d3e957ae97f2bff71ccf08ac0c5f6`, tree `d6b15b28dc673b5529538bf9afc07235fe0cc3cd`.
+- Result: passed and accepted. Stage 6's neutral engine is complete. Task 9 is next.
 
 ### R5 — App integration cold-start bounds
 

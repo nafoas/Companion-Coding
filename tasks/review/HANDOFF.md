@@ -2,85 +2,61 @@
 
 ## Task
 
-Task 8 — Attention Engine (`tasks/active/task-08-attention-engine.md`), Roadmap Stage 6. Branch `agent/task-08-attention-engine`, based on accepted `main` `8ec0a270ee4297562b766b06ee7e8af211398a0e`.
+No task is active. The last accepted packet is Task 8 — Attention Engine (`tasks/archive/task-08-attention-engine.md`), merged through PR #25 as `3d63147a153d3e957ae97f2bff71ccf08ac0c5f6`. Stage 6's neutral engine is complete.
 
 Builder: Claude.
 
 ## Completed
 
-- New `CompanionCore.Attention`: a deterministic, I/O-free `AttentionEngine` with Noticing, Engaged, High Attention, and Afterglow states. It provides:
-  - hysteresis and a dwell minimum for High Attention;
-  - level-dependent decay, integrated in bounded steps with evaluation at each step;
-  - a weighted signal blend;
-  - corroboration of weak evidence from independent sources within a window;
-  - decisive bypass;
-  - deduplication of global transitions, with a capped contribution;
-  - per-topic habituation with recovery;
-  - location familiarity, explicit or learned, which never suppresses urgent evidence;
-  - adaptive, bounded Afterglow with exactly one opening and suppression of unrelated initiated conversations;
-  - false-alarm correction;
-  - typed abstract intents;
-  - attention-event records;
-  - validated configuration and inputs;
-  - bounded tables.
-- New `CompanionCore.Attention.Tests`: 49 deterministic synthetic-stream tests covering acceptance scenarios 1–11 and the Stage 6 Paw Gate scenarios.
+- **Task 7** (PR #21): the stateless Braincase bridge.
+- **R5** (PR #23): App integration startup and exit phase bounds.
+- **Task 8** (PR #25, recorded here): the deterministic attention engine.
 
 ## Changed
 
-- `CompanionCore.slnx`
-- `src/CompanionCore.Attention/**` (5 files, including the lock file)
-- `tests/CompanionCore.Attention.Tests/**` (4 files, including the lock file)
-- this handoff and the active packet
+This docs-only reconciliation:
+
+- archives Task 8 with its PASS record;
+- updates `BUILD_LEDGER.md` and `README.md`;
+- resets this handoff.
 
 ## Verification
 
-Local, on the pinned SDK 10.0.302 (Linux cross-build):
-
-- Locked restore passed and the audit of all 24 projects is clean.
-- The strict Release build had 0 warnings and 0 errors.
-- 489/489 executable tests passed:
-
-  | Suite | Tests |
-  |---|---|
-  | Api | 128 |
-  | Attention | 49 |
-  | Capture | 14 |
-  | Capture Worker | 68 |
-  | Memory | 68 |
-  | Presentation | 50 |
-  | Privacy | 13 |
-  | Runtime | 26 |
-  | TargetAuth | 73 |
-
-- The bug hunt fixed J3 and J4. The mutation pass killed all 23 key-guard mutations; see the packet.
-- Windows CI on implementation head `6101fe1`: push run `38034930893` (job `114163281939`) and PR run `38034940743` (job `114163311101`) each passed 502/502 on the first attempt (Attention 49/49).
-  - Both artifact digests verified on each path.
-  - The attention-sheet PNG keeps the accepted digest `5eb11c96…b046dd`.
+- Task 8 gate head `5294cfd`, tree `d6b15b2`: push run `38035136125` and PR run `38035139305` each passed 502/502 with verified artifacts.
+- The merge ref had exact parents and an equal tree.
+- The squash merge went through the expected-head fence, and the merged tree `d6b15b2` equals the gate head's tree.
 
 ## Remaining
 
-- CI on this evidence descendant, the merge-ref check, merge, closure records, and post-merge `main` CI.
+- Pass this reconciliation's CI paths, merge it, and confirm post-merge `main` CI.
+- Deferred, in order:
+  1. wiring for the attention engine and the bridge into capture, conversation, presentation, and the app, when consumers exist;
+  2. Stage 11 calibration and diagnostics;
+  3. a Stage 10 keepsakes packet;
+  4. a synthetic `SourceResized` capability;
+  5. persistent credentials and the live adapter (Task 12, stop condition).
 
 ## Risks and assumptions
 
-- All numbers are provisional calibration (J2) until Stage 11.
-- The engine is not yet wired to capture, the semantic bridge, conversation, or presentation (deferred finding 1).
+- Minimized and exclusive-fullscreen WGC remain unsupported absent target-PC evidence.
+- All attention, bridge, watchdog, orientation, and App startup numbers are provisional until Stage 11.
 
 ## Personal Round Judgments
 
-J1–J9 are recorded in the packet.
+Recorded per packet: R2 J1–J6, R3 J1–J7, R4 J1–J3, Task 7 J1–J15, R5 J1–J2, and Task 8 J1–J9.
 
 ## Review focus
 
-- Urgent-evidence exemptions in `Factor`.
-- Stepwise `AdvanceTo` and `Evaluate` transitions.
-- Corroboration bookkeeping.
-- False-alarm scope.
+- This reconciliation changes only:
+  - `BUILD_LEDGER.md`;
+  - `README.md`;
+  - this handoff;
+  - the Task 8 active-to-archive rename and its content update.
 
 ## Repository state
 
-- Branch `agent/task-08-attention-engine`, draft PR #25. Implementation `6101fe1`, then this evidence descendant.
+- Reconciliation branch `agent/task-08-closure`, based on `main` `3d63147`.
 
 ## Next safe task
 
-Complete this Paw Gate. Then open Task 9 (conversation coordinator and seed banks, Stage 7).
+Open Task 9 (conversation coordinator and seed banks, Stage 7) through its own packet.
