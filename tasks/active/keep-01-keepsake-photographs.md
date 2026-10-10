@@ -85,7 +85,16 @@ New `CompanionCore.Keepsakes` project, referencing Memory, Privacy, and Capture.
 
 ## Paw Gate
 
-Pending.
+Candidate evidence (pending the evidence-descendant CI, merge-ref check, and acceptance):
+
+- First CI on `8dc845f` (runs `38060302436` and `38060315384`) failed on one test. It was a test-only, file-system-dependent assumption (NTFS case-insensitivity), corrected in `25e6178` without any product change.
+- Fix head `25e6178`:
+  - push run `38060543707` and PR run `38060546479` each passed **710/710** (15 test projects, Keepsakes 23, App Integration 13);
+  - test-results and attention-sheet artifacts: archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- Local gate: 697/697, 0 warnings, 0 vulnerable packages across 34 projects.
+- Mutation pass: 52 mutants; 48 killed, 4 equivalent.
+- Acceptance scenarios 1–9 are covered by `KeepsakeTests`. Scenario 10 is covered by the full CI suite.
 
 ## Personal Round Judgments
 

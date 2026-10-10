@@ -52,7 +52,10 @@ Builder: Claude.
   - Root cause: the test wrote an uppercase-named twin of a kept photograph. On case-insensitive NTFS that is the same file, so it overwrote the photograph instead of creating a non-canonical orphan.
   - Product behaviour is correct on both file systems.
   - Fix: the test creates the twin only where the file system is case-sensitive, and expects 3 orphans otherwise. Locally it still kills the canonical-name mutant.
-- CI on the fix: pending.
+- Fix head `25e6178`:
+  - push run `38060543707` and PR run `38060546479` each passed **710/710** (15 test projects, Keepsakes 23, App Integration 13);
+  - test-results and attention-sheet artifacts: archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
 
 ## Remaining
 
