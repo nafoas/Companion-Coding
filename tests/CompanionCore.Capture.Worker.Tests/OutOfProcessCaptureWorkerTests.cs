@@ -225,7 +225,7 @@ public sealed class OutOfProcessCaptureWorkerTests
         var publishedFrames = new ConcurrentDictionary<long, byte>();
         var attentionBeforeSourceFrame = 0;
         var foreignAttention = 0;
-        var firstAttentionSignal = new TaskCompletionSource<AttentionSheetMetadata>(
+        var orientationSignal = new TaskCompletionSource<AttentionSheetMetadata>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         worker.FrameProduced += (_, frame) => publishedFrames.TryAdd(frame.SequenceNumber, 0);
         worker.AttentionSheetProduced += (_, metadata) =>
@@ -240,33 +240,36 @@ public sealed class OutOfProcessCaptureWorkerTests
                 Interlocked.Exchange(ref foreignAttention, 1);
             }
 
-            firstAttentionSignal.TrySetResult(metadata);
+            if (metadata.Kind == AttentionSheetKind.Orientation)
+            {
+                orientationSignal.TrySetResult(metadata);
+            }
         };
         await worker.StartAsync(grant, CancellationToken.None);
-        var firstSignal = await firstAttentionSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
 
-        // The worker emits exactly one orientation, then a regional sheet for each
-        // changed frame. Client retention and notifications are newest-preserving,
-        // so whether the retained sheet is still the orientation is timing, not
-        // contract. Orientation production is proven exactly by the worker metric
-        // below; its pixel layout is proven in-process and by the CI artifact.
-        AttentionSheet? retained = null;
+        // The orientation notice is never coalesced away and follows its own source
+        // frame.
+        var orientationNotice = await orientationSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.True(orientationNotice.Matches(grant));
+        Assert.True(publishedFrames.ContainsKey(orientationNotice.SourceSequenceNumber));
+
+        // Let many newer regional sheets arrive (one per changed 10 ms frame). The
+        // undelivered orientation must still be the first sheet handed over.
+        await Task.Delay(TimeSpan.FromMilliseconds(300));
+        AttentionSheet? orientation = null;
         await CaptureWorkerTestSupport.WaitUntilAsync(
-            () => (retained = worker.TakeLatestAttentionSheet()) is not null,
+            () => (orientation = worker.TakeLatestAttentionSheet()) is not null,
             TimeSpan.FromSeconds(10));
-        using (retained)
+        using (orientation)
         {
-            Assert.Contains(
-                retained!.Metadata.Kind,
-                new[] { AttentionSheetKind.Orientation, AttentionSheetKind.Regional });
-            Assert.True(retained.Metadata.Matches(grant));
-            Assert.True(retained.Metadata.SourceSequenceNumber >= firstSignal.SourceSequenceNumber);
+            Assert.Equal(AttentionSheetKind.Orientation, orientation!.Metadata.Kind);
+            Assert.Equal(orientationNotice, orientation.Metadata);
+            Assert.True(orientation.Metadata.Matches(grant));
             Assert.Equal(0, Volatile.Read(ref attentionBeforeSourceFrame));
             Assert.Equal(0, Volatile.Read(ref foreignAttention));
-            Assert.True(publishedFrames.ContainsKey(firstSignal.SourceSequenceNumber));
-            var decoded = PngTestDecoder.Decode(retained.EncodedImage.Span);
-            Assert.Equal(retained.Metadata.SheetWidth, decoded.Width);
-            Assert.Equal(retained.Metadata.SheetHeight, decoded.Height);
+            var decoded = PngTestDecoder.Decode(orientation.EncodedImage.Span);
+            Assert.Equal(orientation.Metadata.SheetWidth, decoded.Width);
+            Assert.Equal(orientation.Metadata.SheetHeight, decoded.Height);
         }
 
         var manual = new NormalizedRegion(0.2, 0.2, 0.4, 0.5);
@@ -350,6 +353,56 @@ public sealed class OutOfProcessCaptureWorkerTests
 
         await worker.StopAndClearAsync(CancellationToken.None);
         Assert.Null(worker.TakeLatestAttentionSheet());
+    }
+
+    [Fact]
+    public async Task SlowFrameObserver_StillReceivesEveryEpochOrientationFirst()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        var orientations = new ConcurrentQueue<AttentionSheetMetadata>();
+
+        // A slow observer lets several regional sheets queue behind each orientation,
+        // the exact pressure under which the notice used to be coalesced away.
+        worker.FrameProduced += (_, _) => Thread.Sleep(15);
+        worker.AttentionSheetProduced += (_, metadata) =>
+        {
+            if (metadata.Kind == AttentionSheetKind.Orientation)
+            {
+                orientations.Enqueue(metadata);
+            }
+        };
+
+        await worker.StartAsync(grant, CancellationToken.None);
+        for (var epoch = 1; epoch <= 4; epoch++)
+        {
+            if (epoch > 1)
+            {
+                await worker.RestartAsync(grant, CancellationToken.None);
+            }
+
+            await CaptureWorkerTestSupport.WaitUntilAsync(
+                () => orientations.Count >= epoch,
+                TimeSpan.FromSeconds(10));
+            await Task.Delay(TimeSpan.FromMilliseconds(150));
+            AttentionSheet? first = null;
+            await CaptureWorkerTestSupport.WaitUntilAsync(
+                () => (first = worker.TakeLatestAttentionSheet()) is not null,
+                TimeSpan.FromSeconds(10));
+            using (first)
+            {
+                Assert.Equal(AttentionSheetKind.Orientation, first!.Metadata.Kind);
+                Assert.Equal(orientations.Last(), first.Metadata);
+            }
+        }
+
+        Assert.Equal(4, orientations.Count);
+        await worker.StopAndClearAsync(CancellationToken.None);
     }
 
     private static OutOfProcessCaptureWorker CreateWorker() =>
