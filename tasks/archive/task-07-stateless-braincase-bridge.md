@@ -1,11 +1,14 @@
 # Task 7 — Stateless Braincase Bridge
 
-Status: **active — implementation**
+Status: **accepted — Paw Gate passed 2026-10-10**
 Authorized: 2026-10-10 by Boss's standing direction to continue autonomously from Task 7 / Stage 5 under the Paw Gate model, stopping only before real credentials, paid/live API use, or a serious issue
 Accepted remote base: `3e99685091b4b398719a2f8fae478a836c900221`
 Accepted base tree: `e117c193a81f702a6d1a7125d34c862267f3c4e1`
 Working branch: `agent/task-07-stateless-braincase-bridge`
 Builder: Claude
+Accepted gate head: `9ea877b7642d4663ba940ec00be5f7ec78fd1d36`, tree `cc5536fc288157123305d59f8326b29d303c5a12`
+Pull request: #21, squash-merged as `9b8d45f0939735a3281b06bec44af47518703a80`
+Final CI: push run `38032469978`, PR run `38032472690`, each 453/453
 
 ## Objective
 
@@ -164,14 +167,37 @@ Do not modify accepted capture, target-authorization, memory behavior, privacy b
 
 ## Paw Gate
 
-Pending. The gate requires:
+Gate result: **PASS** on 2026-10-10. The separate review confirmed:
 
-- every acceptance scenario passing;
-- a strict Release build with 0 warnings;
-- the full local suite and both Windows CI event paths green, with verified artifacts;
-- actual-diff review for scope, invariants, privacy fencing, authority, cancellation, resource lifetime, and credential hygiene;
-- an exact merge-ref check;
-- Personal Round Judgments recorded.
+**Acceptance.**
+- Scenarios 1–13 pass through 128 new tests, with no network and no key.
+- The API assembly and every assembly it reaches reference no networking assembly.
+
+**Actual-diff review.**
+- The 50-path change is allowlisted.
+- `ApiBridge` holds no store, journal, maintenance, or repository reference; it reaches only `LocalWriteGate` and read-only retrieval.
+- Privacy order: grant and generation, then per-attempt currency, then the admission lease, then the gate append under the expected generation, then the currency check before publication.
+- Nap order: checkpoint, then buffer release, then completion, then one notice.
+- Journal recovery and compaction are atomic and bounded.
+- No exception text or remote text reaches diagnostics.
+
+**Bug hunt.**
+- Two defects were found and fixed with regression tests (J14).
+- A mutation pass over the key guards turned the suite red each time. The exceptions are the documented defense-in-depth layers.
+- 40 consecutive local runs were clean.
+
+**Local gate.**
+- Locked restore and a clean audit on 22 projects.
+- Strict Release build with 0 warnings and 0 errors.
+- 440/440 executable tests.
+
+**Windows CI.**
+- Final head `9ea877b`: push run `38032469978` (job `114156103179`) and PR run `38032472690` (job `114156111743`) each passed 453/453 on the first attempt.
+- Both artifact digests verified on each path. The attention sheet keeps the accepted digest and was inspected visually.
+
+**Merge ref.** Exact parents (`3e99685`, `9ea877b`) and a tree equal to the head tree.
+
+**Earlier App shutdown timeouts.** These led to J15: this suite's load was reduced, and the pre-existing App sensitivity was assigned to R5.
 
 ## Personal Round Judgments
 
