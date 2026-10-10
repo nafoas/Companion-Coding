@@ -40,11 +40,11 @@ Builder: Claude.
 
 ## Changed
 
-49 paths, all inside the packet allowlist:
+50 paths, all inside the packet allowlist:
 
 - `CompanionCore.slnx`;
 - `src/CompanionCore.Api/**` (21 files including the lock file);
-- `tests/CompanionCore.Api.Tests/**` (14 files including two sanitized replay fixtures and the lock file);
+- `tests/CompanionCore.Api.Tests/**` (15 files, including two sanitized replay fixtures, the lock file, and the sequential-execution `AssemblyInfo.cs`);
 - one test-only friend line each in the Capture.Contracts, Memory, and Privacy `AssemblyInfo.cs`;
 - this handoff and the active packet.
 
@@ -76,12 +76,20 @@ Local, on the pinned SDK 10.0.302 (Linux cross-build):
 
 Windows CI (`windows-latest`, locked restore, 22-project audit, Release build, all tests, both artifact uploads):
 
-- **Implementation head `cecc766`:**
-  - Push run `38031379455` passed 453/453.
-  - PR run `38031390951`, attempt 1, failed only the legacy `AppProcessTests.Shutdown_StopThenClose_ExitsCleanlyWithStoppedStateAndNoLeftoverProcess`. The app did not exit within its 30-second bound.
-  - The one permitted rerun of that failed job passed (attempt 2). The same commit had already passed on the push path, and no App-reachable code changed.
-  - The recurrence is deferred finding 5, for a root-cause packet (R5).
-- **Head `fc05f61`:** push run `38031598450` (job `114153512295`) and PR run `38031601345` (job `114153521364`) each passed 453/453 on the first attempt. Per suite:
+- **Earlier heads `cecc766`, `fc05f61`, `9cc20be`:** 3 of 6 runs failed only the App shutdown test, at its 30-second bound:
+  - PR run `38031390951`, attempt 1;
+  - push run `38031750912`;
+  - PR run `38031754225`.
+
+  The other runs passed 453/453. TRX timing traced the failures to this PR's suite load (J15), not to a legacy flake.
+- **Corrected head `f1f3b8c`:**
+
+  | Event | Run | Job | Result | App shutdown test | Api suite wall time |
+  |---|---|---|---|---|---|
+  | push | `38032069504` | `114154913047` | 453/453, first attempt | 3.5 s | ≈42 s, sequential |
+  | PR | `38032071891` | `114154920016` | 453/453, first attempt | 10.2 s | ≈40 s, sequential |
+
+  Per suite:
 
   | Suite | Tests |
   |---|---|
@@ -111,7 +119,7 @@ Windows CI (`windows-latest`, locked restore, 22-project audit, Release build, a
 
 ## Personal Round Judgments
 
-J1–J14 are recorded in the packet.
+J1–J15 are recorded in the packet.
 
 ## Review focus
 
@@ -122,7 +130,11 @@ J1–J14 are recorded in the packet.
 
 ## Repository state
 
-- Branch `agent/task-07-stateless-braincase-bridge`, draft PR #21. Implementation `cecc766`, deferred-finding record `fc05f61`, then this evidence descendant.
+- Branch `agent/task-07-stateless-braincase-bridge`, draft PR #21. Commits:
+  - implementation `cecc766`;
+  - records `fc05f61` and `9cc20be`;
+  - load correction `f1f3b8c`;
+  - this evidence descendant.
 
 ## Next safe task
 
