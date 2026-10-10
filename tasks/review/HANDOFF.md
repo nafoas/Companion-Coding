@@ -2,67 +2,75 @@
 
 ## Task
 
-No task is active. The last accepted packet is Task 11 — Application-Bound Watchbun Continuity (`tasks/archive/task-11-watchbun-continuity.md`), merged through PR #33 as `97ea0e411c3d9da29d7841d6a810a9fb4773c6e9`.
-
-**Stage 9 is complete.**
+KEEP-01 — Keepsake Photographs (`tasks/active/keep-01-keepsake-photographs.md`), the first of two Roadmap Stage 10 packets.
 
 Builder: Claude.
 
 ## Completed
 
-- **Task 7** (PR #21): the stateless Braincase bridge.
-- **R5** (PR #23): App test phase bounds.
-- **Task 8** (PR #25): the attention engine.
-- **Task 9** (PR #27): the conversation coordinator.
-- **ERPP-01** (PR #29): the session transcript.
-- **Task 10** (PR #31): memory consolidation and recall.
-- **Task 11** (PR #33, recorded here): Watchbun continuity.
+- **New `CompanionCore.Keepsakes`** (references Memory, Privacy, and Capture.Contracts):
+  - `KeepsakeLocation`: a validated test or development sibling directory.
+  - `KeepsakeCamera`:
+    - a visible camera action precedes every durable write, and the two are paired by action ID;
+    - writes accept only a frame for the authorized target and current privacy generation, inside the action window, and admitted by the privacy guard;
+    - camera actions are rare by construction;
+    - frames are box-downscaled to a bounded edge and saved as compressed PNG;
+    - the file is written atomically first, then the record is committed through the generation-bound gate;
+    - retries are idempotent.
+  - `KeepsakeStore`:
+    - verified inspection;
+    - authority-gated deletion that is record-first and keeps the original record;
+    - orphan reporting;
+    - read-only disk-growth figures, with no cleanup surface.
+- Judgments J1–J8 and deferred finding D1 (listing paging) are recorded in the packet.
 
 ## Changed
 
-This docs-only reconciliation:
-
-- archives Task 11 with its PASS record;
-- updates `BUILD_LEDGER.md` and `README.md`;
-- resets this handoff.
+- `CompanionCore.slnx`
+- `src/CompanionCore.Keepsakes/**` (new)
+- `tests/CompanionCore.Keepsakes.Tests/**` (new)
+- Test-only friend lines in `src/CompanionCore.Capture.Contracts/AssemblyInfo.cs` and `src/CompanionCore.Privacy/AssemblyInfo.cs`
+- This packet and this handoff
 
 ## Verification
 
-- Task 11 gate head `6c6b7c7`, tree `bf4d317`: push run `38058347513` and PR run `38058350655` each passed 687/687 with verified artifacts.
-- The merge ref had exact parents and an equal tree.
-- The squash merge went through the expected-head fence, and the merged tree `bf4d317` equals the gate head's tree.
+- Local gate (Linux, cross-targeted build), with the 13 App integration tests deferred to Windows CI:
+  - locked restore;
+  - Release build with `--no-incremental /warnaserror`: 0 warnings, 0 errors;
+  - vulnerability audit: 0 across 34 projects;
+  - tests: **697/697** (Keepsakes 23, new).
+- Expected on Windows CI: 710.
+- Mutation pass: 52 mutants; 48 killed, 4 equivalent.
+  - The equivalents are:
+    - the generation-bound submit, which matters only in a race between the privacy check and the commit;
+    - the open-action removal, since the saved cache answers first;
+    - the edge clamp, which rounding never exceeds;
+    - the length pre-check, since the digest catches the same files.
+  - The first run's three real gaps were closed with new tests: the encoded-size bound, a rejected record, and the saved-edge lower bound.
+- The bug hunt also made orphan detection strict about canonical file names.
+- CI: pending.
 
 ## Remaining
 
-- Pass this reconciliation's CI paths, merge it, and confirm post-merge `main` CI.
-- Then a Stage 10 keepsakes and complete-recovery packet.
-- Deferred, in order:
-  1. wiring for the bridge, attention, coordinator, transcript, recall, and Watchbun, with real OS hooks;
-  2. Stage 11 calibration and diagnostics;
-  3. a synthetic `SourceResized` capability;
-  4. persistent credentials and the live adapter (Task 12, stop condition).
+- Gate CI, the evidence descendant, merge, and closure.
+- Then KEEP-02: Vault inclusion and complete recovery.
 
 ## Risks and assumptions
 
-- Minimized and exclusive-fullscreen WGC remain unsupported absent target-PC evidence.
-- All attention, conversation, transcript, recall, Watchbun, bridge, watchdog, orientation, and App startup numbers are provisional until Stage 11.
-
-## Personal Round Judgments
-
-Recorded per packet: R2 J1–J6, R3 J1–J7, R4 J1–J3, Task 7 J1–J15, R5 J1–J2, Task 8 J1–J9, Task 9 J1–J8, ERPP-01 J1–J7, Task 10 J1–J9, and Task 11 J1–J9.
+- Rarity, size, and compression bounds are provisional.
+- Rarity counts reset when the runtime restarts (J5).
+- Listing is bounded at 1000 records (D1).
 
 ## Review focus
 
-- This reconciliation changes only:
-  - `BUILD_LEDGER.md`;
-  - `README.md`;
-  - this handoff;
-  - the Task 11 active-to-archive rename and its content update.
+- No durable byte is written without a preceding action and every admission check.
+- There is no cleanup or public delete surface.
+- Committed records are never removed.
 
 ## Repository state
 
-- Reconciliation branch `agent/task-11-closure`, based on `main` `97ea0e4`.
+- Branch `agent/keep-01-keepsake-photographs`, based on `main` `531fa5c`.
 
 ## Next safe task
 
-Open the Stage 10 keepsakes and complete-recovery packet.
+After closure: KEEP-02.

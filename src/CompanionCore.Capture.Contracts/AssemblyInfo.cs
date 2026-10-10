@@ -10,3 +10,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("CompanionCore.TargetAuth.Tests")]
 [assembly: InternalsVisibleTo("CompanionCore.Api.Tests")]
 [assembly: InternalsVisibleTo("CompanionCore.Watchbun.Tests")]
+[assembly: InternalsVisibleTo("CompanionCore.Keepsakes.Tests")]

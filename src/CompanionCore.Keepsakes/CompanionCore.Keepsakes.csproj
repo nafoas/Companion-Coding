@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CompanionCore.Keepsakes</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CompanionCore.Memory\CompanionCore.Memory.csproj" />
+    <ProjectReference Include="..\CompanionCore.Privacy\CompanionCore.Privacy.csproj" />
+    <ProjectReference Include="..\CompanionCore.Capture.Contracts\CompanionCore.Capture.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
