@@ -53,11 +53,13 @@ Local, on the pinned SDK 10.0.302 (Linux cross-build):
   | TargetAuth | 73 |
 
 - The bug hunt fixed J3 and J4. The mutation pass killed all 23 key-guard mutations; see the packet.
-- Windows CI on both paths is pending. The expected total is 502 = 453 + 49.
+- Windows CI on implementation head `6101fe1`: push run `38034930893` (job `114163281939`) and PR run `38034940743` (job `114163311101`) each passed 502/502 on the first attempt (Attention 49/49).
+  - Both artifact digests verified on each path.
+  - The attention-sheet PNG keeps the accepted digest `5eb11c96…b046dd`.
 
 ## Remaining
 
-- Both Windows CI paths with artifact verification, the evidence descendant, merge-ref check, merge, closure records, and post-merge `main` CI.
+- CI on this evidence descendant, the merge-ref check, merge, closure records, and post-merge `main` CI.
 
 ## Risks and assumptions
 
@@ -77,7 +79,7 @@ J1–J9 are recorded in the packet.
 
 ## Repository state
 
-- Branch `agent/task-08-attention-engine`; implementation commit pending publication.
+- Branch `agent/task-08-attention-engine`, draft PR #25. Implementation `6101fe1`, then this evidence descendant.
 
 ## Next safe task
 
