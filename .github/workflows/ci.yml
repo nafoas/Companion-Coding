@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-test:
     runs-on: windows-latest
+    # A hung test must fail the gate promptly rather than consume the six-hour limit.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
 
@@ -50,7 +52,7 @@ jobs:
         run: dotnet build CompanionCore.slnx --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test CompanionCore.slnx --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test CompanionCore.slnx --no-build --configuration Release --blame-hang-timeout 10m --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
         if: always()

@@ -166,8 +166,15 @@ public sealed class OutOfProcessCaptureWorkerTests
             TaskCreationOptions.RunContinuationsAsynchronously);
         var stopped = new TaskCompletionSource<CaptureWorkerStatusChanged>(
             TaskCreationOptions.RunContinuationsAsynchronously);
+        var framesDispatchedAfterStop = 0;
         worker.FrameProduced += (_, _) =>
         {
+            if (stopped.Task.IsCompleted)
+            {
+                Interlocked.Increment(ref framesDispatchedAfterStop);
+                return;
+            }
+
             observerEntered.TrySetResult();
             releaseObserver.Wait(TimeSpan.FromSeconds(10));
         };
@@ -198,6 +205,11 @@ public sealed class OutOfProcessCaptureWorkerTests
         {
             releaseObserver.Set();
         }
+
+        // Frames queued behind the blocked observer predate the Stopped fence that was
+        // already delivered. Releasing the observer must not dispatch any of them.
+        await Task.Delay(TimeSpan.FromMilliseconds(500));
+        Assert.Equal(0, Volatile.Read(ref framesDispatchedAfterStop));
     }
 
     [Fact]
