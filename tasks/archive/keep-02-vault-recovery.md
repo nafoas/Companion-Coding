@@ -1,10 +1,13 @@
 # KEEP-02 — Da Bun Vault Inclusion and Complete Recovery
 
-Status: **active — Paw Gate review**
+Status: **accepted — Paw Gate passed 2026-10-10**. Stage 10 is complete.
 Authorized: 2026-10-10 under Boss's standing direction, as the second of two Stage 10 packets (after KEEP-01 passed)
 Accepted remote base: `53d72d63ca4230ab28cc53ee026a9c04c4d5c582`
 Working branch: `agent/keep-02-vault-recovery`
 Builder: Claude
+Accepted gate head: `04e06490848dc1de489a8b42fbcf060c7108c480`, tree `7f9cc0e22d01fc55562211aff3db2e75e8854a23`
+Pull request: #37, squash-merged as `e59b46b809f19325b425614e7e62d78b2a9c2b80`
+Final CI: push run `38062794018`, PR run `38062797018`, each 744/744
 
 ## Objective
 
@@ -98,7 +101,21 @@ It references Memory and Keepsakes, and is the single composition point of backu
 
 ## Paw Gate
 
-Candidate evidence (pending the evidence-descendant CI, merge-ref check, and acceptance):
+Gate result: **PASS** on 2026-10-10.
+
+**Actual-diff review.**
+- The 26-path change is allowlisted.
+- The accepted memory archive format, its validator, and the repair protocol are unchanged, and every accepted memory test passes unedited.
+- Promotion is ordered and failure-atomic.
+- Restoration never deletes, never resurrects a deleted photograph, never restores a non-matching copy, and preserves damaged copies.
+- No public backup or repair surface was added.
+
+**Merge.**
+- PR #37's merge ref had exact parents `53d72d6` (main) and `04e0649` (head), and a tree equal to the head tree `7f9cc0e`.
+- It was squash-merged through the expected-head fence as `e59b46b`.
+
+**Evidence.**
+- Gate head `04e0649`: push run `38062794018` and PR run `38062797018` each passed 744/744 with verified artifacts.
 
 - First CI on `91fbcb8` (runs `38062246267` and `38062259517`) failed one test. It was a test-only Windows assumption (hashing the exclusively held live journal), corrected in `25d5785` by asserting the journal's rotation state, with no product change.
 - Fix head `25d5785`:

@@ -2,78 +2,70 @@
 
 ## Task
 
-KEEP-02 — Da Bun Vault Inclusion and Complete Recovery (`tasks/active/keep-02-vault-recovery.md`), the second and final Roadmap Stage 10 packet.
+No task is active. The last accepted packet is KEEP-02 — Da Bun Vault Inclusion and Complete Recovery (`tasks/archive/keep-02-vault-recovery.md`), merged through PR #37 as `e59b46b809f19325b425614e7e62d78b2a9c2b80`.
+
+**Stage 10 is complete.**
 
 Builder: Claude.
 
 ## Completed
 
-- **Memory, minimal and internal.**
-  - An optional `IVaultCompanion` hook in the backup service builds and validates the companion before any promotion. The companion is promoted first, then the memory archive.
-  - A companion archive path.
-  - A read-only keyset-paged subject-prefix query, which resolves KEEP-01 D1.
-  - The accepted memory archive format, its validator, and the repair protocol are unchanged.
-- **New `CompanionCore.Vault`**, the single composition point of backup and repair authority:
-  - `VaultStateStore`: checksummed, atomically written, bounded state entries for settings and the active checkpoint.
-  - `CompanionArchive`: a strict writer and validator.
-  - `DaBunVault`: create, plus the complete restore. The restore runs the companion validation, then the accepted memory repair, then photograph restoration against restored live records, then state restoration. Damaged copies are preserved, and the report is honest.
-- Judgments J1–J7 are recorded in the packet.
+- **Task 7** (PR #21): the stateless Braincase bridge.
+- **R5** (PR #23): App test phase bounds.
+- **Task 8** (PR #25): the attention engine.
+- **Task 9** (PR #27): the conversation coordinator.
+- **ERPP-01** (PR #29): the session transcript.
+- **Task 10** (PR #31): memory consolidation and recall.
+- **Task 11** (PR #33): Watchbun continuity.
+- **KEEP-01** (PR #35): keepsake photographs.
+- **KEEP-02** (PR #37, recorded here): Vault inclusion and complete recovery.
 
 ## Changed
 
-- `CompanionCore.slnx`
-- Memory: `IVaultCompanion.cs` (new), `MemoryBackupService.cs`, `MemoryRepository.cs`, `MemoryStoreLocation.cs`, `MemoryStore.Retrieval.cs`, `BackupTestHooks.cs`, `MemoryBackupResult.cs`, `AssemblyInfo.cs`
-- `src/CompanionCore.Keepsakes/AssemblyInfo.cs`
-- `src/CompanionCore.Vault/**` (new) and `tests/CompanionCore.Vault.Tests/**` (new)
-- `tests/CompanionCore.Memory.Tests/MemoryPagingTests.cs` (new; existing memory tests unchanged)
-- Test-only friend lines in Capture.Contracts and Privacy
-- This packet and this handoff
+This docs-only reconciliation:
+
+- archives KEEP-02 with its PASS record;
+- updates `BUILD_LEDGER.md` and `README.md`;
+- resets this handoff.
 
 ## Verification
 
-- Local gate (Linux, cross-targeted build), with the 13 App integration tests deferred to Windows CI:
-  - locked restore;
-  - Release build with `--no-incremental /warnaserror`: 0 warnings, 0 errors;
-  - vulnerability audit: 0 across 36 projects;
-  - tests: **731/731**. Vault 32 is new; Memory is 87 (85 accepted and unchanged, plus 2 paging tests).
-- Expected on Windows CI: 744.
-- Mutation pass: 37 mutants across the Vault, the backup hook, and paging; 34 killed, 3 equivalent.
-  - The equivalents are defense-in-depth checks a later stage repeats:
-    - the damaged-state pre-check, which validation's envelope check repeats;
-    - the traversal check, which the exact declared-set check repeats;
-    - the built-versus-validated comparison.
-  - The three real gaps from the first run were closed with tests: a same-length tamper, a Vault copy that mismatches its record, and a silent companion.
-- The bug hunt also wrapped corrupt-zip `InvalidDataException` as an invalid companion, and bounded entry size before reading.
-- First CI (`91fbcb8`): push run `38062246267` and PR run `38062259517` each passed 743/744.
-  - Both failed only `Scenario4_ADamagedStateFailsTheBackup_AndThePreviousVaultIsUntouched`, with an `IOException`: the test hashed the live journal while the repository held it exclusively, which Windows enforces.
-  - Product behaviour is correct.
-  - Fix: the test now asserts the journal's rotation base and highest append sequence are unchanged, instead of hashing the locked file.
-- Fix head `25d5785`:
-  - push run `38062566372` and PR run `38062568915` each passed **744/744** (16 test projects, Vault 32, Memory 87, App Integration 13);
-  - test-results and attention-sheet artifacts: archive digests verified;
-  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- KEEP-02 gate head `04e0649`, tree `7f9cc0e`: push run `38062794018` and PR run `38062797018` each passed 744/744 with verified artifacts.
+- The merge ref had exact parents and an equal tree.
+- The squash merge went through the expected-head fence, and the merged tree `7f9cc0e` equals the gate head's tree.
 
 ## Remaining
 
-- Gate CI, the evidence descendant, merge, and closure. That completes Stage 10.
-- Then stop and report to Boss. Stage 11 needs target-PC calibration evidence, and Stage 12 (Task 12) needs credentials and live API, both of which are stop conditions. Pre-API wiring could be proposed as its own packet.
+- Pass this reconciliation's CI paths, merge it, and confirm post-merge `main` CI.
+- **Roadmap boundary.** The remaining stages need Boss:
+  - Stage 11: calibration and diagnostics from target-PC measurements.
+  - Stage 12 (Task 12): persistent credentials, the live semantic adapter, and live calls. This is a stop condition.
+  - A pre-API wiring packet, connecting the bridge, attention, coordinator, transcript, recall, Watchbun, keepsakes, and Vault to the app with real OS hooks, could proceed without credentials, but needs Boss's go-ahead as a new packet outside the neutral-core task list.
+- Deferred, from the packet records:
+  - KEEP-02 D1: a single-file Vault export and a public command;
+  - a synthetic `SourceResized` capability.
 
 ## Risks and assumptions
 
-- The Vault is a two-archive backup set (J1).
-- The production friend lines into Vault (J2) are deliberate and reversible.
-- State bounds are provisional.
+- Minimized and exclusive-fullscreen WGC remain unsupported absent target-PC evidence.
+- Every numeric bound across attention, conversation, transcript, recall, Watchbun, keepsakes, state, bridge, watchdog, orientation, and App startup is provisional until Stage 11.
+
+## Personal Round Judgments
+
+Recorded per packet: R2 J1–J6, R3 J1–J7, R4 J1–J3, Task 7 J1–J15, R5 J1–J2, Task 8 J1–J9, Task 9 J1–J8, ERPP-01 J1–J7, Task 10 J1–J9, Task 11 J1–J9, KEEP-01 J1–J8, and KEEP-02 J1–J7.
 
 ## Review focus
 
-- Accepted memory backup and repair code paths are unchanged apart from the companion hook.
-- Promotion order and failure atomicity.
-- Restoration never deletes, never resurrects deleted photographs, and never restores a non-matching copy.
+- This reconciliation changes only:
+  - `BUILD_LEDGER.md`;
+  - `README.md`;
+  - this handoff;
+  - the KEEP-02 active-to-archive rename and its content update.
 
 ## Repository state
 
-- Branch `agent/keep-02-vault-recovery`, based on `main` `53d72d6`.
+- Reconciliation branch `agent/keep-02-closure`, based on `main` `e59b46b`.
 
 ## Next safe task
 
-After closure: report to Boss at the Stage 11/12 boundary.
+Await Boss's direction at the Stage 11/12 boundary.
