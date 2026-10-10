@@ -74,7 +74,6 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private bool _bridgeInFlight;
     private BridgeOutcomeKind? _lastBraincase;
     private DateTimeOffset _lastPersist;
-    private bool _endingForExit;
     private long _faults;
     private int _disposed;
 
@@ -419,16 +418,11 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
                 break;
             case TargetSessionEventKind.TargetEnded:
-                if (_endingForExit)
-                {
-                    _endingForExit = false;
-                    break;
-                }
-
                 if (_session is null)
                 {
-                    // Not an attached session (for example after a restart): a recovering or
-                    // paused Watchbun span is Boss's to decide, not dissolved by this event.
+                    // Not an attached session: either our own end after a target exit or a
+                    // Watchbun close (the session objects are already closed), or a restart.
+                    // A recovering or paused Watchbun span is Boss's to decide, not dissolved here.
                     break;
                 }
 
@@ -462,7 +456,6 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             return;
         }
 
-        _endingForExit = false;
         var now = Now();
         if (_session is { } current)
         {
@@ -563,7 +556,6 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         await CloseSessionObjectsAsync().ConfigureAwait(false);
         if (_c.Controller.CurrentSession.Phase != TargetSessionPhase.None)
         {
-            _endingForExit = true;
             await _c.Controller.EndSessionAsync().ConfigureAwait(false);
         }
 
@@ -891,7 +883,6 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             await CloseSessionObjectsAsync().ConfigureAwait(false);
             if (_c.Controller.CurrentSession.Phase != TargetSessionPhase.None)
             {
-                _endingForExit = true;
                 await _c.Controller.EndSessionAsync().ConfigureAwait(false);
             }
 

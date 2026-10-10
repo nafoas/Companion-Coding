@@ -8,6 +8,7 @@ using CompanionCore.Capture.Contracts;
 using CompanionCore.Memory;
 using CompanionCore.Privacy;
 using CompanionCore.TargetAuth;
+using CompanionCore.Vault;
 using CompanionCore.Watchbun;
 
 namespace CompanionCore.Orchestration.Tests;
@@ -143,11 +144,11 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
         Task.FromResult(new CaptureWorkerMetrics { Status = Status });
 
     /// <summary>Emits one admitted frame and its orientation sheet for the current grant.</summary>
-    public AttentionSheet EmitSheet(DateTimeOffset timestamp, byte shade = 90, double changeScore = 0.5, CaptureAuthorizationGrant? grant = null)
+    public AttentionSheet EmitSheet(DateTimeOffset timestamp, byte shade = 90, double changeScore = 0.5, CaptureAuthorizationGrant? grant = null, byte[]? payload = null)
     {
         var authorization = grant ?? _grant ?? throw new InvalidOperationException("No grant.");
         var sequence = Interlocked.Increment(ref _sequence);
-        var png = EncodeUniform(SheetWidth, SheetHeight, shade);
+        var png = payload ?? EncodeUniform(SheetWidth, SheetHeight, shade);
         var metadata = new AttentionSheetMetadata
         {
             TargetSessionId = authorization.TargetSessionId,
@@ -205,24 +206,37 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
         StatusChanged?.Invoke(this, new CaptureWorkerStatusChanged(status, DateTimeOffset.UtcNow));
     }
 
-    internal static byte[] EncodeUniform(int width, int height, byte shade)
+    internal static byte[] EncodeUniform(int width, int height, byte shade) =>
+        EncodeRaw(width, height, UniformRows(width, height, shade));
+
+    /// <summary>The filtered scanlines (filter byte plus RGBA8) of a uniform test image.</summary>
+    internal static byte[] UniformRows(int width, int height, byte shade)
+    {
+        var row = new byte[width * 4 + 1];
+        for (var x = 0; x < width; x++)
+        {
+            row[1 + (x * 4)] = shade;
+            row[2 + (x * 4)] = (byte)(shade + x);
+            row[3 + (x * 4)] = 40;
+            row[4 + (x * 4)] = 255;
+        }
+
+        var raw = new byte[row.Length * height];
+        for (var y = 0; y < height; y++)
+        {
+            row.CopyTo(raw, y * row.Length);
+        }
+
+        return raw;
+    }
+
+    /// <summary>Encodes raw filtered scanlines exactly as the worker does, optionally malformed.</summary>
+    internal static byte[] EncodeRaw(int width, int height, byte[] raw, bool duplicateHeader = false)
     {
         using var compressed = new MemoryStream();
         using (var zlib = new ZLibStream(compressed, CompressionLevel.Fastest, leaveOpen: true))
         {
-            var row = new byte[width * 4 + 1];
-            for (var x = 0; x < width; x++)
-            {
-                row[1 + (x * 4)] = shade;
-                row[2 + (x * 4)] = (byte)(shade + x);
-                row[3 + (x * 4)] = 40;
-                row[4 + (x * 4)] = 255;
-            }
-
-            for (var y = 0; y < height; y++)
-            {
-                zlib.Write(row);
-            }
+            zlib.Write(raw);
         }
 
         using var output = new MemoryStream();
@@ -233,6 +247,11 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
         header[8] = 8;
         header[9] = 6;
         Chunk(output, "IHDR", header);
+        if (duplicateHeader)
+        {
+            Chunk(output, "IHDR", header);
+        }
+
         Chunk(output, "IDAT", compressed.ToArray());
         Chunk(output, "IEND", []);
         return output.ToArray();
@@ -301,20 +320,20 @@ internal sealed class OrchestrationHarness : IAsyncDisposable
 
     internal ConcurrentQueue<CompanionNotice> Notices { get; } = new();
 
-    internal static async Task<OrchestrationHarness> CreateAsync(OrchestratorOptions? options = null)
+    internal static async Task<OrchestrationHarness> CreateAsync(OrchestratorOptions? options = null, bool withPlatform = true)
     {
         var basePath = Path.Combine(Path.GetTempPath(), "CompanionCore.Orchestration.Tests", Guid.NewGuid().ToString("N"));
         var catalog = await TargetPolicyCatalog.OpenTestAsync(basePath);
         var harness = new OrchestrationHarness(basePath, TestDataRootPolicy.Create(basePath, Guid.NewGuid()), catalog);
-        await harness.OpenHostAsync(options);
+        await harness.OpenHostAsync(options, withPlatform);
         return harness;
     }
 
-    internal async Task OpenHostAsync(OrchestratorOptions? options = null)
+    internal async Task OpenHostAsync(OrchestratorOptions? options = null, bool withPlatform = true)
     {
         Host = await CompanionHost.OpenAsync(new CompanionHostOptions(Location, Privacy, Controller, Provider, new InMemoryCredentialStore())
         {
-            Platform = Platform,
+            Platform = withPlatform ? Platform : null,
             Time = Time,
             Orchestrator = options,
             Bridge = new BridgeOptions { InitialBackoff = TimeSpan.Zero, MaximumBackoff = TimeSpan.Zero },
@@ -371,10 +390,17 @@ internal sealed class OrchestrationHarness : IAsyncDisposable
         throw new TimeoutException("The orchestrator did not settle.");
     }
 
-    /// <summary>Commits one neutral original for a session, as an earlier capture path would have.</summary>
-    internal async Task CommitSessionOriginalAsync(string sessionReference)
+    internal async Task<CompanionOrchestrator.PendingConsolidation[]> PendingConsolidationsAsync()
     {
-        var result = await Host.Repository.WriteGate.SubmitAsync(new AppendMemoryProposal(Guid.NewGuid(), [
+        var read = await Host.State.GetAsync(CompanionOrchestrator.ConsolidationStateName);
+        Assert.Equal(StateStatus.Verified, read.Status);
+        return read.Payload.IsEmpty ? [] : System.Text.Json.JsonSerializer.Deserialize<CompanionOrchestrator.PendingConsolidation[]>(read.Payload.Span)!;
+    }
+
+    /// <summary>Commits one neutral original for a session, as an earlier capture path would have.</summary>
+    internal async Task CommitSessionOriginalAsync(string sessionReference, Guid? operationId = null)
+    {
+        var result = await Host.Repository.WriteGate.SubmitAsync(new AppendMemoryProposal(operationId ?? Guid.NewGuid(), [
             new MemoryRecordDraft
             {
                 RecordId = Guid.NewGuid(),
