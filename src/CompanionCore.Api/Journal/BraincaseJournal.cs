@@ -16,9 +16,11 @@ internal sealed record BraincaseJournalRecovery(bool TornTailTruncated, bool Cor
 
 /// <summary>
 /// Append-only, checksummed JSON-lines journal for the bridge's local state. Each append
-/// is flushed to disk before it is applied. One exclusive writer handle fences a second
-/// bridge on the same location. Recovery truncates one torn trailing line, preserves a
-/// corrupt journal aside, and marks operations that were in flight as interrupted.
+/// is written as one unbuffered line and flushed to stable storage before it is applied;
+/// a write-through open flag would only repeat that sync. One exclusive writer handle
+/// fences a second bridge on the same location. Recovery truncates one torn trailing
+/// line, preserves a corrupt journal aside, and marks operations that were in flight as
+/// interrupted.
 /// </summary>
 internal sealed class BraincaseJournal : IDisposable
 {
@@ -333,7 +335,7 @@ internal sealed class BraincaseJournal : IDisposable
                 FileAccess.ReadWrite,
                 FileShare.None,
                 bufferSize: 1,
-                FileOptions.WriteThrough);
+                FileOptions.None);
         }
         catch (IOException exception)
         {

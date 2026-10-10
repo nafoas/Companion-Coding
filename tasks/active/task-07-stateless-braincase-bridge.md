@@ -248,6 +248,25 @@ A mutation pass then disabled each key guard in turn and confirmed the suite fai
 
 One gap the pass exposed (budget-nap buffer release before the notice) gained an assertion.
 
+### J15 — The new suite's disk-sync load starved the App shutdown test; fixed at the source
+
+**Symptom.** `AppProcessTests.Shutdown_StopThenClose_ExitsCleanlyWithStoppedStateAndNoLeftoverProcess` exceeded its 30-second exit bound in 3 of 6 Windows runs:
+
+- PR run `38031390951`, attempt 1;
+- push run `38031750912`;
+- PR run `38031754225`.
+
+The last two were on a documentation-only head. On accepted `main` the test takes about 3.6 seconds.
+
+**Cause.** The TRX timing shows the Api suite running for 29 seconds on Windows (1 second on Linux), concurrently with the App integration suite. That is about 100 seconds of disk-sync-bound test time: SQLite `synchronous=FULL` plus journal flushes, at roughly 120 ms per journal append, packed into the App suite's window by intra-assembly parallelism.
+
+**Fix.** Two changes, neither weakening a durability guarantee or a test:
+
+- The bridge journal no longer opens with a redundant write-through flag. Each append is still flushed to stable storage before it is applied.
+- The Api test assembly runs its classes sequentially, so it adds at most one sync stream to the runner.
+
+**Rejected.** Raising the App test's bound, or rerunning, would hide a load this PR introduced.
+
 ## Deferred findings
 
 1. App composition when the first consumer exists (Tasks 8–10):
@@ -258,4 +277,4 @@ One gap the pass exposed (budget-nap buffer release before the notice) gained an
 2. Bridge diagnostics and usage estimates into Stage 11 "Show Da Technical Thinks" diagnostics, alongside the Stage 4 orientation-failsafe counters.
 3. Persistent OS-protected credential storage and the live provider adapter (Task 12, stop condition).
 4. Conversation and text-formulation request kinds when the conversation thread exists (Task 10).
-5. **Legacy App-integration shutdown timeout:** `AppProcessTests.Shutdown_StopThenClose_ExitsCleanlyWithStoppedStateAndNoLeftoverProcess` exceeded its 30-second exit bound on Task 7's PR run `38031390951`, attempt 1. The push run `38031379455` on the identical commit passed 453/453. Neither the App nor anything it references changed. The Build Ledger records earlier App-integration timeouts under runner saturation (Task 5). This flake recurs, so it gets its own root-cause packet (R5) before Task 8, rather than repeated reruns.
+5. **App-integration shutdown timeout under the new suite's disk load:** see J15. The root cause was in this PR and is fixed here. The App shutdown test remains sensitive to whole-runner load, because it cold-starts a real WPF process against a fixed 30-second bound. If it recurs on a head without heavy concurrent I/O, it gets its own root-cause packet.
