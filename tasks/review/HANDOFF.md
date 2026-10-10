@@ -2,81 +2,67 @@
 
 ## Task
 
-ERPP-01 — Session Transcript Continuity (`tasks/active/erpp-01-session-transcript.md`), Task 9's companion gate for Roadmap Stage 7. Branch `agent/erpp-01-session-transcript`, based on accepted `main` `cb169a672820233e4357e0b08ff2b0cd9efa3fc5`.
+No task is active. The last accepted packet is ERPP-01 — Session Transcript Continuity (`tasks/archive/erpp-01-session-transcript.md`), merged through PR #29 as `7623b0e0f1f33734fed4cdc29ddbcb3b99c5737d`.
+
+With Task 9, **Stage 7 is final**.
 
 Builder: Claude.
 
 ## Completed
 
-- New `CompanionCore.Transcript`:
-  - `TranscriptLocation`, a validated sibling of a development or test root;
-  - `SessionTranscript`, an append-only, checksummed, flushed, session-scoped JSON-lines transcript with stable derived IDs, a lock-file writer fence, live shared reads, privacy-generation and credential gates, text validation, event and byte bounds, an explicit session lifecycle, and recovery (torn tail, preserved corruption, recovered reopen);
-  - `TranscriptRecorder`, which maps coordinator updates to `ConversationActive`, `BnuyModeInterrupted` (with resume point), `UrgentObservation`, `ReturnOffered`, `ConversationResumed` (referencing its interruption), and `ConversationSettled`, plus utterances and coordinator checkpoints;
-  - `TranscriptReader.Reconstruct`, which rebuilds the current thread, its ordered utterances, the pre-interruption context, and the latest checkpoint, without committed memory.
-- New `CompanionCore.Transcript.Tests`: 17 tests covering acceptance scenarios 1–9.
+- **Task 7** (PR #21): the stateless Braincase bridge.
+- **R5** (PR #23): App test phase bounds.
+- **Task 8** (PR #25): the attention engine.
+- **Task 9** (PR #27): the conversation coordinator.
+- **ERPP-01** (PR #29, recorded here): the session transcript.
 
 ## Changed
 
-- `CompanionCore.slnx`
-- `src/CompanionCore.Transcript/**` (9 files, including the lock file)
-- `tests/CompanionCore.Transcript.Tests/**` (3 files, including the lock file)
-- one test-only friend line each in Memory and Privacy `AssemblyInfo.cs`
-- this handoff and the active packet
+This docs-only reconciliation:
+
+- archives ERPP-01 with its PASS record;
+- updates `BUILD_LEDGER.md` and `README.md`;
+- resets this handoff.
 
 ## Verification
 
-Local, on the pinned SDK 10.0.302 (Linux cross-build):
-
-- Locked restore passed and the audit of all 28 projects is clean.
-- The strict Release build had 0 warnings and 0 errors.
-- 550/550 executable tests passed:
-
-  | Suite | Tests |
-  |---|---|
-  | Api | 128 |
-  | Attention | 49 |
-  | Capture | 14 |
-  | Capture Worker | 68 |
-  | Conversation | 44 |
-  | Memory | 68 |
-  | Presentation | 50 |
-  | Privacy | 13 |
-  | Runtime | 26 |
-  | TargetAuth | 73 |
-  | Transcript | 17 |
-
-- Mutation pass: 18 of 18 transcript guards are covered, after two test additions and one removal of redundant code.
-- Windows CI on implementation head `7362924`: push run `38054434361` (job `114219884515`) and PR run `38054444729` (job `114219914108`) each passed 563/563 on the first attempt (Transcript 17/17).
-  - The live-read and lock-file fence design therefore also holds under Windows file sharing.
-  - Both artifact digests verified on each path.
-  - The attention-sheet PNG keeps the accepted digest `5eb11c96…b046dd`.
+- ERPP-01 gate head `5a44dc8`, tree `159c18b`: push run `38054660628` and PR run `38054663515` each passed 563/563 with verified artifacts.
+- The merge ref had exact parents and an equal tree.
+- The squash merge went through the expected-head fence, and the merged tree `159c18b` equals the gate head's tree.
 
 ## Remaining
 
-- CI on this evidence descendant, the merge-ref check, merge, closure records (which finalize Stage 7), and post-merge `main` CI.
+- Pass this reconciliation's CI paths, merge it, and confirm post-merge `main` CI.
+- Then Task 10: memory consolidation and retrieval mechanics (Stage 8).
+- Deferred, in order:
+  1. a transcript retention decision for Boss with Task 10;
+  2. wiring for the bridge, attention engine, coordinator, and transcript;
+  3. Stage 11 calibration and diagnostics;
+  4. a Stage 10 keepsakes packet;
+  5. a synthetic `SourceResized` capability;
+  6. persistent credentials and the live adapter (Task 12, stop condition).
 
 ## Risks and assumptions
 
-- Bounds are provisional (J5).
-- Transcript retention is a Boss decision with Task 10 (deferred finding 1).
-- The transcript is not yet wired into the app.
+- Minimized and exclusive-fullscreen WGC remain unsupported absent target-PC evidence.
+- All attention, conversation, transcript, bridge, watchdog, orientation, and App startup numbers are provisional until Stage 11.
 
 ## Personal Round Judgments
 
-J1–J7 are recorded in the packet.
+Recorded per packet: R2 J1–J6, R3 J1–J7, R4 J1–J3, Task 7 J1–J15, R5 J1–J2, Task 8 J1–J9, Task 9 J1–J8, and ERPP-01 J1–J7.
 
 ## Review focus
 
-- Writer fence versus live reads.
-- Privacy and credential gates.
-- Recovery paths.
-- Recorder mapping and ordering.
-- Reconstruction.
+- This reconciliation changes only:
+  - `BUILD_LEDGER.md`;
+  - `README.md`;
+  - this handoff;
+  - the ERPP-01 active-to-archive rename and its content update.
 
 ## Repository state
 
-- Branch `agent/erpp-01-session-transcript`, draft PR #29. Implementation `7362924`, then this evidence descendant.
+- Reconciliation branch `agent/erpp-01-closure`, based on `main` `7623b0e`.
 
 ## Next safe task
 
-Complete this Paw Gate and finalize Stage 7. Then open Task 10 (memory consolidation and retrieval mechanics).
+Open Task 10 (memory consolidation and retrieval mechanics, Stage 8) through its own packet.

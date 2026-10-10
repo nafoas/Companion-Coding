@@ -1,10 +1,13 @@
 # ERPP-01 — Session Transcript Continuity
 
-Status: **active — implementation**
+Status: **accepted — Paw Gate passed 2026-10-10**. With Task 9, Stage 7 is final.
 Authorized: proposed and authorized by Boss on 2026-08-11 as Task 9's companion gate. It is opened now under Boss's standing direction to continue autonomously through the pre-API tasks.
 Accepted remote base: `cb169a672820233e4357e0b08ff2b0cd9efa3fc5`
 Working branch: `agent/erpp-01-session-transcript`
 Builder: Claude
+Accepted gate head: `5a44dc84b03d870a9277572af2e8f2c28aa43b87`, tree `159c18b12cd930a0195f015423cba125a088f659`
+Pull request: #29, squash-merged as `7623b0e0f1f33734fed4cdc29ddbcb3b99c5737d`
+Final CI: push run `38054660628`, PR run `38054663515`, each 563/563
 
 ## Objective
 
@@ -118,7 +121,30 @@ The reconstruction works after a restart and never consults committed memory.
 
 ## Paw Gate
 
-Pending.
+Gate result: **PASS** on 2026-10-10. The separate review confirmed:
+
+**Acceptance.** Scenarios 1–9 pass through 17 tests that drive the real coordinator through the recorder.
+
+**Actual-diff review.**
+- The 17-path change is allowlisted.
+- No committed-memory writer is reachable, which a reflection test proves.
+- The privacy and credential gates cover every content event.
+- The writer fence coexists with live shared reads.
+- Recovery and recorder ordering were verified.
+
+**Bug hunt.** The live-read defect was fixed (J2). 18 of 18 transcript guards are covered after two test additions and one removal of redundant code (J7).
+
+**Local gate.**
+- Locked restore and a clean audit on 28 projects.
+- Strict build with 0 warnings and 0 errors.
+- 550/550 executable tests.
+
+**Windows CI.**
+- Implementation head `7362924`: push run `38054434361` and PR run `38054444729`.
+- Gate head `5a44dc8`: push run `38054660628` (job `114220547875`) and PR run `38054663515` (job `114220556433`).
+- Every run passed 563/563 on the first attempt, with verified artifacts and the accepted attention-sheet digest.
+
+**Merge ref.** Exact parents (`cb169a6`, `5a44dc8`) and a tree equal to the head tree.
 
 ## Personal Round Judgments
 
