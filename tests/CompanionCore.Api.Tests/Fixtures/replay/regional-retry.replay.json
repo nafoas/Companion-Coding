@@ -1,0 +1,26 @@
+{
+  "fixtureVersion": 1,
+  "name": "regional-retry",
+  "match": {
+    "operationKind": "interpretAttentionSheet",
+    "sheetKind": "regional",
+    "regionKinds": ["fullContext", "centerEnvironment"],
+    "subjects": []
+  },
+  "replies": [
+    { "kind": "transient" },
+    {
+      "kind": "success",
+      "response": {
+        "schemaVersion": 1,
+        "operationId": "00000000-0000-0000-0000-000000000000",
+        "interpretation": {
+          "summary": "Replayed synthetic regional summary.",
+          "observations": [
+            { "region": "centerEnvironment", "label": "synthetic focus", "confidence": 0.6 }
+          ]
+        }
+      }
+    }
+  ]
+}

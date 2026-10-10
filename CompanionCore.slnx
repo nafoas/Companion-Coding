@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/CompanionCore.Api/CompanionCore.Api.csproj" />
     <Project Path="src/CompanionCore.App/CompanionCore.App.csproj" />
     <Project Path="src/CompanionCore.Capture.Contracts/CompanionCore.Capture.Contracts.csproj" />
     <Project Path="src/CompanionCore.Capture.Client/CompanionCore.Capture.Client.csproj" />
@@ -13,6 +14,7 @@
     <Project Path="src/CompanionCore.TargetAuth.Windows/CompanionCore.TargetAuth.Windows.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/CompanionCore.Api.Tests/CompanionCore.Api.Tests.csproj" />
     <Project Path="tests/CompanionCore.App.IntegrationTests/CompanionCore.App.IntegrationTests.csproj" />
     <Project Path="tests/CompanionCore.Capture.Tests/CompanionCore.Capture.Tests.csproj" />
     <Project Path="tests/CompanionCore.Capture.Worker.Tests/CompanionCore.Capture.Worker.Tests.csproj" />
