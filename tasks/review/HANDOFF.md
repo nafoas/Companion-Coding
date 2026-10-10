@@ -40,7 +40,7 @@ Builder: Claude.
 
 ## Changed
 
-48 paths, all inside the packet allowlist:
+49 paths, all inside the packet allowlist:
 
 - `CompanionCore.slnx`;
 - `src/CompanionCore.Api/**` (21 files including the lock file);
@@ -74,15 +74,39 @@ Local, on the pinned SDK 10.0.302 (Linux cross-build):
 - Mutation pass: disabling each key guard turned the suite red. The exceptions are two documented defense-in-depth layers (J14) and the attempt timeout, which shows up as a blame-hang abort. A gap the pass exposed was closed with an assertion.
 - `git diff --check` is clean, exactly one packet is active, and the allowlist check passed.
 
-Windows CI evidence on both event paths is pending and will be recorded here before acceptance. The expected total is 453 = 325 accepted + 128 new.
+Windows CI (`windows-latest`, locked restore, 22-project audit, Release build, all tests, both artifact uploads):
+
+- **Implementation head `cecc766`:**
+  - Push run `38031379455` passed 453/453.
+  - PR run `38031390951`, attempt 1, failed only the legacy `AppProcessTests.Shutdown_StopThenClose_ExitsCleanlyWithStoppedStateAndNoLeftoverProcess`. The app did not exit within its 30-second bound.
+  - The one permitted rerun of that failed job passed (attempt 2). The same commit had already passed on the push path, and no App-reachable code changed.
+  - The recurrence is deferred finding 5, for a root-cause packet (R5).
+- **Head `fc05f61`:** push run `38031598450` (job `114153512295`) and PR run `38031601345` (job `114153521364`) each passed 453/453 on the first attempt. Per suite:
+
+  | Suite | Tests |
+  |---|---|
+  | Api | 128 |
+  | App Integration | 13 |
+  | Capture | 14 |
+  | Capture Worker | 68 |
+  | Memory | 68 |
+  | Presentation | 50 |
+  | Privacy | 13 |
+  | Runtime | 26 |
+  | TargetAuth | 73 |
+
+  - Both artifact digests verified on each path.
+  - The synthetic attention sheet is 792×621 RGBA with the accepted digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`, and it was inspected visually.
 
 ## Remaining
 
-- Both Windows CI event paths with artifact verification, the evidence descendant, merge-ref check, merge, and closure records.
+- CI on this evidence descendant, the merge-ref check, merge, closure records, and post-merge `main` CI.
 
 ## Risks and assumptions
 
 - All bounds and the usage estimate are provisional until Stage 11 and the final API gate (J9).
+- The daily budget pre-check counts one attempt's estimate. Retries within the same operation can add at most `MaximumAttempts - 1` more.
+- `CancelPendingWork` reaches operations that have already linked their token. One that has not yet linked it is still fenced by privacy generation.
 - The bridge is not composed into the WPF app yet (J2, deferred finding 1). The privacy-stop route to `CancelPendingWork` arrives with that composition; until then, generation fencing alone guards late results.
 
 ## Personal Round Judgments
@@ -98,7 +122,7 @@ J1–J14 are recorded in the packet.
 
 ## Repository state
 
-- Branch `agent/task-07-stateless-braincase-bridge`; implementation commit pending publication.
+- Branch `agent/task-07-stateless-braincase-bridge`, draft PR #21. Implementation `cecc766`, deferred-finding record `fc05f61`, then this evidence descendant.
 
 ## Next safe task
 
