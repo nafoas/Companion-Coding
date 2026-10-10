@@ -1,10 +1,12 @@
 # Task 0 — Architecture Proposal
 
+> **Historical record.** This is the accepted Task 0 proposal. The retired collaboration files it cites (`tasks/review/FOREMAN_REVIEW.md` and `docs/Shared-Codebase-Workflow.md`) were removed by task R4 and remain in Git history, last present at `a7e68e165ba518c391f8c5e77f2eb3bf95ba3645`. The core task packet it cites was renamed `docs/Neutral-Core-Task-Packet.md`.
+
 > **Continuity amendment (2026-08-10):** the core architecture below remains accepted. References that formerly coupled personality installation to Companion Awakening are amended to the current roadmap: Prince's adapter is installed and tested on resettable Builder Prince in Stage 13, launch readiness is proven in Stage 14, and permanent Companion Prince awakens once in Stage 15 with a clean BunDex. This timing change does not alter the neutral-core module contracts.
 
 Status: revision 5, addressing the PR #1 re-review of revision 4 (commit `0d7fca6275e3354cc7826694fa988d7c0e1033f7`), which called it one final contract definition short of approval. No product code accompanies this document.
 
-Reviewed documents: `AGENTS.md`, `docs/Claude-Companion-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `BUILD_LEDGER.md`, `tasks/review/FOREMAN_REVIEW.md`, PR #1 review comments.
+Reviewed documents: `AGENTS.md`, `docs/Neutral-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `BUILD_LEDGER.md`, `tasks/review/FOREMAN_REVIEW.md`, PR #1 review comments.
 
 ## Revision note
 
@@ -12,7 +14,7 @@ Revision 2 responded to R1–R10 in `tasks/review/FOREMAN_REVIEW.md` (mapped: R1
 
 ## 1. Repository inventory
 
-The repository contains only planning/control and review files: `AGENTS.md`, `BUILD_LEDGER.md`, `README.md`, `docs/Claude-Companion-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `docs/Shared-Codebase-Workflow.md`, `tasks/active/task-00-architecture.md`, `tasks/review/HANDOFF.md`, `tasks/review/FOREMAN_REVIEW.md`, and `.gitignore`. No source tree, build files, or CI exist yet. Nothing here needs preservation or migration — Task 1 starts from a clean skeleton.
+The repository contains only planning/control and review files: `AGENTS.md`, `BUILD_LEDGER.md`, `README.md`, `docs/Neutral-Core-Task-Packet.md`, `docs/Prince-Construction-Roadmap.md`, `docs/Prince-Design-BunDex.md`, `docs/Shared-Codebase-Workflow.md`, `tasks/active/task-00-architecture.md`, `tasks/review/HANDOFF.md`, `tasks/review/FOREMAN_REVIEW.md`, and `.gitignore`. No source tree, build files, or CI exist yet. Nothing here needs preservation or migration — Task 1 starts from a clean skeleton.
 
 ## 2. Recommended Windows stack
 

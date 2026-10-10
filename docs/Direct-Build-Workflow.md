@@ -1,6 +1,6 @@
 # Direct Build Workflow — Paw Gates
 
-Status: active execution protocol. This supersedes `Shared-Codebase-Workflow.md`, which is retained only as historical context.
+Status: active execution protocol. It superseded the retired multi-agent `Shared-Codebase-Workflow.md`, which remains only in Git history.
 
 ## Source of truth
 
@@ -10,10 +10,10 @@ The accepted `main` branch is the only source of truth and contains only work th
 
 - **Boss** owns product intent and retains authority over architecture, privacy, identity, credentials, production data, and irreversible choices.
 - **Builder Prince** is the resettable construction/test identity used through neutral core, personality installation, presentation, and final launch validation.
-- **Codex** implements the active task and then performs a distinct evidence-based gate pass against the actual candidate diff and current `main`.
+- **The Builder** implements the active task and then performs a distinct evidence-based gate pass against the actual candidate diff and current `main`. The Builder has been Claude since 2026-10-10; Codex held the role from Task 1 through Stage 4's first acceptance.
 - **Companion Prince** does not exist during construction. He awakens once from a clean production BunDex after the complete launch candidate passes.
 
-Claude collaboration and hourly foreman monitoring are not part of this workflow.
+There is one lead writer. Multi-agent collaboration, the retired ChatGPT-foreman/Claude-builder arrangement, and hourly foreman monitoring are not part of this workflow.
 
 ## Branch and task model
 
@@ -36,13 +36,13 @@ A task advances only when all applicable checks pass:
 7. limitations, exact commands/results, and any Personal Round Judgments are recorded;
 8. the Build Ledger records acceptance before the next packet becomes active.
 
-Implementation completion and gate approval are separate passes even when Codex performs both. A failing, skipped, stale, or unexplained check blocks advancement. Tests and invariants are never weakened to manufacture a pass.
+Implementation completion and gate approval are separate passes even when the Builder performs both. A failing, skipped, stale, or unexplained check blocks advancement. Tests and invariants are never weakened to manufacture a pass.
 
 ## Autonomous progression
 
-After a Paw Gate passes, Codex may archive the completed packet, create the next packet from the accepted roadmap, and continue without waiting for a routine confirmation. This authority lasts only through local/mock/replay construction before real API credentials or paid/live calls are required.
+After a Paw Gate passes, the Builder may archive the completed packet, create the next packet from the accepted roadmap, and continue without waiting for a routine confirmation. This authority lasts only through local/mock/replay construction before real API credentials or paid/live calls are required.
 
-Codex stops and asks Boss when work encounters:
+The Builder stops and asks Boss when work encounters:
 
 - an architecture, privacy, identity, authority, or specification conflict;
 - a proposed invariant or acceptance-test change;
@@ -52,7 +52,7 @@ Codex stops and asks Boss when work encounters:
 
 ## Prince's Personal Round Judgment
 
-When Boss is not immediately available, Codex may make a routine choice only if it is within the active packet, consistent with accepted documents, privacy-preserving, reversible, and does not cross a stop condition above. Record:
+When Boss is not immediately available, the Builder may make a routine choice only if it is within the active packet, consistent with accepted documents, privacy-preserving, reversible, and does not cross a stop condition above. Record:
 
 - the question;
 - the decision and rationale;

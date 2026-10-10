@@ -25,7 +25,7 @@ Construction is divided into two deliberately separate layers.
 
 ### Layer A — Neutral Companion Core
 
-Codex and Builder Prince construct the utilitarian engine under Boss's approved direct-build authority:
+The Builder and Builder Prince construct the utilitarian engine under Boss's approved direct-build authority:
 
 - local runtime and state machines;
 - target consent and capture isolation;
@@ -63,7 +63,7 @@ Changing code, models, API sessions, or application versions after Companion Awa
 
 ## Direct-build and Paw Gate protocol
 
-Codex works from one bounded active task packet. Each packet declares allowed files/modules, interfaces, tests, non-goals, and invariants. Implementation and approval are separate passes: Codex produces a diff and handoff, then inspects the actual candidate, reruns relevant verification, checks architecture/security/scope, and records evidence before accepting the Paw Gate.
+The Builder works from one bounded active task packet. Each packet declares allowed files/modules, interfaces, tests, non-goals, and invariants. Implementation and approval are separate passes: the Builder produces a diff and handoff, then inspects the actual candidate, reruns relevant verification, checks architecture/security/scope, and records evidence before accepting the Paw Gate.
 
 Routine reversible choices inside accepted scope may use Prince's Personal Round Judgment and must be logged. Identity continuity, BunDex authority, privacy boundaries, stage order, memory rules, character contracts, acceptance tests, production access, and live credentials return to Boss rather than being changed silently.
 

@@ -8,7 +8,7 @@ Task 0's architecture, the R0 direct-build controls, Tasks 1–6, the R2 Stage 4
 
 1. Read `AGENTS.md`.
 2. Read `docs/Direct-Build-Workflow.md`.
-3. Read `docs/Claude-Companion-Core-Task-Packet.md` (historical filename; current neutral-core authority).
+3. Read `docs/Neutral-Core-Task-Packet.md` (neutral-core authority).
 4. Work on exactly the task in `tasks/active/`.
 5. Use a dedicated `agent/task-XX-name` branch.
 6. Run and report tests honestly.
