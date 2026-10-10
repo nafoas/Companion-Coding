@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–7, the R2 Stage 4 recertification, and R3 reliable orientation delivery are accepted. Stage 5's stateless Braincase bridge is complete with mock and replay providers only. R5 corrected the App integration test timing. No task is active; Task 8 is next.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–8, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only) and Stage 6's neutral attention engine are complete. No task is active; Task 9 is next.
 
 ## Builder workflow
 
@@ -34,7 +34,19 @@ The final head passed both Windows event gates at 453/453 and merged as `9b8d45f
 
 **R5** (PR #23) found why the App shutdown integration test was timing out: the first App launch's cold start was being charged against the shutdown exit bound. Startup and exit are now separately bounded phases, and the 30 s exit bound is unchanged. It merged as `3c078f58a46daf8f2f66e97592c39cf18d120f98`.
 
-Attention meaning (Task 8) is next. Conversation, ERPP implementation, personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**Task 8** (PR #25) added `CompanionCore.Attention`, a deterministic attention engine:
+
+- Noticing, Engaged, High Attention, and Afterglow states, with hysteresis;
+- corroboration of weak evidence;
+- immediate escalation for decisive events;
+- deduplication of loading screens and other global transitions;
+- habituation that never dampens urgent danger;
+- adaptive Afterglow;
+- false-alarm correction.
+
+All of it is typed abstract intents with provisional configuration. It passed both Windows gates at 502/502 and merged as `3d63147a153d3e957ae97f2bff71ccf08ac0c5f6`.
+
+The conversation coordinator and seed banks (Task 9) are next. ERPP implementation, personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 
