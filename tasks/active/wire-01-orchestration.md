@@ -108,12 +108,37 @@ Pending.
 
 ## Personal Round Judgments
 
-(Recorded during implementation.)
+- **J1 — Photographs come from the sheet.** A keepsake photograph is cropped from the next sheet's full-context region, at the worker's sheet resolution. There is no new capture IPC, so the capture surface and the worker contract stay exactly as accepted. Full-resolution photographs are deferred (D2).
+- **J2 — Scope of each component.** The conversation coordinator and its checkpoint are runtime-wide: one Conversation Thread. Attention engines and transcripts are per target session.
+- **J3 — Bridge calls.** Bridge interpretation runs off the mailbox with at most one call in flight. A sheet arriving during a call, or while Watchbun pauses semantic spending, is disposed at once (RAM-only); the latest-sheet slot keeps only the newest.
+- **J4 — Immediate privacy cancel.** A privacy pause cancels bridge work immediately on the event thread as well as through the mailbox. Generation fencing remains the guarantee; the early cancel only saves spend.
+- **J5 — Braincase notices.** Braincase notices are emitted only when the outcome kind changes (Interpreted / Napping / Unavailable), so an offline Braincase produces one notice, not one per sheet.
+- **J6 — No process monitor.** Without a platform process monitor, `TargetUnavailable` is treated as an unclean exit (crash semantics). A clean exit cannot be proven without that evidence, and Watchbun's crash path is the conservative one.
+- **J7 — Durable consolidation queue.** Consolidation intents form a durable per-session queue bounded at 64. A rejected intent stays queued and is retried at every later consolidation and start. Dropping the oldest intent past the bound loses only the derived summary, never an original.
+- **J8 — Topic keys.** Topic keys are transliterated (Unicode FormD, nonspacing marks removed) and then restricted to `[a-z0-9._-]`, at most 64 characters, so "Ünïcödé" becomes "unicode". Scripts with no Latin form fall back to the neutral "observation".
+- **J9 — Friend lines.** Production friend lines were added only where the orchestrator needs an accepted internal authority:
+  - the TargetAuth grant read;
+  - Vault backup and repair;
+  - Boss-requested keepsake deletion.
+
+  All other friend lines are test-only.
 
 ## Defects found by composition
 
-(Recorded during implementation.)
+Each was fixed at its root, with a regression test.
+
+- **C1 — Recall summary subjects (Task 10).** Bridge session references (`target-session:<id>`) contain colons, and `RecallSubjects.Summary` produced a subject key the write gate rejects, so consolidation was refused for every real session. The session part is now escaped (`%` → `%25`, `:` → `%3A`). Regression: `RecallMechanicsTests.SessionSummary_ConsolidatesBridgeStyleSessionReferences`.
+- **C2 — Consolidation aborted silently.** A session closed after a target exit had no game reference, and a failure in one session aborted the whole close without notice. The game now comes from the Watchbun binding when no session is attached, and each session's consolidation is contained (a fault notice, its intent replayed later), so the Vault backup and cleanup always run. Covered by the crash-then-consolidate and Watchbun-close scenarios.
+- **C3 — Startup notices lost.** Notices raised during start, such as Recovering, were published before presentation could subscribe. `CompanionHostOptions.Notice` is now attached before every start, including after repairs. Regression: Scenario 7 asserts `Recovering`.
+- **C4 — No repair path for a damaged BunDex.** A damaged BunDex made the host unopenable, so Bnuy Repairs could never run. `CompanionHost.RepairOfflineAsync` now restores with nothing holding the data root. Regression: Scenario 9.
+- **C5 — Recovering Watchbun dissolved.** A `TargetEnded` arriving with no attached session (after a restart) consolidated and dissolved a recovering or paused Watchbun span that was Boss's to decide. It is now ignored. Regression: Scenario 7's end-then-reauthorize reattach.
+- **C6 — Single-slot consolidation intent.** The single durable intent could be overwritten by another session's consolidation, losing the unfinished intent's summary. It is now a durable per-session queue (J7). Regressions:
+  - `Scenario8b_AnotherSessionsConsolidationNeverOverwritesAnUnfinishedIntent`;
+  - `RejectedConsolidationIntent_StaysQueuedAcrossOtherSessions`.
+- **C7 — Leftover sessions dropped.** Sessions left by an interrupted close were cleared without consolidation when a fresh Watchbun started. They are now consolidated first. Regression: `SessionsLeftByAnInterruptedClose_AreConsolidatedBeforeAFreshWatch`.
 
 ## Deferred findings
 
-(None yet.)
+- **D1 — Per-session consolidation bounds.** One session's consolidation reads at most `MemoryQuery.MaximumLimit` (1000) originals, and the planner proposes at most 128 records. Longer sessions keep every original but summarize only the first page. Paging or rolling consolidation belongs to Stage 11 calibration.
+- **D2 — Full-resolution photographs.** Keepsake photographs are taken at sheet full-context resolution (J1). A full-resolution photograph needs a worker capture command and a new IPC contract.
+- **D3 — Windows platform signals and the App composition root.** These are WIRE-02.
