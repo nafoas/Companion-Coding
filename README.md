@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–9, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, and Stage 7's conversation coordinator are in place. No task is active; ERPP-01 (Session Transcript Continuity) is next.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–9, ERPP-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, and Stage 7's conversation coordinator with its session transcript are complete. No task is active; Task 10 is next.
 
 ## Builder workflow
 
@@ -57,7 +57,9 @@ All of it is typed abstract intents with provisional configuration. It passed bo
 
 It passed both Windows gates at 546/546 and merged as `0fe0932aaa54039fafd709e2cb120bda16fd7d6b`.
 
-ERPP-01, the durable session transcript that Boss authorized as Task 9's companion, comes next. Consolidation (Task 10), personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**ERPP-01** (PR #29) added `CompanionCore.Transcript`, a durable, session-scoped transcript of typed conversation events. From it Prince can reconstruct exactly what was being discussed before an interruption, without committed memory. It passed both Windows gates at 563/563 and merged as `7623b0e0f1f33734fed4cdc29ddbcb3b99c5737d`. With Task 9, Stage 7 is final.
+
+Memory consolidation and retrieval mechanics (Task 10) come next. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 
