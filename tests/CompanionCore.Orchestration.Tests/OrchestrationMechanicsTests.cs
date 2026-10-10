@@ -254,6 +254,10 @@ public sealed class OrchestrationMechanicsTests
         Assert.NotEqual(CompanionOrchestrator.DeriveId("x", "y"), CompanionOrchestrator.DeriveId("x", "z"));
         Assert.Equal("synthetic-game", CompanionOrchestrator.GameReference("Synthetic-Game.EXE"));
         Assert.Equal("c-x", CompanionOrchestrator.GameReference("c:x.exe"));
+        Assert.Equal("game", CompanionOrchestrator.GameReference(@"C:\Games\Game.exe"));
+        Assert.Equal("game", CompanionOrchestrator.GameReference("/opt/games/game.exe"));
+        Assert.Equal("my.game", CompanionOrchestrator.GameReference("My.Game.exe"));
+        Assert.Equal("noextension", CompanionOrchestrator.GameReference("NoExtension"));
         Assert.Equal("application", CompanionOrchestrator.GameReference(".exe"));
         Assert.Equal(120, CompanionOrchestrator.GameReference(new string('g', 200) + ".exe").Length);
         Assert.Throws<ArgumentOutOfRangeException>(() => new OrchestratorOptions { CheckpointInterval = TimeSpan.Zero }.Validate());

@@ -1085,9 +1085,16 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private Task WriteJsonAsync<T>(string name, T value) =>
         _c.State.PutAsync(name, JsonSerializer.SerializeToUtf8Bytes(value, Json), _shutdown.Token);
 
+    /// <summary>
+    /// A platform-independent game reference: the same executable name yields the same
+    /// BunDex key on every OS (no drive or path interpretation).
+    /// </summary>
     internal static string GameReference(string executableFileName)
     {
-        var name = Path.GetFileNameWithoutExtension(executableFileName ?? string.Empty).ToLowerInvariant().Replace(':', '-');
+        var name = executableFileName ?? string.Empty;
+        name = name[(name.LastIndexOfAny(['/', '\\']) + 1)..];
+        var dot = name.LastIndexOf('.');
+        name = (dot >= 0 ? name[..dot] : name).ToLowerInvariant().Replace(':', '-');
         name = name.Length == 0 ? "application" : name;
         return name.Length > 120 ? name[..120] : name;
     }

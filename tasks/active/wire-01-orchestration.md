@@ -152,6 +152,7 @@ Each was fixed at its root, with a regression test.
 - **C6 — Single-slot consolidation intent.** The single durable intent could be overwritten by another session's consolidation, losing the unfinished intent's summary. It is now a durable per-session queue (J7). Regressions:
   - `Scenario8b_AnotherSessionsConsolidationNeverOverwritesAnUnfinishedIntent`;
   - `RejectedConsolidationIntent_StaysQueuedAcrossOtherSessions`.
+- **C8 — Platform-dependent game references.** Found by the first Windows CI run of `414ee9d` (push run `38069900594`, PR run `38069916752`): 792/793, one failure. `GameReference` used `Path.GetFileNameWithoutExtension`, which reads `c:` as a drive on Windows, so one executable name produced different BunDex keys on different platforms. It now strips path separators and the last extension itself, identically everywhere. Regression: `Ids_AndGameReferences_AreStableAndSafe` gains Windows-path, POSIX-path, dotted, and extensionless cases.
 - **C7 — Leftover sessions dropped.** Sessions left by an interrupted close were cleared without consolidation when a fresh Watchbun started. They are now consolidated first. Regression: `SessionsLeftByAnInterruptedClose_AreConsolidatedBeforeAFreshWatch`.
 
 ## Deferred findings
