@@ -2,17 +2,17 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 6 — attention ladder (neutral engine) — **accepted** |
-| Active task | None; Task 9 (conversation coordinator and seed banks, Stage 7) is next |
-| Working branch | Accepted product/evidence baseline on `main`: `3d63147a153d3e957ae97f2bff71ccf08ac0c5f6` (Task 8) |
-| Entry criteria met | Complete; Tasks 4–8, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
+| Current stage | Stage 7 — expression and one Conversation Thread — **Task 9 accepted**; ERPP-01 companion gate next |
+| Active task | None; ERPP-01 (Session Transcript Continuity) is next |
+| Working branch | Accepted product/evidence baseline on `main`: `0fe0932aaa54039fafd709e2cb120bda16fd7d6b` (Task 9) |
+| Entry criteria met | Complete; Tasks 4–9, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | Task 8 gate head `5294cfdd4546e612a01ed71eb51980b69817e586`, tree `d6b15b28dc673b5529538bf9afc07235fe0cc3cd`, passed push run `38035136125` (job `114163895813`) and PR run `38035139305` (job `114163904782`) on their first attempts. Each passed locked restore, the clean 24-project audit, a 0-warning/0-error Release build, 502/502 tests (Attention 49), and both artifact uploads. The local gate passed the strict build and 489/489 executable tests. |
-| Manual gate | Task 8 actual-diff, allowlist, urgent-exemption, transition, corroboration, and bounds review passed. The Builder's bug hunt fixed two engine defects (J3, J4), and all 23 key-guard mutations are killed. PR #25 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `3d63147a153d3e957ae97f2bff71ccf08ac0c5f6` — Task 8 attention engine (PR #25) |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, the orientation budgets, the Task 7 bridge bounds and usage estimate, the App startup liveness bound, and every Task 8 attention number are provisional until Stage 11 physical profiling and calibration. The synthetic capture source cannot emit `SourceResized`. The bridge and the attention engine are not yet wired to capture, conversation, or presentation. |
-| Deferred temptations | Task 9+ conversation/ERPP/personality work; live API and credentials (Task 12); durable images, production settings, final UI |
+| Automated tests | Task 9 gate head `94554856910fce708b183d19dbbdcd17e83ce108`, tree `0e97a7c8f8e8959331f2b98675804b13f669e33e`, passed push run `38053270968` (job `114216541373`) and PR run `38053274366` (job `114216551132`) on their first attempts. Each passed locked restore, the clean 26-project audit, a 0-warning/0-error Release build, 546/546 tests (Conversation 44), and both artifact uploads. The local gate passed the strict build and 533/533 executable tests. |
+| Manual gate | Task 9 actual-diff, allowlist, priority/lock, resume-ordering, seeding, neutral non-response, and checkpoint review passed. The Builder fixed an immediate re-offer (J5) and corrected a redundant gate rule (J4), and all 32 rule mutations are killed. PR #27 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `0fe0932aaa54039fafd709e2cb120bda16fd7d6b` — Task 9 conversation coordinator (PR #27) |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds and usage estimate, the App startup liveness bound, and every Task 8 attention and Task 9 conversation number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The bridge, attention engine, and coordinator are not yet wired to each other, capture, presentation, or the app. Durable session transcripts belong to ERPP-01. |
+| Deferred temptations | ERPP-01 next; Task 10+ consolidation/personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
 ## Gate history
@@ -108,6 +108,40 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### Task 9 — Conversation coordinator and seed banks
+
+- Builder: Claude, under Boss's standing direction (2026-10-10).
+- Scope: 14 allowlisted paths, comprising:
+  - the new `CompanionCore.Conversation` project and `CompanionCore.Conversation.Tests`;
+  - solution wiring;
+  - control records.
+- Delivered: a deterministic, I/O-free `ConversationCoordinator`, comprising:
+  - exactly one thread, with game ranked above initiated, and the Player Conversation Lock;
+  - independent, bounded, deduplicating Seed Banks on separate clocks behind one game-favored gate;
+  - an Afterglow opening guarantee;
+  - ambient expression promoted to a thread only explicitly;
+  - substantive-only seeding;
+  - urgent hold and resume, with ask-first for sensitive topics;
+  - neutral presentation counting and a positive-only engagement profile;
+  - follow-up saturation;
+  - Brain Fart conditions;
+  - a validated checkpoint and restore.
+- Personal Round Judgments J1–J8 record:
+  - two banks with origin;
+  - provisional calibration;
+  - deterministic identity and chance;
+  - the gate claimed by every game check;
+  - quiet settling of an unanswered resume;
+  - the direct Afterglow opening;
+  - ambient urgent alerts;
+  - the user explicitly beating an unlocked thread.
+- Evidence:
+  - 32 of 32 rule mutations are killed.
+  - The implementation and gate heads each passed both Windows paths at 546/546 with verified artifacts.
+  - The merge ref had exact parents and an equal tree.
+- Merge: PR #27 squash-merged with the expected-head fence as `0fe0932aaa54039fafd709e2cb120bda16fd7d6b`, tree `0e97a7c8f8e8959331f2b98675804b13f669e33e`.
+- Result: passed and accepted. Combined Stage 7 behavior is finalized when the ERPP-01 companion gate also passes.
 
 ### Task 8 — Attention engine
 

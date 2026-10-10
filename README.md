@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–8, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only) and Stage 6's neutral attention engine are complete. No task is active; Task 9 is next.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–9, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, and Stage 7's conversation coordinator are in place. No task is active; ERPP-01 (Session Transcript Continuity) is next.
 
 ## Builder workflow
 
@@ -46,7 +46,18 @@ The final head passed both Windows event gates at 453/453 and merged as `9b8d45f
 
 All of it is typed abstract intents with provisional configuration. It passed both Windows gates at 502/502 and merged as `3d63147a153d3e957ae97f2bff71ccf08ac0c5f6`.
 
-The conversation coordinator and seed banks (Task 9) are next. ERPP implementation, personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**Task 9** (PR #27) added `CompanionCore.Conversation`, a deterministic coordinator:
+
+- exactly one Conversation Thread, with game outranking initiated conversation and a player lock;
+- independent Seed Banks on separate clocks behind one game-favored expression gate;
+- ambient expression that becomes a thread only through explicit interaction;
+- substantive-only seeding;
+- urgent hold and resume;
+- strictly neutral non-response.
+
+It passed both Windows gates at 546/546 and merged as `0fe0932aaa54039fafd709e2cb120bda16fd7d6b`.
+
+ERPP-01, the durable session transcript that Boss authorized as Task 9's companion, comes next. Consolidation (Task 10), personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 

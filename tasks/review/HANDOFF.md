@@ -2,92 +2,69 @@
 
 ## Task
 
-Task 9 — Conversation Coordinator and Seed Banks (`tasks/active/task-09-conversation-coordinator.md`), Roadmap Stage 7. Branch `agent/task-09-conversation-coordinator`, based on accepted `main` `cf034f60ef15e175d071bf624d960ed8188beb06`.
+No task is active. The last accepted packet is Task 9 — Conversation Coordinator and Seed Banks (`tasks/archive/task-09-conversation-coordinator.md`), merged through PR #27 as `0fe0932aaa54039fafd709e2cb120bda16fd7d6b`.
 
-ERPP-01 follows as its own companion packet.
+Combined Stage 7 behavior is finalized when the ERPP-01 companion gate passes.
 
 Builder: Claude.
 
 ## Completed
 
-- New `CompanionCore.Conversation`: a deterministic, I/O-free `ConversationCoordinator`. It provides:
-  - exactly one thread, with game ranked above initiated;
-  - the Player Conversation Lock;
-  - independent, bounded, deduplicating game and initiated Seed Banks with eviction;
-  - a semantic-scan game clock and a 30 s (offset 15 s) initiated clock with bounded catch-up;
-  - one expression gate, with game context favored;
-  - state-dependent expression chance;
-  - an Afterglow opening guarantee;
-  - ambient commentary, pep talks, and urgent alerts that become a thread only through explicit promotion;
-  - substantive-only seeding;
-  - idle settling;
-  - urgent hold, then resume offer, then resume or settle;
-  - ask-first for sensitive seeds and threads;
-  - neutral presentation counting, retiring a seed after three;
-  - a positive-only engagement profile;
-  - follow-up saturation;
-  - Brain Fart conditions;
-  - a full, validated, serializable checkpoint and restore.
-- New `CompanionCore.Conversation.Tests`: 44 deterministic tests covering acceptance scenarios 1–12 and all seven Stage 7 Paw Gate scenarios.
+- **Task 7** (PR #21): the stateless Braincase bridge.
+- **R5** (PR #23): App test phase bounds.
+- **Task 8** (PR #25): the attention engine.
+- **Task 9** (PR #27, recorded here): the conversation coordinator.
 
 ## Changed
 
-- `CompanionCore.slnx`
-- `src/CompanionCore.Conversation/**` (7 files, including the lock file)
-- `tests/CompanionCore.Conversation.Tests/**` (4 files, including the lock file)
-- this handoff and the active packet
+This docs-only reconciliation:
+
+- archives Task 9 with its PASS record;
+- updates `BUILD_LEDGER.md` and `README.md`;
+- resets this handoff.
 
 ## Verification
 
-Local, on the pinned SDK 10.0.302 (Linux cross-build):
-
-- Locked restore passed and the audit of all 26 projects is clean.
-- The strict Release build had 0 warnings and 0 errors.
-- 533/533 executable tests passed:
-
-  | Suite | Tests |
-  |---|---|
-  | Api | 128 |
-  | Attention | 49 |
-  | Capture | 14 |
-  | Capture Worker | 68 |
-  | Conversation | 44 |
-  | Memory | 68 |
-  | Presentation | 50 |
-  | Privacy | 13 |
-  | Runtime | 26 |
-  | TargetAuth | 73 |
-
-- Mutation pass: 32 of 32 coordinator rules are killed, after four test strengthenings and one rule correction (J4).
-- Windows CI on implementation head `a0e5efe`: push run `38053076912` (job `114215981421`) and PR run `38053089128` (job `114216016451`) each passed 546/546 on the first attempt (Conversation 44/44).
-  - Both artifact digests verified on each path.
-  - The attention-sheet PNG keeps the accepted digest `5eb11c96…b046dd`.
+- Task 9 gate head `9455485`, tree `0e97a7c`: push run `38053270968` and PR run `38053274366` each passed 546/546 with verified artifacts.
+- The merge ref had exact parents and an equal tree.
+- The squash merge went through the expected-head fence, and the merged tree `0e97a7c` equals the gate head's tree.
 
 ## Remaining
 
-- CI on this evidence descendant, the merge-ref check, merge, closure records, and post-merge `main` CI. Then ERPP-01.
+- Pass this reconciliation's CI paths, merge it, and confirm post-merge `main` CI.
+- Then ERPP-01 (Session Transcript Continuity), the durable, session-scoped conversation transcript, with:
+  - typed `ConversationActive`, `BnuyModeInterrupted`, `UrgentObservation`, `ReturnOffered`, and `ConversationResumed` events;
+  - stable identifiers and the pre-interruption resume point;
+  - bounded session lifecycle;
+  - no raw frames, rejected privacy material, credentials, or unrelated application content.
+- Deferred, in order:
+  1. wiring for the bridge, attention engine, and coordinator;
+  2. Stage 11 calibration and diagnostics;
+  3. a Stage 10 keepsakes packet;
+  4. a synthetic `SourceResized` capability;
+  5. persistent credentials and the live adapter (Task 12, stop condition).
 
 ## Risks and assumptions
 
-- All numbers are provisional calibration (J2).
-- The coordinator is not yet wired, and transcript durability belongs to ERPP-01.
+- Minimized and exclusive-fullscreen WGC remain unsupported absent target-PC evidence.
+- All attention, conversation, bridge, watchdog, orientation, and App startup numbers are provisional until Stage 11.
 
 ## Personal Round Judgments
 
-J1–J8 are recorded in the packet.
+Recorded per packet: R2 J1–J6, R3 J1–J7, R4 J1–J3, Task 7 J1–J15, R5 J1–J2, Task 8 J1–J9, and Task 9 J1–J8.
 
 ## Review focus
 
-- Priority and lock checks.
-- `Advance` expiry, idle, and resume ordering.
-- Seeding qualification.
-- Neutral non-response.
-- Checkpoint validation.
+- This reconciliation changes only:
+  - `BUILD_LEDGER.md`;
+  - `README.md`;
+  - this handoff;
+  - the Task 9 active-to-archive rename and its content update.
 
 ## Repository state
 
-- Branch `agent/task-09-conversation-coordinator`, draft PR #27. Implementation `a0e5efe`, then this evidence descendant.
+- Reconciliation branch `agent/task-09-closure`, based on `main` `0fe0932`.
 
 ## Next safe task
 
-Complete this Paw Gate. Then open ERPP-01 (Session Transcript Continuity) through its own packet.
+Open ERPP-01 (Session Transcript Continuity) through its own packet.
