@@ -46,11 +46,14 @@ Local, on the pinned SDK 10.0.302 (Linux cross-build):
   | Transcript | 17 |
 
 - Mutation pass: 18 of 18 transcript guards are covered, after two test additions and one removal of redundant code.
-- Windows CI on both paths is pending. The expected total is 563 = 546 + 17.
+- Windows CI on implementation head `7362924`: push run `38054434361` (job `114219884515`) and PR run `38054444729` (job `114219914108`) each passed 563/563 on the first attempt (Transcript 17/17).
+  - The live-read and lock-file fence design therefore also holds under Windows file sharing.
+  - Both artifact digests verified on each path.
+  - The attention-sheet PNG keeps the accepted digest `5eb11c96…b046dd`.
 
 ## Remaining
 
-- Both Windows CI paths with artifact verification, the evidence descendant, merge-ref check, merge, closure records (which finalize Stage 7), and post-merge `main` CI.
+- CI on this evidence descendant, the merge-ref check, merge, closure records (which finalize Stage 7), and post-merge `main` CI.
 
 ## Risks and assumptions
 
@@ -72,7 +75,7 @@ J1–J7 are recorded in the packet.
 
 ## Repository state
 
-- Branch `agent/erpp-01-session-transcript`; implementation commit pending publication.
+- Branch `agent/erpp-01-session-transcript`, draft PR #29. Implementation `7362924`, then this evidence descendant.
 
 ## Next safe task
 
