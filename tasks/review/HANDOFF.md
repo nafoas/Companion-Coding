@@ -2,67 +2,86 @@
 
 ## Task
 
-No task is active. The last accepted packet is ERPP-01 — Session Transcript Continuity (`tasks/archive/erpp-01-session-transcript.md`), merged through PR #29 as `7623b0e0f1f33734fed4cdc29ddbcb3b99c5737d`.
-
-With Task 9, **Stage 7 is final**.
+Task 10 — Memory Consolidation and Retrieval Mechanics (`tasks/active/task-10-memory-consolidation.md`), Roadmap Stage 8.
 
 Builder: Claude.
 
 ## Completed
 
-- **Task 7** (PR #21): the stateless Braincase bridge.
-- **R5** (PR #23): App test phase bounds.
-- **Task 8** (PR #25): the attention engine.
-- **Task 9** (PR #27): the conversation coordinator.
-- **ERPP-01** (PR #29, recorded here): the session transcript.
+- **Read-only `MemoryQuery`.** Exposed through `MemoryRepository.RetrieveAsync`:
+  - filters by game, save, session, literal subject prefix, scope, or record IDs;
+  - requires at least one filter, and is bounded (limit ≤1000, ≤256 IDs);
+  - shares one checksum-verified read path with subject retrieval;
+  - adds no schema, write, or maintenance change.
+- **New `CompanionCore.Recall` project** (references only Memory):
+  - session consolidation: summaries `Source`-link every original, highlights are copied verbatim, routine entries are compressed into counts;
+  - append-only adventure statuses and hypotheses, plus Boss confirmation;
+  - lore provenance with linked corrections;
+  - grouped evolving opinions (`BeliefHistory`);
+  - user-correction precedence;
+  - spoiler-aware, bounded local recall (`RecallSelector`, `RecallService`);
+  - immutable checksummed interest roots, with validated generated-seed storage.
+- Packet judgments J1–J9, including the retention decision (retain everything; no deletion).
 
 ## Changed
 
-This docs-only reconciliation:
-
-- archives ERPP-01 with its PASS record;
-- updates `BUILD_LEDGER.md` and `README.md`;
-- resets this handoff.
+- `CompanionCore.slnx`
+- `src/CompanionCore.Memory/MemoryQuery.cs` (new), `MemoryStore.Retrieval.cs`, `MemoryRepository.cs`
+- `src/CompanionCore.Recall/**` (new)
+- `tests/CompanionCore.Memory.Tests/MemoryQueryTests.cs` (new)
+- `tests/CompanionCore.Recall.Tests/**` (new)
+- This packet and this handoff
 
 ## Verification
 
-- ERPP-01 gate head `5a44dc8`, tree `159c18b`: push run `38054660628` and PR run `38054663515` each passed 563/563 with verified artifacts.
-- The merge ref had exact parents and an equal tree.
-- The squash merge went through the expected-head fence, and the merged tree `159c18b` equals the gate head's tree.
+- Local gate (Linux, cross-targeted build), with the 13 App integration tests deferred to Windows CI:
+  - locked restore;
+  - Release build with `--no-incremental /warnaserror`: 0 warnings, 0 errors;
+  - vulnerability audit: 0;
+  - tests: **608/608**: Api 128, Attention 49, Capture 14, Capture Worker 68, Conversation 44, Memory 85 (+17 query tests), Presentation 50, Privacy 13, Recall 41 (new), Runtime 26, TargetAuth 73, Transcript 17.
+- Expected on Windows CI: 621 (608 plus 13 App integration tests).
+- Recall tests repeated 5× with no flake, after record-ID ordering was compared as sets.
+- Mutation pass: 63 mutants across Recall, `MemoryQuery`, and the retrieval SQL.
+  - The first run killed 59.
+  - Three survivors were real test gaps, closed with new tests: focus bonus, service session query, and belief-current selection.
+  - One is equivalent: removing the duplicate-root check still refuses through the dictionary build with the same `ArgumentException`.
+- Gate head `755f8d3`:
+  - push run `38056481599` and PR run `38056494760` each passed **621/621** (13 projects, Recall 41, Memory 85, App Integration 13);
+  - test-results and attention-sheet artifacts: archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+
+## Bug hunt findings fixed before the gate
+
+These came from review and from writing the tests:
+
+- A consolidation larger than one store operation would have been rejected opaquely; it is now refused up front.
+- Duplicate originals would have produced duplicate links, which the store rejects; they are now deduplicated.
+- Spoiler lore without a save would have reached new saves; spoiler lore now requires a save, and the selector suppresses unattributed spoilers.
+- A full-confidence Integration record could tie or beat a low-confidence user correction; corrections now have their own tier.
+- The roots fingerprint was ambiguous under tab/newline descriptions; it now uses JSON framing.
+- A missing roots fingerprint was accepted; it is now required.
+- Null recall metadata threw; it now parses as an entry.
 
 ## Remaining
 
-- Pass this reconciliation's CI paths, merge it, and confirm post-merge `main` CI.
-- Then Task 10: memory consolidation and retrieval mechanics (Stage 8).
-- Deferred, in order:
-  1. a transcript retention decision for Boss with Task 10;
-  2. wiring for the bridge, attention engine, coordinator, and transcript;
-  3. Stage 11 calibration and diagnostics;
-  4. a Stage 10 keepsakes packet;
-  5. a synthetic `SourceResized` capability;
-  6. persistent credentials and the live adapter (Task 12, stop condition).
+- Finish the gate (CI, evidence, merge, closure).
+- Then Task 11 (Stage 9 Watchbun continuity).
 
 ## Risks and assumptions
 
-- Minimized and exclusive-fullscreen WGC remain unsupported absent target-PC evidence.
-- All attention, conversation, transcript, bridge, watchdog, orientation, and App startup numbers are provisional until Stage 11.
-
-## Personal Round Judgments
-
-Recorded per packet: R2 J1–J6, R3 J1–J7, R4 J1–J3, Task 7 J1–J15, R5 J1–J2, Task 8 J1–J9, Task 9 J1–J8, and ERPP-01 J1–J7.
+- Recall scoring weights and budgets are provisional until Stage 11.
+- Consolidation idempotency needs the caller to persist the operation time (J3); wiring is deferred.
 
 ## Review focus
 
-- This reconciliation changes only:
-  - `BUILD_LEDGER.md`;
-  - `README.md`;
-  - this handoff;
-  - the ERPP-01 active-to-archive rename and its content update.
+- No update, delete, or compaction path exists anywhere in Recall.
+- Spoiler suppression and the scope rules.
+- The `MemoryQuery` SQL builds only from fixed fragments plus bound parameters.
 
 ## Repository state
 
-- Reconciliation branch `agent/erpp-01-closure`, based on `main` `7623b0e`.
+- Branch `agent/task-10-memory-consolidation`, based on `main` `6f27392`.
 
 ## Next safe task
 
-Open Task 10 (memory consolidation and retrieval mechanics, Stage 8) through its own packet.
+After closure: Task 11, Watchbun continuity (Stage 9).

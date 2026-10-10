@@ -153,6 +153,15 @@ public sealed class MemoryRepository : IAsyncDisposable
         return _store.RetrieveBySubjectAsync(subjectKey, cancellationToken);
     }
 
+    /// <summary>Bounded read-only query; see <see cref="MemoryQuery"/>.</summary>
+    public Task<IReadOnlyList<RetrievedMemory>> RetrieveAsync(
+        MemoryQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _store.RetrieveAsync(query, cancellationToken);
+    }
+
     internal async Task<MemoryBackupResult> CreateBackupAsync(
         IBackupTestHook? testHook = null,
         CancellationToken cancellationToken = default)
