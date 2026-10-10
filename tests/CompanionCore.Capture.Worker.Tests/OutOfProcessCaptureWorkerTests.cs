@@ -164,23 +164,52 @@ public sealed class OutOfProcessCaptureWorkerTests
         using var releaseObserver = new ManualResetEventSlim();
         var observerEntered = new TaskCompletionSource(
             TaskCreationOptions.RunContinuationsAsynchronously);
+        var stopped = new TaskCompletionSource<CaptureWorkerStatusChanged>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var framesDispatchedAfterStop = 0;
         worker.FrameProduced += (_, _) =>
         {
+            if (stopped.Task.IsCompleted)
+            {
+                Interlocked.Increment(ref framesDispatchedAfterStop);
+                return;
+            }
+
             observerEntered.TrySetResult();
             releaseObserver.Wait(TimeSpan.FromSeconds(10));
+        };
+        worker.StatusChanged += (_, change) =>
+        {
+            if (change.Status == CaptureWorkerStatus.Stopped)
+            {
+                stopped.TrySetResult(change);
+            }
         };
         await worker.StartAsync(CaptureWorkerTestSupport.CreateGrant(), CancellationToken.None);
         await observerEntered.Task.WaitAsync(TimeSpan.FromSeconds(10));
 
-        var metrics = await worker.GetMetricsAsync(CancellationToken.None)
-            .WaitAsync(TimeSpan.FromSeconds(3));
-        var stop = worker.StopAndClearAsync(CancellationToken.None);
-        var result = await stop.WaitAsync(TimeSpan.FromSeconds(5));
+        try
+        {
+            var metrics = await worker.GetMetricsAsync(CancellationToken.None)
+                .WaitAsync(TimeSpan.FromSeconds(3));
+            var stop = worker.StopAndClearAsync(CancellationToken.None);
+            var result = await stop.WaitAsync(TimeSpan.FromSeconds(5));
+            var stoppedChange = await stopped.Task.WaitAsync(TimeSpan.FromSeconds(3));
 
-        Assert.True(metrics.WorkerProcessId > 0);
-        Assert.True(result.ClearedMetadataCount >= 0);
-        Assert.Equal(0, worker.WorkerProcessId);
-        releaseObserver.Set();
+            Assert.True(metrics.WorkerProcessId > 0);
+            Assert.True(result.ClearedMetadataCount >= 0);
+            Assert.Equal(CaptureWorkerStatus.Stopped, stoppedChange.Status);
+            Assert.Equal(0, worker.WorkerProcessId);
+        }
+        finally
+        {
+            releaseObserver.Set();
+        }
+
+        // Frames queued behind the blocked observer predate the Stopped fence that was
+        // already delivered. Releasing the observer must not dispatch any of them.
+        await Task.Delay(TimeSpan.FromMilliseconds(500));
+        Assert.Equal(0, Volatile.Read(ref framesDispatchedAfterStop));
     }
 
     [Fact]

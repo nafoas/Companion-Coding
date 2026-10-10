@@ -66,6 +66,94 @@ public sealed class CaptureFramePipelineTests
     }
 
     [Fact]
+    public async Task ProducerPressure_DoesNotAccumulateWakeSignalsForEvictedFrames()
+    {
+        const int pressuredFrames = 4096;
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var ownership = new SharedDisposalCounter();
+        await using var pipeline = new CaptureFramePipeline(
+            processor: async (_, cancellationToken) =>
+            {
+                entered.TrySetResult();
+                await release.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            });
+        pipeline.Resume();
+
+        // The release must run even when an assertion fails. Otherwise disposal waits
+        // for the blocked processor, which waits for the pipeline lifetime, and the
+        // red-evidence run deadlocks instead of failing.
+        try
+        {
+            Assert.True(pipeline.TryOffer(CreateCountedFrame(ownership)));
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            for (var index = 0; index < pressuredFrames; index++)
+            {
+                Assert.True(pipeline.TryOffer(CreateCountedFrame(ownership)));
+            }
+
+            // The consumer holds the first frame and its consumed signal, so exactly
+            // one unreserved signal remains for each bounded pending entry.
+            var pressured = CaptureWorkerTestSupport.Snapshot(pipeline);
+            Assert.Equal(CaptureFramePipeline.ProcessingQueueCapacity, pressured.QueueDepth);
+            Assert.Equal(pressured.QueueDepth, pipeline.PendingWakeSignalCount);
+            Assert.Equal(pressuredFrames - CaptureFramePipeline.ProcessingQueueCapacity, pressured.DroppedFrames);
+        }
+        finally
+        {
+            release.TrySetResult();
+        }
+
+        await pipeline.ClearAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(0, pipeline.PendingWakeSignalCount);
+        Assert.Equal(0, CaptureWorkerTestSupport.Snapshot(pipeline).CurrentSourceFrames);
+        Assert.Equal(pressuredFrames + 1, Interlocked.Read(ref ownership.Created));
+        Assert.Equal(pressuredFrames + 1, Interlocked.Read(ref ownership.Disposed));
+    }
+
+    [Fact]
+    public async Task Clear_RetiresWakeSignalsOfClearedPendingFrames()
+    {
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var ownership = new SharedDisposalCounter();
+        var processed = 0;
+        await using var pipeline = new CaptureFramePipeline(
+            processor: async (_, cancellationToken) =>
+            {
+                Interlocked.Increment(ref processed);
+                entered.TrySetResult();
+                await release.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            });
+        pipeline.Resume();
+
+        Task<CaptureStopResult> clear;
+        try
+        {
+            Assert.True(pipeline.TryOffer(CreateCountedFrame(ownership)));
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(pipeline.TryOffer(CreateCountedFrame(ownership)));
+            Assert.True(pipeline.TryOffer(CreateCountedFrame(ownership)));
+            Assert.Equal(2, pipeline.PendingWakeSignalCount);
+
+            // Clearing removes the pending entries before it waits for the processor.
+            clear = pipeline.ClearAsync(CancellationToken.None);
+            await CaptureWorkerTestSupport.WaitUntilAsync(
+                () => CaptureWorkerTestSupport.Snapshot(pipeline).QueueDepth == 0);
+            Assert.Equal(0, pipeline.PendingWakeSignalCount);
+        }
+        finally
+        {
+            release.TrySetResult();
+        }
+
+        await clear.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(0, pipeline.PendingWakeSignalCount);
+        Assert.Equal(1, Volatile.Read(ref processed));
+        Assert.Equal(3, Interlocked.Read(ref ownership.Disposed));
+    }
+
+    [Fact]
     public async Task BytePressure_EvictsOldestAndStaysBelowSixtyFourMiB()
     {
         await using var pipeline = new CaptureFramePipeline();
@@ -215,4 +303,7 @@ public sealed class CaptureFramePipelineTests
             height: 32,
             accountedBytes: bytes,
             resource);
+
+    private static CaptureSourceFrame CreateCountedFrame(SharedDisposalCounter ownership) =>
+        CreateFrame(new CountedResource(ownership), 4096);
 }

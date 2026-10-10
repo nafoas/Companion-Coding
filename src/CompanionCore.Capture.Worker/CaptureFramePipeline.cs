@@ -45,6 +45,8 @@ internal sealed class CaptureFramePipeline : IAsyncDisposable
 
     internal event EventHandler<CaptureSourceFrame>? FrameReady;
 
+    internal int PendingWakeSignalCount => _available.CurrentCount;
+
     internal void Resume()
     {
         lock (_gate)
@@ -90,7 +92,7 @@ internal sealed class CaptureFramePipeline : IAsyncDisposable
                 {
                     while (_pending.Count >= ProcessingQueueCapacity)
                     {
-                        var oldestPending = _pending.Dequeue();
+                        var oldestPending = DequeuePendingUnsafe();
                         _dropped++;
                         dispose.Add(oldestPending);
                     }
@@ -118,8 +120,11 @@ internal sealed class CaptureFramePipeline : IAsyncDisposable
         {
             disposedBefore = _disposedFrames;
             disposedBytesBefore = _disposedBytes;
-            dispose = [.. _pending];
-            _pending.Clear();
+            dispose = [];
+            while (_pending.Count > 0)
+            {
+                dispose.Add(DequeuePendingUnsafe());
+            }
         }
 
         DisposeFrames(dispose);
@@ -195,7 +200,7 @@ internal sealed class CaptureFramePipeline : IAsyncDisposable
             var oldest = _ring.RemoveOldest();
             if (oldest is null && _pending.Count > 0)
             {
-                oldest = _pending.Dequeue();
+                oldest = DequeuePendingUnsafe();
                 _dropped++;
             }
 
@@ -289,6 +294,17 @@ internal sealed class CaptureFramePipeline : IAsyncDisposable
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
         {
         }
+    }
+
+    // Every pending entry owns exactly one wake signal. Removing an entry outside the
+    // consumer retires that signal so producer pressure cannot accumulate wake debt
+    // over runtime. When no signal is available, the single consumer has already
+    // reserved it; that reservation drains as one harmless empty wake.
+    private CaptureSourceFrame DequeuePendingUnsafe()
+    {
+        var frame = _pending.Dequeue();
+        _available.Wait(0);
+        return frame;
     }
 
     private int CurrentFrameCountUnsafe() =>
