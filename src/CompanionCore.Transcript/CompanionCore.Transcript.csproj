@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CompanionCore.Transcript</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CompanionCore.Conversation\CompanionCore.Conversation.csproj" />
+    <ProjectReference Include="..\CompanionCore.Memory\CompanionCore.Memory.csproj" />
+    <ProjectReference Include="..\CompanionCore.Privacy\CompanionCore.Privacy.csproj" />
+  </ItemGroup>
+
+</Project>
