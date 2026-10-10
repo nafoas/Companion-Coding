@@ -11,6 +11,8 @@ internal enum BackupTestPoint
     AfterArchivePromotion,
     BeforeJournalReplacement,
     AfterJournalReplacement,
+    CompanionBuilt,
+    AfterCompanionPromotion,
 }
 
 /// <summary>

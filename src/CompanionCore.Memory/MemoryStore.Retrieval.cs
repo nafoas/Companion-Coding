@@ -100,11 +100,44 @@ internal sealed partial class MemoryStore
             cancellationToken);
     }
 
+    internal Task<IReadOnlyList<RetrievedMemory>> RetrieveSubjectPrefixPageAsync(
+        string subjectPrefix,
+        Guid? afterRecordId,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        ArgumentException.ThrowIfNullOrWhiteSpace(subjectPrefix);
+        if (subjectPrefix.Length > MemoryProposalValidator.MaximumKeyCharacters
+            || limit is < 1 or > MemoryQuery.MaximumLimit
+            || afterRecordId == Guid.Empty)
+        {
+            throw new ArgumentException("The subject-prefix page request is unbounded or invalid.");
+        }
+
+        return RetrieveWhereAsync(
+            afterRecordId is null
+                ? "substr(r.subject_key, 1, length($prefix)) = $prefix"
+                : "substr(r.subject_key, 1, length($prefix)) = $prefix AND r.record_id > $after",
+            command =>
+            {
+                command.Parameters.AddWithValue("$prefix", subjectPrefix);
+                if (afterRecordId is { } after)
+                {
+                    command.Parameters.AddWithValue("$after", after.ToString("D"));
+                }
+            },
+            limit,
+            cancellationToken,
+            orderByRecordId: true);
+    }
+
     private async Task<IReadOnlyList<RetrievedMemory>> RetrieveWhereAsync(
         string whereClause,
         Action<Microsoft.Data.Sqlite.SqliteCommand> bind,
         int? limit,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool orderByRecordId = false)
     {
         await _accessLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -152,11 +185,7 @@ internal sealed partial class MemoryStore
                     INNER JOIN append_operations o ON o.operation_id = r.operation_id
                     WHERE {{whereClause}}
                     ORDER BY
-                        is_current DESC,
-                        source_rank DESC,
-                        r.confidence DESC,
-                        r.created_at_utc DESC,
-                        r.record_id ASC
+                        {{(orderByRecordId ? "r.record_id ASC" : "is_current DESC, source_rank DESC, r.confidence DESC, r.created_at_utc DESC, r.record_id ASC")}}
                     {{(limit is { } bound ? "LIMIT $limit" : string.Empty)}};
                     """;
                 bind(command);

@@ -5,10 +5,12 @@ namespace CompanionCore.Memory;
 internal sealed class MemoryBackupService
 {
     private readonly MemoryRepository _repository;
+    private readonly IVaultCompanion? _companion;
 
-    internal MemoryBackupService(MemoryRepository repository)
+    internal MemoryBackupService(MemoryRepository repository, IVaultCompanion? companion = null)
     {
         _repository = repository;
+        _companion = companion;
     }
 
     internal async Task<MemoryBackupResult> CreateAsync(
@@ -34,6 +36,13 @@ internal sealed class MemoryBackupService
             location.BackupDirectoryPath,
             $".memory-vault-v1.{attemptId:N}.tmp");
         var candidatePromoted = false;
+        var companionCandidatePath = Path.Combine(
+            location.BackupDirectoryPath,
+            $".companion-vault-v1.{attemptId:N}.tmp");
+        var companionPromoted = false;
+        _ = MemoryPathGuard.RequireImmediateChild(
+            location.BackupDirectoryPath,
+            companionCandidatePath);
         _ = MemoryPathGuard.RequireImmediateChild(
             location.BackupDirectoryPath,
             candidateArchivePath);
@@ -128,6 +137,34 @@ internal sealed class MemoryBackupService
                         BackupTestPoint.CandidateValidated,
                         cancellationToken)
                     .ConfigureAwait(false);
+            }
+
+            if (_companion is not null)
+            {
+                // The companion builds and validates its own candidate before anything is
+                // promoted; any failure leaves the previous Vault untouched.
+                await _companion.BuildCandidateAsync(
+                        backupId,
+                        createdAtUtc,
+                        companionCandidatePath,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                if (!File.Exists(companionCandidatePath))
+                {
+                    throw new BackupValidationException("The Vault companion produced no candidate archive.");
+                }
+
+                if (testHook is not null)
+                {
+                    await testHook.OnPointAsync(
+                            BackupTestPoint.CompanionBuilt,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
+
+            if (testHook is not null)
+            {
                 await testHook.OnPointAsync(
                         BackupTestPoint.BeforeArchivePromotion,
                         cancellationToken)
@@ -135,6 +172,24 @@ internal sealed class MemoryBackupService
             }
 
             cancellationToken.ThrowIfCancellationRequested();
+            if (_companion is not null)
+            {
+                // Companion first: a crash before the memory promotion leaves a newer
+                // companion beside the previous memory archive, which restoration tolerates
+                // because every file is verified against the restored records.
+                PromoteArchive(companionCandidatePath, location.CompanionArchivePath);
+                companionPromoted = true;
+                if (testHook is not null)
+                {
+                    await testHook.OnPointAsync(
+                            BackupTestPoint.AfterCompanionPromotion,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
             PromoteArchive(candidateArchivePath, location.BackupArchivePath);
             candidatePromoted = true;
 
@@ -183,7 +238,8 @@ internal sealed class MemoryBackupService
                 cutSequence,
                 location.BackupArchivePath,
                 archiveLength,
-                archiveDigest);
+                archiveDigest,
+                _companion is not null);
         }
         finally
         {
@@ -192,6 +248,13 @@ internal sealed class MemoryBackupService
                 MemoryPathGuard.TryDeleteTaskOwnedFile(
                     location.BackupDirectoryPath,
                     candidateArchivePath);
+            }
+
+            if (!companionPromoted)
+            {
+                MemoryPathGuard.TryDeleteTaskOwnedFile(
+                    location.BackupDirectoryPath,
+                    companionCandidatePath);
             }
 
             MemoryPathGuard.TryDeleteTaskOwnedDirectory(
@@ -215,7 +278,7 @@ internal sealed class MemoryBackupService
 
         var rollbackPath = Path.Combine(
             directory,
-            $".memory-vault-v1.{Guid.NewGuid():N}.previous");
+            $".{Path.GetFileNameWithoutExtension(promotedPath)}.{Guid.NewGuid():N}.previous");
         try
         {
             File.Replace(candidatePath, promotedPath, rollbackPath, ignoreMetadataErrors: true);
