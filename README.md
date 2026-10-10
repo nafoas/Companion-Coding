@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–10, ERPP-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, and Stage 8's memory consolidation and recall mechanics are complete. No task is active; Task 11 is next.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. No task is active; Stage 10 keepsakes and complete recovery are next.
 
 ## Builder workflow
 
@@ -61,7 +61,9 @@ It passed both Windows gates at 546/546 and merged as `0fe0932aaa54039fafd709e2c
 
 **Task 10** (PR #31) added a bounded read-only `MemoryQuery` and `CompanionCore.Recall`: append-only session consolidation with verbatim highlights, adventure records, lore provenance, evolving beliefs, user-correction precedence, spoiler-aware local recall, and immutable interest roots. It passed both Windows gates at 621/621 and merged as `e529eb679a17dcc6059d2f83d33d850dc6a80c2f`. Stage 8 is complete.
 
-Application-bound background continuity (Task 11) comes next. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**Task 11** (PR #33) added `CompanionCore.Watchbun`, a checkpointed engine that keeps one authorized target attached across tab-aways, quiet hours, exits, relaunches, and lock/sleep, plus a synthetic structured-event adapter. It passed both Windows gates at 687/687 and merged as `97ea0e411c3d9da29d7841d6a810a9fb4773c6e9`. Stage 9 is complete.
+
+Stage 10 keepsakes and complete recovery come next. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 
