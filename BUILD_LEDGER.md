@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 4 — local peepers and bounded visual pipeline — **accepted** |
+| Current stage | Stage 4 — local peepers and bounded visual pipeline — **accepted and recertified** |
 | Active task | None; Task 7 remains unopened |
-| Working branch | Accepted product/evidence baseline on `main`: `779ed4b0fab9cce8fdf978add388b6282010974a` |
-| Entry criteria met | Complete; Tasks 4–6 each passed their Paw Gates and were reconciled to accepted `main` |
+| Working branch | Accepted product/evidence baseline on `main`: `11cc752eae1e9457a12c9d847aacdeb073463b13` (R2) |
+| Entry criteria met | Complete; Tasks 4–6 and the R2 recertification each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No |
-| Automated tests | Final evidence head `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf`, tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`, passed push run `33032555656` (job `98388150311`) and PR run `33032557593` (job `98388156701`) on their first attempts. Each passed locked restore, the clean 20-project audit, a 0-warning/0-error Release build, 309/309 tests, and both artifact uploads. Corrected local gate also passed all 20 builds and 296/296 executable tests. |
-| Manual gate | PR #11 merged the implementation. Premature PR #12 was closed without merge. PR #13's attributable six-path correction, evidence descendant, exact-tree/artifact inspection, actual-diff review, and merge-ref review passed; it squash-merged through the expected-head fence with tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. Task 6 is archived. |
-| Accepted `main` baseline | `779ed4b0fab9cce8fdf978add388b6282010974a` — Task 6 and the Stage 4 product/evidence tree accepted through PR #13 |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds are deliberately provisional until Stage 11 physical profiling. |
+| Automated tests | R2 final evidence head `a54330178764bfddb18f15d0801a3f24f9df1ad9`, tree `5483a2d7ccd577447013c3844a2be22beeb55a44`, passed push run `38025762113` (job `114136151131`) and PR run `38025763952` (job `114136156632`) on their first attempts. Each passed locked restore, the clean 20-project audit, a 0-warning/0-error Release build, 311/311 tests, and both artifact uploads. The local gate passed all 20 strict builds and 298/298 executable tests. |
+| Manual gate | R2 red evidence failed exactly the three intended regressions (run `38025402946`). Actual-diff review, allowlist, artifact inspection, and merge-ref review passed. PR #15 squash-merged through the expected-head fence with tree `5483a2d7ccd577447013c3844a2be22beeb55a44`, and R2 is archived. |
+| Accepted `main` baseline | `11cc752eae1e9457a12c9d847aacdeb073463b13` — Stage 4 product/evidence tree recertified through PR #15 |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds are deliberately provisional until Stage 11 physical profiling. The synthetic capture source cannot emit `SourceResized`, so the R2 visual fence is exercised through `Stopped`. |
 | Deferred temptations | Task 7+ semantic bridge/attention meaning/API/conversation/ERPP/personality work; durable images, production settings, final UI |
-| Approval | Boss authorized completing and pushing all remaining Stage 4 work on 2026-08-26 and explicitly confirmed `https://github.com/nafoas/Companion-Coding.git` on 2026-08-27. |
+| Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10 and authorized completing all of Stage 4, including R2 and its publication. |
 
 ## Gate history
 
@@ -108,6 +108,32 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### R2 — Stage 4 recertification and closure
+
+- Builder: Claude, which took over direct construction from Codex at Boss's instruction on 2026-10-10. The Paw Gate protocol is unchanged.
+- Entry: Codex's interrupted R2 published only regression evidence `326afd4` on accepted `main` `04af51b`. Its candidate fixes were never published. Push run `33337966344` hung for six hours: on failure, the pressure regression never released its blocked processor, so disposal deadlocked. A local `--blame-hang-timeout` run named that test.
+- Defects confirmed in accepted Stage 4 code:
+  1. `CaptureFramePipeline` never retired the wake signal of an evicted or cleared pending frame, so signal debt grew with runtime.
+  2. `OutOfProcessCaptureWorker` shared one 64-entry drop-oldest lane and one dispatcher across status, frame, and sheet events, so a blocked frame observer could delay or evict the `Stopped`/`Faulted`/resize fence.
+- Correction:
+  - one signal-retiring removal helper;
+  - an independent bounded status lane and dispatcher;
+  - a visual fence that rejects frames queued before any visual-invalidating status;
+  - prompt-failing regressions;
+  - CI `--blame-hang-timeout 10m` and a 60-minute job timeout.
+
+  Frames and sheets keep one serialized dispatcher in source order. Six allowlisted paths changed, with 330 additions and 52 deletions; no contract, project, package, lock, or authority surface changed.
+- Red evidence: head `bf0113c`, push run `38025402946`, job `114135078349`, 2 min 9 s. 311 executed, and exactly the three intended regressions failed (0 vs 2, 2 vs 4096, and a 3 s `Stopped` timeout) with no hang.
+- Windows evidence:
+  - Candidate `82a70df`: push run `38025519542` and PR run `38025588908`.
+  - Final evidence descendant `a543301`, tree `5483a2d7ccd577447013c3844a2be22beeb55a44`: push run `38025762113` (job `114136151131`) and PR run `38025763952` (job `114136156632`).
+
+  Every run passed restore, audit, all 20 Release builds with 0 warnings and 0 errors, 311/311 tests, and both artifact uploads on the first attempt.
+- Artifacts: final push test results `11659363605` (`sha256:40408fc40f78b504453ce68ffa13b9ea91257ffe667ef940ba4639adfbd7ce45`) and sheet `11659258710` (`sha256:c0187a84c72d07a36b1d2a504f7f28a7022c198e85b59259230e1572047fa774`); final PR test results `11659288564` (`sha256:1b29948a872fc70330982024c59eb0701029d210be9d06277f71938ec4fd1e85`) and sheet `11659423502` (`sha256:fe69331b984c2fa6fed11563c956cb3db3bfade3f5d46464ec1b6abef6106cb5`). Downloaded hashes matched GitHub. Every PNG retained `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd` at 792×621 RGBA and was visually inspected.
+- Personal Round Judgments J1–J6 cover the corrective label, one-for-one signals, the independent status lane, the visual fence, CI hang bounds, and builder continuity.
+- Merge: the PR #15 merge ref had exact parents `04af51b` and `a543301` and a tree equal to the head tree. It squash-merged with the expected-head fence as `11cc752eae1e9457a12c9d847aacdeb073463b13`, and fetched `main` retained the exact tree.
+- Result: passed, merged, and accepted. Stage 4 is recertified and closed; no task is active and Task 7 remains unopened.
 
 ### R0 — Direct-build re-entry and continuity alignment
 

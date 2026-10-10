@@ -1,6 +1,6 @@
 # Task R2 — Stage 4 Recertification and Closure
 
-Status: **Active**
+Status: **Accepted. PR #15 squash-merged to `main` as `11cc752eae1e9457a12c9d847aacdeb073463b13` after the red evidence failed exactly the three intended cases and the final head passed both exact Windows event paths at 311/311.**
 Accepted base: `04af51b90ffbc44933a56c21a1c1223940ef671a`, tree `ad027224f73e4fb3401c2d48d9591226395b4bf4`
 Roadmap slice: Stage 4 corrective verification only; Task 7 remains unopened
 Builder: Claude, which took over direct construction from Codex at Boss's instruction on 2026-10-10
@@ -90,6 +90,15 @@ R2 passes only when:
 - **J4 — A visual fence replaces the ordering the single lane implied.** Every status other than an ordinary `Running` transition (exactly the statuses `TargetSessionController` treats as clearing visual admission) increments a fence under the state gate before the status is enqueued. Frame events record the fence at creation and are rejected at dispatch if it has moved. The one frame already inside an observer when a fence occurs completes normally, as it did before. Reversal: remove the fence together with J3.
 - **J5 — CI bounds hangs.** The R2 red-evidence run consumed six hours because the workflow had no hang bound. The Test step now uses `--blame-hang-timeout 10m`, which fails the hung test with a named dump, and the job has a 60-minute `timeout-minutes`. Both only strengthen the gate; neither skips or weakens a test. Reversal: remove the two bounds from `ci.yml`.
 - **J6 — Builder continuity.** Boss transferred direct construction from Codex to Claude on 2026-10-10 with unchanged Paw Gate authority. Renaming the builder role throughout standing documents is a separate control task after R2, so this corrective gate stays bounded. Reversal: none required; the rename task can choose any wording Boss prefers.
+
+## Candidate evidence
+
+- Red evidence: head `bf0113cdd86e2c51110643d7181ef51cbabac54b` (regressions only, accepted product code), push run `38025402946`, job `114135078349`, 2 min 9 s. 311 executed and 308 passed. Exactly the three intended cases failed, with no timeout or skip: clear left 2 signals where 0 were expected (94 ms), pressure left 4096 signals where 2 were expected (130 ms), and `Stopped` timed out behind a blocked observer (3 s).
+- Candidate implementation: head `82a70df099a53a877b0d2443a8b39b02ece846a6`, tree `f9b13752f4d54a19208fec3a933590a9d73b23e1`. Push run `38025519542` (job `114135429187`) and PR run `38025588908` (job `114135636155`) each passed 311/311 on the first attempt.
+- Final evidence descendant: head `a54330178764bfddb18f15d0801a3f24f9df1ad9`, tree `5483a2d7ccd577447013c3844a2be22beeb55a44`. Push run `38025762113` (job `114136151131`) and PR run `38025763952` (job `114136156632`) each passed locked restore, the clean 20-project audit, all 20 Release builds with 0 warnings and 0 errors, 311/311 tests, and both artifact uploads, on the first attempt.
+- Artifacts: every archive was downloaded and matched GitHub's digest. Every TRX set totals 311 executed. Every attention-sheet PNG is 792×621 8-bit RGBA, non-interlaced, with the accepted pixel digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`, and it was visually inspected.
+- Local gate: locked restore; a clean audit of 20 projects; all 20 Release projects built with `/warnaserror`, 0 warnings and 0 errors; 298/298 locally executable tests passed.
+- Merge: the PR #15 merge ref had parents `04af51b` and `a543301` and a tree equal to the head tree. It was squash-merged with the expected-head fence as `11cc752eae1e9457a12c9d847aacdeb073463b13`, and fetched `main` retained tree `5483a2d7ccd577447013c3844a2be22beeb55a44`.
 
 ## Review focus
 

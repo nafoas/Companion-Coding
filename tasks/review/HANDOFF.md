@@ -2,7 +2,7 @@
 
 ## Task
 
-Task R2 — Stage 4 Recertification and Closure (`tasks/active/task-r2-stage4-recertification.md`). This corrective packet is based directly on accepted `main` `04af51b90ffbc44933a56c21a1c1223940ef671a` and is published as draft PR #15. Task 7 remains unopened.
+Task R2 — Stage 4 Recertification and Closure. Accepted and archived (`tasks/archive/task-r2-stage4-recertification.md`). PR #15 merged the correction and its evidence as `11cc752eae1e9457a12c9d847aacdeb073463b13` with an expected-head fence and unchanged tree. This docs-only reconciliation records the closure. Stage 4 is complete and recertified, no task is active, and Task 7 remains unopened.
 
 Builder: Claude, which took over direct construction from Codex at Boss's instruction on 2026-10-10. The Paw Gate protocol is unchanged.
 
@@ -53,12 +53,14 @@ No project, package, lock, solution, contract, memory, runtime, privacy-authorit
   - PR: test results `11659043533` (`sha256:db8e2ba8eaf13940830e0e0e5e0539ef8065931eff426c9282a9d25babc52904`) and sheet `11659423284` (`sha256:296647b48ab99b137abd3b908976d93d44c0d3ab613c1266ae6c6ed89112a17f`).
   - Every TRX set totals 311 executed. Every extracted PNG, including the red run's, is 792×621, 8-bit RGBA, non-interlaced, with the accepted pixel digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`. Visual inspection confirmed the `FULL CONTEXT`, `CENTER`, and `LOWER / DIALOGUE` labels and synchronized crops.
 - Static gates: `git diff --check origin/main...HEAD` passed; exactly one packet is active; the changed-path set equals six allowlisted paths; local and remote heads and trees are identical.
+- Final event paths on evidence head `a54330178764bfddb18f15d0801a3f24f9df1ad9`, tree `5483a2d7ccd577447013c3844a2be22beeb55a44`: push run `38025762113` (job `114136151131`) and PR run `38025763952` (job `114136156632`) each passed on the first attempt, with 311/311 tests and both artifacts. Push artifacts are test results `11659363605` (`sha256:40408fc40f78b504453ce68ffa13b9ea91257ffe667ef940ba4639adfbd7ce45`) and sheet `11659258710` (`sha256:c0187a84c72d07a36b1d2a504f7f28a7022c198e85b59259230e1572047fa774`). PR artifacts are test results `11659288564` (`sha256:1b29948a872fc70330982024c59eb0701029d210be9d06277f71938ec4fd1e85`) and sheet `11659423502` (`sha256:fe69331b984c2fa6fed11563c956cb3db3bfade3f5d46464ec1b6abef6106cb5`). Downloaded hashes matched GitHub, and every PNG retained the accepted pixel digest.
+- Merge: the PR #15 merge ref had exact parents `04af51b` and `a543301` and a tree equal to the head tree. It was marked ready and squash-merged with expected head `a543301` as `11cc752eae1e9457a12c9d847aacdeb073463b13`; fetched `main` retained exact tree `5483a2d7ccd577447013c3844a2be22beeb55a44`.
 
 ## Remaining
 
-- This evidence descendant must pass both exact Windows event paths. PR #15 then merges with an expected-head fence.
-- After that merge, a docs-only reconciliation must archive the packet, update `BUILD_LEDGER.md` and `README.md`, and pass its own exact gates before Stage 4 is recorded as closed.
-- Task 7 stays unopened until that reconciliation merges.
+- This docs-only reconciliation must pass both exact Windows event paths and merge with an expected-head fence before Stage 4 is recorded as closed on `main`.
+- No Stage 4 implementation work remains. Task 7 stays unopened; later work begins through its own bounded active packet.
+- Deferred findings in the archived packet are next in order: a bounded control task to rename the builder role in standing documents and retire the obsolete Claude-collaboration workflow, the stale draft PR #8, and the abandoned branches; and a Stage 10 keepsakes packet before that stage begins.
 
 ## Risks and assumptions
 
@@ -73,15 +75,14 @@ J1–J6 are recorded in the packet: R2 as a corrective label, one-for-one wake s
 
 ## Review focus
 
-- Signal accounting across consumer reservation, eviction, clear, pause/resume, and disposal: available ≤ pending and available + reserved ≥ pending.
-- Fence placement relative to `TargetSessionController`'s clearing statuses, and the absence of status-triggered sheet dispatch.
-- Both GitHub event paths at 311/311 on the exact final head, with both artifacts.
+- Confirm this reconciliation changes only `BUILD_LEDGER.md`, `README.md`, this handoff, and the R2 active-to-archive rename and content update.
+- Require both GitHub event paths to execute 311/311 and generate both artifacts on the exact reconciliation head.
 
 ## Repository state
 
-- Branch `agent/task-r2-stage4-recertification`, draft PR #15 against `main`.
-- Candidate implementation head `82a70df`; this handoff is its evidence descendant. Worktree clean after commit.
+- Accepted `main`: `11cc752eae1e9457a12c9d847aacdeb073463b13`, tree `5483a2d7ccd577447013c3844a2be22beeb55a44` (PR #15).
+- Reconciliation branch `agent/task-r2-stage4-closure`, based directly on that `main`. Worktree clean after commit.
 
 ## Next safe task
 
-Merge PR #15 after its final-head gates pass, then publish the docs-only Stage 4 closure reconciliation. Do not open Task 7 within this packet.
+Merge this reconciliation after its exact gates pass. Then open the bounded control task named in the deferred findings, or Task 7 through its own packet, one active task at a time.
