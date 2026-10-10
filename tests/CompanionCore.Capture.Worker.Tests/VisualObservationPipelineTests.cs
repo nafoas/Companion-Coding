@@ -53,6 +53,43 @@ public sealed class VisualObservationPipelineTests
     }
 
     [Fact]
+    public async Task RequestedOrientation_IsProducedFromTheNextFrameEvenWhenDuplicate()
+    {
+        using var pipeline = new VisualObservationPipeline();
+        var authorization = CaptureWorkerTestSupport.CreateAuthorization();
+
+        using (var firstFrame = CreateFrame(1, pattern: 10))
+        using (var first = await pipeline.ProcessAsync(firstFrame, authorization, CancellationToken.None))
+        {
+            Assert.Equal(AttentionSheetKind.Orientation, first!.Metadata.Kind);
+        }
+
+        using (var duplicateFrame = CreateFrame(2, pattern: 10))
+        {
+            Assert.Null(await pipeline.ProcessAsync(duplicateFrame, authorization, CancellationToken.None));
+        }
+
+        pipeline.RequestOrientation();
+        using (var retakeFrame = CreateFrame(3, pattern: 10))
+        using (var retake = await pipeline.ProcessAsync(retakeFrame, authorization, CancellationToken.None))
+        {
+            Assert.NotNull(retake);
+            Assert.Equal(AttentionSheetKind.Orientation, retake.Metadata.Kind);
+            Assert.Equal(3, retake.Metadata.SourceSequenceNumber);
+            Assert.Single(retake.Metadata.Regions);
+        }
+
+        using (var afterFrame = CreateFrame(4, pattern: 10))
+        {
+            Assert.Null(await pipeline.ProcessAsync(afterFrame, authorization, CancellationToken.None));
+        }
+
+        Assert.Equal(2, pipeline.Snapshot().OrientationSheets);
+        pipeline.Dispose();
+        Assert.Throws<ObjectDisposedException>(pipeline.RequestOrientation);
+    }
+
+    [Fact]
     public async Task ManualOverrideForcesNextSheetAndSurvivesGeometryRemap()
     {
         using var pipeline = new VisualObservationPipeline();

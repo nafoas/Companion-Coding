@@ -224,7 +224,8 @@ public sealed class OutOfProcessCaptureWorkerTests
         var grant = CaptureWorkerTestSupport.CreateGrant();
         var publishedFrames = new ConcurrentDictionary<long, byte>();
         var attentionBeforeSourceFrame = 0;
-        var firstAttentionSignal = new TaskCompletionSource<AttentionSheetMetadata>(
+        var foreignAttention = 0;
+        var orientationSignal = new TaskCompletionSource<AttentionSheetMetadata>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         worker.FrameProduced += (_, frame) => publishedFrames.TryAdd(frame.SequenceNumber, 0);
         worker.AttentionSheetProduced += (_, metadata) =>
@@ -234,10 +235,27 @@ public sealed class OutOfProcessCaptureWorkerTests
                 Interlocked.Exchange(ref attentionBeforeSourceFrame, 1);
             }
 
-            firstAttentionSignal.TrySetResult(metadata);
+            if (!metadata.Matches(grant))
+            {
+                Interlocked.Exchange(ref foreignAttention, 1);
+            }
+
+            if (metadata.Kind == AttentionSheetKind.Orientation)
+            {
+                orientationSignal.TrySetResult(metadata);
+            }
         };
         await worker.StartAsync(grant, CancellationToken.None);
-        await firstAttentionSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        // The orientation notice is never coalesced away and follows its own source
+        // frame.
+        var orientationNotice = await orientationSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.True(orientationNotice.Matches(grant));
+        Assert.True(publishedFrames.ContainsKey(orientationNotice.SourceSequenceNumber));
+
+        // Let many newer regional sheets arrive (one per changed 10 ms frame). The
+        // undelivered orientation must still be the first sheet handed over.
+        await Task.Delay(TimeSpan.FromMilliseconds(300));
         AttentionSheet? orientation = null;
         await CaptureWorkerTestSupport.WaitUntilAsync(
             () => (orientation = worker.TakeLatestAttentionSheet()) is not null,
@@ -245,11 +263,10 @@ public sealed class OutOfProcessCaptureWorkerTests
         using (orientation)
         {
             Assert.Equal(AttentionSheetKind.Orientation, orientation!.Metadata.Kind);
+            Assert.Equal(orientationNotice, orientation.Metadata);
             Assert.True(orientation.Metadata.Matches(grant));
             Assert.Equal(0, Volatile.Read(ref attentionBeforeSourceFrame));
-            await CaptureWorkerTestSupport.WaitUntilAsync(
-                () => publishedFrames.ContainsKey(orientation.Metadata.SourceSequenceNumber),
-                TimeSpan.FromSeconds(10));
+            Assert.Equal(0, Volatile.Read(ref foreignAttention));
             var decoded = PngTestDecoder.Decode(orientation.EncodedImage.Span);
             Assert.Equal(orientation.Metadata.SheetWidth, decoded.Width);
             Assert.Equal(orientation.Metadata.SheetHeight, decoded.Height);
@@ -336,6 +353,113 @@ public sealed class OutOfProcessCaptureWorkerTests
 
         await worker.StopAndClearAsync(CancellationToken.None);
         Assert.Null(worker.TakeLatestAttentionSheet());
+    }
+
+    [Fact]
+    public async Task SlowFrameObserver_StillReceivesEveryEpochOrientationFirst()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        var orientations = new ConcurrentQueue<AttentionSheetMetadata>();
+
+        // A slow observer lets several regional sheets queue behind each orientation,
+        // the exact pressure under which the notice used to be coalesced away.
+        worker.FrameProduced += (_, _) => Thread.Sleep(15);
+        worker.AttentionSheetProduced += (_, metadata) =>
+        {
+            if (metadata.Kind == AttentionSheetKind.Orientation)
+            {
+                orientations.Enqueue(metadata);
+            }
+        };
+
+        await worker.StartAsync(grant, CancellationToken.None);
+        for (var epoch = 1; epoch <= 4; epoch++)
+        {
+            if (epoch > 1)
+            {
+                await worker.RestartAsync(grant, CancellationToken.None);
+            }
+
+            await CaptureWorkerTestSupport.WaitUntilAsync(
+                () => orientations.Count >= epoch,
+                TimeSpan.FromSeconds(10));
+            await Task.Delay(TimeSpan.FromMilliseconds(150));
+            AttentionSheet? first = null;
+            await CaptureWorkerTestSupport.WaitUntilAsync(
+                () => (first = worker.TakeLatestAttentionSheet()) is not null,
+                TimeSpan.FromSeconds(10));
+            using (first)
+            {
+                Assert.Equal(AttentionSheetKind.Orientation, first!.Metadata.Kind);
+                Assert.Equal(orientations.Last(), first.Metadata);
+            }
+        }
+
+        Assert.Equal(4, orientations.Count);
+        await worker.StopAndClearAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task RequestOrientation_RetakesThroughTheWorkerProcessForTheActiveGrantOnly()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        var orientations = new ConcurrentQueue<AttentionSheetMetadata>();
+        worker.AttentionSheetProduced += (_, metadata) =>
+        {
+            if (metadata.Kind == AttentionSheetKind.Orientation)
+            {
+                orientations.Enqueue(metadata);
+            }
+        };
+
+        await worker.StartAsync(grant, CancellationToken.None);
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => orientations.Count >= 1,
+            TimeSpan.FromSeconds(10));
+        using (var first = worker.TakeLatestAttentionSheet())
+        {
+            Assert.Equal(AttentionSheetKind.Orientation, first!.Metadata.Kind);
+        }
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            worker.RequestOrientationAsync(
+                CaptureWorkerTestSupport.CreateGrant(generation: 8),
+                CancellationToken.None));
+
+        await worker.RequestOrientationAsync(grant, CancellationToken.None);
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => orientations.Count >= 2,
+            TimeSpan.FromSeconds(10));
+        AttentionSheet? retaken = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => (retaken = worker.TakeLatestAttentionSheet()) is not null,
+            TimeSpan.FromSeconds(10));
+        using (retaken)
+        {
+            Assert.Equal(AttentionSheetKind.Orientation, retaken!.Metadata.Kind);
+            Assert.True(retaken.Metadata.Matches(grant));
+            Assert.True(
+                retaken.Metadata.SourceSequenceNumber
+                > orientations.First().SourceSequenceNumber);
+        }
+
+        var metrics = await worker.GetMetricsAsync(CancellationToken.None);
+        Assert.Equal(2, metrics.ProducedOrientationSheets);
+        await worker.StopAndClearAsync(CancellationToken.None);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            worker.RequestOrientationAsync(grant, CancellationToken.None));
     }
 
     private static OutOfProcessCaptureWorker CreateWorker() =>

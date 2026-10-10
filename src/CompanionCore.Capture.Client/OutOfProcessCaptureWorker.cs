@@ -50,6 +50,13 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private long _lastDispatchedAttentionSheetSequence;
     private long _visualFence;
     private AttentionSheetMetadata? _latestAttentionMetadata;
+
+    // The one orientation of a visual epoch is pinned outside newest-preserving
+    // regional retention until taken, and its notice is never coalesced away. Its
+    // source frame is tracked exactly so the notice cannot precede or outlive it.
+    private AttentionSheet? _pinnedOrientation;
+    private AttentionSheetMetadata? _pendingOrientationNotice;
+    private bool _orientationSourceDispatched;
     private bool _admitFrames;
     private bool _expectedExit;
     private bool _disposed;
@@ -208,11 +215,56 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         }
     }
 
+    public async Task RequestOrientationAsync(
+        CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(authorization);
+        cancellationToken.ThrowIfCancellationRequested();
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            lock (_stateGate)
+            {
+                if (Status != CaptureWorkerStatus.Running
+                    || !_admitFrames
+                    || _currentGrant is null
+                    || !GrantsMatch(_currentGrant, authorization))
+                {
+                    throw new InvalidOperationException(
+                        "The orientation request does not match the active capture grant.");
+                }
+            }
+
+            var response = await SendCommandAsync(
+                new CaptureIpcMessage
+                {
+                    Kind = CaptureIpcMessageKind.RequestOrientation,
+                    Authorization = CaptureIpcAuthorization.FromGrant(authorization),
+                },
+                cancellationToken).ConfigureAwait(false);
+            UpdateMetrics(response.Metrics);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
     public AttentionSheet? TakeLatestAttentionSheet()
     {
         ThrowIfDisposed();
         lock (_stateGate)
         {
+            if (_pinnedOrientation is { } orientation)
+            {
+                // The orientation is handed over before any regional sheet. The
+                // newest regional sheet stays retained for the next take.
+                _pinnedOrientation = null;
+                return orientation;
+            }
+
             if (_attentionSheets.Count == 0)
             {
                 return null;
@@ -692,11 +744,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             frameEvent = new FrameClientEvent(workerEpoch, grant, frame, _visualFence);
             if (!_admitFrames)
             {
-                while (_deferredStartFrames.Count >= MaximumDeferredStartFrames)
-                {
-                    _deferredStartFrames.Dequeue();
-                }
-
+                EvictDeferredStartFrameUnsafe();
                 _deferredStartFrames.Enqueue(frameEvent);
                 return;
             }
@@ -737,12 +785,32 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
 
             sheet = envelope.TakeAttentionSheet();
 
-            while (_attentionSheets.Count >= AttentionSheet.MaximumRetainedSheets)
+            if (sheet!.Metadata.Kind == AttentionSheetKind.Orientation)
+            {
+                _pinnedOrientation?.Dispose();
+                _pinnedOrientation = sheet;
+                _pendingOrientationNotice = sheet.Metadata;
+
+                // The worker hands a sheet to IPC before its source frame, so the
+                // frame normally follows. If it was already the newest dispatched
+                // frame, the notice may go out immediately.
+                _orientationSourceDispatched =
+                    sheet.Metadata.SourceSequenceNumber == _lastDispatchedSequence;
+            }
+            else
+            {
+                _attentionSheets.Enqueue(sheet);
+            }
+
+            // The pinned orientation counts toward the same two-sheet ceiling, so
+            // regional retention shrinks to the newest one while it is held.
+            var regionalCapacity = AttentionSheet.MaximumRetainedSheets
+                - (_pinnedOrientation is null ? 0 : 1);
+            while (_attentionSheets.Count > regionalCapacity)
             {
                 _attentionSheets.Dequeue().Dispose();
             }
 
-            _attentionSheets.Enqueue(sheet!);
             _lastAttentionSheetSequence = sheet!.Metadata.SourceSequenceNumber;
             _latestAttentionMetadata = sheet.Metadata;
             if (_admitFrames)
@@ -1255,24 +1323,73 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
 
     private void DispatchLatestAttentionSheetIfCurrent(long workerEpoch)
     {
-        AttentionSheetMetadata? metadata;
+        AttentionSheetMetadata? orientation = null;
+        AttentionSheetMetadata? latestMetadata = null;
         lock (_stateGate)
         {
             if (workerEpoch != _workerEpoch
                 || !_admitFrames
-                || _currentGrant is null
-                || _latestAttentionMetadata is not { } latest
-                || !latest.Matches(_currentGrant)
-                || latest.SourceSequenceNumber > _lastDispatchedSequence
-                || latest.SourceSequenceNumber <= _lastDispatchedAttentionSheetSequence)
+                || _currentGrant is null)
             {
                 return;
             }
 
-            metadata = latest;
-            _lastDispatchedAttentionSheetSequence = latest.SourceSequenceNumber;
+            if (_pendingOrientationNotice is { } pending)
+            {
+                if (!pending.Matches(_currentGrant))
+                {
+                    DiscardPinnedOrientationUnsafe();
+                }
+                else if (_orientationSourceDispatched)
+                {
+                    // The orientation notice is never coalesced away: it is sent
+                    // exactly once, after its own source frame, before any newer
+                    // regional notice.
+                    orientation = pending;
+                    _pendingOrientationNotice = null;
+                    _lastDispatchedAttentionSheetSequence = Math.Max(
+                        _lastDispatchedAttentionSheetSequence,
+                        pending.SourceSequenceNumber);
+                }
+                else if (_lastDispatchedSequence > pending.SourceSequenceNumber)
+                {
+                    // Its exact source frame was skipped (dropped or fenced) while a
+                    // newer frame was dispatched. The orientation can never be
+                    // admitted, so release it; the consumer's bounded failsafe asks
+                    // the worker for a fresh one.
+                    DiscardPinnedOrientationUnsafe();
+                }
+                else
+                {
+                    // Hold every newer regional notice until the orientation's own
+                    // source frame has been dispatched.
+                    return;
+                }
+            }
+
+            if (_latestAttentionMetadata is { } latest
+                && latest.Matches(_currentGrant)
+                && latest.SourceSequenceNumber <= _lastDispatchedSequence
+                && latest.SourceSequenceNumber > _lastDispatchedAttentionSheetSequence)
+            {
+                latestMetadata = latest;
+                _lastDispatchedAttentionSheetSequence = latest.SourceSequenceNumber;
+            }
         }
 
+        if (orientation is not null)
+        {
+            RaiseAttentionSheetProduced(orientation);
+        }
+
+        if (latestMetadata is not null)
+        {
+            RaiseAttentionSheetProduced(latestMetadata);
+        }
+    }
+
+    private void RaiseAttentionSheetProduced(AttentionSheetMetadata metadata)
+    {
         foreach (EventHandler<AttentionSheetMetadata> handler in
                  AttentionSheetProduced?.GetInvocationList()
                      .Cast<EventHandler<AttentionSheetMetadata>>()
@@ -1284,6 +1401,49 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             }
             catch (Exception)
             {
+            }
+        }
+    }
+
+    private void DiscardPinnedOrientationUnsafe()
+    {
+        if (_pinnedOrientation is { } pinned
+            && _pendingOrientationNotice is { } pending
+            && pinned.Metadata.SourceSequenceNumber == pending.SourceSequenceNumber)
+        {
+            pinned.Dispose();
+            _pinnedOrientation = null;
+        }
+
+        _pendingOrientationNotice = null;
+        _orientationSourceDispatched = false;
+    }
+
+    private void EvictDeferredStartFrameUnsafe()
+    {
+        // Evict the oldest deferred start frame that is not the source of the pinned
+        // orientation, preserving order, so a slow start handshake cannot strand the
+        // orientation. At most one frame is protected, so a victim always exists.
+        var protectedSequence = _pendingOrientationNotice?.SourceSequenceNumber;
+        while (_deferredStartFrames.Count >= MaximumDeferredStartFrames)
+        {
+            var retained = new List<FrameClientEvent>(_deferredStartFrames.Count);
+            var evicted = false;
+            foreach (var deferred in _deferredStartFrames)
+            {
+                if (!evicted && deferred.Frame.SequenceNumber != protectedSequence)
+                {
+                    evicted = true;
+                    continue;
+                }
+
+                retained.Add(deferred);
+            }
+
+            _deferredStartFrames.Clear();
+            foreach (var deferred in retained)
+            {
+                _deferredStartFrames.Enqueue(deferred);
             }
         }
     }
@@ -1302,6 +1462,12 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             }
 
             _lastDispatchedSequence = frameEvent.Frame.SequenceNumber;
+            if (_pendingOrientationNotice is { } orientation
+                && orientation.SourceSequenceNumber == frameEvent.Frame.SequenceNumber)
+            {
+                _orientationSourceDispatched = true;
+            }
+
             return true;
         }
     }
@@ -1329,6 +1495,10 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             _attentionSheets.Dequeue().Dispose();
         }
 
+        _pinnedOrientation?.Dispose();
+        _pinnedOrientation = null;
+        _pendingOrientationNotice = null;
+        _orientationSourceDispatched = false;
         _latestAttentionMetadata = null;
         _lastDispatchedAttentionSheetSequence = 0;
     }

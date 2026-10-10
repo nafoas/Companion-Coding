@@ -49,7 +49,7 @@ public sealed class CaptureIpcProtocolTests
     public async Task UnknownMember_IsRejectedByStrictDeserializer()
     {
         const string json =
-            "{\"ProtocolVersion\":2,\"Kind\":3,\"CorrelationId\":\"25252525-2525-2525-2525-252525252525\",\"ControlSequence\":1,\"Unexpected\":true}";
+            "{\"ProtocolVersion\":3,\"Kind\":3,\"CorrelationId\":\"25252525-2525-2525-2525-252525252525\",\"ControlSequence\":1,\"Unexpected\":true}";
         await using var stream = FrameJson(json);
 
         var exception = await Assert.ThrowsAsync<CaptureProtocolException>(() =>
@@ -61,13 +61,39 @@ public sealed class CaptureIpcProtocolTests
     [Fact]
     public async Task UnsupportedVersion_FailsClosed()
     {
-        const string json = "{\"ProtocolVersion\":3,\"Kind\":3}";
+        var json = $"{{\"ProtocolVersion\":{CaptureIpcProtocol.Version + 1},\"Kind\":3}}";
         await using var stream = FrameJson(json);
 
         var exception = await Assert.ThrowsAsync<CaptureProtocolException>(() =>
             CaptureIpcProtocol.ReadAsync(stream, CancellationToken.None));
 
         Assert.Equal(CaptureWorkerErrorCode.UnsupportedProtocol, exception.ErrorCode);
+    }
+
+    [Fact]
+    public void RequestOrientationCommand_RequiresAuthorizationAndNoOtherFields()
+    {
+        var valid = new CaptureIpcMessage
+        {
+            Kind = CaptureIpcMessageKind.RequestOrientation,
+            CorrelationId = Guid.NewGuid(),
+            ControlSequence = 1,
+            Authorization = CaptureWorkerTestSupport.CreateAuthorization(),
+        };
+        WorkerIpcHost.ValidateCommandShape(valid);
+
+        foreach (var malformed in new[]
+                 {
+                     valid with { Authorization = null },
+                     valid with { ManualRegion = new NormalizedRegion(0.1, 0.1, 0.2, 0.2) },
+                     valid with { ClearManualRegion = true },
+                     valid with { SequenceNumber = 5 },
+                 })
+        {
+            var exception = Assert.Throws<CaptureProtocolException>(() =>
+                WorkerIpcHost.ValidateCommandShape(malformed));
+            Assert.Equal(CaptureWorkerErrorCode.MalformedMessage, exception.ErrorCode);
+        }
     }
 
     [Fact]

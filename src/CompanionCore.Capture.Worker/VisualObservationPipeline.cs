@@ -205,6 +205,15 @@ internal sealed class VisualObservationPipeline : IDisposable
         }
     }
 
+    internal void RequestOrientation()
+    {
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _orientationPending = true;
+        }
+    }
+
     internal void Reset(bool clearManualRegion = true)
     {
         lock (_gate)
