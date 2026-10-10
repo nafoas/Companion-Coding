@@ -1,10 +1,13 @@
 # Task 11 — Application-Bound Watchbun Continuity
 
-Status: **active — Paw Gate review**
+Status: **accepted — Paw Gate passed 2026-10-10**. Stage 9 is complete.
 Authorized: 2026-10-10 under Boss's standing direction to continue autonomously through the pre-API tasks under the Paw Gate model
 Accepted remote base: `08063ceda8287cb945d63f4788d1c9f3c794d99b`
 Working branch: `agent/task-11-watchbun-continuity`
 Builder: Claude
+Accepted gate head: `6c6b7c7768db7518db6ad53a0f77317e63eb6bad`, tree `bf4d3173715c55c92eb6a7af58da5b635d4ec4d1`
+Pull request: #33, squash-merged as `97ea0e411c3d9da29d7841d6a810a9fb4773c6e9`
+Final CI: push run `38058347513`, PR run `38058350655`, each 687/687
 
 ## Objective
 
@@ -122,7 +125,23 @@ It references only `CompanionCore.Capture.Contracts`, for the target identity.
 
 ## Paw Gate
 
-Candidate evidence (pending the evidence-descendant CI, merge-ref check, and acceptance):
+Gate result: **PASS** on 2026-10-10.
+
+**Actual-diff review.**
+- The 17-path change is allowlisted.
+- Capture never names a non-target application.
+- There is no retarget or focus-stealing surface, which a reflection guard checks.
+- Reattach requires a TargetAuth-minted grant for the same executable.
+- Clocks freeze outside attached, unsuspended time.
+- Restore recovers without capture.
+- The engine writes no memory.
+
+**Merge.**
+- PR #33's merge ref had exact parents `08063ce` (main) and `6c6b7c7` (head), and a tree equal to the head tree `bf4d317`.
+- It was squash-merged through the expected-head fence as `97ea0e4`.
+
+**Evidence.**
+- Gate head `6c6b7c7`: push run `38058347513` and PR run `38058350655` each passed 687/687, with verified artifacts and the unchanged PNG digest.
 
 - Implementation head `5b96720`:
   - push run `38058141112` and PR run `38058154820` each passed **687/687** (14 test projects, Watchbun 66, App Integration 13);
