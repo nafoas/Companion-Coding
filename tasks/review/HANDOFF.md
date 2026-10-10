@@ -48,7 +48,11 @@ Builder: Claude.
     - the length pre-check, since the digest catches the same files.
   - The first run's three real gaps were closed with new tests: the encoded-size bound, a rejected record, and the saved-edge lower bound.
 - The bug hunt also made orphan detection strict about canonical file names.
-- CI: pending.
+- First CI (`8dc845f`): push run `38060302436` and PR run `38060315384` both failed on one test, `Scenario8_NoCleanupSurface_OrphansAreReportedNotRemoved` (expected 4 orphans, got 3).
+  - Root cause: the test wrote an uppercase-named twin of a kept photograph. On case-insensitive NTFS that is the same file, so it overwrote the photograph instead of creating a non-canonical orphan.
+  - Product behaviour is correct on both file systems.
+  - Fix: the test creates the twin only where the file system is case-sensitive, and expects 3 orphans otherwise. Locally it still kills the canonical-name mutant.
+- CI on the fix: pending.
 
 ## Remaining
 

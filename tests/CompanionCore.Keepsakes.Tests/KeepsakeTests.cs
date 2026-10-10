@@ -278,14 +278,24 @@ public sealed class KeepsakeTests
         await File.WriteAllBytesAsync(Path.Combine(harness.Location.RootPath, $"{gone.ActionId:N}.png"), [1, 2, 3]);
         await File.WriteAllBytesAsync(Path.Combine(harness.Location.RootPath, $"{Guid.NewGuid():N}.png"), [4]);
         await File.WriteAllBytesAsync(Path.Combine(harness.Location.RootPath, ".stray.tmp"), [5]);
+        // A non-canonical-case twin can only exist on a case-sensitive file system; on NTFS
+        // it would be the kept photograph itself, so it is created only where it is distinct.
         var nonCanonical = $"{kept.ActionId.ToString("N").ToUpperInvariant()}.png";
-        await File.WriteAllBytesAsync(Path.Combine(harness.Location.RootPath, nonCanonical), [6]);
+        var caseSensitive = !File.Exists(Path.Combine(harness.Location.RootPath, nonCanonical));
+        if (caseSensitive)
+        {
+            await File.WriteAllBytesAsync(Path.Combine(harness.Location.RootPath, nonCanonical), [6]);
+        }
 
         var orphans = await harness.Store.FindOrphansAsync();
 
-        Assert.Equal(4, orphans.Count);
-        Assert.Contains(nonCanonical, orphans);
-        File.Delete(Path.Combine(harness.Location.RootPath, nonCanonical));
+        Assert.Equal(caseSensitive ? 4 : 3, orphans.Count);
+        if (caseSensitive)
+        {
+            Assert.Contains(nonCanonical, orphans);
+            File.Delete(Path.Combine(harness.Location.RootPath, nonCanonical));
+        }
+
         Assert.Contains($"{gone.ActionId:N}.png", orphans);
         Assert.Contains(".stray.tmp", orphans);
         Assert.DoesNotContain($"{kept.ActionId:N}.png", orphans);
