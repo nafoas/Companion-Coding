@@ -1,6 +1,6 @@
 # WIRE-02 — Windows Platform Signals and App Composition
 
-Status: **active — implementation**
+Status: **accepted** — Paw Gate PASS; PR #41 squash-merged as `111e15a2b51ee7691dc1acb7aa9971f7f2840ee6`
 Authorized: 2026-10-10 by Boss ("For now, wire everything together, and do a bunch of tests to make sure everything works as it should…"). This is the second wiring packet, named as D3 in the accepted WIRE-01 packet.
 Accepted remote base: `125060236c62e221c9d22bb04d8e625d4e30ddf0`
 Working branch: `agent/wire-02-app-composition`
@@ -111,7 +111,12 @@ It then stops cleanly. A second launch on the same root restores the same conver
 
 ## Paw Gate
 
-Gate result: **PASS** on 2026-10-10 (merge-ref check and merge are recorded at closure).
+Gate result: **PASS** on 2026-10-10.
+
+**Merge.**
+- PR #41's merge ref had exact parents `1250602` (main) and `8a031b4` (evidence head), and a tree equal to the head tree `32a9cf6`.
+- It was squash-merged through the expected-head fence as `111e15a`.
+- Evidence head `8a031b4`: push run `38078940123` and PR run `38078943764` passed 908/908 with verified artifacts.
 
 **CI evidence.**
 - **Candidate `e63242c`:** push run `38078377838` and PR run `38078393543` each passed **908/908** on the first attempt:
