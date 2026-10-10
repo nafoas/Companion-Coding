@@ -248,24 +248,26 @@ A mutation pass then disabled each key guard in turn and confirmed the suite fai
 
 One gap the pass exposed (budget-nap buffer release before the notice) gained an assertion.
 
-### J15 — The new suite's disk-sync load starved the App shutdown test; fixed at the source
+### J15 — Reduce this suite's disk-sync load; root-cause the App shutdown sensitivity separately
 
-**Symptom.** `AppProcessTests.Shutdown_StopThenClose_ExitsCleanlyWithStoppedStateAndNoLeftoverProcess` exceeded its 30-second exit bound in 3 of 6 Windows runs:
+**Symptom.** `AppProcessTests.Shutdown_StopThenClose_ExitsCleanlyWithStoppedStateAndNoLeftoverProcess` exceeded its 30-second exit bound in 3 of 6 early Task 7 runs:
 
 - PR run `38031390951`, attempt 1;
 - push run `38031750912`;
 - PR run `38031754225`.
 
-The last two were on a documentation-only head. On accepted `main` the test takes about 3.6 seconds.
+TRX timing showed the Api suite taking 29 seconds on Windows and running concurrently with the App integration suite. That is about 100 seconds of sync-bound test time packed into the App window by intra-assembly parallelism.
 
-**Cause.** The TRX timing shows the Api suite running for 29 seconds on Windows (1 second on Linux), concurrently with the App integration suite. That is about 100 seconds of disk-sync-bound test time: SQLite `synchronous=FULL` plus journal flushes, at roughly 120 ms per journal append, packed into the App suite's window by intra-assembly parallelism.
+**This PR's share, mitigated here:**
 
-**Fix.** Two changes, neither weakening a durability guarantee or a test:
+- the bridge journal drops a redundant write-through flag (each append is still flushed to stable storage before it is applied);
+- the Api suite runs its classes sequentially.
 
-- The bridge journal no longer opens with a redundant write-through flag. Each append is still flushed to stable storage before it is applied.
-- The Api test assembly runs its classes sequentially, so it adds at most one sync stream to the runner.
+**Pre-existing cause, not this PR's.** The same test took 27.0 s on accepted-lineage R4 run `38028570862`, before this project existed, when Memory.Tests overlapped the App suite. On head `2d1c56f` the test took 17.2 s on the push path and 29.8 s on the PR path. Both passed, but the PR run came within 0.2 s of the bound.
 
-**Rejected.** Raising the App test's bound, or rerunning, would hide a load this PR introduced.
+The ready, multi-window, and second-process scenarios stay at about 1 s under the same load. Only the shutdown scenario degrades: it stops the runtime and closes the window before calling `Shutdown`. That is App code outside this packet's scope, so it becomes R5 (deferred finding 5) rather than a widened Task 7.
+
+**Rejected.** Raising the 30-second bound, or relying on reruns.
 
 ## Deferred findings
 
@@ -277,4 +279,4 @@ The last two were on a documentation-only head. On accepted `main` the test take
 2. Bridge diagnostics and usage estimates into Stage 11 "Show Da Technical Thinks" diagnostics, alongside the Stage 4 orientation-failsafe counters.
 3. Persistent OS-protected credential storage and the live provider adapter (Task 12, stop condition).
 4. Conversation and text-formulation request kinds when the conversation thread exists (Task 10).
-5. **App-integration shutdown timeout under the new suite's disk load:** see J15. The root cause was in this PR and is fixed here. The App shutdown test remains sensitive to whole-runner load, because it cold-starts a real WPF process against a fixed 30-second bound. If it recurs on a head without heavy concurrent I/O, it gets its own root-cause packet.
+5. **R5 — App shutdown load sensitivity (next packet, before Task 8):** instrument and root-cause why the `shutdown` test-mode alone stretches from about 3.5 s to 27–30 s under concurrent disk-sync load (J15), fix it in the App's stop/close/exit path, and prove it under deliberately overlapped I/O. Do not raise the bound.

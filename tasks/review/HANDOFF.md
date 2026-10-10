@@ -81,7 +81,7 @@ Windows CI (`windows-latest`, locked restore, 22-project audit, Release build, a
   - push run `38031750912`;
   - PR run `38031754225`.
 
-  The other runs passed 453/453. TRX timing traced the failures to this PR's suite load (J15), not to a legacy flake.
+  The other runs passed 453/453. TRX timing showed this PR's suite load making a pre-existing App shutdown sensitivity much more likely to trip (J15).
 - **Corrected head `f1f3b8c`:**
 
   | Event | Run | Job | Result | App shutdown test | Api suite wall time |
@@ -105,6 +105,15 @@ Windows CI (`windows-latest`, locked restore, 22-project audit, Release build, a
 
   - Both artifact digests verified on each path.
   - The synthetic attention sheet is 792×621 RGBA with the accepted digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`, and it was inspected visually.
+
+- **Evidence head `2d1c56f`:**
+
+  | Event | Run | Result | App shutdown test |
+  |---|---|---|---|
+  | push | `38032246784` | 453/453 | 17.2 s |
+  | PR | `38032249868` | 453/453 | 29.8 s |
+
+  The 29.8 s pass came within 0.2 s of the bound. Accepted-lineage R4 run `38028570862` took 27.0 s with no Api suite, so the remaining sensitivity is pre-existing App behavior, assigned to R5.
 
 ## Remaining
 
@@ -138,4 +147,4 @@ J1–J15 are recorded in the packet.
 
 ## Next safe task
 
-Complete this Paw Gate. Then open Task 8 (attention engine, Stage 6) through its own packet.
+Complete this Paw Gate. Then open R5 (App shutdown load sensitivity, deferred finding 5) before Task 8.
