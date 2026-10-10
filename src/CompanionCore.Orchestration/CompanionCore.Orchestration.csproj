@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CompanionCore.Orchestration</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CompanionCore.Api\CompanionCore.Api.csproj" />
+    <ProjectReference Include="..\CompanionCore.Attention\CompanionCore.Attention.csproj" />
+    <ProjectReference Include="..\CompanionCore.Conversation\CompanionCore.Conversation.csproj" />
+    <ProjectReference Include="..\CompanionCore.Transcript\CompanionCore.Transcript.csproj" />
+    <ProjectReference Include="..\CompanionCore.Recall\CompanionCore.Recall.csproj" />
+    <ProjectReference Include="..\CompanionCore.Watchbun\CompanionCore.Watchbun.csproj" />
+    <ProjectReference Include="..\CompanionCore.Keepsakes\CompanionCore.Keepsakes.csproj" />
+    <ProjectReference Include="..\CompanionCore.Vault\CompanionCore.Vault.csproj" />
+    <ProjectReference Include="..\CompanionCore.TargetAuth\CompanionCore.TargetAuth.csproj" />
+    <ProjectReference Include="..\CompanionCore.Memory\CompanionCore.Memory.csproj" />
+    <ProjectReference Include="..\CompanionCore.Privacy\CompanionCore.Privacy.csproj" />
+    <ProjectReference Include="..\CompanionCore.Capture.Contracts\CompanionCore.Capture.Contracts.csproj" />
+    <ProjectReference Include="..\CompanionCore.Runtime\CompanionCore.Runtime.csproj" />
+  </ItemGroup>
+
+</Project>

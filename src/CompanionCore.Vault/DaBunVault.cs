@@ -53,6 +53,14 @@ internal static class DaBunVault
         return repository.CreateBackupAsync(new Companion(repository.Location, keepsakes, state), testHook, cancellationToken);
     }
 
+    /// <summary>Backup entry point for the orchestration composition point; failures propagate unchanged.</summary>
+    internal static Task BackUpAsync(
+        MemoryRepository repository,
+        KeepsakeLocation keepsakes,
+        VaultStateStore state,
+        CancellationToken cancellationToken = default) =>
+        CreateAsync(repository, keepsakes, state, testHook: null, cancellationToken);
+
     /// <summary>
     /// Bnuy Repairs for the whole Vault: validate the companion, run the accepted memory repair,
     /// then restore photographs and state against what was restored, and report honestly.

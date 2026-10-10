@@ -7,3 +7,4 @@ using System.Runtime.CompilerServices;
 // The Da Bun Vault is the single composition point of backup and repair authority.
 [assembly: InternalsVisibleTo("CompanionCore.Vault")]
 [assembly: InternalsVisibleTo("CompanionCore.Vault.Tests")]
+[assembly: InternalsVisibleTo("CompanionCore.Orchestration.Tests")]

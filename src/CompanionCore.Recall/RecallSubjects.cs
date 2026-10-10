@@ -11,7 +11,13 @@ public static class RecallSubjects
 
     public static string Opinion(string topic) => $"opinion:{Key(topic)}";
 
-    public static string Summary(string session) => $"summary:{Key(session)}";
+    /// <summary>
+    /// The session reference is percent-encoded (<c>%</c> and <c>:</c>) so structured references
+    /// such as the bridge's <c>target-session:&lt;id&gt;</c> stay one colon-free, reversible component.
+    /// Colon-free references are unchanged.
+    /// </summary>
+    public static string Summary(string session) =>
+        $"summary:{Key((session ?? string.Empty).Replace("%", "%25", StringComparison.Ordinal).Replace(":", "%3A", StringComparison.Ordinal))}";
 
     public static string Highlight(Guid original) => $"highlight:{original:N}";
 
