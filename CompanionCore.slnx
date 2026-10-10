@@ -16,6 +16,7 @@
     <Project Path="src/CompanionCore.TargetAuth/CompanionCore.TargetAuth.csproj" />
     <Project Path="src/CompanionCore.TargetAuth.Windows/CompanionCore.TargetAuth.Windows.csproj" />
     <Project Path="src/CompanionCore.Transcript/CompanionCore.Transcript.csproj" />
+    <Project Path="src/CompanionCore.Watchbun/CompanionCore.Watchbun.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/CompanionCore.Api.Tests/CompanionCore.Api.Tests.csproj" />
@@ -31,6 +32,7 @@
     <Project Path="tests/CompanionCore.Runtime.Tests/CompanionCore.Runtime.Tests.csproj" />
     <Project Path="tests/CompanionCore.TargetAuth.Tests/CompanionCore.TargetAuth.Tests.csproj" />
     <Project Path="tests/CompanionCore.Transcript.Tests/CompanionCore.Transcript.Tests.csproj" />
+    <Project Path="tests/CompanionCore.Watchbun.Tests/CompanionCore.Watchbun.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/CompanionCore.Capture.Spike/CompanionCore.Capture.Spike.csproj" />
