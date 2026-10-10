@@ -6,3 +6,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("CompanionCore.Api.Tests")]
 [assembly: InternalsVisibleTo("CompanionCore.Transcript.Tests")]
 [assembly: InternalsVisibleTo("CompanionCore.Keepsakes.Tests")]
+[assembly: InternalsVisibleTo("CompanionCore.Vault.Tests")]

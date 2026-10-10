@@ -43,6 +43,8 @@ public sealed class MemoryStoreLocation
 
     internal string BackupArchivePath => Path.Combine(BackupDirectoryPath, "memory-vault-v1.zip");
 
+    internal string CompanionArchivePath => Path.Combine(BackupDirectoryPath, "companion-vault-v1.zip");
+
     internal string BackupStagingDirectoryPath => Path.Combine(RootPath, ".backup-staging-v1");
 
     internal string BackupValidationDirectoryPath => Path.Combine(RootPath, ".backup-validation-v1");

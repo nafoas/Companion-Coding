@@ -5,4 +5,5 @@ internal sealed record MemoryBackupResult(
     long CutSequence,
     string ArchivePath,
     long ArchiveByteLength,
-    string ArchiveSha256);
+    string ArchiveSha256,
+    bool CompanionIncluded = false);

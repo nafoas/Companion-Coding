@@ -153,6 +153,21 @@ public sealed class MemoryRepository : IAsyncDisposable
         return _store.RetrieveBySubjectAsync(subjectKey, cancellationToken);
     }
 
+    /// <summary>
+    /// Read-only keyset page of records whose subject starts with <paramref name="subjectPrefix"/>,
+    /// ordered by record ID, strictly after <paramref name="afterRecordId"/>. Repeating with the
+    /// last returned ID enumerates every matching record exactly once.
+    /// </summary>
+    public Task<IReadOnlyList<RetrievedMemory>> RetrieveSubjectPrefixPageAsync(
+        string subjectPrefix,
+        Guid? afterRecordId,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _store.RetrieveSubjectPrefixPageAsync(subjectPrefix, afterRecordId, limit, cancellationToken);
+    }
+
     /// <summary>Bounded read-only query; see <see cref="MemoryQuery"/>.</summary>
     public Task<IReadOnlyList<RetrievedMemory>> RetrieveAsync(
         MemoryQuery query,
@@ -162,16 +177,32 @@ public sealed class MemoryRepository : IAsyncDisposable
         return _store.RetrieveAsync(query, cancellationToken);
     }
 
-    internal async Task<MemoryBackupResult> CreateBackupAsync(
+    internal Task<MemoryBackupResult> CreateBackupAsync(
+        IBackupTestHook? testHook = null,
+        CancellationToken cancellationToken = default) =>
+        CreateBackupCoreAsync(companion: null, testHook, cancellationToken);
+
+    /// <summary>Creates the memory archive together with the Vault companion archive.</summary>
+    internal Task<MemoryBackupResult> CreateBackupAsync(
+        IVaultCompanion companion,
         IBackupTestHook? testHook = null,
         CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(companion);
+        return CreateBackupCoreAsync(companion, testHook, cancellationToken);
+    }
+
+    private async Task<MemoryBackupResult> CreateBackupCoreAsync(
+        IVaultCompanion? companion,
+        IBackupTestHook? testHook,
+        CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
         await _backupLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             ThrowIfDisposed();
-            return await new MemoryBackupService(this)
+            return await new MemoryBackupService(this, companion)
                 .CreateAsync(testHook, cancellationToken)
                 .ConfigureAwait(false);
         }
