@@ -2,16 +2,16 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 10 — keepsakes and complete memory recovery — **accepted and complete** (KEEP-01 + KEEP-02) |
-| Active task | None. Roadmap boundary: Stage 11 calibration needs target-PC evidence and Stage 12 (Task 12) needs credentials and live API, both requiring Boss |
-| Working branch | Accepted product/evidence baseline on `main`: `e59b46b809f19325b425614e7e62d78b2a9c2b80` (KEEP-02) |
-| Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
+| Current stage | Stages 1–10 accepted. Pre-API wiring: WIRE-01 (platform-neutral orchestration core) **accepted**; WIRE-02 (Windows platform signals and App composition) next |
+| Active task | None between packets. WIRE-02 is the next Boss-directed wiring packet. Stage 11 calibration (target-PC evidence) and Stage 12 / Task 12 (credentials, live API) still require Boss |
+| Working branch | Accepted product/evidence baseline on `main`: `be890e0e08cc55254e89d733e2645bac3ce6bd88` (WIRE-01) |
+| Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | KEEP-02 gate head `04e06490848dc1de489a8b42fbcf060c7108c480`, tree `7f9cc0e22d01fc55562211aff3db2e75e8854a23`, passed push run `38062794018` and PR run `38062797018`; fix head `25d5785` passed push run `38062566372` and PR run `38062568915`. Each run passed locked restore, the clean 36-project audit, a 0-warning/0-error Release build, 744/744 tests (Vault 32, Memory 87), and both artifact uploads with verified digests. The first candidate `91fbcb8` failed one test-only Windows assumption (hashing the exclusively held journal), corrected without product change. The local gate passed 731/731. KEEP-01 closure post-merge `main` run `38061297520` passed. |
-| Manual gate | KEEP-02 actual-diff, allowlist, accepted-memory-format preservation, promotion-atomicity, restoration-policy, and mutation review passed. 37 mutants: 34 killed, 3 equivalent (defense in depth). PR #37 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `e59b46b809f19325b425614e7e62d78b2a9c2b80` — KEEP-02 Vault inclusion and complete recovery (PR #37), completing Stage 10 |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The bridge, attention engine, coordinator, transcript, recall, and Watchbun engine are not yet wired to each other, capture, presentation, or the app. Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; real OS foreground/input/process/lock hooks await wiring; Recall is not yet wired to the app. Consolidation idempotency requires the caller to persist the operation time (Task 10 J3). |
+| Automated tests | WIRE-01 evidence head `a8591b893c178859b00b308cf255f0b64eb9e932`, tree `23290d8521c50d402be7c96eb00cc231ed961a5a`, passed push run `38070920738` and PR run `38070923790`. Fix head `2b1656f` passed push run `38070682490` and PR run `38070686736`. Each passed locked restore, the clean audit, a 0-warning/0-error Release build, 793/793 tests (744 accepted, +1 Recall regression, +48 Orchestration), and both artifact uploads with verified digests. The first candidate `414ee9d` failed one test that exposed C8, a platform-dependent game reference, fixed in product code. The local gate passed 780/780 on Linux. |
+| Manual gate | WIRE-01 actual-diff, allowlist, invariant-preservation, and mutation review passed. 49 mutants: 45 killed, 3 equivalent (defense in depth), 1 unobservable (RAM hygiene). Composition defects C1–C8 were fixed, each with a regression test. PR #39 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `be890e0e08cc55254e89d733e2645bac3ce6bd88` — WIRE-01 companion orchestration core (PR #39) |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01), but not yet wired to real OS signals, presentation, or the App (WIRE-02). Photographs are taken at sheet resolution (WIRE-01 D2), and one session's consolidation reads at most 1000 originals (WIRE-01 D1). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; real OS foreground/input/process/lock hooks await WIRE-02. Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
 | Deferred temptations | Single-file Vault export and a public backup/repair command (KEEP-02 D1); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
@@ -108,6 +108,33 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### WIRE-01 — Companion orchestration core
+
+- Builder: Claude. Opened on 2026-10-10 under Boss's direction: "wire everything together, and do a bunch of tests".
+- Scope: 26 allowlisted paths, comprising:
+  - the new `CompanionCore.Orchestration` project and `CompanionCore.Orchestration.Tests` (48 tests);
+  - the C1 fix in Recall;
+  - an internal Vault backup wrapper;
+  - friend lines;
+  - solution wiring and control records.
+- Delivered:
+  - `CompanionOrchestrator`: a single-consumer mailbox composing capture, the bridge, attention, conversation, transcript, memory, Recall, Watchbun, keepsakes, and the Vault;
+  - `CompanionHost`: one data root, with Bnuy Repairs online and offline;
+  - typed `CompanionNotice` output;
+  - the `IPlatformSignals` seam;
+  - a strict sheet-PNG photograph source;
+  - a durable per-session consolidation intent queue.
+- Composition defects C1–C8 were fixed, each with a regression test. C8 (a platform-dependent game reference) was found by Windows CI.
+- Personal Round Judgments J1–J10. Deferred findings:
+  - D1: per-session consolidation bounds;
+  - D2: full-resolution photographs;
+  - D3: Windows signals and the App root (WIRE-02).
+- Evidence:
+  - Fix head `2b1656f` (runs `38070682490` and `38070686736`) and evidence head `a8591b8` (runs `38070920738` and `38070923790`) each passed 793/793 with verified artifacts.
+  - Mutation pass: 49 mutants; 45 killed, 3 equivalent, 1 unobservable.
+- Merge: the merge ref had exact parents and an equal tree. PR #39 squash-merged through the expected-head fence as `be890e0e08cc55254e89d733e2645bac3ce6bd88`.
+- Result: passed and accepted.
 
 ### KEEP-02 — Da Bun Vault inclusion and complete recovery (Stage 10, part 2)
 

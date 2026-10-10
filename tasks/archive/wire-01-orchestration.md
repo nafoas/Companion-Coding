@@ -1,6 +1,6 @@
 # WIRE-01 — Companion Orchestration Core
 
-Status: **active — implementation**
+Status: **accepted** — Paw Gate PASS; PR #39 squash-merged as `be890e0e08cc55254e89d733e2645bac3ce6bd88`
 Authorized: 2026-10-10 by Boss ("For now, wire everything together, and do a bunch of tests to make sure everything works as it should. Test every task previously and make sure it all works fine, bugfix, and then let's roundtable again").
 Accepted remote base: `32351f1f15b6211fb856473015886363edef91fc`
 Working branch: `agent/wire-01-orchestration`
@@ -104,7 +104,12 @@ It is platform-neutral (`net10.0`) and references the accepted component project
 
 ## Paw Gate
 
-Gate result: **PASS** on 2026-10-10 (pending the merge-ref check and merge, recorded at closure).
+Gate result: **PASS** on 2026-10-10.
+
+**Merge.**
+- PR #39's merge ref had exact parents `32351f1` (main) and `a8591b8` (evidence head), and a tree equal to the head tree `23290d8`.
+- It was squash-merged through the expected-head fence as `be890e0`, whose tree `23290d8` equals the gate head's tree.
+- Evidence head `a8591b8`: push run `38070920738` and PR run `38070923790` passed.
 
 **CI evidence.**
 - **First CI (head `414ee9d`):** push run `38069900594` and PR run `38069916752` each failed one test, `Ids_AndGameReferences_AreStableAndSafe`. This exposed C8, a platform-dependent product behavior, fixed in `2b1656f` with added cases.
