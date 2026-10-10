@@ -5,7 +5,7 @@ namespace CompanionCore.Memory;
 
 internal sealed partial class MemoryStore
 {
-    internal async Task<IReadOnlyList<RetrievedMemory>> RetrieveBySubjectAsync(
+    internal Task<IReadOnlyList<RetrievedMemory>> RetrieveBySubjectAsync(
         string subjectKey,
         CancellationToken cancellationToken)
     {
@@ -16,13 +16,103 @@ internal sealed partial class MemoryStore
             throw new ArgumentOutOfRangeException(nameof(subjectKey));
         }
 
+        return RetrieveWhereAsync(
+            "r.subject_key = $subjectKey",
+            command => command.Parameters.AddWithValue("$subjectKey", subjectKey),
+            limit: null,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Read-only query by game, save, session, scope, subject prefix, or record identity.
+    /// Every returned record passes the same checksum verification as subject retrieval.
+    /// </summary>
+    internal Task<IReadOnlyList<RetrievedMemory>> RetrieveAsync(
+        MemoryQuery query,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(query);
+        query.Validate();
+        var clauses = new List<string>();
+        var bindings = new List<Action<Microsoft.Data.Sqlite.SqliteCommand>>();
+        if (query.GameReference is { } game)
+        {
+            clauses.Add("r.game_reference = $game");
+            bindings.Add(command => command.Parameters.AddWithValue("$game", game));
+        }
+
+        if (query.SaveReference is { } save)
+        {
+            clauses.Add("r.save_reference = $save");
+            bindings.Add(command => command.Parameters.AddWithValue("$save", save));
+        }
+
+        if (query.SessionReference is { } session)
+        {
+            clauses.Add("r.session_reference = $session");
+            bindings.Add(command => command.Parameters.AddWithValue("$session", session));
+        }
+
+        if (query.SubjectPrefix is { } prefix)
+        {
+            // substr comparison: no LIKE wildcards to escape.
+            clauses.Add("substr(r.subject_key, 1, length($prefix)) = $prefix");
+            bindings.Add(command => command.Parameters.AddWithValue("$prefix", prefix));
+        }
+
+        if (query.Scopes is { Count: > 0 } scopes)
+        {
+            var names = scopes.Distinct().Select((scope, index) => (Scope: scope, Name: $"$scope{index}")).ToArray();
+            clauses.Add($"r.scope IN ({string.Join(", ", names.Select(item => item.Name))})");
+            bindings.Add(command =>
+            {
+                foreach (var (scope, name) in names)
+                {
+                    command.Parameters.AddWithValue(name, (int)scope);
+                }
+            });
+        }
+
+        if (query.RecordIds is { Count: > 0 } recordIds)
+        {
+            var names = recordIds.Distinct().Select((id, index) => (Id: id, Name: $"$id{index}")).ToArray();
+            clauses.Add($"r.record_id IN ({string.Join(", ", names.Select(item => item.Name))})");
+            bindings.Add(command =>
+            {
+                foreach (var (id, name) in names)
+                {
+                    command.Parameters.AddWithValue(name, id.ToString("D"));
+                }
+            });
+        }
+
+        return RetrieveWhereAsync(
+            string.Join(" AND ", clauses),
+            command =>
+            {
+                foreach (var bind in bindings)
+                {
+                    bind(command);
+                }
+            },
+            query.Limit,
+            cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<RetrievedMemory>> RetrieveWhereAsync(
+        string whereClause,
+        Action<Microsoft.Data.Sqlite.SqliteCommand> bind,
+        int? limit,
+        CancellationToken cancellationToken)
+    {
         await _accessLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var rows = new List<StoredRecordRow>();
             await using (var command = _connection.CreateCommand())
             {
-                command.CommandText = """
+                command.CommandText = $$"""
                     SELECT
                         r.record_id,
                         r.operation_id,
@@ -60,15 +150,20 @@ internal sealed partial class MemoryStore
                         END AS source_rank
                     FROM memory_records r
                     INNER JOIN append_operations o ON o.operation_id = r.operation_id
-                    WHERE r.subject_key = $subjectKey
+                    WHERE {{whereClause}}
                     ORDER BY
                         is_current DESC,
                         source_rank DESC,
                         r.confidence DESC,
                         r.created_at_utc DESC,
-                        r.record_id ASC;
+                        r.record_id ASC
+                    {{(limit is { } bound ? "LIMIT $limit" : string.Empty)}};
                     """;
-                command.Parameters.AddWithValue("$subjectKey", subjectKey);
+                bind(command);
+                if (limit is { } boundLimit)
+                {
+                    command.Parameters.AddWithValue("$limit", boundLimit);
+                }
 
                 await using var reader = await command.ExecuteReaderAsync(cancellationToken)
                     .ConfigureAwait(false);
