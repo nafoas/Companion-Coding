@@ -29,7 +29,7 @@
 - Work reached closed PR #3 at head `da4797e1a3df2c6f0ddaaa0248098fd40f656121`.
 - The implementation checkpoint and its passing tests were not merged.
 - On 2026-08-09 the user withdrew authorization for the Claude–ChatGPT collaborative workflow and requested a complete approach reset.
-- The task is preserved at `tasks/paused/task-01-skeleton.md`.
+- The task was preserved at `tasks/paused/task-01-skeleton.md` until task R4 retired it; it remains in Git history, last present at `a7e68e165ba518c391f8c5e77f2eb3bf95ba3645`.
 - Result: paused and superseded; not accepted.
 
 ### Task 1 — Direct neutral skeleton adoption

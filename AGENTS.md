@@ -6,7 +6,7 @@ These rules apply to every coding agent in this repository.
 
 1. `tasks/active/` — the only authorized current task.
 2. `docs/Direct-Build-Workflow.md` — current execution and Paw Gate protocol.
-3. `docs/Claude-Companion-Core-Task-Packet.md` — neutral-core requirements; historical filename retained for stable links.
+3. `docs/Neutral-Core-Task-Packet.md` — neutral-core requirements.
 4. `docs/Prince-Construction-Roadmap.md` — stage dependencies and gates.
 5. `docs/Prince-Design-BunDex.md` — behavioral authority and future compatibility.
 6. `BUILD_LEDGER.md` — accepted state, decisions, and known limitations.

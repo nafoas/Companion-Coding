@@ -4,7 +4,7 @@ The filename is retained for stable historical links. This packet no longer assi
 
 ## How to use this packet
 
-Build the local Windows companion engine through one bounded active task and one Paw Gate at a time. Codex performs implementation and a distinct evidence-based gate pass under the authority boundaries in `AGENTS.md` and `Direct-Build-Workflow.md`.
+Build the local Windows companion engine through one bounded active task and one Paw Gate at a time. The Builder performs implementation and a distinct evidence-based gate pass under the authority boundaries in `AGENTS.md` and `Direct-Build-Workflow.md`.
 
 Do **not** implement this entire packet in one pass. Work on exactly one explicitly assigned task at a time. After implementation, produce the required handoff and conduct the current candidate's Paw Gate. Do not begin the next task until that gate is recorded as passed.
 
