@@ -163,14 +163,20 @@ public sealed class VaultRecoveryTests
         var memoryHash = Hash(harness.Location.BackupArchivePath);
         var companionHash = Hash(harness.Location.CompanionArchivePath);
         await harness.RememberAsync("synthetic.after-good-backup");
-        var journalHash = Hash(harness.Location.JournalPath);
+
+        // The live journal is held exclusively on Windows, so rotation is checked through its state.
+        var journal = harness.Repository!.Journal;
+        var rotationBefore = journal.RotationBase?.CutSequence;
+        var highestBefore = journal.HighestAppendSequence;
         await File.WriteAllBytesAsync(harness.State.PathFor("settings"), Bytes("damaged"));
 
         await Assert.ThrowsAsync<BackupValidationException>(() => DaBunVault.CreateAsync(harness.Repository!, harness.Keepsakes, harness.State));
 
         Assert.Equal(memoryHash, Hash(harness.Location.BackupArchivePath));
         Assert.Equal(companionHash, Hash(harness.Location.CompanionArchivePath));
-        Assert.Equal(journalHash, Hash(harness.Location.JournalPath));
+        Assert.Equal(rotationBefore, journal.RotationBase?.CutSequence);
+        Assert.Equal(highestBefore, journal.HighestAppendSequence);
+        Assert.NotNull(rotationBefore);
         Assert.Equal(["companion-vault-v1.zip", "memory-vault-v1.zip"], Directory.GetFiles(Path.GetDirectoryName(harness.Location.BackupArchivePath)!).Select(Path.GetFileName).Order(StringComparer.Ordinal));
     }
 

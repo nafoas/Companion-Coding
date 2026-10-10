@@ -44,7 +44,11 @@ Builder: Claude.
     - the built-versus-validated comparison.
   - The three real gaps from the first run were closed with tests: a same-length tamper, a Vault copy that mismatches its record, and a silent companion.
 - The bug hunt also wrapped corrupt-zip `InvalidDataException` as an invalid companion, and bounded entry size before reading.
-- CI: pending.
+- First CI (`91fbcb8`): push run `38062246267` and PR run `38062259517` each passed 743/744.
+  - Both failed only `Scenario4_ADamagedStateFailsTheBackup_AndThePreviousVaultIsUntouched`, with an `IOException`: the test hashed the live journal while the repository held it exclusively, which Windows enforces.
+  - Product behaviour is correct.
+  - Fix: the test now asserts the journal's rotation base and highest append sequence are unchanged, instead of hashing the locked file.
+- CI on the fix: pending.
 
 ## Remaining
 
