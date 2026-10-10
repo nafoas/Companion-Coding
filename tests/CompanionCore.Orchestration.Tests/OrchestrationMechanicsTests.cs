@@ -159,12 +159,19 @@ public sealed class OrchestrationMechanicsTests
             return ProviderReply.Success(MockSemanticProvider.DefaultResponseJson(request));
         });
 
-        for (var index = 0; index < 20; index++)
+        // Hold the first call in flight, then deliver more sheets one at a time, each fully
+        // processed by the mailbox, so a missing single-flight guard deterministically starts
+        // a second call (a burst alone could collapse into the latest-sheet slot).
+        harness.Worker.EmitSheet(harness.Time.GetUtcNow(), shade: 0);
+        await harness.WaitForAsync(() => harness.Provider.CallCount == 1);
+        for (var index = 1; index < 20; index++)
         {
             harness.Worker.EmitSheet(harness.Time.GetUtcNow(), shade: (byte)index);
+            await harness.Orchestrator.GetSnapshotAsync();
         }
 
-        await harness.WaitForAsync(() => harness.Provider.CallCount == 1);
+        await Task.Delay(50);
+        Assert.Equal(1, harness.Provider.CallCount);
         Assert.True((await harness.Orchestrator.GetSnapshotAsync()).BridgeInFlight);
         release.SetResult();
         await harness.SettleAsync();

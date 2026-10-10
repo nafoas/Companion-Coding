@@ -2,64 +2,53 @@
 
 ## Task
 
-No task is active. The last accepted packet is WIRE-02 — Windows Platform Signals and App Composition (`tasks/archive/wire-02-app-composition.md`), merged through PR #41 as `111e15a2b51ee7691dc1acb7aa9971f7f2840ee6`.
+AUDIT-01 — Regression Audit of Every Accepted Task (`tasks/active/audit-01-regression.md`).
 
-**Pre-API wiring is complete.**
-
-Builder: Claude.
-
-## Completed
-
-- **Tasks 7–11, R5, ERPP-01, KEEP-01, KEEP-02** (PRs #21–#37).
-- **WIRE-01** (PR #39): the orchestration core.
-- **WIRE-02** (PR #41, recorded here): Windows platform signals and App composition.
+- Branch: `agent/audit-01-regression`.
+- Base: `main` `bf25765`.
+- Builder: Claude.
 
 ## Changed
 
-This docs-only reconciliation:
+Tests only; there is no product change.
 
-- archives WIRE-02 with its PASS record;
-- updates `BUILD_LEDGER.md` and `README.md`;
-- resets this handoff.
+- **Memory:** structural limits.
+- **TargetAuth:** sensitive-category, stored-browser-entry, and executable-match coverage.
+- **Capture worker:** ring-bound tests.
+- **Api:** credential echo outside the decoded fields.
+- **Orchestration:** a deterministic single-flight burst test.
+- The packet.
 
 ## Verification
 
-- WIRE-02 evidence head `8a031b4`, tree `32a9cf6`: push run `38078940123` and PR run `38078943764` passed 908/908 with verified artifacts.
-- The merge ref had exact parents and an equal tree.
-- The squash merge went through the expected-head fence.
+- **Stress:** 5 full runs under saturated CPU, 85/85 project runs green.
+- **Mutation:** 420 mutants replayed and added across every task; 403 killed, 16 equivalent, 1 unobservable. Every replayed set matches its accepted record.
+- **Local gate:** 0 warnings, 0 vulnerable packages, 914/914 on Linux.
+- **Windows CI:** pending (expected 929).
 
 ## Remaining
 
-- Pass this reconciliation's CI paths, merge it, and confirm post-merge `main` CI.
-- Run the regression audit of every accepted task, then the roundtable with Boss.
-- **Roadmap boundary.** Stage 11 calibration (target-PC evidence) and Stage 12 / Task 12 (credentials, live API) are stop conditions.
-- Deferred, from the packet records:
-  - KEEP-02 D1;
-  - WIRE-01 D1 and D2;
-  - WIRE-02 D1–D4;
-  - a synthetic `SourceResized` capability.
+- CI, the merge-ref check, merge, closure, and post-merge `main` CI.
+- Then the roundtable with Boss.
 
 ## Risks and assumptions
 
-- Minimized and exclusive-fullscreen WGC remain unsupported absent target-PC evidence.
 - Every numeric bound is provisional until Stage 11.
+- The Windows-only and real-hardware checks (lock/suspend, WGC modes) need the target PC.
 
 ## Personal Round Judgments
 
-Recorded per packet, through WIRE-01 J1–J10 and WIRE-02 J1–J10.
+AUDIT-01 J1–J2, recorded in the packet.
 
 ## Review focus
 
-- This reconciliation changes only:
-  - `BUILD_LEDGER.md`;
-  - `README.md`;
-  - this handoff;
-  - the WIRE-02 active-to-archive rename and its content update.
+- The new tests pin real invariants without weakening any accepted test.
+- The A5 rewrite stays deterministic.
 
 ## Repository state
 
-- Reconciliation branch `agent/wire-02-closure`, based on `main` `111e15a`.
+- Branch `agent/audit-01-regression`, based on `main` `bf25765`.
 
 ## Next safe task
 
-The regression audit of all accepted tasks, then the roundtable.
+The roundtable with Boss. Stage 11 and Task 12 remain stop conditions.

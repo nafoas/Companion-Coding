@@ -176,6 +176,29 @@ public sealed class CredentialTests
     }
 
     [Fact]
+    public async Task ASecretEchoedInAFieldOutsideTheDecodedText_StillInvalidatesTheWholeResponse()
+    {
+        await using var harness = await ApiTestHarness.CreateAsync();
+        harness.Credentials.Set(RealSemanticProviderShell.PrimaryCredentialName, ProtectedCredential.FromCharacters(Marker));
+        var mock = new MockSemanticProvider([
+            MockSemanticProvider.Respond(request => SyntheticResponses.Interpretation(
+                request.OperationId,
+                proposals: [SyntheticResponses.Append("synthetic.subject.kind", "[neutral] recollection", sourceKind: Marker)])),
+        ]);
+        var bridge = harness.OpenBridge(mock);
+        var published = 0;
+        bridge.InterpretationProduced += (_, _) => published++;
+        var grant = harness.Grant();
+
+        var outcome = await bridge.InterpretAttentionSheetAsync(ApiTestHarness.Sheet(grant), grant);
+
+        Assert.Equal(BridgeOutcomeKind.InvalidResponse, outcome.Kind);
+        Assert.Equal(SemanticResponseInvalidReason.CredentialEcho, outcome.InvalidReason);
+        Assert.Equal(0, published);
+        Assert.Empty(await harness.RetrieveAsync("synthetic.subject.kind"));
+    }
+
+    [Fact]
     public async Task RealProviderShell_WithoutCredentials_IsNeutrallyUnavailableNotACrash()
     {
         await using var harness = await ApiTestHarness.CreateAsync();
