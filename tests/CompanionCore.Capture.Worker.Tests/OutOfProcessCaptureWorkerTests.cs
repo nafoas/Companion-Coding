@@ -224,6 +224,7 @@ public sealed class OutOfProcessCaptureWorkerTests
         var grant = CaptureWorkerTestSupport.CreateGrant();
         var publishedFrames = new ConcurrentDictionary<long, byte>();
         var attentionBeforeSourceFrame = 0;
+        var foreignAttention = 0;
         var firstAttentionSignal = new TaskCompletionSource<AttentionSheetMetadata>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         worker.FrameProduced += (_, frame) => publishedFrames.TryAdd(frame.SequenceNumber, 0);
@@ -234,25 +235,38 @@ public sealed class OutOfProcessCaptureWorkerTests
                 Interlocked.Exchange(ref attentionBeforeSourceFrame, 1);
             }
 
+            if (!metadata.Matches(grant))
+            {
+                Interlocked.Exchange(ref foreignAttention, 1);
+            }
+
             firstAttentionSignal.TrySetResult(metadata);
         };
         await worker.StartAsync(grant, CancellationToken.None);
-        await firstAttentionSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        AttentionSheet? orientation = null;
+        var firstSignal = await firstAttentionSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        // The worker emits exactly one orientation, then a regional sheet for each
+        // changed frame. Client retention and notifications are newest-preserving,
+        // so whether the retained sheet is still the orientation is timing, not
+        // contract. Orientation production is proven exactly by the worker metric
+        // below; its pixel layout is proven in-process and by the CI artifact.
+        AttentionSheet? retained = null;
         await CaptureWorkerTestSupport.WaitUntilAsync(
-            () => (orientation = worker.TakeLatestAttentionSheet()) is not null,
+            () => (retained = worker.TakeLatestAttentionSheet()) is not null,
             TimeSpan.FromSeconds(10));
-        using (orientation)
+        using (retained)
         {
-            Assert.Equal(AttentionSheetKind.Orientation, orientation!.Metadata.Kind);
-            Assert.True(orientation.Metadata.Matches(grant));
+            Assert.Contains(
+                retained!.Metadata.Kind,
+                new[] { AttentionSheetKind.Orientation, AttentionSheetKind.Regional });
+            Assert.True(retained.Metadata.Matches(grant));
+            Assert.True(retained.Metadata.SourceSequenceNumber >= firstSignal.SourceSequenceNumber);
             Assert.Equal(0, Volatile.Read(ref attentionBeforeSourceFrame));
-            await CaptureWorkerTestSupport.WaitUntilAsync(
-                () => publishedFrames.ContainsKey(orientation.Metadata.SourceSequenceNumber),
-                TimeSpan.FromSeconds(10));
-            var decoded = PngTestDecoder.Decode(orientation.EncodedImage.Span);
-            Assert.Equal(orientation.Metadata.SheetWidth, decoded.Width);
-            Assert.Equal(orientation.Metadata.SheetHeight, decoded.Height);
+            Assert.Equal(0, Volatile.Read(ref foreignAttention));
+            Assert.True(publishedFrames.ContainsKey(firstSignal.SourceSequenceNumber));
+            var decoded = PngTestDecoder.Decode(retained.EncodedImage.Span);
+            Assert.Equal(retained.Metadata.SheetWidth, decoded.Width);
+            Assert.Equal(retained.Metadata.SheetHeight, decoded.Height);
         }
 
         var manual = new NormalizedRegion(0.2, 0.2, 0.4, 0.5);
