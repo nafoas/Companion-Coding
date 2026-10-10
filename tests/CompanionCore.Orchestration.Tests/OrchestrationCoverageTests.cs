@@ -198,6 +198,22 @@ public sealed class OrchestrationCoverageTests
         Assert.Equal(WatchbunPhase.ExitPending, (await harness.Orchestrator.GetSnapshotAsync()).Watchbun!.Phase);
     }
 
+    [Fact]
+    public async Task ACompletedWatchTask_IsADecisiveAttentionMoment()
+    {
+        await using var harness = await CreateAsync();
+        var grant = await harness.AuthorizeAsync();
+        await harness.Orchestrator.AddWatchTaskAsync("door.opened", TimeSpan.FromHours(2));
+
+        var verdict = await harness.Orchestrator.SubmitGameEventLineAsync(
+            $"{{\"session\":\"{grant.TargetSessionId:D}\",\"kind\":\"meaningful\",\"key\":\"door.opened\"}}");
+        await harness.SettleAsync();
+
+        Assert.Equal(AdapterVerdict.Accepted, verdict);
+        Assert.True(harness.HasWatchbun(WatchbunIntentKind.WatchTaskCompleted));
+        Assert.Equal(AttentionState.HighAttention, (await harness.Orchestrator.GetSnapshotAsync()).Attention!.State);
+    }
+
     // ---- checkpoints -----------------------------------------------------------------
 
     [Fact]

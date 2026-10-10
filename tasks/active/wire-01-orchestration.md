@@ -91,7 +91,7 @@ It is platform-neutral (`net10.0`) and references the accepted component project
 7. **Restart.** Checkpoints restore the conversation and Watchbun after a host restart. Watchbun recovers without capture until re-authorization.
 8. **Consolidation idempotency.** A consolidation interrupted after its intent was persisted replays idempotently.
 9. **Repair.** `CompanionHost.RepairAsync` restores a damaged BunDex, photographs, and state, and reports.
-10. **Regression.** All 744 accepted tests still pass on Windows CI.
+10. **Regression.** All 744 accepted tests still pass on Windows CI (793 with the new Recall regression and the 48 orchestration tests).
 
 ## Allowed change scope
 
@@ -104,7 +104,23 @@ It is platform-neutral (`net10.0`) and references the accepted component project
 
 ## Paw Gate
 
-Pending.
+Pending CI. Local evidence so far:
+
+- **Local gate.** Locked restore and a `--no-incremental` Release build with `/warnaserror`: 0 warnings, 0 errors. 0 vulnerable packages.
+- **Local tests.** 780/780 on Linux across 16 projects (the App integration tests are Windows-only). The accepted suites pass unedited, apart from the one added Recall regression test.
+- **Orchestration tests.** 48 tests:
+  - `OrchestrationScenarioTests`: acceptance scenarios 1–9 plus 8b;
+  - `OrchestrationMechanicsTests`;
+  - `OrchestrationCoverageTests`.
+
+  They passed five consecutive runs, then ten more under full-core CPU load.
+- **Mutation pass.** 49 mutants over the orchestrator, evidence mapper, sheet decoder, host, and the C1 fix. The first pass left 24 survivors; each became a targeted test. Final result: **45 killed**, plus:
+  - 3 equivalent (defense in depth):
+    - the orchestrator's sheet-grant re-check (the controller fences stale sheets at both the event and the take);
+    - the stale-session outcome check (bridge generation fencing stops the outcome first);
+    - the summary/highlight filter (the planner already excludes consolidation output, as the undrained-replay test proves);
+  - 1 unobservable: zeroing the photograph's BGRA buffer after use (RAM hygiene with no externally visible effect).
+- **Simplification.** The mutation pass showed that the `_endingForExit` flag was dead once the C5 guard existed (a `TargetEnded` with no attached session is always ignored), so it was removed (J10).
 
 ## Personal Round Judgments
 
@@ -122,6 +138,7 @@ Pending.
   - Boss-requested keepsake deletion.
 
   All other friend lines are test-only.
+- **J10 — One rule for `TargetEnded`.** It is acted on only while a session is attached. Our own ends, after a target exit or a Watchbun close, always close the session objects first, so no separate "ending for exit" flag is needed. A flag that could go stale is one more state to get wrong.
 
 ## Defects found by composition
 
