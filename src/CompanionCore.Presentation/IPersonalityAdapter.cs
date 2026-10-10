@@ -1,3 +1,4 @@
+using CompanionCore.Orchestration;
 using CompanionCore.Runtime;
 using CompanionCore.TargetAuth;
 
@@ -14,4 +15,7 @@ public interface IPersonalityAdapter
     PresentationContent Map(LifecycleTransitionResult transition);
 
     PresentationContent Map(TargetSessionEvent targetEvent);
+
+    /// <summary>Maps one typed orchestration notice; every visible word belongs to the adapter.</summary>
+    PresentationContent Map(CompanionNotice notice);
 }

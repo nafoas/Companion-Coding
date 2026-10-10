@@ -37,7 +37,8 @@ public sealed record OrchestratorSnapshot(
     bool PhotographPending,
     bool BridgeInFlight,
     IReadOnlyList<string> UnconsolidatedSessions,
-    long Faults);
+    long Faults,
+    Guid ConversationLineage);
 
 /// <summary>
 /// The one composition of every accepted subsystem. A single-consumer mailbox serializes
@@ -141,7 +142,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             _pendingPhoto is not null,
             _bridgeInFlight,
             [.. _watchbunSessions],
-            Interlocked.Read(ref _faults))));
+            Interlocked.Read(ref _faults),
+            _conversation.Checkpoint().CoordinatorId)));
 
     public long Faults => Interlocked.Read(ref _faults);
 

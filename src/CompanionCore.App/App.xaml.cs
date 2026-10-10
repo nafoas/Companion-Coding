@@ -33,6 +33,7 @@ public partial class App : Application
     private SingleInstanceGuard? _instanceGuard;
     private CompanionRuntime? _runtime;
     private TargetSessionController? _targetController;
+    private CompanionComposition? _companion;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -99,6 +100,17 @@ public partial class App : Application
         var startResult = _runtime.Start(checkpointRecovered: false);
         window.RenderTransition(startResult);
 
+        // The orchestration core: one host on the development root (an isolated test root in
+        // test mode), offline Braincase only. Notices are queued to the dispatcher, never
+        // awaited, so the orchestrator's mailbox can never wait on this thread.
+        _companion = CompanionComposition.Open(
+            CompanionComposition.ResolveLocation(e.Args, testMode is not null),
+            privacyState,
+            _targetController,
+            diagnostics,
+            notice => Dispatcher.BeginInvoke(() => window.RenderNotice(notice)),
+            Dispatcher);
+
         if (testMode is not null)
         {
             RunTestMode(
@@ -163,6 +175,25 @@ public partial class App : Application
                 Shutdown(0);
                 break;
 
+            case "wired":
+                // The full orchestration composition in the real process: the host started on
+                // an isolated test root, its fault count, and the conversation lineage that a
+                // second launch on the same root must restore.
+                {
+                    var companion = _companion!;
+                    var snapshot = Task.Run(() => companion.Host.Orchestrator.GetSnapshotAsync()).GetAwaiter().GetResult();
+                    Console.WriteLine(
+                        $"WIRED ROOT:{companion.Host.Location.Kind} FAULTS:{snapshot.Faults} "
+                        + $"LINEAGE:{snapshot.ConversationLineage:N} UNCONSOLIDATED:{snapshot.UnconsolidatedSessions.Count} "
+                        + $"CONSTRUCTIONS:{CompanionRuntime.ConstructionCount}");
+                    var wiredStop = _runtime!.Stop();
+                    firstWindow.RenderTransition(wiredStop);
+                    firstWindow.Close();
+                    Shutdown(0);
+                }
+
+                break;
+
             case "hold":
                 // Used by the second-process integration test: signal that the guard is
                 // held, then block until the harness tells us to release it, so the
@@ -191,9 +222,19 @@ public partial class App : Application
         // all if the window was closed directly.
         try
         {
-            if (_targetController is not null)
+            try
             {
-                _targetController.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                if (_companion is not null)
+                {
+                    Task.Run(() => _companion.DisposeAsync().AsTask()).GetAwaiter().GetResult();
+                }
+            }
+            finally
+            {
+                if (_targetController is not null)
+                {
+                    _targetController.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                }
             }
         }
         finally

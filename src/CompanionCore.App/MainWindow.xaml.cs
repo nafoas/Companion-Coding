@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using CompanionCore.Capture.Contracts;
+using CompanionCore.Orchestration;
 using CompanionCore.Presentation;
 using CompanionCore.Privacy;
 using CompanionCore.Runtime;
@@ -22,6 +23,7 @@ public partial class MainWindow : Window
     private readonly IPresentationSink _sink;
     private readonly IPresentationSink _targetSink;
     private readonly IPresentationSink _selectionSink;
+    private readonly IPresentationSink _companionSink;
     private readonly TargetAuthorizationService _targetAuthorization;
     private readonly TargetSessionController _targetController;
     private readonly WpfPrivacyHotkey? _privacyHotkey;
@@ -41,6 +43,7 @@ public partial class MainWindow : Window
         _sink = new WpfPresentationSink(StatusText);
         _targetSink = new WpfPresentationSink(TargetStatusText);
         _selectionSink = new WpfPresentationSink(SelectionStatusText);
+        _companionSink = new WpfPresentationSink(CompanionStatusText);
         _targetAuthorization = targetAuthorization;
         _targetController = targetController;
         AuthorizationCategoryCombo.ItemsSource = Enum.GetValues<AuthorizationCategory>();
@@ -76,6 +79,12 @@ public partial class MainWindow : Window
     public void RenderTransition(LifecycleTransitionResult transition)
     {
         _sink.Render(_adapter.Map(transition));
+    }
+
+    /// <summary>Renders one orchestration notice; called on the dispatcher thread.</summary>
+    public void RenderNotice(CompanionNotice notice)
+    {
+        _companionSink.Render(_adapter.Map(notice));
     }
 
     private async void NapButton_Click(object sender, RoutedEventArgs e)
