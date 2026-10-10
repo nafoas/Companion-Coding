@@ -98,7 +98,16 @@ It references Memory and Keepsakes, and is the single composition point of backu
 
 ## Paw Gate
 
-Pending.
+Candidate evidence (pending the evidence-descendant CI, merge-ref check, and acceptance):
+
+- First CI on `91fbcb8` (runs `38062246267` and `38062259517`) failed one test. It was a test-only Windows assumption (hashing the exclusively held live journal), corrected in `25d5785` by asserting the journal's rotation state, with no product change.
+- Fix head `25d5785`:
+  - push run `38062566372` and PR run `38062568915` each passed **744/744** (16 test projects, Vault 32, Memory 87, App Integration 13);
+  - test-results and attention-sheet artifacts: archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- Local gate: 731/731, 0 warnings, 0 vulnerable packages across 36 projects. Every accepted memory backup and repair test is unchanged.
+- Mutation pass: 37 mutants; 34 killed, 3 equivalent (defense in depth).
+- Acceptance scenarios 1–9 are covered by `VaultRecoveryTests`, `CompanionArchiveTests`, `VaultStateStoreTests`, and `MemoryPagingTests`. Scenario 10 is covered by the full CI suite.
 
 ## Personal Round Judgments
 

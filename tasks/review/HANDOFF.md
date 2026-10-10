@@ -48,7 +48,10 @@ Builder: Claude.
   - Both failed only `Scenario4_ADamagedStateFailsTheBackup_AndThePreviousVaultIsUntouched`, with an `IOException`: the test hashed the live journal while the repository held it exclusively, which Windows enforces.
   - Product behaviour is correct.
   - Fix: the test now asserts the journal's rotation base and highest append sequence are unchanged, instead of hashing the locked file.
-- CI on the fix: pending.
+- Fix head `25d5785`:
+  - push run `38062566372` and PR run `38062568915` each passed **744/744** (16 test projects, Vault 32, Memory 87, App Integration 13);
+  - test-results and attention-sheet artifacts: archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
 
 ## Remaining
 
