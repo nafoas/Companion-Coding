@@ -104,7 +104,24 @@ It is platform-neutral (`net10.0`) and references the accepted component project
 
 ## Paw Gate
 
-Pending CI. Local evidence so far:
+Gate result: **PASS** on 2026-10-10 (pending the merge-ref check and merge, recorded at closure).
+
+**CI evidence.**
+- **First CI (head `414ee9d`):** push run `38069900594` and PR run `38069916752` each failed one test, `Ids_AndGameReferences_AreStableAndSafe`. This exposed C8, a platform-dependent product behavior, fixed in `2b1656f` with added cases.
+- **Fix head `2b1656f`:** push run `38070682490` and PR run `38070686736` each passed **793/793** (17 test projects: 744 accepted + 1 Recall regression + 48 orchestration).
+- **Artifacts:**
+  - test-results and attention-sheet archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+
+**Actual-diff review.**
+- The 26-path change stays inside the allowed scope. The only edits to accepted components are:
+  - the C1 escape in `RecallSubjects.Summary`;
+  - the internal `DaBunVault.BackUpAsync` wrapper;
+  - friend lines.
+- Every accepted test passes unedited, apart from one added Recall regression.
+- No credentials, live API, production data root, or personality wording.
+
+Local evidence:
 
 - **Local gate.** Locked restore and a `--no-incremental` Release build with `/warnaserror`: 0 warnings, 0 errors. 0 vulnerable packages.
 - **Local tests.** 780/780 on Linux across 16 projects (the App integration tests are Windows-only). The accepted suites pass unedited, apart from the one added Recall regression test.
@@ -152,8 +169,8 @@ Each was fixed at its root, with a regression test.
 - **C6 — Single-slot consolidation intent.** The single durable intent could be overwritten by another session's consolidation, losing the unfinished intent's summary. It is now a durable per-session queue (J7). Regressions:
   - `Scenario8b_AnotherSessionsConsolidationNeverOverwritesAnUnfinishedIntent`;
   - `RejectedConsolidationIntent_StaysQueuedAcrossOtherSessions`.
-- **C8 — Platform-dependent game references.** Found by the first Windows CI run of `414ee9d` (push run `38069900594`, PR run `38069916752`): 792/793, one failure. `GameReference` used `Path.GetFileNameWithoutExtension`, which reads `c:` as a drive on Windows, so one executable name produced different BunDex keys on different platforms. It now strips path separators and the last extension itself, identically everywhere. Regression: `Ids_AndGameReferences_AreStableAndSafe` gains Windows-path, POSIX-path, dotted, and extensionless cases.
 - **C7 — Leftover sessions dropped.** Sessions left by an interrupted close were cleared without consolidation when a fresh Watchbun started. They are now consolidated first. Regression: `SessionsLeftByAnInterruptedClose_AreConsolidatedBeforeAFreshWatch`.
+- **C8 — Platform-dependent game references.** Found by the first Windows CI run of `414ee9d` (push run `38069900594`, PR run `38069916752`): 792/793, one failure. `GameReference` used `Path.GetFileNameWithoutExtension`, which reads `c:` as a drive on Windows, so one executable name produced different BunDex keys on different platforms. It now strips path separators and the last extension itself, identically everywhere. Regression: `Ids_AndGameReferences_AreStableAndSafe` gains Windows-path, POSIX-path, dotted, and extensionless cases.
 
 ## Deferred findings
 

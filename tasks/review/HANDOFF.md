@@ -34,11 +34,12 @@ WIRE-01 — Companion Orchestration Core (`tasks/active/wire-01-orchestration.md
   - 780/780 on Linux across 16 test projects (App integration is Windows-only);
   - orchestration tests stable across 15 runs, 10 of them under full CPU load.
 - **Mutation pass:** 49 mutants; 45 killed, 3 equivalent (defense in depth), 1 unobservable (RAM hygiene). Details are in the packet.
-- **Windows CI:** pending. Expected 793 tests (744 accepted, +1 Recall regression, +48 orchestration).
+- **Windows CI:**
+  - The first runs on `414ee9d` (`38069900594` and `38069916752`) found C8, a platform-dependent game reference, fixed in `2b1656f`.
+  - On `2b1656f`, push run `38070682490` and PR run `38070686736` each passed **793/793**, with verified artifacts and the expected attention-sheet PNG digest.
 
 ## Remaining
 
-- Both CI paths and artifact verification.
 - Merge-ref check, merge, closure, and post-merge `main` CI.
 - WIRE-02:
   - Windows `IPlatformSignals`;
