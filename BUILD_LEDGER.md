@@ -2,18 +2,18 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 4 — local peepers and bounded visual pipeline — **accepted, recertified, and orientation delivery made reliable** |
-| Active task | None; Task 7 remains unopened |
-| Working branch | Accepted product/evidence baseline on `main`: `755b11f2304ed8567011958f2de6e16448ef15ec` (R3) |
-| Entry criteria met | Complete; Tasks 4–6, R2, and R3 each passed their Paw Gates and were reconciled to accepted `main` |
+| Current stage | Stage 5 — stateless faraway Braincase bridge (mock/replay only) — **accepted** |
+| Active task | None; R5 (App shutdown load sensitivity) is next, before Task 8 |
+| Working branch | Accepted product/evidence baseline on `main`: `9b8d45f0939735a3281b06bec44af47518703a80` (Task 7) |
+| Entry criteria met | Complete; Tasks 4–7, R2, and R3 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
-| Live API authorized | No |
-| Automated tests | R3 final evidence head `975a7ce2a19956041996dc47037d07bca7f1e650`, tree `81523c004c6b2b791ceb67aa90a67071a4c11712`, passed push run `38027884572` (job `114142508091`) and PR run `38027886917` (job `114142515094`) on their first attempts. Each passed locked restore, the clean 20-project audit, a 0-warning/0-error Release build, 325/325 tests, and both artifact uploads. The local gate passed all 20 strict builds and 312/312 executable tests. |
-| Manual gate | R3 red evidence failed exactly the two intended process cases on both event paths (runs `38027555649` and `38027558031`), and the controller displacement case was proven red locally. Actual-diff, allowlist, lease-safety, and grant review passed, as did artifact and merge-ref review. PR #17 squash-merged through the expected-head fence. R2 and R3 are archived. |
-| Accepted `main` baseline | `e6664d115b7864b588b8a908d541a222137472af` — Stage 4 product tree from PR #17 (`755b11f`) with R4 control-record cleanup through PR #19 |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, the eight-frame orientation budget, and the three-retake bound are provisional until Stage 11 physical profiling. The synthetic capture source cannot emit `SourceResized`, so resize ordering and resize-owed orientations are proven through status events. |
-| Deferred temptations | Task 7+ semantic bridge/attention meaning/API/conversation/ERPP/personality work; durable images, production settings, final UI |
-| Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, and directed the R4 cleanup. |
+| Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
+| Automated tests | Task 7 gate head `9ea877b7642d4663ba940ec00be5f7ec78fd1d36`, tree `cc5536fc288157123305d59f8326b29d303c5a12`, passed push run `38032469978` (job `114156103179`) and PR run `38032472690` (job `114156111743`) on their first attempts. Each passed locked restore, the clean 22-project audit, a 0-warning/0-error Release build, 453/453 tests (Api 128), and both artifact uploads. The local gate passed the strict build and 440/440 executable tests. |
+| Manual gate | Task 7 actual-diff, allowlist, privacy-fencing, nap-ordering, journal-recovery, and credential-hygiene review passed. The Builder's bug hunt fixed two defects (J14) and ran a mutation pass over the key guards. Earlier App shutdown timeouts were traced through TRX timing: this suite's load was reduced, and the pre-existing App sensitivity was assigned to R5 (J15). PR #21 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `9b8d45f0939735a3281b06bec44af47518703a80` — Task 7 stateless Braincase bridge (PR #21) |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, the eight-frame orientation budget, the three-retake bound, and the Task 7 bridge bounds and usage estimate are provisional until Stage 11 physical profiling and the final API gate. The synthetic capture source cannot emit `SourceResized`. The bridge is not yet composed into the WPF app. The App shutdown integration scenario slows sharply under concurrent disk-sync load (R5). |
+| Deferred temptations | Task 8+ attention meaning/conversation/ERPP/personality work; live API and credentials (Task 12); durable images, production settings, final UI |
+| Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
 ## Gate history
 
@@ -108,6 +108,48 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### Task 7 — Stateless Braincase bridge
+
+- Builder: Claude, under Boss's standing direction to continue from Task 7 / Stage 5 (2026-10-10).
+- Scope: 50 allowlisted paths, comprising:
+  - the new `CompanionCore.Api` project (architecture §7) and `CompanionCore.Api.Tests`;
+  - solution wiring;
+  - one test-only friend line each in Capture.Contracts, Memory, and Privacy;
+  - control records.
+
+  No App, CI, presentation, capture, target-authorization, memory-behavior, privacy-behavior, runtime, or documentation source changed.
+- Delivered:
+  - strict schema-v1 contracts through one parser;
+  - mock and replay providers, and a transport-free real-provider shell;
+  - graceful configuration;
+  - bounded, idempotent `ApiBridge` with grant and privacy-generation fencing through `LocalWriteGate`;
+  - a local append-only allowlist;
+  - a per-request local Resume Packet;
+  - durable naptime with bounded probes;
+  - a checksummed bridge journal;
+  - RAM-only protected credentials with echo rejection.
+- Personal Round Judgments J1–J15 record:
+  - the project name;
+  - deferred presentation mapping;
+  - a zero-length queue;
+  - whole-batch rejection;
+  - the remote source-kind set;
+  - no retry of invalid responses;
+  - interrupted operations never re-sent;
+  - the RAM-only credential store;
+  - provisional bounds;
+  - journal placement;
+  - corruption handling;
+  - no notice replay;
+  - the default provider;
+  - review-found fixes;
+  - the shutdown-timeout diagnosis.
+- Evidence:
+  - The final head passed both Windows paths at 453/453 with verified artifacts.
+  - The merge ref had exact parents and an equal tree.
+- Merge: PR #21 squash-merged with the expected-head fence as `9b8d45f0939735a3281b06bec44af47518703a80`, tree `cc5536fc288157123305d59f8326b29d303c5a12`.
+- Result: passed and accepted. Stage 5 is complete. R5 is next, then Task 8.
 
 ### R4 — Retired workflow cleanup
 

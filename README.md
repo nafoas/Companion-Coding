@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–6, the R2 Stage 4 recertification, and R3 reliable orientation delivery are accepted. Stage 4's local peepers and bounded visual pipeline are complete. No task is active, and Task 7 remains unopened.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–7, the R2 Stage 4 recertification, and R3 reliable orientation delivery are accepted. Stage 5's stateless Braincase bridge is complete with mock and replay providers only. No task is active; R5 is next, then Task 8.
 
 ## Builder workflow
 
@@ -17,22 +17,22 @@ Task 0's architecture, the R0 direct-build controls, Tasks 1–6, the R2 Stage 4
 
 ## Current checkpoint
 
-Stage 4 is closed through two corrective gates.
+Stage 5 is complete. **Task 7** (PR #21) added `CompanionCore.Api`, the stateless faraway Braincase bridge:
 
-**R2** (PR #15):
-- fixed wake-signal debt;
-- gave worker status its own delivery lane, with a visual fence;
-- bounded CI hangs.
+- strict versioned request and response contracts;
+- deterministic mock and fixture-replay providers;
+- a real-provider shell with no transport, so no live or paid call is possible;
+- bounded, idempotent retries;
+- privacy-generation fencing;
+- a local append-only allowlist in front of the write gate;
+- a local Resume Packet rebuilt for every request;
+- packaged naptime with bounded probes that survives restart;
+- a checksummed local bridge journal;
+- RAM-only protected credentials.
 
-**R3** (PR #17) made the one orientation sheet per visual epoch reliably reach the consumer:
-- it is pinned within the two-sheet ceiling;
-- its notice is never coalesced away;
-- its source frame is protected during start;
-- it has its own controller slot.
+The final head passed both Windows event gates at 453/453 and merged as `9b8d45f0939735a3281b06bec44af47518703a80`.
 
-A bounded failsafe asks the worker to retake it, at most three times, only when delivery still fails. Red evidence failed exactly the intended cases, and the final head passed both Windows event gates at 325/325. It merged as `755b11f2304ed8567011958f2de6e16448ef15ec`.
-
-Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable product images, and all Task 7+ behavior remain deferred.
+R5 comes next. It root-causes why the App's shutdown integration scenario slows sharply under concurrent disk load. Attention meaning (Task 8), conversation, ERPP implementation, personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 
