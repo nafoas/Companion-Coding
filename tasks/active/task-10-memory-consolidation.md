@@ -122,7 +122,15 @@ It references only Memory and produces append proposals committed only through `
 
 ## Paw Gate
 
-Pending.
+Candidate evidence (pending merge-ref check and acceptance):
+
+- Gate head `755f8d3`:
+  - push run `38056481599` and PR run `38056494760` each passed **621/621** (13 projects, Recall 41, Memory 85, App Integration 13);
+  - test-results and attention-sheet artifacts: archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- Local gate: 608/608, 0 warnings, 0 vulnerable packages.
+- Mutation pass: 63 mutants; 62 killed, 1 equivalent.
+- Acceptance scenarios 1–9 are covered by `RecallScenarioTests`, `RecallMechanicsTests`, and `MemoryQueryTests`. Scenario 10 is covered by the full CI suite.
 
 ## Personal Round Judgments
 

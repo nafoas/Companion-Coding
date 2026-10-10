@@ -45,7 +45,10 @@ Builder: Claude.
   - The first run killed 59.
   - Three survivors were real test gaps, closed with new tests: focus bonus, service session query, and belief-current selection.
   - One is equivalent: removing the duplicate-root check still refuses through the dictionary build with the same `ArgumentException`.
-- CI: pending.
+- Gate head `755f8d3`:
+  - push run `38056481599` and PR run `38056494760` each passed **621/621** (13 projects, Recall 41, Memory 85, App Integration 13);
+  - test-results and attention-sheet artifacts: archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
 
 ## Bug hunt findings fixed before the gate
 
