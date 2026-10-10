@@ -7,6 +7,7 @@
     <Project Path="src/CompanionCore.Capture.Client/CompanionCore.Capture.Client.csproj" />
     <Project Path="src/CompanionCore.Capture.Fake/CompanionCore.Capture.Fake.csproj" />
     <Project Path="src/CompanionCore.Capture.Worker/CompanionCore.Capture.Worker.csproj" />
+    <Project Path="src/CompanionCore.Conversation/CompanionCore.Conversation.csproj" />
     <Project Path="src/CompanionCore.Memory/CompanionCore.Memory.csproj" />
     <Project Path="src/CompanionCore.Presentation/CompanionCore.Presentation.csproj" />
     <Project Path="src/CompanionCore.Privacy/CompanionCore.Privacy.csproj" />
@@ -20,6 +21,7 @@
     <Project Path="tests/CompanionCore.Attention.Tests/CompanionCore.Attention.Tests.csproj" />
     <Project Path="tests/CompanionCore.Capture.Tests/CompanionCore.Capture.Tests.csproj" />
     <Project Path="tests/CompanionCore.Capture.Worker.Tests/CompanionCore.Capture.Worker.Tests.csproj" />
+    <Project Path="tests/CompanionCore.Conversation.Tests/CompanionCore.Conversation.Tests.csproj" />
     <Project Path="tests/CompanionCore.Memory.Tests/CompanionCore.Memory.Tests.csproj" />
     <Project Path="tests/CompanionCore.Presentation.Tests/CompanionCore.Presentation.Tests.csproj" />
     <Project Path="tests/CompanionCore.Privacy.Tests/CompanionCore.Privacy.Tests.csproj" />
