@@ -10,10 +10,10 @@
 | Live API authorized | No |
 | Automated tests | R3 final evidence head `975a7ce2a19956041996dc47037d07bca7f1e650`, tree `81523c004c6b2b791ceb67aa90a67071a4c11712`, passed push run `38027884572` (job `114142508091`) and PR run `38027886917` (job `114142515094`) on their first attempts. Each passed locked restore, the clean 20-project audit, a 0-warning/0-error Release build, 325/325 tests, and both artifact uploads. The local gate passed all 20 strict builds and 312/312 executable tests. |
 | Manual gate | R3 red evidence failed exactly the two intended process cases on both event paths (runs `38027555649` and `38027558031`), and the controller displacement case was proven red locally. Actual-diff, allowlist, lease-safety, and grant review passed, as did artifact and merge-ref review. PR #17 squash-merged through the expected-head fence. R2 and R3 are archived. |
-| Accepted `main` baseline | `755b11f2304ed8567011958f2de6e16448ef15ec` — Stage 4 with reliable orientation delivery, accepted through PR #17 |
+| Accepted `main` baseline | `e6664d115b7864b588b8a908d541a222137472af` — Stage 4 product tree from PR #17 (`755b11f`) with R4 control-record cleanup through PR #19 |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, the eight-frame orientation budget, and the three-retake bound are provisional until Stage 11 physical profiling. The synthetic capture source cannot emit `SourceResized`, so resize ordering and resize-owed orientations are proven through status events. |
 | Deferred temptations | Task 7+ semantic bridge/attention meaning/API/conversation/ERPP/personality work; durable images, production settings, final UI |
-| Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10 and authorized completing all of Stage 4, including R2 and its publication. |
+| Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, and directed the R4 cleanup. |
 
 ## Gate history
 
@@ -108,6 +108,20 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### R4 — Retired workflow cleanup
+
+- Builder: Claude, at Boss's direction ("clean everything up", 2026-10-10). This completes the cleanup approved on 2026-08-10 that draft PR #8 left unfinished.
+- Change:
+  - standing rules name **the Builder** role;
+  - `docs/Claude-Companion-Core-Task-Packet.md` is renamed `docs/Neutral-Core-Task-Packet.md`;
+  - `docs/Shared-Codebase-Workflow.md`, `tasks/review/FOREMAN_REVIEW.md`, and `tasks/paused/task-01-skeleton.md` are removed, and their citations now note they remain in Git history at `a7e68e1`.
+
+  No product or test change.
+- Evidence: push run `38028570862` and PR run `38028579760` each passed 325/325 with verified artifacts on head `0f46817`.
+- Repository hygiene: draft PR #8 was closed as superseded. Every stale remote branch was verified reachable through a pull-request ref before retirement.
+- Merge: PR #19 squash-merged with the expected-head fence as `e6664d115b7864b588b8a908d541a222137472af`, tree `af31a27da877f931092ccfe5c52efbae1f8d495b`.
+- Result: passed and accepted. No task is active and Task 7 remains unopened.
 
 ### R3 — Reliable orientation delivery
 
