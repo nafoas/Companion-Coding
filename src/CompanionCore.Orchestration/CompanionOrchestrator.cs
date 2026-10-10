@@ -502,6 +502,12 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
         else
         {
+            if (_watchbunSessions.Count > 0)
+            {
+                // Sessions left from an interrupted close are consolidated, never dropped.
+                await ConsolidateAndBackUpAsync().ConfigureAwait(false);
+            }
+
             StartFreshWatchbun(grant, now);
         }
 
@@ -915,17 +921,21 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
     // ---- consolidation, Vault, persistence --------------------------------------------
 
-    private sealed record PendingConsolidation(string Session, Guid OperationId, DateTimeOffset Now, string? Game, bool Done);
+    internal sealed record PendingConsolidation(string Session, Guid OperationId, DateTimeOffset Now, string? Game);
+
+    /// <summary>Bound on durable consolidation intents; the oldest is dropped (its originals stay intact).</summary>
+    internal const int MaximumPendingConsolidations = 64;
 
     private async Task ConsolidateAndBackUpAsync()
     {
         var game = _watchbun is { } engine ? GameReference(engine.Current.BoundTarget.ExecutableFileName) : _session?.Game;
-        foreach (var reference in _watchbunSessions.ToArray())
+        var queued = (await ReadPendingAsync().ConfigureAwait(false)).Select(pending => pending.Session);
+        foreach (var reference in queued.Concat(_watchbunSessions).Distinct(StringComparer.Ordinal).ToArray())
         {
             var operationId = DeriveId("consolidation", reference);
             try
             {
-                await ConsolidateAsync(new PendingConsolidation(reference, operationId, Now(), game, Done: false)).ConfigureAwait(false);
+                await ConsolidateAsync(new PendingConsolidation(reference, operationId, Now(), game)).ConfigureAwait(false);
             }
             catch (Exception exception) when (exception is not (OutOfMemoryException or OperationCanceledException))
             {
@@ -949,13 +959,25 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
     /// <summary>
     /// Persists the intent (operation and time) before committing, so an interrupted
-    /// consolidation replays the identical proposal and is idempotent (Task 10 J3).
+    /// consolidation replays the identical proposal and is idempotent (Task 10 J3). Intents
+    /// are queued per session, so one session's unfinished intent is never overwritten by
+    /// another's.
     /// </summary>
     private async Task ConsolidateAsync(PendingConsolidation requested)
     {
-        var existing = await ReadJsonAsync<PendingConsolidation>(ConsolidationStateName, _shutdown.Token).ConfigureAwait(false);
-        var intent = existing is { Done: false } && existing.Session == requested.Session ? existing : requested;
-        await WriteJsonAsync(ConsolidationStateName, intent).ConfigureAwait(false);
+        var pending = await ReadPendingAsync().ConfigureAwait(false);
+        var intent = pending.FirstOrDefault(item => item.Session == requested.Session);
+        if (intent is null)
+        {
+            intent = requested;
+            pending.Add(intent);
+            while (pending.Count > MaximumPendingConsolidations)
+            {
+                pending.RemoveAt(0);
+            }
+
+            await WriteJsonAsync(ConsolidationStateName, pending.ToArray()).ConfigureAwait(false);
+        }
 
         var originals = await _c.Repository
             .RetrieveAsync(new MemoryQuery { SessionReference = intent.Session, Limit = MemoryQuery.MaximumLimit }, _shutdown.Token)
@@ -975,15 +997,28 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             Publish(new CompanionNotice(CompanionNoticeKind.Consolidated, Key: intent.Session, Count: entries.Length));
         }
 
-        await WriteJsonAsync(ConsolidationStateName, intent with { Done = true }).ConfigureAwait(false);
+        var remaining = await ReadPendingAsync().ConfigureAwait(false);
+        remaining.RemoveAll(item => item.Session == intent.Session);
+        await WriteJsonAsync(ConsolidationStateName, remaining.ToArray()).ConfigureAwait(false);
         _watchbunSessions.Remove(intent.Session);
     }
 
+    private async Task<List<PendingConsolidation>> ReadPendingAsync() =>
+        [.. (await ReadJsonAsync<PendingConsolidation[]>(ConsolidationStateName, _shutdown.Token).ConfigureAwait(false) ?? [])
+            .Where(item => item is { Session.Length: > 0 })];
+
     private async Task ReplayPendingConsolidationAsync()
     {
-        if (await ReadJsonAsync<PendingConsolidation>(ConsolidationStateName, _shutdown.Token).ConfigureAwait(false) is { Done: false } pending)
+        foreach (var pending in await ReadPendingAsync().ConfigureAwait(false))
         {
-            await ConsolidateAsync(pending).ConfigureAwait(false);
+            try
+            {
+                await ConsolidateAsync(pending).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (exception is not (OutOfMemoryException or OperationCanceledException))
+            {
+                RecordFault(exception);
+            }
         }
     }
 

@@ -371,6 +371,27 @@ internal sealed class OrchestrationHarness : IAsyncDisposable
         throw new TimeoutException("The orchestrator did not settle.");
     }
 
+    /// <summary>Commits one neutral original for a session, as an earlier capture path would have.</summary>
+    internal async Task CommitSessionOriginalAsync(string sessionReference)
+    {
+        var result = await Host.Repository.WriteGate.SubmitAsync(new AppendMemoryProposal(Guid.NewGuid(), [
+            new MemoryRecordDraft
+            {
+                RecordId = Guid.NewGuid(),
+                CreatedAtUtc = Time.GetUtcNow(),
+                Scope = MemoryScope.Session,
+                SourceKind = MemorySourceKind.Observed,
+                Confidence = 0.8,
+                SubjectKey = "synthetic.orphan",
+                EntityReferences = ["synthetic.entity"],
+                SessionReference = sessionReference,
+                VisibleRecollection = "[neutral memory] an orphaned moment.",
+                RetrievalMetadataJson = new CompanionCore.Recall.RecallMetadata().ToJson(),
+            },
+        ]));
+        Assert.True(result.IsAccepted);
+    }
+
     internal async Task WaitForAsync(Func<bool> condition, CompanionOrchestrator? orchestrator = null, int timeoutMs = 10_000)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);

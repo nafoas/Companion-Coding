@@ -130,6 +130,24 @@ public sealed class OrchestrationMechanicsTests
     }
 
     [Fact]
+    public async Task SessionsLeftByAnInterruptedClose_AreConsolidatedBeforeAFreshWatch()
+    {
+        await using var harness = await CreateAsync();
+        const string leftover = "target-session:leftover";
+        await harness.CommitSessionOriginalAsync(leftover);
+        await harness.Host.DisposeAsync();
+        await harness.Host.State.PutAsync(CompanionOrchestrator.SessionsStateName, System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new[] { leftover }));
+        await harness.OpenHostAsync();
+        Assert.Equal([leftover], (await harness.Orchestrator.GetSnapshotAsync()).UnconsolidatedSessions);
+
+        await harness.AuthorizeAsync();
+
+        Assert.Single(await harness.Host.Repository.RetrieveBySubjectAsync(RecallSubjects.Summary(leftover)));
+        Assert.DoesNotContain(leftover, (await harness.Orchestrator.GetSnapshotAsync()).UnconsolidatedSessions);
+        Assert.Equal(0, harness.Orchestrator.Faults);
+    }
+
+    [Fact]
     public async Task SheetBurst_KeepsAtMostOneBridgeCallInFlight_AndZeroesEverySheet()
     {
         await using var harness = await CreateAsync();

@@ -258,7 +258,7 @@ public sealed class OrchestrationScenarioTests
 
         // Persist the intent exactly as the orchestrator would, then "crash" before the commit.
         var operation = CompanionOrchestrator.DeriveId("consolidation", reference);
-        var intent = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new { Session = reference, OperationId = operation, Now = harness.Time.GetUtcNow(), Game = (string?)null, Done = false });
+        var intent = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new[] { new CompanionOrchestrator.PendingConsolidation(reference, operation, harness.Time.GetUtcNow(), null) });
         await harness.Host.State.PutAsync(CompanionOrchestrator.ConsolidationStateName, intent);
         await harness.ReopenHostAsync();
         await harness.ReopenHostAsync();
@@ -266,6 +266,38 @@ public sealed class OrchestrationScenarioTests
         var summaries = await harness.Host.Repository.RetrieveBySubjectAsync(RecallSubjects.Summary(reference));
         Assert.Single(summaries);
         Assert.Equal(CompanionOrchestrator.DeriveId("consolidation", reference), summaries[0].LocalOperationId);
+        Assert.Equal(0, harness.Orchestrator.Faults);
+    }
+
+    [Fact]
+    public async Task Scenario8b_AnotherSessionsConsolidationNeverOverwritesAnUnfinishedIntent()
+    {
+        await using var harness = await CreateAsync();
+
+        // An earlier session whose consolidation was interrupted at runtime: its originals are
+        // committed and its intent is durable, but it is no longer an attached session.
+        const string orphan = "target-session:orphaned";
+        await harness.CommitSessionOriginalAsync(orphan);
+        var orphanOperation = CompanionOrchestrator.DeriveId("consolidation", orphan);
+        await harness.Host.State.PutAsync(
+            CompanionOrchestrator.ConsolidationStateName,
+            System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new[] { new CompanionOrchestrator.PendingConsolidation(orphan, orphanOperation, harness.Time.GetUtcNow(), null) }));
+
+        var grant = await harness.AuthorizeAsync();
+        harness.Provider.Enqueue(MockSemanticProvider.Respond(request => ResponseWithMemory(request.OperationId, "key", "synthetic.key", "[neutral memory] a key.")));
+        await harness.SheetAsync();
+        await harness.Controller.EndSessionAsync();
+        await harness.WaitForAsync(() => harness.Has(CompanionNoticeKind.SessionEnded));
+
+        var current = $"target-session:{grant.TargetSessionId:N}";
+        Assert.Single(await harness.Host.Repository.RetrieveBySubjectAsync(RecallSubjects.Summary(current)));
+        var orphanSummary = Assert.Single(await harness.Host.Repository.RetrieveBySubjectAsync(RecallSubjects.Summary(orphan)));
+        Assert.Equal(orphanOperation, orphanSummary.LocalOperationId);
+        Assert.Equal(2, harness.Notices.Count(n => n.Kind == CompanionNoticeKind.Consolidated));
+
+        // The queue drained: a restart replays nothing and writes nothing new.
+        await harness.ReopenHostAsync();
+        Assert.Single(await harness.Host.Repository.RetrieveBySubjectAsync(RecallSubjects.Summary(orphan)));
         Assert.Equal(0, harness.Orchestrator.Faults);
     }
 
