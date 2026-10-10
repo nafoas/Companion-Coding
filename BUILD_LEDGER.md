@@ -2,17 +2,17 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 7 — expression and one Conversation Thread — **accepted and final** (Task 9 + ERPP-01) |
-| Active task | None; Task 10 (memory consolidation and retrieval mechanics, Stage 8) is next |
-| Working branch | Accepted product/evidence baseline on `main`: `7623b0e0f1f33734fed4cdc29ddbcb3b99c5737d` (ERPP-01) |
-| Entry criteria met | Complete; Tasks 4–9, ERPP-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
+| Current stage | Stage 8 — memory consolidation and retrieval mechanics — **accepted** (Task 10) |
+| Active task | None; Task 11 (application-bound background continuity, Stage 9) is next |
+| Working branch | Accepted product/evidence baseline on `main`: `e529eb679a17dcc6059d2f83d33d850dc6a80c2f` (Task 10) |
+| Entry criteria met | Complete; Tasks 4–10, ERPP-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | ERPP-01 gate head `5a44dc84b03d870a9277572af2e8f2c28aa43b87`, tree `159c18b12cd930a0195f015423cba125a088f659`, passed push run `38054660628` (job `114220547875`) and PR run `38054663515` (job `114220556433`) on their first attempts. Each passed locked restore, the clean 28-project audit, a 0-warning/0-error Release build, 563/563 tests (Transcript 17), and both artifact uploads. The local gate passed the strict build and 550/550 executable tests. |
-| Manual gate | ERPP-01 actual-diff, allowlist, no-committed-memory, privacy/credential, fence/live-read, recovery, and reconstruction review passed. The Builder fixed a live-read defect (J2) and removed redundant code (J7), and all 18 guards are covered. PR #29 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `7623b0e0f1f33734fed4cdc29ddbcb3b99c5737d` — ERPP-01 session transcript (PR #29), completing Stage 7 with Task 9 |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The bridge, attention engine, coordinator, and transcript are not yet wired to each other, capture, presentation, or the app. Transcript retention awaits a Boss decision with Task 10. |
-| Deferred temptations | Task 10+ consolidation/personality work; live API and credentials (Task 12); durable images, production settings, final UI |
+| Automated tests | Task 10 gate head `033eef6f79ed30572f1d3134729f13a52e8b55ae`, tree `c200f164ce1ac92b63b60fb26a5a2fcc0e412e29`, passed push run `38056657903` and PR run `38056660572`; the implementation head `755f8d3` passed push run `38056481599` and PR run `38056494760`. Each run passed locked restore, the clean audit, a 0-warning/0-error Release build, 621/621 tests (Memory 85, Recall 41), and both artifact uploads with verified digests. The local gate passed the strict build and 608/608 executable tests. |
+| Manual gate | Task 10 actual-diff, allowlist, append-only, scope/spoiler, query-SQL, and mutation review passed. 63 mutants: 62 killed, 1 equivalent; three survivor-revealed test gaps were closed. PR #31 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `e529eb679a17dcc6059d2f83d33d850dc6a80c2f` — Task 10 memory consolidation and retrieval mechanics (PR #31), completing Stage 8 |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The bridge, attention engine, coordinator, and transcript are not yet wired to each other, capture, presentation, or the app. Recall scoring weights and budgets are provisional until Stage 11; Recall is not yet wired to the app. Consolidation idempotency requires the caller to persist the operation time (Task 10 J3). |
+| Deferred temptations | Personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
 ## Gate history
@@ -108,6 +108,28 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### Task 10 — Memory consolidation and retrieval mechanics
+
+- Builder: Claude. Opened on 2026-10-10 under Boss's standing direction.
+- Scope: 21 allowlisted paths, comprising:
+  - a read-only, bounded, filter-required `MemoryQuery` sharing the checksum-verified read path;
+  - the new `CompanionCore.Recall` project and `CompanionCore.Recall.Tests`;
+  - Memory query tests;
+  - solution wiring and control records.
+- Delivered:
+  - append-only session consolidation (summaries `Source`-link every original; verbatim highlights; routine compressed into counts);
+  - adventure statuses and hypotheses with Boss confirmation;
+  - lore provenance with linked corrections;
+  - grouped evolving beliefs;
+  - user-correction precedence;
+  - spoiler-aware bounded local recall;
+  - immutable checksummed interest roots with validated seed storage.
+- Retention decision: transcripts and every committed record are retained; there is no deletion.
+- Personal Round Judgments J1–J9.
+- Evidence: implementation head `755f8d3` (runs `38056481599` and `38056494760`) and gate head `033eef6` (runs `38056657903` and `38056660572`) each passed 621/621 with verified artifacts. The PNG kept `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd` at 792×621.
+- Merge: the merge ref had exact parents and an equal tree. PR #31 squash-merged through the expected-head fence as `e529eb679a17dcc6059d2f83d33d850dc6a80c2f`.
+- Result: passed and accepted. Stage 8 is complete.
 
 ### ERPP-01 — Session transcript continuity
 
