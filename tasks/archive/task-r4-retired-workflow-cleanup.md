@@ -1,6 +1,6 @@
 # Task R4 — Retired Workflow Cleanup
 
-Status: **Active**
+Status: **Accepted. PR #19 squash-merged to `main` as `e6664d115b7864b588b8a908d541a222137472af` after both exact Windows event paths passed 325/325 on the unchanged product tree.**
 Accepted base: `a7e68e165ba518c391f8c5e77f2eb3bf95ba3645`, tree `1e33e9e64730f5acc942f3e54e0e63c0798f4b04`
 Roadmap slice: control records only; no product behavior; Task 7 remains unopened
 Builder: Claude. Boss directed "clean everything up" on 2026-10-10. This completes the cleanup Boss approved on 2026-08-10, which Codex's draft PR #8 left unfinished.
@@ -37,6 +37,14 @@ R4 passes when:
 - both exact Windows event paths pass the unchanged suite with both artifacts;
 - the merge uses the expected-head fence and post-merge `main` CI is green;
 - the branch retirement is verified ref by ref.
+
+## Candidate evidence
+
+- Head `0f46817cced647f8039e15059f0b3291011d25e0`, tree `af31a27da877f931092ccfe5c52efbae1f8d495b`. Push run `38028570862` (job `114144529480`) and PR run `38028579760` (job `114144554794`) each passed restore, audit, all 20 Release builds with 0 warnings and 0 errors, 325/325 tests, and both artifact uploads. Artifacts were hash-verified, and the sheet digest is unchanged.
+- Static gates: allowlisted scope (11 paths), `git diff --check`, one active packet, and a clean stale-reference scan.
+- Branch retirement precheck: all 18 non-`main` remote branch heads were reachable from pull-request refs `#2`–`#19`.
+- Draft PR #8 was closed as superseded, with a comment.
+- Merge: the merge ref had parents `a7e68e1` and `0f46817` and a tree equal to the head tree. It was squash-merged with the expected-head fence as `e6664d115b7864b588b8a908d541a222137472af`.
 
 ## Personal Round Judgments
 
