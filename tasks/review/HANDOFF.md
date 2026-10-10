@@ -2,7 +2,7 @@
 
 ## Task
 
-Task R3 — Reliable Orientation Delivery (`tasks/active/task-r3-orientation-test-race.md`). This corrective Stage 4 packet is based directly on accepted `main` `2b5ef836183dde261d52bfa2f6c68340aff2e9f3` and is published as draft PR #17. Task 7 remains unopened.
+Task R3 — Reliable Orientation Delivery. Accepted and archived (`tasks/archive/task-r3-orientation-test-race.md`). PR #17 merged the correction and its evidence as `755b11f2304ed8567011958f2de6e16448ef15ec` with an expected-head fence and unchanged tree `81523c004c6b2b791ceb67aa90a67071a4c11712`. This docs-only reconciliation records the closure. Stage 4 is complete, no task is active, and Task 7 remains unopened.
 
 Builder: Claude. Boss directed reliable delivery plus a retake failsafe on 2026-10-10.
 
@@ -30,7 +30,7 @@ Builder: Claude. Boss directed reliable delivery plus a retake failsafe on 2026-
 
 ## Changed
 
-Seventeen paths relative to accepted `main`, all within the packet's allowlist: 8 product files, 6 test files plus 1 new test file, the packet, and this handoff.
+Sixteen paths relative to accepted `main` `2b5ef83`, all within the packet's allowlist: 8 product files, 5 modified and 1 new test file, the packet, and the handoff. The handoff on the merged head miscounted these as seventeen; this record is the correction.
 
 ## Verification
 
@@ -57,11 +57,17 @@ Seventeen paths relative to accepted `main`, all within the packet's allowlist: 
   - The deferral protects at most one frame.
   - The failsafe is bounded and never performs worker I/O inside an admission lease.
   - `RequestOrientation` is checked against the grant at the client, the IPC shape check, and the engine.
+- Final event paths on evidence head `975a7ce2a19956041996dc47037d07bca7f1e650`: push run `38027884572` (job `114142508091`) and PR run `38027886917` (job `114142515094`) each passed 325/325 with both artifacts on the first attempt. Push artifacts are test results `11660498445` and sheet `11660323524`; PR artifacts are test results `11661321188` and sheet `11660543477`. All hashes matched GitHub, and every PNG retained the accepted pixel digest.
+- Merge: the PR #17 merge ref had exact parents `2b5ef83` and `975a7ce` and a tree equal to the head tree. It was squash-merged with expected head `975a7ce` as `755b11f2304ed8567011958f2de6e16448ef15ec`; fetched `main` retained exact tree `81523c004c6b2b791ceb67aa90a67071a4c11712`.
 
 ## Remaining
 
-- This evidence descendant must pass both exact Windows event paths. PR #17 then merges with an expected-head fence.
-- After that merge, a docs-only reconciliation archives R3 and updates the Ledger and README. Post-merge `main` CI must be green before Stage 4 is recorded as closed.
+- This docs-only reconciliation must pass both exact Windows event paths and merge with an expected-head fence, followed by green post-merge `main` CI.
+- No Stage 4 work remains. Task 7 stays unopened; later work begins through its own bounded active packet.
+- Next in order, from the deferred findings:
+  - a bounded control task to rename the builder role in standing documents, retire the obsolete Claude-collaboration workflow, close stale draft PR #8, and retire the abandoned branches;
+  - surfacing the orientation failsafe counters in later diagnostics;
+  - a Stage 10 keepsakes packet before that stage begins.
 
 ## Risks and assumptions
 
@@ -82,14 +88,14 @@ J1–J7 are recorded in the packet:
 
 ## Review focus
 
-- Notice ordering against frame dispatch, and the stranded-orientation release.
-- The controller's owed-orientation state transitions and the lease-free retake.
-- Both GitHub event paths at 325/325 on the exact final head.
+- Confirm this reconciliation changes only `BUILD_LEDGER.md`, `README.md`, this handoff, and the R3 active-to-archive rename and content update.
+- Require both GitHub event paths to execute 325/325 and generate both artifacts on the exact reconciliation head.
 
 ## Repository state
 
-- Branch `agent/task-r3-orientation-test-race`, draft PR #17 against `main`.
+- Accepted `main`: `755b11f2304ed8567011958f2de6e16448ef15ec`, tree `81523c004c6b2b791ceb67aa90a67071a4c11712` (PR #17).
+- Reconciliation branch `agent/task-r3-stage4-closure`, based directly on that `main`. Worktree clean after commit.
 
 ## Next safe task
 
-Merge PR #17 after its final-head gates pass, then publish the docs-only Stage 4 closure reconciliation.
+Merge this reconciliation after its exact gates pass, and confirm post-merge `main` CI is green. Then open the bounded control task named under Remaining, or Task 7 through its own packet, one active task at a time.

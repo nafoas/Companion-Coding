@@ -2,16 +2,16 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 4 — local peepers and bounded visual pipeline — **accepted and recertified** |
+| Current stage | Stage 4 — local peepers and bounded visual pipeline — **accepted, recertified, and orientation delivery made reliable** |
 | Active task | None; Task 7 remains unopened |
-| Working branch | Accepted product/evidence baseline on `main`: `11cc752eae1e9457a12c9d847aacdeb073463b13` (R2) |
-| Entry criteria met | Complete; Tasks 4–6 and the R2 recertification each passed their Paw Gates and were reconciled to accepted `main` |
+| Working branch | Accepted product/evidence baseline on `main`: `755b11f2304ed8567011958f2de6e16448ef15ec` (R3) |
+| Entry criteria met | Complete; Tasks 4–6, R2, and R3 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No |
-| Automated tests | R2 final evidence head `a54330178764bfddb18f15d0801a3f24f9df1ad9`, tree `5483a2d7ccd577447013c3844a2be22beeb55a44`, passed push run `38025762113` (job `114136151131`) and PR run `38025763952` (job `114136156632`) on their first attempts. Each passed locked restore, the clean 20-project audit, a 0-warning/0-error Release build, 311/311 tests, and both artifact uploads. The local gate passed all 20 strict builds and 298/298 executable tests. |
-| Manual gate | R2 red evidence failed exactly the three intended regressions (run `38025402946`). Actual-diff review, allowlist, artifact inspection, and merge-ref review passed. PR #15 squash-merged through the expected-head fence with tree `5483a2d7ccd577447013c3844a2be22beeb55a44`, and R2 is archived. |
-| Accepted `main` baseline | `11cc752eae1e9457a12c9d847aacdeb073463b13` — Stage 4 product/evidence tree recertified through PR #15 |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds are deliberately provisional until Stage 11 physical profiling. The synthetic capture source cannot emit `SourceResized`, so the R2 visual fence is exercised through `Stopped`. |
+| Automated tests | R3 final evidence head `975a7ce2a19956041996dc47037d07bca7f1e650`, tree `81523c004c6b2b791ceb67aa90a67071a4c11712`, passed push run `38027884572` (job `114142508091`) and PR run `38027886917` (job `114142515094`) on their first attempts. Each passed locked restore, the clean 20-project audit, a 0-warning/0-error Release build, 325/325 tests, and both artifact uploads. The local gate passed all 20 strict builds and 312/312 executable tests. |
+| Manual gate | R3 red evidence failed exactly the two intended process cases on both event paths (runs `38027555649` and `38027558031`), and the controller displacement case was proven red locally. Actual-diff, allowlist, lease-safety, and grant review passed, as did artifact and merge-ref review. PR #17 squash-merged through the expected-head fence. R2 and R3 are archived. |
+| Accepted `main` baseline | `755b11f2304ed8567011958f2de6e16448ef15ec` — Stage 4 with reliable orientation delivery, accepted through PR #17 |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, the eight-frame orientation budget, and the three-retake bound are provisional until Stage 11 physical profiling. The synthetic capture source cannot emit `SourceResized`, so resize ordering and resize-owed orientations are proven through status events. |
 | Deferred temptations | Task 7+ semantic bridge/attention meaning/API/conversation/ERPP/personality work; durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10 and authorized completing all of Stage 4, including R2 and its publication. |
 
@@ -108,6 +108,33 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### R3 — Reliable orientation delivery
+
+- Entry: post-merge `main` run `38026209974` failed `SyntheticWorker_ProducesBoundedOrientationAndManualRegionalSheets`. The same root cause produced five recorded failures since 2026-08-27 (runs `33027979425`, `33027981777`, `33029729188`, `33030041052`, `38026209974`), two of them earlier recorded as transient. A test-only relaxation exposed the same cause in run `38026568119`.
+- Cause: the worker produced exactly one orientation per epoch, but it could be lost before the consumer saw it:
+  - newest-preserving client retention;
+  - newest-only notice coalescing;
+  - start deferral that dropped its source frame;
+  - a controller slot that let newer regional sheets displace it.
+
+  A privacy-rejected source frame made it unrecoverable.
+- Correction (Boss-directed, 2026-10-10):
+  - **Client:** the orientation is pinned within the unchanged two-sheet ceiling and handed over first; its notice is sent exactly once, after its exact source frame; its source frame is protected during deferral; a stranded orientation is released.
+  - **Controller:** a separate orientation slot.
+  - **Failsafe:** a retake request after eight admitted frames, at most three per owed orientation, outside the privacy admission lease, then an honest failure count.
+  - **Worker:** a grant-checked `RequestOrientation` command (IPC v3).
+
+  Sixteen allowlisted paths changed: 8 product, 5 modified and 1 new test file, the packet, and the handoff. The R3 handoff on the merged head miscounted them as seventeen; this record corrects it. No sheet or source bound changed.
+- Evidence:
+  - Red head `8aaac5a`: both paths failed exactly the two intended cases out of 312 executed.
+  - Candidate `ff2add8`: both paths 325/325.
+  - Final head `975a7ce2a19956041996dc47037d07bca7f1e650`: push run `38027884572` and PR run `38027886917` at 325/325.
+
+  Artifacts were hash-verified, with sheet digest `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd` unchanged.
+- Personal Round Judgments J1–J7 cover: product fix over test relaxation, orientation-first `TakeLatest`, frame budget instead of timer, protocol v3, stranded release, internal shape validation, and protocol literals.
+- Merge: PR #17 squash-merged with the expected-head fence as `755b11f2304ed8567011958f2de6e16448ef15ec`; fetched `main` retained tree `81523c004c6b2b791ceb67aa90a67071a4c11712`.
+- Result: passed, merged, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
 
 ### R2 — Stage 4 recertification and closure
 

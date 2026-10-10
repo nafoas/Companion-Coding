@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–6, and the R2 Stage 4 recertification are accepted. Stage 4's local peepers and bounded visual pipeline are complete and recertified. No task is active, and Task 7 remains unopened.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–6, the R2 Stage 4 recertification, and R3 reliable orientation delivery are accepted. Stage 4's local peepers and bounded visual pipeline are complete. No task is active, and Task 7 remains unopened.
 
 ## Builder workflow
 
@@ -17,12 +17,20 @@ Task 0's architecture, the R0 direct-build controls, Tasks 1–6, and the R2 Sta
 
 ## Current checkpoint
 
-R2: Stage 4 recertification. An independent audit of the accepted Stage 4 code found two violations of accepted bounds:
+Stage 4 is closed through two corrective gates.
 
-1. Evicted capture frames left wake signals behind, so wake debt grew with runtime.
-2. A blocked frame observer could delay or evict the worker's `Stopped`/`Faulted`/resize fence.
+**R2** (PR #15):
+- fixed wake-signal debt;
+- gave worker status its own delivery lane, with a visual fence;
+- bounded CI hangs.
 
-PR #15 fixed both. It also added a visual fence so independent status delivery cannot re-admit stale frames, replaced a regression that deadlocked CI for six hours with prompt-failing evidence, and bounded CI hangs. The red evidence failed exactly the three intended cases. The final head passed both Windows event gates at 311/311 and merged as `11cc752eae1e9457a12c9d847aacdeb073463b13`.
+**R3** (PR #17) made the one orientation sheet per visual epoch reliably reach the consumer:
+- it is pinned within the two-sheet ceiling;
+- its notice is never coalesced away;
+- its source frame is protected during start;
+- it has its own controller slot.
+
+A bounded failsafe asks the worker to retake it, at most three times, only when delivery still fails. Red evidence failed exactly the intended cases, and the final head passed both Windows event gates at 325/325. It merged as `755b11f2304ed8567011958f2de6e16448ef15ec`.
 
 Semantic interpretation, API calls, attention meaning, conversation, ERPP implementation, personality, durable product images, and all Task 7+ behavior remain deferred.
 
