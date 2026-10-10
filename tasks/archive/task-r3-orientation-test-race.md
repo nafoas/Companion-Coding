@@ -1,6 +1,6 @@
 # Task R3 — Reliable Orientation Delivery
 
-Status: **Active**
+Status: **Accepted. PR #17 squash-merged to `main` as `755b11f2304ed8567011958f2de6e16448ef15ec` after the red evidence failed exactly the two intended process cases and the final head passed both exact Windows event paths at 325/325.**
 Accepted base: `2b5ef836183dde261d52bfa2f6c68340aff2e9f3`, tree `fb6e016a585effede01cb42e2f368499f2546a76`
 Roadmap slice: Stage 4 corrective work only; Task 7 remains unopened
 Builder: Claude. Boss directed on 2026-10-10: "make delivery more reliable… tighten the screws until it reliably delivers the screenshot, with a backup failsafe of it taking it again only if this doesn't happen."
@@ -77,6 +77,18 @@ R3 passes when:
 - **J5 — Stranded orientations are released, not announced.** An orientation whose exact source frame was skipped can never pass privacy admission. Releasing it frees the pinned slot, and the controller failsafe retakes. Reversal: hold it until the next epoch.
 - **J6 — `ValidateCommandShape` becomes internal** so the new command's accepted and rejected shapes are tested directly. Reversal: test through the host instead.
 - **J7 — Two hard-coded protocol-version literals in accepted tests are updated.** The unknown-member case now pins version 3, and the unsupported-version case derives `Version + 1`, so both keep testing what they were written to test.
+
+## Candidate evidence
+
+- Red evidence: head `8aaac5a` (tests only, accepted product). Push run `38027555649` and PR run `38027558031` each executed 312 tests and failed exactly `SyntheticWorker_ProducesBoundedOrientationAndManualRegionalSheets` ("Expected: Orientation, Actual: Regional") and `SlowFrameObserver_StillReceivesEveryEpochOrientationFirst` (orientation-notice timeout). The controller displacement case was proven red locally against the accepted controller.
+- Candidate: head `ff2add8`, push run `38027635962` and PR run `38027637986`, each 325/325.
+- Final evidence descendant: head `975a7ce2a19956041996dc47037d07bca7f1e650`, tree `81523c004c6b2b791ceb67aa90a67071a4c11712`. Push run `38027884572` (job `114142508091`) and PR run `38027886917` (job `114142515094`) each passed restore, audit, all 20 Release builds with 0 warnings and 0 errors, 325/325 tests, and both artifact uploads.
+- Artifacts:
+  - push test results `11660498445` (`sha256:dbca7828f829551675c6c9f5394350fd62a39ae624b023f1056706244d474550`) and sheet `11660323524` (`sha256:591162b6864aea9d7278b1f52d633cf12b4d7ea73481e8115daeddfb9497ad55`);
+  - PR test results `11661321188` (`sha256:70c3286acf888ad63fe2707584ff6f8c391851264bd190644feb7fd63180b77c`) and sheet `11660543477` (`sha256:d2683b9d62edc83b3ae338673141d89fdb2120d129f0554b1b07ac3b7d4dc0a9`).
+
+  Downloaded hashes matched GitHub. Every PNG retained `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- Merge: the PR #17 merge ref had parents `2b5ef83` and `975a7ce` and a tree equal to the head tree. It was squash-merged with the expected-head fence as `755b11f2304ed8567011958f2de6e16448ef15ec`, and fetched `main` retained tree `81523c004c6b2b791ceb67aa90a67071a4c11712`.
 
 ## Deferred findings
 
