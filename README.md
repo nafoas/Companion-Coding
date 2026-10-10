@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. No task is active; Stage 10 keepsakes and complete recovery are next.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, KEEP-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. Stage 10's keepsake photographs (KEEP-01) are accepted. No task is active; KEEP-02 (Vault inclusion and complete recovery) is next.
 
 ## Builder workflow
 
@@ -63,7 +63,9 @@ It passed both Windows gates at 546/546 and merged as `0fe0932aaa54039fafd709e2c
 
 **Task 11** (PR #33) added `CompanionCore.Watchbun`, a checkpointed engine that keeps one authorized target attached across tab-aways, quiet hours, exits, relaunches, and lock/sleep, plus a synthetic structured-event adapter. It passed both Windows gates at 687/687 and merged as `97ea0e411c3d9da29d7841d6a810a9fb4773c6e9`. Stage 9 is complete.
 
-Stage 10 keepsakes and complete recovery come next. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**KEEP-01** (PR #35) added `CompanionCore.Keepsakes`, the only durable-image path. Each write is paired with a visible camera action, admitted only for the authorized target and current privacy generation, compressed, verified on inspection, and deletable only on Boss's explicit request. It passed both Windows gates at 710/710 and merged as `05c5bbb7a6f9a0517a7b06a2abeb2becfcb45f08`.
+
+KEEP-02 (Vault inclusion and complete recovery) comes next. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 

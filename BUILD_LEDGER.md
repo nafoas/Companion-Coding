@@ -2,17 +2,17 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 9 — application-bound Watchbun continuity — **accepted** (Task 11) |
-| Active task | None; a Stage 10 keepsakes and complete-recovery packet is next |
-| Working branch | Accepted product/evidence baseline on `main`: `97ea0e411c3d9da29d7841d6a810a9fb4773c6e9` (Task 11) |
-| Entry criteria met | Complete; Tasks 4–11, ERPP-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
+| Current stage | Stage 10 — keepsakes and complete memory recovery — **part 1 accepted** (KEEP-01 keepsake photographs); KEEP-02 Vault inclusion and complete recovery pending |
+| Active task | None; KEEP-02 (Da Bun Vault inclusion of photographs, settings, and active checkpoint; complete recovery) is next |
+| Working branch | Accepted product/evidence baseline on `main`: `05c5bbb7a6f9a0517a7b06a2abeb2becfcb45f08` (KEEP-01) |
+| Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | Task 11 gate head `6c6b7c7768db7518db6ad53a0f77317e63eb6bad`, tree `bf4d3173715c55c92eb6a7af58da5b635d4ec4d1`, passed push run `38058347513` and PR run `38058350655`; the implementation head `5b96720` passed push run `38058141112` and PR run `38058154820`. Each run passed locked restore, the clean 32-project audit, a 0-warning/0-error Release build, 687/687 tests (Watchbun 66), and both artifact uploads with verified digests. The local gate passed the strict build and 674/674 executable tests. Task 10 closure post-merge `main` run `38057131892` passed. |
-| Manual gate | Task 11 actual-diff, allowlist, target-binding, authorization, clock, recovery, and mutation review passed. 64 mutants: 63 killed, 1 equivalent; survivors produced three new tests and removed two redundant signals. PR #33 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `97ea0e411c3d9da29d7841d6a810a9fb4773c6e9` — Task 11 Watchbun continuity (PR #33), completing Stage 9 |
+| Automated tests | KEEP-01 gate head `7febbf676bded32ee10a684a721e300ae9c8e985`, tree `e700562cbc2b9cb7eec843e667cca28bdc3fff41`, passed push run `38060811488` and PR run `38060814801`; fix head `25e6178` passed push run `38060543707` and PR run `38060546479`. Each run passed locked restore, the clean 34-project audit, a 0-warning/0-error Release build, 710/710 tests (Keepsakes 23), and both artifact uploads with verified digests. The first candidate `8dc845f` failed one test-only, file-system-dependent assertion (NTFS case-insensitivity), corrected without product change. The local gate passed 697/697. Task 11 closure post-merge `main` run `38058826534` passed. |
+| Manual gate | KEEP-01 actual-diff, allowlist, durable-write admission, no-cleanup/no-public-delete, record-retention, and mutation review passed. 52 mutants: 48 killed, 4 equivalent; three first-run gaps were closed with tests. PR #35 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `05c5bbb7a6f9a0517a7b06a2abeb2becfcb45f08` — KEEP-01 keepsake photographs (PR #35), Stage 10 part 1 |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The bridge, attention engine, coordinator, transcript, recall, and Watchbun engine are not yet wired to each other, capture, presentation, or the app. Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; real OS foreground/input/process/lock hooks await wiring; Recall is not yet wired to the app. Consolidation idempotency requires the caller to persist the operation time (Task 10 J3). |
-| Deferred temptations | Personality work; live API and credentials (Task 12); durable images, production settings, final UI |
+| Deferred temptations | Keepsake listing paging (KEEP-01 D1); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
 ## Gate history
@@ -108,6 +108,30 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### KEEP-01 — Keepsake photographs (Stage 10, part 1)
+
+- Builder: Claude. Opened on 2026-10-10 under Boss's standing direction as the first of two Stage 10 packets. The split mirrors Boss's separate gating of backup/repair authority.
+- Scope: 20 allowlisted paths, comprising:
+  - the new `CompanionCore.Keepsakes` project and `CompanionCore.Keepsakes.Tests`;
+  - test-only friend lines in Capture.Contracts and Privacy;
+  - solution wiring and control records.
+- Delivered:
+  - the only durable-image path, with a visible camera action paired with every write;
+  - writes admitted only for a target-session, generation, and identity match, inside the action window, while privacy is current and the guard admits the frame;
+  - rarity bounds;
+  - box-downscaled compressed PNG;
+  - an atomic file write, then a generation-bound record with a neutral caption and scope;
+  - idempotent retry;
+  - verified inspection;
+  - authority-gated, record-first deletion that keeps the original record;
+  - orphan and disk-growth reporting with no cleanup surface.
+- Personal Round Judgments J1–J8. Deferred finding D1: listing paging.
+- Evidence:
+  - The first candidate's single test-only NTFS failure was corrected in `25e6178`.
+  - Fix head `25e6178` (runs `38060543707` and `38060546479`) and gate head `7febbf6` (runs `38060811488` and `38060814801`) each passed 710/710 with verified artifacts.
+- Merge: the merge ref had exact parents and an equal tree. PR #35 squash-merged through the expected-head fence as `05c5bbb7a6f9a0517a7b06a2abeb2becfcb45f08`.
+- Result: passed and accepted. Stage 10 continues with KEEP-02.
 
 ### Task 11 — Application-bound Watchbun continuity
 

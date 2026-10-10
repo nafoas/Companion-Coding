@@ -1,10 +1,13 @@
 # KEEP-01 — Keepsake Photographs
 
-Status: **active — Paw Gate review**
+Status: **accepted — Paw Gate passed 2026-10-10**. Stage 10 part 1 is complete; KEEP-02 is next.
 Authorized: 2026-10-10 under Boss's standing direction to continue autonomously through the pre-API roadmap under the Paw Gate model. It is the first of two Stage 10 packets.
 Accepted remote base: `531fa5c316b6ed2b5d205e709401d8e19811135b`
 Working branch: `agent/keep-01-keepsake-photographs`
 Builder: Claude
+Accepted gate head: `7febbf676bded32ee10a684a721e300ae9c8e985`, tree `e700562cbc2b9cb7eec843e667cca28bdc3fff41`
+Pull request: #35, squash-merged as `05c5bbb7a6f9a0517a7b06a2abeb2becfcb45f08`
+Final CI: push run `38060811488`, PR run `38060814801`, each 710/710
 
 ## Objective
 
@@ -85,7 +88,21 @@ New `CompanionCore.Keepsakes` project, referencing Memory, Privacy, and Capture.
 
 ## Paw Gate
 
-Candidate evidence (pending the evidence-descendant CI, merge-ref check, and acceptance):
+Gate result: **PASS** on 2026-10-10.
+
+**Actual-diff review.**
+- The 20-path change is allowlisted.
+- No durable byte is written without a preceding camera action and every admission check: target session, generation, identity, window, privacy, and guard.
+- There is no public delete or cleanup surface; reflection guards check this.
+- Committed records are never removed.
+- The Vault format is unchanged.
+
+**Merge.**
+- PR #35's merge ref had exact parents `531fa5c` (main) and `7febbf6` (head), and a tree equal to the head tree `e700562`.
+- It was squash-merged through the expected-head fence as `05c5bbb`.
+
+**Evidence.**
+- Gate head `7febbf6`: push run `38060811488` and PR run `38060814801` each passed 710/710 with verified artifacts.
 
 - First CI on `8dc845f` (runs `38060302436` and `38060315384`) failed on one test. It was a test-only, file-system-dependent assumption (NTFS case-insensitivity), corrected in `25e6178` without any product change.
 - Fix head `25e6178`:
