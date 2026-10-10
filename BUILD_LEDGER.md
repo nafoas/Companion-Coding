@@ -2,15 +2,15 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stages 1–10 accepted. Pre-API wiring complete: WIRE-01 (orchestration core) and WIRE-02 (Windows platform signals and App composition) **accepted**. The real App runs the full neutral core end to end with the offline Braincase |
-| Active task | None. Next: a regression audit of every accepted task, then a roundtable with Boss. Stage 11 calibration (target-PC evidence) and Stage 12 / Task 12 (credentials, live API) still require Boss |
-| Working branch | Accepted product/evidence baseline on `main`: `111e15a2b51ee7691dc1acb7aa9971f7f2840ee6` (WIRE-02) |
-| Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
+| Current stage | Stages 1–10 accepted. Pre-API wiring complete (WIRE-01, WIRE-02). AUDIT-01 re-verified every accepted task against the wired `main` |
+| Active task | None. Next: a roundtable with Boss. Stage 11 calibration (target-PC evidence) and Stage 12 / Task 12 (credentials, live API) still require Boss |
+| Working branch | Accepted product/evidence baseline on `main`: `c1787e03070588e7a2d46af1dda95f42ccaff332` (AUDIT-01) |
+| Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | WIRE-02 evidence head `8a031b4139add9ba9afb4817a38c2742faf84b0a`, tree `32a9cf61969c778599211e9d877060868722f773`, passed push run `38078940123` and PR run `38078943764`. Candidate `e63242c` passed push run `38078377838` and PR run `38078393543` on its first attempt. Each passed locked restore, the clean audit, a 0-warning/0-error Release build, 908/908 tests (18 projects, including Platform.Windows 22 with real-Win32 checks, Presentation 141, App Integration 15 with two real-process `wired` launches restoring one conversation lineage), and both artifact uploads with verified digests. The local gate passed 893/893 on Linux. WIRE-01 closure post-merge `main` run `38071505328` passed. |
-| Manual gate | WIRE-02 actual-diff, allowlist, privacy-minimization (target-only foreground, no hooks or titles), test-root isolation, and mutation review passed. 34 mutants: 34 killed. PR #41 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `111e15a2b51ee7691dc1acb7aa9971f7f2840ee6` — WIRE-02 Windows platform signals and App composition (PR #41) |
+| Automated tests | AUDIT-01 head `8f02306f73da725957894dad6e49e07a32f6b156`, tree `74c6421284cc21ddc1b14dacff3d4002ca0d0104`, passed push run `38084310013` and PR run `38084321751` at 929/929 with verified artifacts. The local gate passed 914/914 on Linux. Five stressed full-suite runs: 85/85 project runs green. WIRE-02 closure post-merge `main` run `38079494506` passed. |
+| Manual gate | AUDIT-01 replayed or added 420 mutants across every accepted task: 403 killed, 16 equivalent (defense in depth), 1 unobservable. Every replayed set matched its accepted record. Five test gaps (A1–A5) were closed; no product defect was found. PR #43 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `c1787e03070588e7a2d46af1dda95f42ccaff332` — AUDIT-01 regression audit (PR #43) |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs are taken at sheet resolution (WIRE-01 D2), and one session's consolidation reads at most 1000 originals (WIRE-01 D1). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
 | Deferred temptations | Single-file Vault export and a public backup/repair command (KEEP-02 D1); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
@@ -108,6 +108,28 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### AUDIT-01 — Regression audit of every accepted task
+
+- Builder: Claude. Opened on 2026-10-10 under Boss's direction: "Test every task previously and make sure it all works fine, bugfix".
+- Scope: tests only, across Memory, TargetAuth, Capture.Worker, Api, and Orchestration; plus control records.
+- Method:
+  - five stressed full-suite runs;
+  - a replay of every stored mutation pass (Tasks 7–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02);
+  - a first 34-mutant invariant pass over Tasks 1–6.
+- Result:
+  - 420 mutants; 403 killed, 16 equivalent, 1 unobservable;
+  - every replayed set matched its accepted record;
+  - no product defect.
+- Gaps closed:
+  - A1: memory structural limits;
+  - A2: the sensitive-category and stored-browser-entry denial, and stored-entry executable matching;
+  - A3: the capture ring bounds;
+  - A4: a credential echo outside the decoded fields;
+  - A5: a deterministic single-flight burst.
+- Evidence: head `8f02306` (runs `38084310013` and `38084321751`) passed 929/929 with verified artifacts.
+- Merge: the merge ref had exact parents and an equal tree. PR #43 squash-merged through the expected-head fence as `c1787e03070588e7a2d46af1dda95f42ccaff332`.
+- Result: passed and accepted.
 
 ### WIRE-02 — Windows platform signals and App composition
 

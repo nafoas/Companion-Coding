@@ -1,6 +1,6 @@
 # AUDIT-01 — Regression Audit of Every Accepted Task
 
-Status: **active — gate review**
+Status: **accepted** — Paw Gate PASS; PR #43 squash-merged as `c1787e03070588e7a2d46af1dda95f42ccaff332`
 Authorized: 2026-10-10 by Boss ("…Test every task previously and make sure it all works fine, bugfix, and then let's roundtable again").
 Accepted remote base: `bf25765a816ad29a08b6a200ef64d6b8be078dec` (after WIRE-02 closure)
 Working branch: `agent/audit-01-regression`
@@ -101,10 +101,20 @@ There is no product change.
 
 ## Paw Gate
 
-Pending CI. Local:
+Gate result: **PASS** on 2026-10-10.
+
+- **CI.** Head `8f02306`: push run `38084310013` and PR run `38084321751` each passed **929/929**.
+- **Artifacts:**
+  - test-results and attention-sheet archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- **Merge.**
+  - The merge ref had exact parents `bf25765` (main) and `8f02306` (head), and a tree equal to the head tree `74c6421`.
+  - It was squash-merged through the expected-head fence as `c1787e0`.
+
+Local:
 
 - Locked restore and a `--no-incremental` Release build with `/warnaserror`: 0 warnings, 0 errors. 0 vulnerable packages.
-- 914/914 on Linux. Windows CI is expected to show 929.
+- 914/914 on Linux.
 
 ## Personal Round Judgments
 

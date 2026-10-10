@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. Stage 10's keepsakes and complete recovery (KEEP-01, KEEP-02) are complete. WIRE-01 composes every subsystem into one tested orchestration core, and WIRE-02 runs it in the real Windows App. Stage 11 calibration and Stage 12 live API await Boss.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. Stage 10's keepsakes and complete recovery (KEEP-01, KEEP-02) are complete. WIRE-01 composes every subsystem into one tested orchestration core, and WIRE-02 runs it in the real Windows App. Stage 11 calibration and Stage 12 live API await Boss.
 
 ## Builder workflow
 
@@ -89,6 +89,14 @@ Composition exposed eight defects. Each was fixed with a regression test. WIRE-0
 - neutral notice presentation.
 
 Two real launches restore the same conversation lineage. It passed both Windows gates at 908/908 and merged as `111e15a2b51ee7691dc1acb7aa9971f7f2840ee6`.
+
+**AUDIT-01** (PR #43) re-verified every accepted task against the wired `main`:
+
+- five stressed full-suite runs;
+- 420 mutants replayed or added (403 killed, the rest recorded equivalents);
+- five test gaps closed.
+
+No product defect was found. It passed both Windows gates at 929/929 and merged as `c1787e03070588e7a2d46af1dda95f42ccaff332`.
 
 Stage 11 (calibration on the target PC) and Stage 12 (credentials and live API) require Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
