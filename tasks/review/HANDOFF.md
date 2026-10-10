@@ -45,7 +45,10 @@ Builder: Claude.
     - three real test gaps, now closed: process-only foreground match, minor-change wake, and answering during an indefinite watch;
     - two redundant activity signals, now removed: completion and cancellation;
     - the equivalent above.
-- CI: pending.
+- Implementation head `5b96720`:
+  - push run `38058141112` and PR run `38058154820` each passed **687/687** (14 test projects, Watchbun 66, App Integration 13);
+  - test-results and attention-sheet artifacts: archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
 
 ## Remaining
 

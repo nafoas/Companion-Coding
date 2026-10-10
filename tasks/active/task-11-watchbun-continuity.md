@@ -122,7 +122,15 @@ It references only `CompanionCore.Capture.Contracts`, for the target identity.
 
 ## Paw Gate
 
-Pending.
+Candidate evidence (pending the evidence-descendant CI, merge-ref check, and acceptance):
+
+- Implementation head `5b96720`:
+  - push run `38058141112` and PR run `38058154820` each passed **687/687** (14 test projects, Watchbun 66, App Integration 13);
+  - test-results and attention-sheet artifacts: archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- Local gate: 674/674, 0 warnings, 0 vulnerable packages across 32 projects.
+- Mutation pass: 64 mutants; 63 killed, 1 equivalent.
+- Acceptance scenarios 1–9 are covered by `WatchbunScenarioTests`, `WatchbunMechanicsTests`, and `StructuredGameEventAdapterTests`. Scenario 10 is covered by the full CI suite.
 
 ## Personal Round Judgments
 
