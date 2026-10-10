@@ -21,6 +21,75 @@ public sealed class TargetPolicyCatalogTests
         Assert.Equal(AuthorizationCategory.Denied, harness.Catalog.Resolve(passwordManager).AuthorizationCategory);
     }
 
+    [Theory]
+    [InlineData(ApplicationCategory.Browser)]
+    [InlineData(ApplicationCategory.SocialMedia)]
+    [InlineData(ApplicationCategory.WordProcessor)]
+    [InlineData(ApplicationCategory.CloudStorage)]
+    [InlineData(ApplicationCategory.Email)]
+    [InlineData(ApplicationCategory.Messaging)]
+    [InlineData(ApplicationCategory.PasswordManager)]
+    [InlineData(ApplicationCategory.Banking)]
+    [InlineData(ApplicationCategory.Tax)]
+    [InlineData(ApplicationCategory.Medical)]
+    [InlineData(ApplicationCategory.Government)]
+    public async Task EverySensitiveCategory_IsDeniedByDefault(ApplicationCategory category)
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var candidate = TargetAuthTestHarness.Candidate('B', 102, 202, "neutral-app.exe", category);
+
+        Assert.True(DefaultApplicationClassifier.IsSensitiveByDefault(category));
+        Assert.Equal(AuthorizationCategory.Denied, harness.Catalog.Resolve(candidate).AuthorizationCategory);
+    }
+
+    [Theory]
+    [InlineData(ApplicationCategory.Other)]
+    [InlineData(ApplicationCategory.Game)]
+    public async Task OrdinaryCategories_AreAskedNotDenied(ApplicationCategory category)
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+
+        Assert.False(DefaultApplicationClassifier.IsSensitiveByDefault(category));
+        Assert.Equal(
+            AuthorizationCategory.UnknownAsk,
+            harness.Catalog.Resolve(TargetAuthTestHarness.Candidate('B', 102, 202, "neutral-app.exe", category)).AuthorizationCategory);
+    }
+
+    [Fact]
+    public async Task AStoredStandingEntryForABrowserFilename_IsNeverHonored()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var location = AuthorizationPolicyLocation.CreateTest(harness.Root);
+
+        // A validly checksummed file (written by the store's own writer, as an older build or a
+        // hand edit could) that grants a browser filename standing authorization.
+        await new AuthorizationPolicyStore(location).SaveAsync([
+            new AuthorizationPolicyEntry(new string('B', 64), "chrome.exe", AuthorizationCategory.StandingAuthorized, TargetContentPolicy.Standard),
+        ]);
+        var reopened = await TargetPolicyCatalog.OpenTestAsync(harness.Root);
+        var mislabeled = TargetAuthTestHarness.Candidate('B', 102, 202, "chrome.exe", ApplicationCategory.Other);
+
+        Assert.True(reopened.WasLoadedValidly);
+        Assert.Equal(AuthorizationCategory.Denied, reopened.Resolve(mislabeled).AuthorizationCategory);
+    }
+
+    [Fact]
+    public async Task AStoredEntry_AppliesOnlyToTheSameExecutableName()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var location = AuthorizationPolicyLocation.CreateTest(harness.Root);
+        await new AuthorizationPolicyStore(location).SaveAsync([
+            new AuthorizationPolicyEntry(new string('C', 64), "other-game.exe", AuthorizationCategory.StandingAuthorized, TargetContentPolicy.TrustedGame),
+        ]);
+        var reopened = await TargetPolicyCatalog.OpenTestAsync(harness.Root);
+
+        var renamed = TargetAuthTestHarness.Candidate('C', 103, 203, "synthetic-game.exe");
+        var same = TargetAuthTestHarness.Candidate('C', 103, 203, "OTHER-GAME.EXE");
+
+        Assert.Equal(AuthorizationCategory.UnknownAsk, reopened.Resolve(renamed).AuthorizationCategory);
+        Assert.Equal(AuthorizationCategory.StandingAuthorized, reopened.Resolve(same).AuthorizationCategory);
+    }
+
     [Fact]
     public async Task BrowserCannotBeAuthorizedEvenByExplicitStoredPolicy()
     {

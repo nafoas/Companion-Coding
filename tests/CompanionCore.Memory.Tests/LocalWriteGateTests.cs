@@ -181,6 +181,44 @@ public sealed class LocalWriteGateTests
     }
 
     [Fact]
+    public async Task StructuralLimits_AreEnforcedBeforeDurability()
+    {
+        using var directory = new MemoryTestDirectory();
+        await using var repository = await directory.OpenRepositoryAsync();
+        var duplicateId = Guid.NewGuid();
+        var selfLinked = Guid.NewGuid();
+        var oversized = Enumerable.Range(0, MemoryProposalValidator.MaximumRecordsPerOperation + 1)
+            .Select(index => SyntheticMemory.Record(subjectKey: $"synthetic.bulk.{index}"))
+            .ToArray();
+
+        var rejected = new[]
+        {
+            SyntheticMemory.Proposal(oversized),
+            SyntheticMemory.Proposal(
+                SyntheticMemory.Record(recordId: duplicateId, subjectKey: "synthetic.duplicate.a"),
+                SyntheticMemory.Record(recordId: duplicateId, subjectKey: "synthetic.duplicate.b")),
+            SyntheticMemory.Proposal(SyntheticMemory.Record(
+                recordId: selfLinked,
+                links: [new MemoryLink(selfLinked, MemoryLinkKind.Source)])),
+        };
+
+        foreach (var proposal in rejected)
+        {
+            var result = await repository.WriteGate.SubmitAsync(proposal);
+            Assert.Equal(WriteGateStatus.Rejected, result.Status);
+            Assert.Equal(WriteGateRejectionReason.InvalidProposal, result.RejectionReason);
+        }
+
+        Assert.Equal((0L, 0L, 0L), await repository.Store.ReadCountsAsync(default));
+        Assert.Equal(0, repository.Journal.HighestAppendSequence);
+
+        // Exactly at the bound is accepted.
+        var atBound = await repository.WriteGate.SubmitAsync(SyntheticMemory.Proposal(oversized[..^1]));
+        Assert.Equal(WriteGateStatus.Committed, atBound.Status);
+        Assert.Equal(MemoryProposalValidator.MaximumRecordsPerOperation, atBound.RecordIds.Count);
+    }
+
+    [Fact]
     public async Task MissingAndCrossSubjectRelationshipTargets_AreRejectedAtomically()
     {
         using var directory = new MemoryTestDirectory();
