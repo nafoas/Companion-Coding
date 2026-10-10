@@ -26,16 +26,15 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private readonly Queue<FrameClientEvent> _deferredStartFrames = new();
     private readonly ConcurrentDictionary<Guid, TaskCompletionSource<CaptureIpcMessage>> _pending = new();
     private readonly ConcurrentDictionary<Guid, CaptureIpcMessageKind> _pendingKinds = new();
-    private readonly Channel<ClientEvent> _events = Channel.CreateBounded<ClientEvent>(
-        new BoundedChannelOptions(64)
-        {
-            FullMode = BoundedChannelFullMode.DropOldest,
-            SingleReader = true,
-            SingleWriter = false,
-            AllowSynchronousContinuations = false,
-        });
+    private readonly Channel<ClientEvent> _events = CreateEventLane();
+
+    // Status fences travel on their own bounded lane so a blocked frame or attention
+    // observer can neither delay nor evict the Stopped/Faulted/resize fence used by
+    // target authorization.
+    private readonly Channel<ClientEvent> _statusEvents = CreateEventLane();
     private readonly CancellationTokenSource _eventLifetime = new();
     private readonly Task _eventDispatcher;
+    private readonly Task _statusDispatcher;
     private NamedPipeServerStream? _pipe;
     private Process? _process;
     private CancellationTokenSource? _readerLifetime;
@@ -49,6 +48,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private long _lastDispatchedSequence;
     private long _lastAttentionSheetSequence;
     private long _lastDispatchedAttentionSheetSequence;
+    private long _visualFence;
     private AttentionSheetMetadata? _latestAttentionMetadata;
     private bool _admitFrames;
     private bool _expectedExit;
@@ -61,6 +61,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         _options = options ?? CaptureWorkerLaunchOptions.ForSiblingWorker();
         _clock = clock ?? SystemClock.Instance;
         _eventDispatcher = DispatchEventsAsync(_eventLifetime.Token);
+        _statusDispatcher = DispatchStatusEventsAsync(_eventLifetime.Token);
     }
 
     public CaptureWorkerStatus Status { get; private set; } = CaptureWorkerStatus.Stopped;
@@ -688,7 +689,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 message.Width,
                 message.Height,
                 message.AccountedBytes);
-            frameEvent = new FrameClientEvent(workerEpoch, grant, frame);
+            frameEvent = new FrameClientEvent(workerEpoch, grant, frame, _visualFence);
             if (!_admitFrames)
             {
                 while (_deferredStartFrames.Count >= MaximumDeferredStartFrames)
@@ -1136,10 +1137,19 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
 
             Status = status;
             eventEpoch = _workerEpoch;
+
+            // Any status other than an ordinary Running transition invalidates the
+            // visual stream for observers. Frames queued before this fence must not be
+            // dispatched after the status lane has delivered it.
+            if (status != CaptureWorkerStatus.Running
+                || reason == CaptureWorkerStatusReason.SourceResized)
+            {
+                _visualFence = checked(_visualFence + 1);
+            }
         }
 
         var change = new CaptureWorkerStatusChanged(status, timestamp ?? _clock.UtcNow, reason);
-        _events.Writer.TryWrite(new StatusClientEvent(eventEpoch, change));
+        _statusEvents.Writer.TryWrite(new StatusClientEvent(eventEpoch, change));
     }
 
     private long AdvanceWorkerEpoch()
@@ -1192,37 +1202,49 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
 
                         break;
 
-                    case StatusClientEvent statusEvent:
-                        lock (_stateGate)
-                        {
-                            if (statusEvent.WorkerEpoch != _workerEpoch)
-                            {
-                                continue;
-                            }
-                        }
-
-                        foreach (EventHandler<CaptureWorkerStatusChanged> handler in
-                                 StatusChanged?.GetInvocationList()
-                                     .Cast<EventHandler<CaptureWorkerStatusChanged>>()
-                                 ?? [])
-                        {
-                            try
-                            {
-                                handler(this, statusEvent.Change);
-                            }
-                            catch (Exception)
-                            {
-                            }
-                        }
-
-                        DispatchLatestAttentionSheetIfCurrent(statusEvent.WorkerEpoch);
-
-                        break;
-
                     case AttentionSheetClientEvent sheetEvent:
                         DispatchLatestAttentionSheetIfCurrent(sheetEvent.WorkerEpoch);
 
                         break;
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    private async Task DispatchStatusEventsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await foreach (var clientEvent in _statusEvents.Reader.ReadAllAsync(cancellationToken))
+            {
+                if (clientEvent is not StatusClientEvent statusEvent)
+                {
+                    continue;
+                }
+
+                lock (_stateGate)
+                {
+                    if (statusEvent.WorkerEpoch != _workerEpoch)
+                    {
+                        continue;
+                    }
+                }
+
+                foreach (EventHandler<CaptureWorkerStatusChanged> handler in
+                         StatusChanged?.GetInvocationList()
+                             .Cast<EventHandler<CaptureWorkerStatusChanged>>()
+                         ?? [])
+                {
+                    try
+                    {
+                        handler(this, statusEvent.Change);
+                    }
+                    catch (Exception)
+                    {
+                    }
                 }
             }
         }
@@ -1271,6 +1293,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         lock (_stateGate)
         {
             if (frameEvent.WorkerEpoch != _workerEpoch
+                || frameEvent.VisualFence != _visualFence
                 || !_admitFrames
                 || !ReferenceEquals(frameEvent.Grant, _currentGrant)
                 || frameEvent.Frame.SequenceNumber <= _lastDispatchedSequence)
@@ -1340,11 +1363,12 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         finally
         {
             _events.Writer.TryComplete();
+            _statusEvents.Writer.TryComplete();
             _eventLifetime.Cancel();
             _operationLock.Dispose();
             _writeLock.Dispose();
             Status = CaptureWorkerStatus.Stopped;
-            _ = _eventDispatcher.ContinueWith(
+            _ = Task.WhenAll(_eventDispatcher, _statusDispatcher).ContinueWith(
                 static (_, state) => ((CancellationTokenSource)state!).Dispose(),
                 _eventLifetime,
                 CancellationToken.None,
@@ -1353,12 +1377,23 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         }
     }
 
+    private static Channel<ClientEvent> CreateEventLane() =>
+        Channel.CreateBounded<ClientEvent>(
+            new BoundedChannelOptions(64)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = false,
+            });
+
     private abstract record ClientEvent(long WorkerEpoch);
 
     private sealed record FrameClientEvent(
         long WorkerEpoch,
         CaptureAuthorizationGrant Grant,
-        CaptureFrameMetadata Frame) : ClientEvent(WorkerEpoch);
+        CaptureFrameMetadata Frame,
+        long VisualFence) : ClientEvent(WorkerEpoch);
 
     private sealed record StatusClientEvent(
         long WorkerEpoch,
