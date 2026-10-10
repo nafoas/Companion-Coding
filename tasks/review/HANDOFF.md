@@ -59,11 +59,13 @@ Local, on the pinned SDK 10.0.302 (Linux cross-build):
   | TargetAuth | 73 |
 
 - Mutation pass: 32 of 32 coordinator rules are killed, after four test strengthenings and one rule correction (J4).
-- Windows CI on both paths is pending. The expected total is 546 = 502 + 44.
+- Windows CI on implementation head `a0e5efe`: push run `38053076912` (job `114215981421`) and PR run `38053089128` (job `114216016451`) each passed 546/546 on the first attempt (Conversation 44/44).
+  - Both artifact digests verified on each path.
+  - The attention-sheet PNG keeps the accepted digest `5eb11c96…b046dd`.
 
 ## Remaining
 
-- Both Windows CI paths with artifact verification, the evidence descendant, merge-ref check, merge, closure records, and post-merge `main` CI. Then ERPP-01.
+- CI on this evidence descendant, the merge-ref check, merge, closure records, and post-merge `main` CI. Then ERPP-01.
 
 ## Risks and assumptions
 
@@ -84,7 +86,7 @@ J1–J8 are recorded in the packet.
 
 ## Repository state
 
-- Branch `agent/task-09-conversation-coordinator`; implementation commit pending publication.
+- Branch `agent/task-09-conversation-coordinator`, draft PR #27. Implementation `a0e5efe`, then this evidence descendant.
 
 ## Next safe task
 
