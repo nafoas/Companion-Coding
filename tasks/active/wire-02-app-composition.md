@@ -111,16 +111,55 @@ It then stops cleanly. A second launch on the same root restores the same conver
 
 ## Paw Gate
 
-Pending.
+Gate result: **PASS** on 2026-10-10 (merge-ref check and merge are recorded at closure).
+
+**CI evidence.**
+- **Candidate `e63242c`:** push run `38078377838` and PR run `38078393543` each passed **908/908** on the first attempt:
+  - 18 test projects;
+  - Platform.Windows 22, including the real-Win32 child-process exit-code and running-process checks;
+  - Presentation 141;
+  - App Integration 15, including both `wired` scenarios;
+  - Orchestration 48.
+- **Real-process evidence.** Two launches on one isolated test root printed `WIRED ROOT:Test FAULTS:0 LINEAGE:79a6dccba8a042ef8d2f32d05c56bf15 UNCONSOLIDATED:0 CONSTRUCTIONS:1` with the identical lineage. Startup was about 1.2 s, and exit 0.2–0.4 s.
+- **Artifacts:**
+  - test-results and attention-sheet archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+
+**Local evidence.**
+- Locked restore and a `--no-incremental` Release build with `/warnaserror`: 0 warnings, 0 errors. 0 vulnerable packages.
+- 893/893 on Linux. The Windows-only native and App tests early-return there.
+- **Mutation pass:** 34 mutants over the platform signals, the notice mapping, and placeholder resolution. The first pass left 3 survivors; each became a sharper test:
+  - the input baseline across an unavailable tick;
+  - a same-fingerprint, renamed-executable relaunch;
+  - a non-companion key that merely contains a family prefix.
+
+  Final result: **34 killed**.
+
+**Actual-diff review.**
+- Changes stay inside the allowed scope.
+- The only edit to an accepted component outside the new projects and the App is the additive `OrchestratorSnapshot.ConversationLineage`, with Scenario 7 asserting that it survives a restart.
+- No credentials, network, hooks, titles, or text. Test runs never open the development root.
 
 ## Personal Round Judgments
 
-(Recorded during implementation.)
+- **J1 — Target-only foreground.** Only "the target is foreground" or `ForegroundWindow(0, 0)` leaves the adapter. Watchbun needs nothing more, and no other application's identity is ever propagated.
+- **J2 — `WindowClosedFirst` needs an earlier poll.** A window seen gone in the same poll as the exit does not count. Ambiguity therefore errs toward the conservative suspected-crash prompt, never toward a silent deliberate close.
+- **J3 — Unopenable process.** When a process (for example an elevated one) cannot be opened, its exit is observed by its window disappearing, with exit code −1, which classifies as a suspected crash. When a handle answers "unknown", watching continues while the window lives.
+- **J4 — Window owner mismatch.** A window that no longer belongs to the watched process at `WatchTarget` is an immediate unknown exit. A reused handle or process id is never watched.
+- **J5 — Data roots.** Normal runs use the fixed development root. `--test-mode` always uses an isolated `TestDataRootPolicy` root (explicit, or a fresh temporary one), so integration tests never read or write Boss's development data.
+- **J6 — Presentation maps notices.** Presentation references Orchestration so the adapter contract can map notices. Keys are `companion.<kind>[.<member>]` with family templates, and every member resolves without per-member strings. The Stage 13 adapter replaces the wording.
+- **J7 — Conversation lineage.** `OrchestratorSnapshot.ConversationLineage` exposes the coordinator id, which is the one Conversation Thread lineage. It makes "the same thread across restarts" directly assertable in-process and from the real App.
+- **J8 — Serialized App launches.** All App-launching test classes share one xUnit collection, so real launches never race the single-instance guard.
+- **J9 — Provisional intervals.** Polling runs at 100 ms while watching, 500 ms idle, and 2 s for relaunch discovery, with a 1 s dispatcher tick. All are provisional until Stage 11.
+- **J10 — Offline Braincase.** The App uses the offline Braincase shell with an in-memory credential store. Braincase reports "unavailable" once (WIRE-01 J5). Live use stays Task 12.
 
 ## Defects found by composition
 
-(Recorded during implementation.)
+None in accepted components. The candidate passed Windows CI on its first attempt.
 
 ## Deferred findings
 
-(None yet.)
+- **D1 — Interactive controls.** The App has no interactive controls yet for camera actions, quiet-check answers, exit decisions, watch tasks, or Bnuy Repairs. Those surfaces belong to the presentation phase. The orchestrator commands exist and are tested.
+- **D2 — Undiscoverable relaunches.** Relaunch detection sees only windows that title-free discovery accepts. A relaunched game that stays cloaked or tool-windowed is detected once it becomes eligible.
+- **D3 — Temporary test roots.** Fresh temporary test-mode roots (when no `--test-data-root` is given) are left under the temp directory.
+- **D4 — Lock and sleep on real hardware.** Lock and sleep come through `SystemEvents`. CI proves the subscription and forwarding logic, but not a real lock or suspend. That needs target-PC verification (Stage 11).

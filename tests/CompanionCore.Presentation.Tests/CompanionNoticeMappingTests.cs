@@ -99,6 +99,8 @@ public sealed class CompanionNoticeMappingTests
         Assert.Equal("companion.watchbun", undefinedMember.ContentKey);
         Assert.Equal("companion.photograph-refused", noneRefusal.ContentKey);
         Assert.Throws<ArgumentNullException>(() => Adapter.Map((CompanionNotice)null!));
+        Assert.Equal(Unknown, PlaceholderStrings.Resolve(new PresentationContent("target.ended.extra", ExpressionIntent.None)));
+        Assert.Equal(Unknown, PlaceholderStrings.Resolve(new PresentationContent("companion.nonexistent.member", ExpressionIntent.None)));
     }
 
     [Theory]

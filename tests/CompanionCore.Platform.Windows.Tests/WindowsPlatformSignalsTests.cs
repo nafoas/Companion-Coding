@@ -87,8 +87,10 @@ public sealed class WindowsPlatformSignalsTests
         native.LastInput = 1500;
         await signals.PollOnceAsync();
         await signals.PollOnceAsync();
+        Assert.Equal(1, recorder.Inputs);
         native.LastInput = null;
         await signals.PollOnceAsync();
+        Assert.Equal(1, recorder.Inputs);
         native.LastInput = 1600;
         await signals.PollOnceAsync();
 
@@ -287,6 +289,7 @@ public sealed class WindowsPlatformSignalsTests
         discovery.Candidates.Add(Candidate(previous));
         discovery.Candidates.Add(Candidate(Identity(window: 0x30, process: 30, exe: "other.exe", fingerprint: 'B')));
         discovery.Candidates.Add(Candidate(Identity(window: 0x31, process: 31, fingerprint: 'C')));
+        discovery.Candidates.Add(Candidate(Identity(window: 0x32, process: 32, exe: "renamed.exe")));
         discovery.Candidates.Add(Candidate(Identity(window: 0x40, process: 40, exe: "SYNTHETIC-GAME.EXE")));
 
         await signals.PollOnceAsync();
