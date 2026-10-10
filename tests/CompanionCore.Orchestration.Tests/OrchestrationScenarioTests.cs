@@ -235,6 +235,8 @@ public sealed class OrchestrationScenarioTests
         await harness.ReopenHostAsync();
         var restored = await harness.Orchestrator.GetSnapshotAsync();
         Assert.Equal(before.Conversation.Thread?.ThreadId, restored.Conversation.Thread?.ThreadId);
+        Assert.NotEqual(Guid.Empty, restored.ConversationLineage);
+        Assert.Equal(before.ConversationLineage, restored.ConversationLineage);
         Assert.Equal(WatchbunPhase.Recovering, restored.Watchbun!.Phase);
         Assert.Equal(CaptureMode.None, restored.Watchbun.Capture);
         Assert.Single(restored.Watchbun.WatchTasks);

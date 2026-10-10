@@ -40,6 +40,24 @@
         "resolved": "17.14.1",
         "contentHash": "pmTrhfFIoplzFVbhVwUquT+77CbGH+h4/3mBpdmIlYtBi9nAB+kKI6dN3A/nV4DFi3wLLx/BlHIPK+MkbQ6Tpg=="
       },
+      "Microsoft.Data.Sqlite": {
+        "type": "Transitive",
+        "resolved": "10.0.10",
+        "contentHash": "58JwZ39lCvRXHfV5O6RQfbHEDu8ZsXI7weRoVRR4jrGRxxkS+qyeuGrN2xD+9VYEICApYr0iTSL6PuU+DdsvPg==",
+        "dependencies": {
+          "Microsoft.Data.Sqlite.Core": "10.0.10",
+          "SQLitePCLRaw.bundle_e_sqlite3": "2.1.11",
+          "SQLitePCLRaw.core": "2.1.11"
+        }
+      },
+      "Microsoft.Data.Sqlite.Core": {
+        "type": "Transitive",
+        "resolved": "10.0.10",
+        "contentHash": "TPCs0ldm7AWqcKmp6f/Xr+14sat7hx4rHfRlS4RgCURBH2thEWbAKEyX7cCWr63zVJVOJIJZTg2cBiUXa8ys6g==",
+        "dependencies": {
+          "SQLitePCLRaw.core": "2.1.11"
+        }
+      },
       "Microsoft.TestPlatform.ObjectModel": {
         "type": "Transitive",
         "resolved": "17.14.1",
@@ -58,6 +76,33 @@
         "type": "Transitive",
         "resolved": "13.0.3",
         "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
+      },
+      "SQLitePCLRaw.bundle_e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.12",
+        "contentHash": "mAgscpQMLw5/nfA1Q5oJVAT29yROUo1ifZGbbTpx/lwZpSxMUGoYbKfmvdm8oXER+RzxqBmmQzeBEVKfeHv2nw==",
+        "dependencies": {
+          "SQLitePCLRaw.lib.e_sqlite3": "2.1.12",
+          "SQLitePCLRaw.provider.e_sqlite3": "2.1.12"
+        }
+      },
+      "SQLitePCLRaw.core": {
+        "type": "Transitive",
+        "resolved": "2.1.12",
+        "contentHash": "ETpNw9DY3ckWLgRRAeCHj+GKOuPi61aeczkXhgHexUvqoZBAYg8RYESE2J7O1M7+o6QbdSEZwrw9bfqztUVWXg=="
+      },
+      "SQLitePCLRaw.lib.e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.12",
+        "contentHash": "fWi8Dbknuhgg72fWinIdjXVaqO1hHL4YBBwVLnr7e1c9TAZwJ0QE38j9syW1hwx6HaqEVTwI+O07WPdZn8Rp0w=="
+      },
+      "SQLitePCLRaw.provider.e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.12",
+        "contentHash": "W3oH4XIfCzFrgUSDKHhN6N+dgzA5YHOR2VxX8GB6Qy7CyrJJgxPEG8NirgYWlPQC5P2jz2knSsexWu4tDUL33g==",
+        "dependencies": {
+          "SQLitePCLRaw.core": "2.1.12"
+        }
       },
       "xunit.abstractions": {
         "type": "Transitive",
@@ -99,16 +144,33 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "companioncore.api": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Capture.Contracts": "[1.0.0, )",
+          "CompanionCore.Memory": "[1.0.0, )",
+          "CompanionCore.Privacy": "[1.0.0, )",
+          "CompanionCore.Runtime": "[1.0.0, )"
+        }
+      },
       "companioncore.app": {
         "type": "Project",
         "dependencies": {
           "CompanionCore.Capture.Client": "[1.0.0, )",
           "CompanionCore.Capture.Contracts": "[1.0.0, )",
+          "CompanionCore.Orchestration": "[1.0.0, )",
+          "CompanionCore.Platform.Windows": "[1.0.0, )",
           "CompanionCore.Presentation": "[1.0.0, )",
           "CompanionCore.Privacy": "[1.0.0, )",
           "CompanionCore.Runtime": "[1.0.0, )",
           "CompanionCore.TargetAuth": "[1.0.0, )",
           "CompanionCore.TargetAuth.Windows": "[1.0.0, )"
+        }
+      },
+      "companioncore.attention": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Capture.Contracts": "[1.0.0, )"
         }
       },
       "companioncore.capture.client": {
@@ -120,15 +182,71 @@
       "companioncore.capture.contracts": {
         "type": "Project"
       },
+      "companioncore.conversation": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Attention": "[1.0.0, )"
+        }
+      },
+      "companioncore.keepsakes": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Capture.Contracts": "[1.0.0, )",
+          "CompanionCore.Memory": "[1.0.0, )",
+          "CompanionCore.Privacy": "[1.0.0, )"
+        }
+      },
+      "companioncore.memory": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Privacy": "[1.0.0, )",
+          "Microsoft.Data.Sqlite": "[10.0.10, )",
+          "SQLitePCLRaw.bundle_e_sqlite3": "[2.1.12, )"
+        }
+      },
+      "companioncore.orchestration": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Api": "[1.0.0, )",
+          "CompanionCore.Attention": "[1.0.0, )",
+          "CompanionCore.Capture.Contracts": "[1.0.0, )",
+          "CompanionCore.Conversation": "[1.0.0, )",
+          "CompanionCore.Keepsakes": "[1.0.0, )",
+          "CompanionCore.Memory": "[1.0.0, )",
+          "CompanionCore.Privacy": "[1.0.0, )",
+          "CompanionCore.Recall": "[1.0.0, )",
+          "CompanionCore.Runtime": "[1.0.0, )",
+          "CompanionCore.TargetAuth": "[1.0.0, )",
+          "CompanionCore.Transcript": "[1.0.0, )",
+          "CompanionCore.Vault": "[1.0.0, )",
+          "CompanionCore.Watchbun": "[1.0.0, )"
+        }
+      },
+      "companioncore.platform.windows": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Capture.Contracts": "[1.0.0, )",
+          "CompanionCore.Orchestration": "[1.0.0, )",
+          "CompanionCore.TargetAuth": "[1.0.0, )",
+          "CompanionCore.Watchbun": "[1.0.0, )"
+        }
+      },
       "companioncore.presentation": {
         "type": "Project",
         "dependencies": {
+          "CompanionCore.Orchestration": "[1.0.0, )",
           "CompanionCore.Runtime": "[1.0.0, )",
           "CompanionCore.TargetAuth": "[1.0.0, )"
         }
       },
       "companioncore.privacy": {
         "type": "Project"
+      },
+      "companioncore.recall": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Memory": "[1.0.0, )"
+        }
       },
       "companioncore.runtime": {
         "type": "Project"
@@ -145,6 +263,27 @@
         "dependencies": {
           "CompanionCore.Capture.Contracts": "[1.0.0, )",
           "CompanionCore.TargetAuth": "[1.0.0, )"
+        }
+      },
+      "companioncore.transcript": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Conversation": "[1.0.0, )",
+          "CompanionCore.Memory": "[1.0.0, )",
+          "CompanionCore.Privacy": "[1.0.0, )"
+        }
+      },
+      "companioncore.vault": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Keepsakes": "[1.0.0, )",
+          "CompanionCore.Memory": "[1.0.0, )"
+        }
+      },
+      "companioncore.watchbun": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Capture.Contracts": "[1.0.0, )"
         }
       }
     }

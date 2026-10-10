@@ -1,3 +1,4 @@
+using CompanionCore.Orchestration;
 using CompanionCore.Runtime;
 using CompanionCore.TargetAuth;
 
@@ -34,6 +35,9 @@ public sealed class NeutralPersonalityAdapter : IPersonalityAdapter
     public const string TargetEndedKey = "target.ended";
     public const string TargetUnavailableKey = "target.unavailable";
     public const string TargetFailedKey = "target.failed";
+
+    /// <summary>Prefix of every orchestration notice key: <c>companion.&lt;kind&gt;[.&lt;member&gt;]</c>.</summary>
+    public const string CompanionPrefix = "companion.";
 
     public PresentationContent Map(LifecycleTransitionResult transition)
     {
@@ -104,5 +108,57 @@ public sealed class NeutralPersonalityAdapter : IPersonalityAdapter
                 new PresentationContent(TargetFailedKey, ExpressionIntent.None, detail),
             _ => new PresentationContent(UnknownKey, ExpressionIntent.None)
         };
+    }
+
+    /// <summary>
+    /// Fixed notices map to <c>companion.&lt;kind&gt;</c>; typed intents map to
+    /// <c>companion.&lt;kind&gt;.&lt;member&gt;</c> with the member as neutral detail. Total and
+    /// deterministic: unknown values still produce a defined key.
+    /// </summary>
+    public PresentationContent Map(CompanionNotice notice)
+    {
+        ArgumentNullException.ThrowIfNull(notice);
+        var member = notice.Kind switch
+        {
+            CompanionNoticeKind.Attention => Member(notice.Attention?.Kind),
+            CompanionNoticeKind.Conversation => Member(notice.Conversation?.Kind),
+            CompanionNoticeKind.Watchbun => Member(notice.Watchbun?.Kind),
+            CompanionNoticeKind.Keepsake => Member(notice.Keepsake?.Kind),
+            CompanionNoticeKind.Braincase => Member(notice.Braincase),
+            CompanionNoticeKind.PhotographRefused => Member((CompanionCore.Keepsakes.KeepsakeRefusal?)notice.PhotographRefusal),
+            _ => null,
+        };
+        var family = Enum.IsDefined(notice.Kind) ? Kebab(notice.Kind.ToString()) : "unknown";
+        var key = member is null ? CompanionPrefix + family : $"{CompanionPrefix}{family}.{member}";
+        var intent = notice.Kind switch
+        {
+            CompanionNoticeKind.PrivacyPaused => ExpressionIntent.PrivacyPaused,
+            CompanionNoticeKind.Recovering => ExpressionIntent.Recovering,
+            _ => ExpressionIntent.None,
+        };
+        return new PresentationContent(key, intent, member?.Replace('-', ' '));
+    }
+
+    private static string? Member<T>(T? value)
+        where T : struct, Enum =>
+        value is { } defined && Enum.IsDefined(defined) && Convert.ToInt64(defined, System.Globalization.CultureInfo.InvariantCulture) != 0
+            ? Kebab(defined.ToString())
+            : null;
+
+    internal static string Kebab(string pascal)
+    {
+        var builder = new System.Text.StringBuilder(pascal.Length + 8);
+        for (var index = 0; index < pascal.Length; index++)
+        {
+            var character = pascal[index];
+            if (char.IsUpper(character) && index > 0)
+            {
+                builder.Append('-');
+            }
+
+            builder.Append(char.ToLowerInvariant(character));
+        }
+
+        return builder.ToString();
     }
 }

@@ -31,17 +31,47 @@ public static class PlaceholderStrings
             [NeutralPersonalityAdapter.TargetResumedKey] = "Authorized target resumed: {target}.",
             [NeutralPersonalityAdapter.TargetEndedKey] = "No target is authorized.",
             [NeutralPersonalityAdapter.TargetUnavailableKey] = "The authorized target is no longer available: {target}.",
-            [NeutralPersonalityAdapter.TargetFailedKey] = "The target operation failed closed for {target}."
+            [NeutralPersonalityAdapter.TargetFailedKey] = "The target operation failed closed for {target}.",
+            ["companion.session-started"] = "Target session started.",
+            ["companion.session-ended"] = "Target session ended.",
+            ["companion.attention"] = "Attention: {detail}.",
+            ["companion.conversation"] = "Conversation: {detail}.",
+            ["companion.watchbun"] = "Watchbun: {detail}.",
+            ["companion.keepsake"] = "Keepsake: {detail}.",
+            ["companion.braincase"] = "Braincase: {detail}.",
+            ["companion.consolidated"] = "Session memories consolidated.",
+            ["companion.vault-backed-up"] = "Vault backup complete.",
+            ["companion.vault-backup-failed"] = "Vault backup failed; the previous backup is unchanged.",
+            ["companion.privacy-paused"] = "Privacy stop: pending work cancelled.",
+            ["companion.photograph-refused"] = "Photograph not taken: {detail}.",
+            ["companion.recovering"] = "Recovering the previous watch.",
+            ["companion.fault"] = "An internal error was contained.",
+            ["companion.unknown"] = "Status unavailable."
         };
 
     public static string Resolve(PresentationContent content)
     {
         var template = ByContentKey.TryGetValue(content.ContentKey, out var text)
             ? text
-            : ByContentKey[NeutralPersonalityAdapter.UnknownKey];
+            : FamilyTemplate(content.ContentKey) ?? ByContentKey[NeutralPersonalityAdapter.UnknownKey];
         return template.Replace(
+            "{detail}",
+            string.IsNullOrWhiteSpace(content.NeutralDetail) ? "update" : content.NeutralDetail,
+            StringComparison.Ordinal).Replace(
             "{target}",
             string.IsNullOrWhiteSpace(content.NeutralDetail) ? "the selected target" : content.NeutralDetail,
             StringComparison.Ordinal);
+    }
+
+    /// <summary>Typed companion intents (<c>companion.&lt;kind&gt;.&lt;member&gt;</c>) share their family's template.</summary>
+    private static string? FamilyTemplate(string key)
+    {
+        if (!key.StartsWith(NeutralPersonalityAdapter.CompanionPrefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var dot = key.IndexOf('.', NeutralPersonalityAdapter.CompanionPrefix.Length);
+        return dot > 0 && ByContentKey.TryGetValue(key[..dot], out var family) ? family : null;
     }
 }

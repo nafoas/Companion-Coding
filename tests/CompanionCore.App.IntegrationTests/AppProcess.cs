@@ -39,9 +39,9 @@ internal static class AppProcess
     /// phase is killed and the call throws naming that phase, rather than hanging the
     /// test suite.
     /// </summary>
-    internal static Result Run(string testMode)
+    internal static Result Run(string testMode, string extraArguments = "")
     {
-        using var process = Start($"--test-mode={testMode}");
+        using var process = Start($"--test-mode={testMode} {extraArguments}".TrimEnd());
         var stdErrTask = process.StandardError.ReadToEndAsync();
         var clock = Stopwatch.StartNew();
 

@@ -10,6 +10,7 @@ namespace CompanionCore.App.IntegrationTests;
 /// shutdown leaving no process behind. Each test launches the actual compiled
 /// <c>CompanionCore.App.exe</c> via <see cref="AppProcess"/>.
 /// </summary>
+[Collection(AppProcessCollection.Name)]
 public sealed class AppProcessTests
 {
     private readonly ITestOutputHelper _output;
