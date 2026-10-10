@@ -83,4 +83,4 @@ The failure depends on runner disk contention, which cannot be reproduced determ
 
 ## Deferred findings
 
-(None yet.)
+1. **Shutdown exit-phase profile (Stage 11):** the `shutdown` scenario's exit phase is consistently about 2.0 s (2.026 s and 2.038 s on the candidate), while `ready` and `multiwindow` exit in 0.01–0.16 s. No 2-second timeout exists on the App, TargetAuth, Capture.Client, or Runtime paths. The scenario's distinguishing step is closing a real WPF window during `OnStartup`, which suggests WPF or render teardown. It passes well inside its bound, so it is recorded for Stage 11 physical profiling rather than widened into this packet.

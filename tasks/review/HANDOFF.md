@@ -26,15 +26,28 @@ Builder: Claude.
 
 - `dotnet build CompanionCore.slnx -c Release --no-restore /m:1 /p:EnableWindowsTargeting=true /warnaserror --no-incremental`: 0 warnings, 0 errors.
 - `git diff --check` is clean.
-- These tests need Windows, so execution evidence comes from Windows CI on both event paths. It is pending and will be recorded here with the per-phase durations.
+- Candidate `a507a4f`: push run `38033166320` and PR run `38033174631` each passed 453/453. Both artifact digests verified on each path, and the attention-sheet PNG keeps the accepted digest `5eb11c96…b046dd`.
+- Per-phase evidence from the TRX output:
+
+  | Run | Scenario | Startup | Exit |
+  |---|---|---|---|
+  | push `38033166320` | shutdown | 28.983 s | 2.026 s |
+  | push `38033166320` | multiwindow | 0.500 s | 0.095 s |
+  | push `38033166320` | ready (×2) | 0.371 s, 0.104 s | 0.072 s, 0.010 s |
+  | PR `38033174631` | shutdown | 12.118 s | 2.038 s |
+  | PR `38033174631` | multiwindow | 0.970 s | 0.147 s |
+  | PR `38033174631` | ready (×2) | 0.873 s, 0.237 s | 0.164 s, 0.024 s |
+
+  The push run's 28.98 s cold start plus its 2.03 s exit totals 31 s. That would have failed the old single 30-second bound, and it now passes with shutdown measured precisely. This confirms the diagnosis.
 
 ## Remaining
 
-- Both Windows CI paths, phase evidence, merge-ref check, merge, closure records, and post-merge `main` CI.
+- CI on this evidence descendant, the merge-ref check, merge, closure records, and post-merge `main` CI.
 
 ## Risks and assumptions
 
 - The 90-second startup bound is sized at three times the worst cold start observed (≈30 s, J1).
+- The shutdown exit phase takes about 2 s (deferred finding 1, Stage 11 profiling).
 
 ## Personal Round Judgments
 
