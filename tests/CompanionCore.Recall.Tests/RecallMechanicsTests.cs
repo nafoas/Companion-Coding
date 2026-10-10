@@ -42,6 +42,29 @@ public sealed class RecallMechanicsTests
     }
 
     [Fact]
+    public async Task SessionSummary_ConsolidatesBridgeStyleSessionReferences()
+    {
+        // Composition regression (WIRE-01 C1): bridge records carry "target-session:<id>".
+        await using var harness = await RecallTestHarness.CreateAsync();
+        var session = $"target-session:{Guid.NewGuid():N}";
+        await harness.CommitAsync(new AppendMemoryProposal(Guid.NewGuid(), [
+            RecallTestHarness.Entry("[neutral entry] one.", session, null, null, 1),
+            RecallTestHarness.Entry("[neutral entry] two.", session, null, null, 2, subject: "entry:bridge:2"),
+        ]));
+        var originals = await harness.Repository.RetrieveAsync(new MemoryQuery { SessionReference = session });
+
+        var plan = ConsolidationPlanner.PlanSessionSummary(Guid.NewGuid(), Now, session, null, null, originals);
+        await harness.CommitAsync(plan.Proposal);
+
+        var summary = Assert.Single(plan.Proposal.Records);
+        Assert.DoesNotContain(':', summary.SubjectKey["summary:".Length..]);
+        Assert.Equal($"summary:{session.Replace(":", "%3A", StringComparison.Ordinal)}", summary.SubjectKey);
+        Assert.Equal(2, summary.Links.Count);
+        Assert.NotEqual(RecallSubjects.Summary("a:b"), RecallSubjects.Summary("a%3Ab"));
+        Assert.Equal("summary:plain-session", RecallSubjects.Summary("plain-session"));
+    }
+
+    [Fact]
     public void SessionSummary_ChunksLargeSessions_WithinStoreBounds()
     {
         var originals = Enumerable.Range(1, 300).Select(minute => SessionEntry(minute)).ToArray();

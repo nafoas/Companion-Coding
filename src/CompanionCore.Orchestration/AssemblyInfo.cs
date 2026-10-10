@@ -1,2 +1,1 @@
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("CompanionCore.Watchbun.Tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("CompanionCore.Orchestration.Tests")]
