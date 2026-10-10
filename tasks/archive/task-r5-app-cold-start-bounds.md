@@ -1,10 +1,13 @@
 # R5 — App Integration Cold-Start Bounds
 
-Status: **active — implementation**
+Status: **accepted — Paw Gate passed 2026-10-10**
 Authorized: 2026-10-10. Task 7 deferred finding 5 routes R5 before Task 8, under Boss's standing direction to fix root causes rather than relax tests.
 Accepted remote base: `ed5f9a88685f38c84ccd07841cbf163f339863d9`
 Working branch: `agent/task-r5-app-cold-start-bounds`
 Builder: Claude
+Accepted gate head: `5054f088bb7bf1ab1fc9c10d3dd5378b54b0554a`, tree `4d207ec0824eff49c3683074d40aa006a601e747`
+Pull request: #23, squash-merged as `3c078f58a46daf8f2f66e97592c39cf18d120f98`
+Final CI: push run `38033372491`, PR run `38033375072`, each 453/453
 
 ## Objective
 
@@ -62,14 +65,22 @@ The shutdown step itself (`Stop`, window close, `OnExit` disposal) is not shown 
 
 ## Paw Gate
 
-Pending. The gate requires:
+Gate result: **PASS** on 2026-10-10. The separate review confirmed:
 
-- the acceptance scenarios;
-- a strict build with 0 warnings;
-- both Windows CI paths with verified artifacts and phase evidence;
-- actual-diff review;
-- an exact merge-ref check;
-- recorded judgments.
+**Actual diff.**
+- Only the two allowlisted harness files and control records changed.
+- The exit bound stays 30 s and is now timed from each scenario's single marker.
+- Startup has its own explicit liveness bound.
+- Output draining is now bounded.
+- No product, CI, or other test changed. No test was skipped, retried, or reordered.
+
+**Strict build.** 0 warnings and 0 errors.
+
+**Diagnosis confirmed by evidence.** On candidate push run `38033166320`, the shutdown launch spent 28.983 s in startup and 2.026 s in exit. Under the old single bound that is a 31 s failure; now it passes with shutdown measured precisely. On PR run `38033174631` the split was 12.118 s and 2.038 s. Every other launch finished both phases in under 1 s.
+
+**Windows CI.** Gate head `5054f08` passed push run `38033372491` (job `114158709568`) and PR run `38033375072` (job `114158717229`), each 453/453 on the first attempt. Artifact digests verified, and the accepted attention-sheet digest is unchanged.
+
+**Merge ref.** Exact parents (`ed5f9a8`, `5054f08`) and a tree equal to the head tree.
 
 ## Personal Round Judgments
 

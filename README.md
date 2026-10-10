@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–7, the R2 Stage 4 recertification, and R3 reliable orientation delivery are accepted. Stage 5's stateless Braincase bridge is complete with mock and replay providers only. No task is active; R5 is next, then Task 8.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–7, the R2 Stage 4 recertification, and R3 reliable orientation delivery are accepted. Stage 5's stateless Braincase bridge is complete with mock and replay providers only. R5 corrected the App integration test timing. No task is active; Task 8 is next.
 
 ## Builder workflow
 
@@ -32,7 +32,9 @@ Stage 5 is complete. **Task 7** (PR #21) added `CompanionCore.Api`, the stateles
 
 The final head passed both Windows event gates at 453/453 and merged as `9b8d45f0939735a3281b06bec44af47518703a80`.
 
-R5 comes next. It root-causes why the App's shutdown integration scenario slows sharply under concurrent disk load. Attention meaning (Task 8), conversation, ERPP implementation, personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**R5** (PR #23) found why the App shutdown integration test was timing out: the first App launch's cold start was being charged against the shutdown exit bound. Startup and exit are now separately bounded phases, and the 30 s exit bound is unchanged. It merged as `3c078f58a46daf8f2f66e97592c39cf18d120f98`.
+
+Attention meaning (Task 8) is next. Conversation, ERPP implementation, personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 

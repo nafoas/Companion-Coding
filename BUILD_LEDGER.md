@@ -2,16 +2,16 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 5 — stateless faraway Braincase bridge (mock/replay only) — **accepted** |
-| Active task | None; R5 (App shutdown load sensitivity) is next, before Task 8 |
-| Working branch | Accepted product/evidence baseline on `main`: `9b8d45f0939735a3281b06bec44af47518703a80` (Task 7) |
-| Entry criteria met | Complete; Tasks 4–7, R2, and R3 each passed their Paw Gates and were reconciled to accepted `main` |
+| Current stage | Stage 5 — stateless faraway Braincase bridge (mock/replay only) — **accepted**; App integration timing corrected (R5) |
+| Active task | None; Task 8 (attention engine, Stage 6) is next |
+| Working branch | Accepted product/evidence baseline on `main`: `3c078f58a46daf8f2f66e97592c39cf18d120f98` (R5) |
+| Entry criteria met | Complete; Tasks 4–7, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | Task 7 gate head `9ea877b7642d4663ba940ec00be5f7ec78fd1d36`, tree `cc5536fc288157123305d59f8326b29d303c5a12`, passed push run `38032469978` (job `114156103179`) and PR run `38032472690` (job `114156111743`) on their first attempts. Each passed locked restore, the clean 22-project audit, a 0-warning/0-error Release build, 453/453 tests (Api 128), and both artifact uploads. The local gate passed the strict build and 440/440 executable tests. |
-| Manual gate | Task 7 actual-diff, allowlist, privacy-fencing, nap-ordering, journal-recovery, and credential-hygiene review passed. The Builder's bug hunt fixed two defects (J14) and ran a mutation pass over the key guards. Earlier App shutdown timeouts were traced through TRX timing: this suite's load was reduced, and the pre-existing App sensitivity was assigned to R5 (J15). PR #21 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `9b8d45f0939735a3281b06bec44af47518703a80` — Task 7 stateless Braincase bridge (PR #21) |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, the eight-frame orientation budget, the three-retake bound, and the Task 7 bridge bounds and usage estimate are provisional until Stage 11 physical profiling and the final API gate. The synthetic capture source cannot emit `SourceResized`. The bridge is not yet composed into the WPF app. The App shutdown integration scenario slows sharply under concurrent disk-sync load (R5). |
+| Automated tests | R5 gate head `5054f088bb7bf1ab1fc9c10d3dd5378b54b0554a`, tree `4d207ec0824eff49c3683074d40aa006a601e747`, passed push run `38033372491` (job `114158709568`) and PR run `38033375072` (job `114158717229`) on their first attempts. Each passed locked restore, the clean 22-project audit, a 0-warning/0-error Release build, 453/453 tests, and both artifact uploads. The App integration tests now log per-phase startup and exit durations. |
+| Manual gate | R5 actual-diff and bound review passed. Candidate evidence confirmed the diagnosis: a 28.983 s cold start plus a 2.026 s exit would have failed the old single 30 s bound and now passes, with shutdown measured precisely. PR #23 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `3c078f58a46daf8f2f66e97592c39cf18d120f98` — R5 App integration cold-start bounds (PR #23), on the Task 7 product tree |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, the eight-frame orientation budget, the three-retake bound, and the Task 7 bridge bounds and usage estimate are provisional until Stage 11 physical profiling and the final API gate. The synthetic capture source cannot emit `SourceResized`. The bridge is not yet composed into the WPF app. A cold first App launch on a shared CI runner can take about 30 s, and the App's `shutdown` scenario exit phase takes about 2 s; both are recorded for Stage 11 profiling. |
 | Deferred temptations | Task 8+ attention meaning/conversation/ERPP/personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
@@ -108,6 +108,22 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### R5 — App integration cold-start bounds
+
+- Builder: Claude. Routed by Task 7 deferred finding 5, under Boss's direction to fix root causes rather than relax tests.
+- Root cause: `Shutdown_StopThenClose…` is always the first App launch in its run, so it absorbed the disk-bound cold start of WPF inside a 30 s bound meant to catch a process that does not exit. It hit the bound three times and reached 27.0 s on an accepted-lineage run before Task 7 existed.
+- Change: the integration harness measures two bounded phases:
+  - launch until the first marker, under a 90 s cold-start liveness bound;
+  - marker until exit, under the unchanged 30 s bound.
+
+  Durations are logged for each launch, and output draining is now bounded. Only the two harness files changed.
+- Evidence:
+  - Candidate push run `38033166320`: 28.983 s startup plus 2.026 s exit, a pass that would have failed before.
+  - Gate head `5054f08`: push run `38033372491` and PR run `38033375072` each passed 453/453 with verified artifacts.
+  - The merge ref had exact parents and an equal tree.
+- Merge: PR #23 squash-merged with the expected-head fence as `3c078f58a46daf8f2f66e97592c39cf18d120f98`, tree `4d207ec0824eff49c3683074d40aa006a601e747`.
+- Result: passed and accepted. Task 8 is next.
 
 ### Task 7 — Stateless Braincase bridge
 
