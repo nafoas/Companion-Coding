@@ -62,6 +62,9 @@
           "CompanionCore.Capture.Contracts": "[1.0.0, )"
         }
       },
+      "companioncore.calibration": {
+        "type": "Project"
+      },
       "companioncore.capture.client": {
         "type": "Project",
         "dependencies": {

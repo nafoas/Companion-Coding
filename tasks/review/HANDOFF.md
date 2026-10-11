@@ -2,29 +2,53 @@
 
 ## Task
 
-No task is active. The last accepted packet is CAL-01 (`tasks/archive/cal-01-agreed-cadence.md`), merged through PR #45 as `a330a3ca5fcbcfbf67d63f51910b2233e0daf708`.
+CAL-02 — Calibration Recorder, Report, and Soak Protocol (`tasks/active/cal-02-calibration-recorder.md`), Stage 11 part 2.
 
-Builder: Claude.
+- Branch: `agent/cal-02-calibration-recorder`.
+- Base: `main` `50b4dd2`.
+- Builder: Claude.
 
 ## Changed
 
-This docs-only reconciliation:
-
-- archives CAL-01 with its PASS record;
-- updates `BUILD_LEDGER.md` and `README.md`;
-- resets this handoff.
+- **New `CompanionCore.Calibration`:** sample, bounded recorder, and analyzer, with 11 tests.
+- **App:**
+  - `CalibrationSampler`;
+  - `--calibration-log` and `--calibration-interval-ms`;
+  - `--test-mode=calibrate`.
+- **New `tools/CompanionCore.CalibrationReport`.**
+- **App integration:** `CalibrationModeTests` (2 real-process tests).
+- **`docs/Calibration-Protocol.md`.**
+- Solution, lock files, and the packet.
 
 ## Verification
 
-- CAL-01 head `3c731c4`, tree `c990426`: push run `38097858502` and PR run `38097870359` passed 943/943 with verified artifacts.
-- The merge ref had exact parents and an equal tree.
+- **Local:**
+  - 0 warnings, 0 vulnerable packages;
+  - 939/939 on Linux;
+  - the report tool was smoke-run on a synthetic 2-hour log.
+- **Mutation:** 16 mutants; 15 killed, 1 equivalent (double ownership filter).
+- **Windows CI:** pending (expected 956).
 
 ## Remaining
 
-- Merge this reconciliation.
-- Then CAL-02, CAL-03, and the smaller deferred items.
-- Stop before Stage 12 (credentials, live API).
+- CI, merge, and closure.
+- Then CAL-03 and the smaller deferred items.
+- Stop before Stage 12.
+
+## Risks and assumptions
+
+- The final thresholds need Boss's measured report (D1).
+
+## Personal Round Judgments
+
+CAL-02 J1–J4, recorded in the packet.
+
+## Review focus
+
+- Recorded fields are numbers and state names only.
+- The log bounds.
+- Opt-in recording.
 
 ## Next safe task
 
-CAL-02 — Calibration recorder, summarizer, and soak protocol.
+CAL-03.

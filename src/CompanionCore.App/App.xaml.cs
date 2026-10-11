@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using CompanionCore.Capture.Client;
 using CompanionCore.Presentation;
@@ -110,6 +111,7 @@ public partial class App : Application
             diagnostics,
             notice => Dispatcher.BeginInvoke(() => window.RenderNotice(notice)),
             Dispatcher);
+        _companion.StartCalibration(e.Args, captureWorker);
 
         if (testMode is not null)
         {
@@ -188,6 +190,28 @@ public partial class App : Application
                         + $"CONSTRUCTIONS:{CompanionRuntime.ConstructionCount}");
                     var wiredStop = _runtime!.Stop();
                     firstWindow.RenderTransition(wiredStop);
+                    firstWindow.Close();
+                    Shutdown(0);
+                }
+
+                break;
+
+            case "calibrate":
+                // Stage 11 calibration sampling in the real process (requires --calibration-log):
+                // wait for a few bounded samples, then report only counts and the file name.
+                {
+                    var sampler = _companion!.Calibration;
+                    var deadline = DateTime.UtcNow.AddSeconds(30);
+                    while (sampler is not null && sampler.Recorder.Written < 3 && DateTime.UtcNow < deadline)
+                    {
+                        Thread.Sleep(50);
+                    }
+
+                    Console.WriteLine(
+                        $"CALIBRATION SAMPLES:{sampler?.Recorder.Written ?? 0} FAILURES:{(sampler?.Recorder.Failures ?? 0) + (sampler?.SampleFailures ?? 0)} "
+                        + $"FILE:{Path.GetFileName(sampler?.Recorder.CurrentFile ?? "none")} CONSTRUCTIONS:{CompanionRuntime.ConstructionCount}");
+                    var calibrateStop = _runtime!.Stop();
+                    firstWindow.RenderTransition(calibrateStop);
                     firstWindow.Close();
                     Shutdown(0);
                 }

@@ -34,6 +34,7 @@
     -->
     <ProjectReference Include="..\..\src\CompanionCore.App\CompanionCore.App.csproj" />
     <ProjectReference Include="..\..\src\CompanionCore.TargetAuth.Windows\CompanionCore.TargetAuth.Windows.csproj" />
+    <ProjectReference Include="..\..\src\CompanionCore.Calibration\CompanionCore.Calibration.csproj" />
   </ItemGroup>
 
 </Project>
