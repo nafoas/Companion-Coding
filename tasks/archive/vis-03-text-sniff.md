@@ -1,6 +1,6 @@
 # VIS-03 — The Text Sniff: noticing new words on screen (Vision upgrade, part 3)
 
-Status: **in progress**
+Status: **accepted** — Paw Gate PASS; PR #69 squash-merged as `86deb5f0e2e54c8b516567e5d80a1d2c65aed627`.
 Authorized: 2026-10-11 by Boss ("Built in + local Vision AI that is just part of the app, not a separate download"; "see, notice, and respond, without an immersion killing delay").
 Accepted remote base: `716930a1eef471cefce0144134636be0842dddef`
 Working branch: `agent/vis-03-text-sniff`
@@ -66,6 +66,7 @@ A per-region digest is kept in worker RAM only, to detect change. The Glance and
 
 - **Real OCR accuracy on game fonts** is verified on Boss's PC. CI has no rendered game text.
 - **The real-process path carries no text in CI.** The synthetic worker has no recognizer, so `TextSniffProduced` over the pipe is covered by protocol round-trip and shape tests, plus the in-process engine test. The live end-to-end path is exercised on Boss's PC.
+- **FIX-03 (found during this gate; outside this task).** `WindowsPlatformSignalsTests.TheLoop_ObservesAnExit_AndDisposeIsIdempotent` failed once on Windows CI (run `38169845132`, WIP head `8ea306c`): "Expected 3, Actual 0". Root cause: a test race. The test sets the fake probe's `State = Exited` before its `ExitCode = 3`, and the background poll loop can read the exit between the two writes. The fix is test-only: set the exit code first. It goes in its own PR.
 - **Region layout is the default one.** A game whose dialogue sits elsewhere (mid-screen speech bubbles, say) is read only through the corners and the band; Glances still see the whole sheet. Learning per-game text regions waits for VIS-04 or later.
 - **VIS-04:** the bundled local scene model.
 
@@ -85,4 +86,10 @@ A per-region digest is kept in worker RAM only, to detect change. The Glance and
 
 ### Gate
 
-_(local gate and CI evidence below)_
+- **Local gate (Linux):** locked restore; `/warnaserror` build, 0 warnings; no vulnerable packages; every suite passed (Capture.Worker 116, Orchestration 109, TargetAuth 97, Api 187, …).
+- **Windows CI.** Head `aeacff6049daa079cbf1424139a8756f19322fc4` passed push run `38170316427` and PR run `38170329276` at 1123/1123, with verified artifact digests and the expected attention-sheet PNG (`5eb11c96…`).
+  - The real Windows OCR engine is **available** on the CI runner. It read a blank 1728×346 crop as no lines in 297 ms and 315 ms: a first, cold read, on the background slot, so the Sniff never waits on it.
+  - The real-process Sniff latency test still passes.
+- **Merge ref.** `refs/pull/69/merge` had exact parents `716930a` (main) and `aeacff6` (head), and tree `de25b5771dcf717b467fac8b54a46922a6b695c9`, equal to a local merge.
+- **Merge.** Marked ready and squash-merged with the expected-head fence as `86deb5f0e2e54c8b516567e5d80a1d2c65aed627`, which carries the same tree.
+- **Result: PASS.**
