@@ -2,15 +2,15 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | **Stage 12 built; Vision upgrade in progress (Boss, 2026-10-11).** VIS-01 (the Sniff), VIS-02 (Glance + Inspect), and VIS-03 (the Text Sniff) accepted; FIX-03 (a test race) and then VIS-04 (the bundled local scene model) are next. **Stage 12 status:** LIVE-01, LIVE-02, and CORE-12 accepted: Claude Braincase, sign-in and Bun Budget, placeholder commands, and the guided milestone. The Core Bun Approval Hop needs Boss's first live check (`docs/Builder-Braincase-Setup.md`) and milestone hand-run (`docs/Core-Prince-Milestone.md`). Stage 13 waits for that hop |
+| Current stage | **Stage 12 built; Vision upgrade in progress (Boss, 2026-10-11).** **The Vision upgrade is complete:** VIS-01 (the Sniff), VIS-02 (Glance + Inspect), VIS-03 (the Text Sniff), and VIS-04 (the Scene Sniff, a bundled local vision model) are accepted, with FIX-03. **Stage 12 status:** LIVE-01, LIVE-02, and CORE-12 accepted: Claude Braincase, sign-in and Bun Budget, placeholder commands, and the guided milestone. The Core Bun Approval Hop needs Boss's first live check (`docs/Builder-Braincase-Setup.md`) and milestone hand-run (`docs/Core-Prince-Milestone.md`). Stage 13 waits for that hop |
 | Active task | None. Waiting on Boss: the first live check, then the milestone hand-run and Core Bun Approval Hop |
-| Working branch | Accepted product/evidence baseline on `main`: `86deb5f0e2e54c8b516567e5d80a1d2c65aed627` (VIS-03) |
+| Working branch | Accepted product/evidence baseline on `main`: `3567519c4d4cc827a7e7f25f0d0fa29c6e2e12f2` (VIS-04) |
 | Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | Stage 12 authorized by Boss on 2026-10-11 ("Let's try Stage 12") |
 | Live API authorized | Stage 12 authorized. Live calls run only on Boss's PC, with his own key and budget, after LIVE-02. No live call has been made from the build environment, and no real credential exists in it |
-| Automated tests | VIS-03 head `aeacff6049daa079cbf1424139a8756f19322fc4` passed push run `38170316427` and PR run `38170329276` at 1123/1123 with verified artifacts; the real Windows OCR engine was available on CI and read a blank crop as no lines in about 300 ms (cold); the local gate passed on Linux. Before it, VIS-02 head `d6a20c51c418d8be0869bb044b1cbfd513b66195` passed push run `38167891536` and PR run `38167905535` at 1102/1102 with verified artifacts; the local gate passed 1084/1084 on Linux. Before it, VIS-01 head `2c5baecee576e86ecb9351cdb7bcc922d24043d9` passed push run `38161132869` and PR run `38161148925` at 1076/1076 with verified artifacts, including the Windows real-process sniff latency test (p95 ≤ 100 ms); the local gate passed 1058/1058 on Linux. Before it, FIX-02 head `012e006fbe3f55cb9a976e7d0093ca9ca9725e9b` passed push run `38144399481` and PR run `38144410265` at 1044/1044 with verified artifacts; the local gate passed 1026/1026 on Linux. Before it, CORE-12 head `0d8b65b21247cbda05ca1b5802b9a1409f782709`, tree `c98917910594f88c69159f570d8870dd11a09848`, passed push run `38142489617` and PR run `38142501429` at 1044/1044 with verified artifacts. The local gate passed 1026/1026 on Linux. |
+| Automated tests | VIS-04 head `353441a4396a51159cd4dd9cf3e9014168b077ea` passed push run `38174260185` and PR run `38174274555` at 1146/1146 with verified artifacts; the real SigLIP model loaded on CI (CPU) and matched the Python reference embedding at cosine 1.00000; the local gate passed on Linux. Before it, FIX-03 head `11c7d35` passed runs `38171459446` and `38171468673` at 1123/1123. Before it, VIS-03 head `aeacff6049daa079cbf1424139a8756f19322fc4` passed push run `38170316427` and PR run `38170329276` at 1123/1123 with verified artifacts; the real Windows OCR engine was available on CI and read a blank crop as no lines in about 300 ms (cold); the local gate passed on Linux. Before it, VIS-02 head `d6a20c51c418d8be0869bb044b1cbfd513b66195` passed push run `38167891536` and PR run `38167905535` at 1102/1102 with verified artifacts; the local gate passed 1084/1084 on Linux. Before it, VIS-01 head `2c5baecee576e86ecb9351cdb7bcc922d24043d9` passed push run `38161132869` and PR run `38161148925` at 1076/1076 with verified artifacts, including the Windows real-process sniff latency test (p95 ≤ 100 ms); the local gate passed 1058/1058 on Linux. Before it, FIX-02 head `012e006fbe3f55cb9a976e7d0093ca9ca9725e9b` passed push run `38144399481` and PR run `38144410265` at 1044/1044 with verified artifacts; the local gate passed 1026/1026 on Linux. Before it, CORE-12 head `0d8b65b21247cbda05ca1b5802b9a1409f782709`, tree `c98917910594f88c69159f570d8870dd11a09848`, passed push run `38142489617` and PR run `38142501429` at 1044/1044 with verified artifacts. The local gate passed 1026/1026 on Linux. |
 | Manual gate | CORE-12 glue review passed: each placeholder command calls one existing command, and repair is opt-in with confirmation. PR #61 squash-merged through the expected-head fence. The milestone hand-run is Boss's. |
-| Accepted `main` baseline | `86deb5f0e2e54c8b516567e5d80a1d2c65aed627` — VIS-03 the Text Sniff (PR #69), on top of VIS-02 Glance and Inspect (PR #67), on top of VIS-01 the Sniff (PR #65), on top of FIX-02 (PR #63) and CORE-12 (PR #61) |
+| Accepted `main` baseline | `3567519c4d4cc827a7e7f25f0d0fa29c6e2e12f2` — VIS-04 the Scene Sniff (PR #72), on top of FIX-03 (PR #71), VIS-03 the Text Sniff (PR #69), on top of VIS-02 Glance and Inspect (PR #67), on top of VIS-01 the Sniff (PR #65), on top of FIX-02 (PR #63) and CORE-12 (PR #61) |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are the accepted agreed defaults (Boss, 2026-10-11), adjusted only on evidence. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs come from the native frame (DEF-02) and are saved under the provisional 1280 edge; long sessions are consolidated completely in parts (DEF-01). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are accepted defaults, tuned from play; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
 | Deferred temptations | A public backup/repair command (KEEP-02 D1; the single-file export exists since DEF-01); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials.. On 2026-10-11 Boss decided the values agreed in the design conversation are the accepted calibration, changed up or down only if real use shows a need. Boss also decided that Prince is one unbroken line of continuous Bun: nothing ever restores, rolls back, or deletes his memories on its own; repair is opt-in only and may only continue his current line; older exports are never imported. |
@@ -172,6 +172,30 @@
   - Mutation pass: 33 mutants, 31 killed, 2 defense-in-depth survivors.
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
+
+### VIS-04 — The Scene Sniff: a local vision model built into the app (Vision upgrade, part 4)
+
+- **Boss, 2026-10-11:** "Built in+ local Vision AI that is just part of the app, not a separate download".
+- **The model (J1).** Google's SigLIP base/16 (Apache-2.0) was chosen over CLIP, whose card puts deployed use out of scope.
+  - It runs on ONNX Runtime 1.24.4 with DirectML or the CPU, whichever wins a warm-up race at load. The CPU uses at most half the cores (4 threads maximum).
+  - The build fetches the model with a pinned digest into a git-ignored cache, and CI caches it. It is never committed.
+  - A 32-entry neutral scene vocabulary is precomputed by a reproducible tool.
+  - `THIRD-PARTY-NOTICES.md` records the licenses.
+- **Reading.**
+  - The whole frame is area-sampled to 224×224, off the frame path, one read at a time: on Sniff triggers (at most every 250 ms) or every 1 s.
+  - Novelty is measured against the scene last reported: ≥ 0.10 is a change, ≥ 0.20 a full shift.
+- **Privacy (J2, J3).**
+  - The embedding never leaves the worker. Protocol v7 `SceneSniffProduced` carries novelty, the shift flag, and a fixed-vocabulary label and confidence. It is strictly validated, sequenced, and privacy-admitted.
+  - ONNX Runtime telemetry is disabled. DirectML's diagnostics follow Windows' setting.
+- **Prince's reaction (`SceneReflex`).**
+  - A change is whole-screen evidence with a `scene:<label>` topic, below Bnuy Mode.
+  - A full shift into a scene he has not just seen brings the next Glance forward.
+  - Scene labels habituate and recover.
+- **Evidence.**
+  - Head `353441a`: runs `38174260185` and `38174274555` passed 1146/1146. The real model matched the Python reference at cosine 1.00000; CI's CPU took about 3–4 s to load and about 300–350 ms per read.
+  - Mutation pass: 44 mutants, 43 caught, 1 equivalent fast path.
+- **Merge.** PR #72 squash-merged as `3567519c4d4cc827a7e7f25f0d0fa29c6e2e12f2`.
+- **Result.** Passed and accepted. The Vision upgrade is complete.
 
 ### FIX-03 — The platform exit test sets the exit code before the exit
 

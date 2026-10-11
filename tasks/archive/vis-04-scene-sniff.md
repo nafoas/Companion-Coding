@@ -1,6 +1,6 @@
 # VIS-04 — The Scene Sniff: a local vision model built into the app (Vision upgrade, part 4)
 
-Status: **in progress**
+Status: **accepted** — Paw Gate PASS; PR #72 squash-merged as `3567519c4d4cc827a7e7f25f0d0fa29c6e2e12f2`.
 Authorized: 2026-10-11 by Boss ("Built in+ local Vision AI that is just part of the app, not a separate download"; "see, notice, and respond, without an immersion killing delay"; "I have a strong PC, so allocate as much RAM is needed").
 Accepted remote base: `4959bf023e1673b99c36fed8a5d4b2fbab21e356`
 Working branch: `agent/vis-04-scene-sniff`
@@ -90,4 +90,12 @@ The agreed plan said "CLIP". OpenAI's CLIP model card says "any deployed use cas
 
 ### Gate
 
-_(local gate and CI evidence below)_
+- **Local gate (Linux):** locked restore; `/warnaserror` build, 0 warnings; no vulnerable packages; every suite passed (Capture.Worker 131, Orchestration 115, TargetAuth 99, Api 187, …).
+- **Windows CI.** Head `353441a4396a51159cd4dd9cf3e9014168b077ea` passed push run `38174260185` and PR run `38174274555` at 1146/1146, with verified artifact digests and the expected attention-sheet PNG (`5eb11c96…`).
+  - The real SigLIP model was fetched (digest-verified) and loaded on both runs, and ran on the CPU (the runners have no GPU).
+  - It matched the Python reference embedding at cosine 1.00000.
+  - Load took 3.1 s and 3.7 s; median reads took 305 ms and 349 ms.
+  - The Sniff latency gate and the OCR test still pass.
+- **Merge ref.** `refs/pull/72/merge` had exact parents `4959bf0` (main) and `353441a` (head), and tree `96ff5256170e089fe07bf95ffdbc9a9e3447b491`, equal to a local merge.
+- **Merge.** Marked ready and squash-merged with the expected-head fence as `3567519c4d4cc827a7e7f25f0d0fa29c6e2e12f2`, which carries the same tree.
+- **Result: PASS.** The Vision upgrade (VIS-01 to VIS-04) is complete.
