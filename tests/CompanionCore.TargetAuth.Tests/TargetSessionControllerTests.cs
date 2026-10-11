@@ -756,6 +756,48 @@ public sealed class TargetSessionControllerTests
     }
 
     [Fact]
+    public async Task ATextSniff_IsExposedOnlyThroughPrivacyAdmission_AndNeverAfterAPrivacyStop()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(harness, worker);
+        var available = new List<TextSniffSignal>();
+        controller.TextSniffAvailable += (_, text) => available.Add(text);
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+        var grant = worker.LastGrant!;
+
+        var text = worker.EmitTextSniff(grant);
+        Assert.Equal(text, Assert.Single(available));
+
+        // Another grant, or a malformed signal, is never exposed.
+        worker.EmitTextSniff(CaptureAuthorizationGrant.Issue(Guid.NewGuid(), grant.Generation, grant.Target));
+        worker.EmitTextSniff(grant, lines: TextSniffSignal.MaximumLines + 1);
+        Assert.Single(available);
+
+        await controller.PrivacyStopAsync();
+        worker.EmitTextSniff(grant);
+        Assert.Single(available);
+    }
+
+    [Fact]
+    public async Task APrivacyRejectedFrame_NeverExposesItsTextSniff()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(
+            harness,
+            worker,
+            _ => PrivacyAssessment.ClearlySensitive(SensitiveContentKind.Credential));
+        var available = 0;
+        controller.TextSniffAvailable += (_, _) => available++;
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+
+        worker.EmitTextSniff(worker.LastGrant!);
+
+        Assert.Equal(0, available);
+    }
+
+    [Fact]
     public async Task ACadence_ReachesTheWorkerOnlyForTheCurrentTarget()
     {
         await using var harness = await TargetAuthTestHarness.CreateAsync();

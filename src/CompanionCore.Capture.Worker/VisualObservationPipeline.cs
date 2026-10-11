@@ -12,6 +12,7 @@ internal sealed class VisualObservationPipeline : IDisposable
     private readonly object _gate = new();
     private readonly FrameChangeDetector _changeDetector = new();
     private readonly StaggeredRegionScheduler _scheduler = new();
+    private readonly TextSniffer _text;
     private NormalizedRegion? _manualRegion;
     private bool _orientationPending = true;
     private bool _photographPending;
@@ -38,21 +39,40 @@ internal sealed class VisualObservationPipeline : IDisposable
     private DateTimeOffset? _lastRegionalSheetAt;
     private bool _disposed;
 
+    internal VisualObservationPipeline(ITextRecognizer? textRecognizer = null)
+    {
+        _text = new TextSniffer(textRecognizer ?? UnavailableTextRecognizer.Instance);
+    }
+
+    /// <summary>The Text Sniff (VIS-03) fed by this pipeline's frames.</summary>
+    internal TextSniffer Text => _text;
+
     internal ValueTask<OwnedWorkerAttentionSheet?> ProcessAsync(
         CaptureSourceFrame frame,
         CaptureIpcAuthorization authorization,
         CancellationToken cancellationToken) =>
-        ProcessAsync(frame, authorization, onSniff: null, cancellationToken);
+        ProcessAsync(frame, authorization, onSniff: null, onText: null, cancellationToken);
+
+    internal ValueTask<OwnedWorkerAttentionSheet?> ProcessAsync(
+        CaptureSourceFrame frame,
+        CaptureIpcAuthorization authorization,
+        Action<SniffSignal>? onSniff,
+        CancellationToken cancellationToken) =>
+        ProcessAsync(frame, authorization, onSniff, onText: null, cancellationToken);
 
     /// <summary>
     /// Sniffs the frame first — before any sheet work, so noticing never waits on
     /// composition or encoding — then composes a sheet only when one is owed: an
     /// orientation, a photograph, a forced sheet, a sniff trigger, or the sheet spacing.
+    /// After the sniff, a due text-likely region is handed to the Text Sniff, which reads it
+    /// in the background (also for a near-duplicate frame) and reports through
+    /// <paramref name="onText"/>; no frame waits on a read.
     /// </summary>
     internal async ValueTask<OwnedWorkerAttentionSheet?> ProcessAsync(
         CaptureSourceFrame frame,
         CaptureIpcAuthorization authorization,
         Action<SniffSignal>? onSniff,
+        Action<TextSniffSignal>? onText,
         CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -98,6 +118,7 @@ internal sealed class VisualObservationPipeline : IDisposable
             FrameChangeResult change = default;
             SniffSignal? sniff = null;
             var sheetOwed = true;
+            var duplicate = false;
             lock (_gate)
             {
                 if (_photographPending && _currentSheets >= AttentionSheet.MaximumRetainedSheets)
@@ -129,46 +150,55 @@ internal sealed class VisualObservationPipeline : IDisposable
                     if (change.IsDuplicate && !orientation && !_forceNextSheet)
                     {
                         _duplicateFrames++;
-                        return null;
-                    }
-
-                    _changedFrames++;
-                    if (change.Grid is { } grid)
-                    {
-                        sniff = BuildSniff(frame, authorization, grid);
-                        _sniffs++;
-                    }
-
-                    var trigger = sniff?.IsTrigger == true;
-                    var spacingElapsed = _lastRegionalSheetAt is not { } lastSheet
-                        || frame.Timestamp < lastSheet
-                        || frame.Timestamp - lastSheet >= _sheetSpacing;
-                    sheetOwed = orientation || _forceNextSheet || trigger || spacingElapsed;
-                    if (sheetOwed && _currentSheets >= AttentionSheet.MaximumRetainedSheets)
-                    {
-                        _droppedSheets++;
+                        duplicate = true;
                         sheetOwed = false;
-                    }
-
-                    if (sheetOwed)
-                    {
-                        stateVersion = _stateVersion;
-                        stateCaptured = true;
-                        regions = orientation
-                            ? []
-                            : _scheduler.TakeNext(_manualRegion, trigger ? FocusOn(sniff!) : null);
-                        _orientationPending = false;
-                        _forceNextSheet = false;
-                        if (!orientation)
-                        {
-                            _lastRegionalSheetAt = frame.Timestamp;
-                        }
                     }
                     else
                     {
-                        _spacedSheets++;
+                        _changedFrames++;
+                        if (change.Grid is { } grid)
+                        {
+                            sniff = BuildSniff(frame, authorization, grid);
+                            _sniffs++;
+                        }
+
+                        var trigger = sniff?.IsTrigger == true;
+                        var spacingElapsed = _lastRegionalSheetAt is not { } lastSheet
+                            || frame.Timestamp < lastSheet
+                            || frame.Timestamp - lastSheet >= _sheetSpacing;
+                        sheetOwed = orientation || _forceNextSheet || trigger || spacingElapsed;
+                        if (sheetOwed && _currentSheets >= AttentionSheet.MaximumRetainedSheets)
+                        {
+                            _droppedSheets++;
+                            sheetOwed = false;
+                        }
+
+                        if (sheetOwed)
+                        {
+                            stateVersion = _stateVersion;
+                            stateCaptured = true;
+                            regions = orientation
+                                ? []
+                                : _scheduler.TakeNext(_manualRegion, trigger ? FocusOn(sniff!) : null);
+                            _orientationPending = false;
+                            _forceNextSheet = false;
+                            if (!orientation)
+                            {
+                                _lastRegionalSheetAt = frame.Timestamp;
+                            }
+                        }
+                        else
+                        {
+                            _spacedSheets++;
+                        }
                     }
                 }
+            }
+
+            if (duplicate)
+            {
+                StartTextSniff(frame, authorization, pixels, change, onText);
+                return null;
             }
 
             if (sniff is not null)
@@ -181,6 +211,11 @@ internal sealed class VisualObservationPipeline : IDisposable
                 }
 
                 onSniff?.Invoke(sniff);
+            }
+
+            if (!photograph)
+            {
+                StartTextSniff(frame, authorization, pixels, change, onText);
             }
 
             if (!photograph && !sheetOwed)
@@ -277,6 +312,32 @@ internal sealed class VisualObservationPipeline : IDisposable
             composed?.Dispose();
             pixels?.Dispose();
             SetWorkingBytes(0);
+        }
+    }
+
+    private void StartTextSniff(
+        CaptureSourceFrame frame,
+        CaptureIpcAuthorization authorization,
+        OwnedBgra32Buffer pixels,
+        FrameChangeResult change,
+        Action<TextSniffSignal>? onText)
+    {
+        if (onText is null || change.CellChanges is not { } cellChanges)
+        {
+            return;
+        }
+
+        try
+        {
+            _text.TryStart(
+                pixels,
+                cellChanges,
+                new TextSniffSource(authorization, frame.SequenceNumber, frame.Timestamp, frame.Width, frame.Height, frame.AccountedBytes),
+                onText);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // Reading text is best effort; the Sniff and sheets carry on without it.
         }
     }
 
@@ -564,6 +625,7 @@ internal sealed class VisualObservationPipeline : IDisposable
             _lastChangeScore = 0;
             _lastRegionalSheetAt = null;
             _stateVersion = checked(_stateVersion + 1);
+            _text.Reset();
         }
     }
 
@@ -661,6 +723,9 @@ internal sealed class VisualObservationPipeline : IDisposable
             _currentWorkingBytes = 0;
             _stateVersion = checked(_stateVersion + 1);
         }
+
+        // Outside the gate: disposing waits for a read in flight.
+        _text.Dispose();
     }
 }
 

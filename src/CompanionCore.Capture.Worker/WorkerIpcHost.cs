@@ -37,6 +37,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         _engine.StatusChanged += OnStatusChanged;
         _engine.AttentionSheetProduced += OnAttentionSheetProduced;
         _engine.SniffProduced += OnSniffProduced;
+        _engine.TextSniffProduced += OnTextSniffProduced;
     }
 
     internal async Task<int> RunAsync(CancellationToken cancellationToken)
@@ -287,6 +288,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
             || !manualShapeIsValid
             || !cadenceShapeIsValid
             || command.Sniff is not null
+            || command.TextSniff is not null
             || command.Kind is not (
                 CaptureIpcMessageKind.Start
                 or CaptureIpcMessageKind.Stop
@@ -368,6 +370,32 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
             },
             SequenceNumber = sniff.SourceSequenceNumber,
             Sniff = sniff,
+        });
+    }
+
+    private void OnTextSniffProduced(object? sender, TextSniffSignal text)
+    {
+        var target = text.Target;
+        if (target is null || !text.IsProtocolSafe())
+        {
+            return;
+        }
+
+        // Counts only: the recognized words never left the Text Sniff.
+        _notifications.Writer.TryWrite(new CaptureIpcMessage
+        {
+            Kind = CaptureIpcMessageKind.TextSniffProduced,
+            Authorization = new CaptureIpcAuthorization
+            {
+                TargetSessionId = text.TargetSessionId,
+                Generation = text.Generation,
+                WindowId = target.WindowId,
+                ProcessId = target.ProcessId,
+                ExecutableFileName = target.ExecutableFileName,
+                ExecutablePathFingerprint = target.ExecutablePathFingerprint,
+            },
+            SequenceNumber = text.SourceSequenceNumber,
+            TextSniff = text,
         });
     }
 
@@ -469,6 +497,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
 
     private static bool HasVisualPayloadFields(CaptureIpcMessage message) =>
         message.Sniff is not null
+        || message.TextSniff is not null
         || message.Cadence is not null
         || message.ManualRegion is not null
         || message.ClearManualRegion
@@ -488,6 +517,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         _engine.StatusChanged -= OnStatusChanged;
         _engine.AttentionSheetProduced -= OnAttentionSheetProduced;
         _engine.SniffProduced -= OnSniffProduced;
+        _engine.TextSniffProduced -= OnTextSniffProduced;
         _notifications.Writer.TryComplete();
         _lifetime.Cancel();
         if (_notificationWriter is not null)

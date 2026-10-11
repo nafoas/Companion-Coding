@@ -20,7 +20,10 @@ internal static class Program
                     : CaptureWorkerEngine.DefaultCadence.FrameSpacing,
                 sheetSpacing: options.UseSyntheticSource
                     ? TimeSpan.Zero
-                    : CaptureWorkerEngine.DefaultCadence.SheetSpacing);
+                    : CaptureWorkerEngine.DefaultCadence.SheetSpacing,
+                textRecognizer: options.UseSyntheticSource
+                    ? null
+                    : WindowsOcrTextRecognizer.Create());
             await using var host = new WorkerIpcHost(options, engine);
             return await host.RunAsync(CancellationToken.None).ConfigureAwait(false);
         }

@@ -379,7 +379,7 @@ public sealed class SniffTests
         ComputeMicroseconds = 1200,
     };
 
-    private static CaptureSourceFrame Frame(
+    internal static CaptureSourceFrame Frame(
         long sequence,
         int milliseconds,
         NormalizedRegion? patch,
@@ -394,7 +394,7 @@ public sealed class SniffTests
         return frame;
     }
 
-    private static CaptureSourceFrame PatchFrame(
+    internal static CaptureSourceFrame PatchFrame(
         int width,
         int height,
         DateTimeOffset timestamp,
