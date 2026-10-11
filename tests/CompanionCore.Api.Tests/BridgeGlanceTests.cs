@@ -240,6 +240,31 @@ public sealed class BridgeGlanceTests
     }
 
     [Fact]
+    public async Task AGlanceEchoingTheKey_IsRefused_EvenWhenEscapedOrInTheLabel()
+    {
+        const string marker = "SYNTHETIC-CREDENTIAL-a51c-TEST-ONLY";
+        await using var harness = await ApiTestHarness.CreateAsync();
+        harness.Credentials.Set(RealSemanticProviderShell.PrimaryCredentialName, ProtectedCredential.FromCharacters(marker));
+        var mock = new MockSemanticProvider();
+        mock.EnqueueGlance(MockSemanticProvider.Respond(request => MockSemanticProvider.GlanceResponseJson(request, label: $"echo {marker}")));
+
+        // JSON escapes hide the key from the raw-text check; the decoded label still catches it.
+        mock.EnqueueGlance(MockSemanticProvider.Respond(request =>
+            MockSemanticProvider.GlanceResponseJson(request, label: "tag-" + marker[..4] + "X").Replace(marker[..4] + "X", "\\u0053" + marker[1..], StringComparison.Ordinal)));
+        var bridge = harness.OpenBridge(mock);
+        var grant = harness.Grant();
+
+        var raw = await bridge.GlanceAsync(ApiTestHarness.Sheet(grant), grant);
+        var escaped = await bridge.GlanceAsync(ApiTestHarness.Sheet(grant), grant);
+
+        Assert.Equal(SemanticResponseInvalidReason.CredentialEcho, raw.InvalidReason);
+        Assert.Equal(SemanticResponseInvalidReason.CredentialEcho, escaped.InvalidReason);
+        Assert.Null(raw.Glance);
+        Assert.Null(escaped.Glance);
+        Assert.DoesNotContain(harness.Diagnostics.Lines, line => line.Contains(marker, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void TheGlanceParser_IsStrict()
     {
         var operation = Guid.NewGuid();

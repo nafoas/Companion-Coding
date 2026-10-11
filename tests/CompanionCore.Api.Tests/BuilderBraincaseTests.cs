@@ -123,6 +123,8 @@ public sealed class BuilderBraincaseTests : IDisposable
     [InlineData("{\"liveCalls\":true,\"effort\":\"turbo\"}", BuilderBraincaseIssue.Invalid)]
     [InlineData("{\"liveCalls\":true,\"apiKey\":\"sk-ant-synthetic\"}", BuilderBraincaseIssue.Invalid)]
     [InlineData("{\"liveCalls\":true,\"model\":\"claude-unknown-9\"}", BuilderBraincaseIssue.UnknownModel)]
+    [InlineData("{\"liveCalls\":true,\"glanceModel\":\"claude-unknown-9\"}", BuilderBraincaseIssue.UnknownModel)]
+    [InlineData("{\"liveCalls\":true,\"glanceModel\":null}", BuilderBraincaseIssue.Invalid)]
     public void DamagedOrUnknownSettings_AlwaysResolveToOff(string json, BuilderBraincaseIssue expected)
     {
         Directory.CreateDirectory(_root);
@@ -132,6 +134,32 @@ public sealed class BuilderBraincaseTests : IDisposable
 
         Assert.Equal(expected, issue);
         Assert.False(settings.LiveCalls);
+    }
+
+    [Fact]
+    public void TheGlance_DefaultsToHaiku_AndAnEmptyGlanceModelTurnsItOff()
+    {
+        Directory.CreateDirectory(_root);
+        File.WriteAllText(Path.Combine(_root, BuilderBraincaseSettings.FileName), "{\"liveCalls\":true}");
+        var (defaulted, _) = BuilderBraincaseSettings.LoadOrCreate(_root);
+        Assert.Equal(("claude-haiku-5-5", true), (defaulted.GlanceModel, defaulted.GlanceEnabled));
+
+        File.WriteAllText(Path.Combine(_root, BuilderBraincaseSettings.FileName), "{\"liveCalls\":true,\"glanceModel\":\"\"}");
+        var (off, issue) = BuilderBraincaseSettings.LoadOrCreate(_root);
+        Assert.Equal((BuilderBraincaseIssue.None, false), (issue, off.GlanceEnabled));
+        Assert.Null(off.ToProviderOptions().GlanceModel);
+
+        var selection = BuilderBraincase.Compose(_root, new InMemoryCredentialStore());
+        try
+        {
+            Assert.True(selection.LiveCallsEnabled);
+            Assert.False(selection.GlanceEnabled);
+            Assert.Null(selection.Bridge!.DailyCostBudget!.GlanceInputCostPerMillionUnits);
+        }
+        finally
+        {
+            (selection.Provider as IDisposable)?.Dispose();
+        }
     }
 
     // ---- pricing and selection -----------------------------------------------------
