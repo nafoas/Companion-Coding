@@ -2,53 +2,29 @@
 
 ## Task
 
-CAL-02 — Calibration Recorder, Report, and Soak Protocol (`tasks/active/cal-02-calibration-recorder.md`), Stage 11 part 2.
+No task is active. The last accepted packet is CAL-02 (`tasks/archive/cal-02-calibration-recorder.md`), merged through PR #47 as `002aec598d9cae5730743e8f787fd27113085f26`.
 
-- Branch: `agent/cal-02-calibration-recorder`.
-- Base: `main` `50b4dd2`.
-- Builder: Claude.
+Builder: Claude.
 
 ## Changed
 
-- **New `CompanionCore.Calibration`:** sample, bounded recorder, and analyzer, with 11 tests.
-- **App:**
-  - `CalibrationSampler`;
-  - `--calibration-log` and `--calibration-interval-ms`;
-  - `--test-mode=calibrate`.
-- **New `tools/CompanionCore.CalibrationReport`.**
-- **App integration:** `CalibrationModeTests` (2 real-process tests).
-- **`docs/Calibration-Protocol.md`.**
-- Solution, lock files, and the packet.
+This docs-only reconciliation:
+
+- archives CAL-02;
+- updates `BUILD_LEDGER.md` and `README.md`;
+- resets this handoff.
 
 ## Verification
 
-- **Local:**
-  - 0 warnings, 0 vulnerable packages;
-  - 939/939 on Linux;
-  - the report tool was smoke-run on a synthetic 2-hour log.
-- **Mutation:** 16 mutants; 15 killed, 1 equivalent (double ownership filter).
-- **Windows CI:** pending (expected 956).
+- CAL-02 head `ce22d99`, tree `b5e1033`: push run `38099088822` and PR run `38099091132` passed 956/956 with verified artifacts.
+- The merge ref had exact parents and an equal tree.
 
 ## Remaining
 
-- CI, merge, and closure.
+- Merge this reconciliation.
 - Then CAL-03 and the smaller deferred items.
 - Stop before Stage 12.
 
-## Risks and assumptions
-
-- The final thresholds need Boss's measured report (D1).
-
-## Personal Round Judgments
-
-CAL-02 J1–J4, recorded in the packet.
-
-## Review focus
-
-- Recorded fields are numbers and state names only.
-- The log bounds.
-- Opt-in recording.
-
 ## Next safe task
 
-CAL-03.
+CAL-03 — Failure-mode hardening and the known-limitations report.

@@ -2,15 +2,15 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 11 (hardening and baseline calibration) in progress: CAL-01 enforced the agreed cadence and pinned the agreed numbers. Live-provider parts of Stage 11 are held for the Stage 12 stop (credentials) |
-| Active task | None between packets. Next: CAL-02 (calibration recorder and soak protocol), CAL-03 (failure-mode hardening), then the smaller deferred items; stop before Stage 12 |
-| Working branch | Accepted product/evidence baseline on `main`: `a330a3ca5fcbcfbf67d63f51910b2233e0daf708` (CAL-01) |
+| Current stage | Stage 11 (hardening and baseline calibration) in progress. CAL-01 enforced the agreed cadence; CAL-02 added the privacy-safe calibration recorder, the report tool, and Boss's soak protocol. Live-provider parts of Stage 11 are held for the Stage 12 stop (credentials) |
+| Active task | None between packets. Next: CAL-03 (failure-mode hardening), then the smaller deferred items; stop before Stage 12. The final resource thresholds await Boss's calibration report from the target PC |
+| Working branch | Accepted product/evidence baseline on `main`: `002aec598d9cae5730743e8f787fd27113085f26` (CAL-02) |
 | Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | CAL-01 head `3c731c4b8aa309bf80679dba49f9cf80552b1079`, tree `c9904263b964c57dcbd7f8de06d3cdaf18cace59`, passed push run `38097858502` and PR run `38097870359` at 943/943 with verified artifacts. The local gate passed 928/928 on Linux. AUDIT-01 closure post-merge `main` run `38084870004` passed. |
-| Manual gate | CAL-01 agreement extraction (from the design PDF and the Design BunDex), actual-diff, and mutation review passed. 12 mutants: 12 killed. PR #45 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `a330a3ca5fcbcfbf67d63f51910b2233e0daf708` — CAL-01 agreed cadence (PR #45) |
+| Automated tests | CAL-02 head `ce22d99f9f5652765aa59a78f4758b29460059d2`, tree `b5e10330d85af7e7a6f8b83430bf11d9421878c8`, passed push run `38099088822` and PR run `38099091132` at 956/956 with verified artifacts; the real App recorded calibration samples with 0 failures. The first candidate `17803b7` failed one test-only Windows file-share assumption, fixed without product change. The local gate passed 939/939 on Linux. |
+| Manual gate | CAL-02 privacy-shape, bound, opt-in, and mutation review passed. 16 mutants; 15 killed, 1 equivalent. PR #47 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `002aec598d9cae5730743e8f787fd27113085f26` — CAL-02 calibration recorder (PR #47) |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs are taken at sheet resolution (WIRE-01 D2), and one session's consolidation reads at most 1000 originals (WIRE-01 D1). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
 | Deferred temptations | Single-file Vault export and a public backup/repair command (KEEP-02 D1); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
@@ -108,6 +108,22 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### CAL-02 — Calibration recorder, report, and soak protocol (Stage 11, part 2)
+
+- Builder: Claude. Opened on 2026-10-11 under Boss's Stage 11 direction.
+- Delivered:
+  - **`CompanionCore.Calibration`:**
+    - privacy-safe samples (numbers and state names only);
+    - a bounded recorder (8 × 8 MiB, owned files only);
+    - an analyzer: per-state baselines and peaks, sustained-growth leak detection after warm-up, and recommended soft 1.5× / restart 2× / Naptime 3× thresholds capped at a quarter of physical memory.
+  - **App:** opt-in `--calibration-log` sampling beside the memory root, and `--test-mode=calibrate`.
+  - **`tools/CompanionCore.CalibrationReport`.**
+  - **`docs/Calibration-Protocol.md`.**
+- Deferred: D1, applying the measured thresholds to the main-process watchdog after Boss's report.
+- Evidence: head `ce22d99` (runs `38099088822` and `38099091132`) passed 956/956 with verified artifacts.
+- Merge: PR #47 squash-merged as `002aec598d9cae5730743e8f787fd27113085f26`.
+- Result: passed and accepted.
 
 ### CAL-01 — Agreed calibration numbers and cadence enforcement (Stage 11, part 1)
 

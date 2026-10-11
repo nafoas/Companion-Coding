@@ -107,7 +107,9 @@ No product defect was found. It passed both Windows gates at 929/929 and merged 
 
 It also pins every agreed number as the running default. Merged as `a330a3ca5fcbcfbf67d63f51910b2233e0daf708`.
 
-Stage 11 continues with calibration tooling and failure hardening. Stage 12 (credentials and live API) requires Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**CAL-02** (PR #47) added privacy-safe calibration recording (`--calibration-log`), a report tool, and the soak protocol in `docs/Calibration-Protocol.md`. Merged as `002aec598d9cae5730743e8f787fd27113085f26`.
+
+Stage 11 continues with failure hardening; the final thresholds await Boss's measured report. Stage 12 (credentials and live API) requires Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 
