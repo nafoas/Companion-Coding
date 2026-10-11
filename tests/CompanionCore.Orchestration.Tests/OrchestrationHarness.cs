@@ -200,6 +200,8 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
         }
     }
 
+    internal void RaiseStatus(CaptureWorkerStatus status) => SetStatus(status);
+
     private void SetStatus(CaptureWorkerStatus status)
     {
         Status = status;
