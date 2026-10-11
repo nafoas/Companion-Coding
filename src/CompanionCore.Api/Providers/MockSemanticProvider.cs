@@ -9,7 +9,8 @@ public sealed record RecordedSemanticRequest(
     int Attempt,
     string RequestJson,
     int ImageLength,
-    string ImageSha256);
+    string ImageSha256,
+    SemanticOperationKind Kind = SemanticOperationKind.InterpretAttentionSheet);
 
 /// <summary>
 /// Deterministic scripted provider. Each call consumes the next scripted step; with no
@@ -22,6 +23,7 @@ public sealed class MockSemanticProvider : ISemanticProvider
 
     private readonly object _gate = new();
     private readonly Queue<MockStep> _script = new();
+    private readonly Queue<MockStep> _glanceScript = new();
     private readonly List<RecordedSemanticRequest> _requests = [];
 
     public MockSemanticProvider(IEnumerable<MockStep>? script = null)
@@ -43,6 +45,59 @@ public sealed class MockSemanticProvider : ISemanticProvider
                 return _requests.Count;
             }
         }
+    }
+
+    /// <summary>Detailed looks only (VIS-02 keeps Glances on their own script and count).</summary>
+    public int InspectCount
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _requests.Count(request => request.Kind != SemanticOperationKind.Glance);
+            }
+        }
+    }
+
+    public int GlanceCount
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _requests.Count(request => request.Kind == SemanticOperationKind.Glance);
+            }
+        }
+    }
+
+    /// <summary>Scripts the next Glance; with none left, a Glance gets a calm default answer.</summary>
+    public void EnqueueGlance(MockStep step)
+    {
+        ArgumentNullException.ThrowIfNull(step);
+        lock (_gate)
+        {
+            _glanceScript.Enqueue(step);
+        }
+    }
+
+    /// <summary>A strict Glance answer for <paramref name="request"/>.</summary>
+    public static string GlanceResponseJson(
+        SemanticRequest request,
+        double interest = 0.3,
+        double confidence = 0.8,
+        string changedRegion = "fullContext",
+        string label = "synthetic scene",
+        bool escalate = false,
+        int nextLookSeconds = 10)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return JsonSerializer.Serialize(
+            new
+            {
+                schemaVersion = SemanticSchema.Version,
+                operationId = request.OperationId,
+                glance = new { interest, confidence, changedRegion, label, escalate, nextLookSeconds },
+            });
     }
 
     public IReadOnlyList<RecordedSemanticRequest> Requests
@@ -101,12 +156,25 @@ public sealed class MockSemanticProvider : ISemanticProvider
                 request.Attempt,
                 request.RequestJson,
                 request.EncodedImage.Length,
-                Convert.ToHexStringLower(SHA256.HashData(request.EncodedImage.Span))));
-            _script.TryDequeue(out step);
+                Convert.ToHexStringLower(SHA256.HashData(request.EncodedImage.Span)),
+                request.Kind));
+            if (request.Kind == SemanticOperationKind.Glance)
+            {
+                _glanceScript.TryDequeue(out step);
+            }
+            else
+            {
+                _script.TryDequeue(out step);
+            }
         }
 
-        return step is null
-            ? Task.FromResult(ProviderReply.Success(DefaultResponseJson(request)))
-            : step(request, cancellationToken);
+        if (step is not null)
+        {
+            return step(request, cancellationToken);
+        }
+
+        return Task.FromResult(ProviderReply.Success(request.Kind == SemanticOperationKind.Glance
+            ? GlanceResponseJson(request)
+            : DefaultResponseJson(request)));
     }
 }

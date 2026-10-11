@@ -10,6 +10,9 @@ internal enum BraincaseJournalEntryType
     Nap = 4,
     Awake = 5,
     Snapshot = 6,
+
+    /// <summary>A Glance's usage (VIS-02). A Glance has no side effects, so it needs no Started entry.</summary>
+    Glanced = 7,
 }
 
 /// <summary>
@@ -78,6 +81,14 @@ internal sealed class BraincaseJournalSnapshot
     public long TotalInputUnits { get; set; }
 
     public long TotalOutputUnits { get; set; }
+
+    // VIS-02 Glance-lane fields are nullable so a snapshot written before them still
+    // verifies: null members are never serialized, so older checksums are unchanged.
+    public long? Glances { get; set; }
+
+    public long? UsageDayGlanceInputUnits { get; set; }
+
+    public long? UsageDayGlanceOutputUnits { get; set; }
 
     public DateOnly? UsageDay { get; set; }
 

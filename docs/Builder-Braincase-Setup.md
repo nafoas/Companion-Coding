@@ -44,7 +44,8 @@ dotnet run --project tools/CompanionCore.BraincaseCheck -- --live
 ```
 
 - **The first command** only reports the settings and whether a sign-in was found. It spends nothing.
-- **The second command** makes exactly one Claude call with a synthetic picture (sky, grass, a red square), never your screen. It prints the answer, the time it took, the tokens used, and the cost. Prince's own strict parser checks the answer.
+- **The second command** makes one detailed Claude call with a synthetic picture (sky, grass, a red square), never your screen. It prints the answer, the time it took, the tokens used, and the cost. Prince's own strict parser checks the answer.
+- **It also makes five quick Glances** with the Glance model (Haiku) at the same picture. It prints each Glance's round trip in milliseconds, the median, and their cost (a fraction of a cent). These are the real numbers for your PC and connection; they decide any tuning.
 
 When it passes, switch Builder Prince's live calls on:
 
@@ -61,6 +62,7 @@ The settings live in `braincase-settings.json` in Builder Prince's data folder. 
   "liveCalls": false,
   "model": "claude-opus-5-5",
   "effort": "low",
+  "glanceModel": "claude-haiku-5-5",
   "dollarsPerDay": 5
 }
 ```
@@ -69,5 +71,6 @@ The settings live in `braincase-settings.json` in Builder Prince's data folder. 
 - **`dollarsPerDay`:** the Bun Budget. When the day's (UTC) spending would pass it, Builder Prince sleeps until the next day. Memory is never touched.
 - **`model`:** one of `claude-opus-5-5` (default), `claude-sonnet-5-5`, or `claude-haiku-5-5` (cheapest).
 - **`effort`:** one of `low`, `medium`, `high`, `xhigh`, or `max`.
+- **`glanceModel`:** Prince's quick, peripheral looks (VIS-02). The default is `claude-haiku-5-5`, the fastest and cheapest. `""` turns Glances off, and every look is then a detailed one. Glances are paid from the same daily Bun Budget, each at its own model's price.
 
 A damaged file, or a model Prince does not know the price of, always means live calls stay off. The file never holds a key.

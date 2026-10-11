@@ -101,10 +101,10 @@ public sealed class AnthropicProviderTests
         return (provider, transport, store);
     }
 
-    private static SemanticRequest Request(AttentionSheet sheet, Guid? operationId = null) =>
+    private static SemanticRequest Request(AttentionSheet sheet, Guid? operationId = null, SemanticOperationKind kind = SemanticOperationKind.InterpretAttentionSheet) =>
         new(
             operationId ?? Guid.NewGuid(),
-            SemanticOperationKind.InterpretAttentionSheet,
+            kind,
             1,
             new ResumePacket(Guid.NewGuid(), ApiTestHarness.BaselineUtc, "target-session:synthetic", null, [], [], 0, false),
             new AttentionSheetDescription(
@@ -374,5 +374,63 @@ public sealed class AnthropicProviderTests
         Assert.Equal(SemanticResponseInvalidReason.CredentialEcho, third.InvalidReason);
         Assert.Equal(3, transport.Calls.Count);
         Assert.DoesNotContain(harness.Diagnostics.Lines, line => line.Contains(SyntheticKey, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AGlance_UsesTheGlanceModel_WithThinkingOff_AndTheStrictGlanceSchema()
+    {
+        using var sheet = Sheet(AttentionSheetKind.Regional);
+        var operation = Guid.NewGuid();
+        var glanceAnswer = "{\"glance\":{\"interest\":0.8,\"confidence\":0.7,\"changedRegion\":\"centerEnvironment\",\"label\":\"a chest opens\",\"escalate\":true,\"nextLookSeconds\":3}}";
+        var (provider, transport, store) = Create((_, _) => Json(HttpStatusCode.OK, Message(glanceAnswer, input: 400, output: 30, cacheRead: 100)));
+        using (provider)
+        using (store)
+        {
+            var reply = await provider.InterpretAsync(Request(sheet, operation, SemanticOperationKind.Glance), CancellationToken.None);
+
+            Assert.True(reply.IsSuccess);
+            var body = JsonNode.Parse(Assert.Single(transport.Calls).Body)!.AsObject();
+            Assert.Equal(AnthropicProviderOptions.DefaultGlanceModel, body["model"]!.GetValue<string>());
+            Assert.Equal("disabled", body["thinking"]!["type"]!.GetValue<string>());
+            Assert.Equal("low", body["output_config"]!["effort"]!.GetValue<string>());
+            Assert.Equal(300, body["max_tokens"]!.GetValue<int>());
+            Assert.Null(body["fallbacks"]);
+            Assert.Equal(AnthropicSemanticProvider.GlanceInstructions, body["system"]!.GetValue<string>());
+            var schema = body["output_config"]!["format"]!["schema"]!;
+            Assert.False(schema["additionalProperties"]!.GetValue<bool>());
+            Assert.False(schema["properties"]!["glance"]!["additionalProperties"]!.GetValue<bool>());
+            Assert.DoesNotContain("memoryProposals", schema.ToJsonString(), StringComparison.Ordinal);
+
+            // The envelope is assigned locally and passes the strict Glance parser.
+            Assert.True(GlanceResponseParser.TryParse(reply.ResponseJson!, operation, [AttentionRegionKind.FullContext, AttentionRegionKind.CenterEnvironment], out var glance, out _));
+            Assert.Equal((0.8, true, TimeSpan.FromSeconds(3), 500L, 30L), (glance!.Interest, glance.Escalate, glance.NextLook, glance.InputUnits, glance.OutputUnits));
+        }
+    }
+
+    [Fact]
+    public async Task WithTheGlanceOff_AGlanceRequestIsRejectedWithoutACall()
+    {
+        using var sheet = Sheet();
+        var (provider, transport, store) = Create((_, _) => throw new InvalidOperationException("no call expected"), new AnthropicProviderOptions { LiveCallsEnabled = true, GlanceModel = null });
+        using (provider)
+        using (store)
+        {
+            var reply = await provider.InterpretAsync(Request(sheet, kind: SemanticOperationKind.Glance), CancellationToken.None);
+            Assert.Equal(ProviderUnavailableReason.RequestRejected, reply.UnavailableReason);
+            Assert.Empty(transport.Calls);
+        }
+    }
+
+    [Fact]
+    public async Task ADeclinedOrCutGlance_IsTransient()
+    {
+        using var sheet = Sheet();
+        var (provider, _, store) = Create((_, _) => Json(HttpStatusCode.OK, Message("{}", stopReason: "refusal")));
+        using (provider)
+        using (store)
+        {
+            var reply = await provider.InterpretAsync(Request(sheet, kind: SemanticOperationKind.Glance), CancellationToken.None);
+            Assert.Equal(ProviderFailureKind.Transient, reply.FailureKind);
+        }
     }
 }

@@ -25,9 +25,13 @@ public sealed class BuilderBraincaseTests : IDisposable
     {
         internal List<HttpRequestMessage> Calls { get; } = [];
 
+        /// <summary>Each request body, captured while it is still readable.</summary>
+        internal List<string> Bodies { get; } = [];
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Calls.Add(request);
+            Bodies.Add(request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult() ?? string.Empty);
             return Task.FromResult(respond(request));
         }
     }
@@ -49,6 +53,15 @@ public sealed class BuilderBraincaseTests : IDisposable
                 Encoding.UTF8,
                 "application/json"),
         };
+
+    private const string GlanceText =
+        "{\"glance\":{\"interest\":0.4,\"confidence\":0.8,\"changedRegion\":\"fullContext\",\"label\":\"red square on grass\",\"escalate\":false,\"nextLookSeconds\":12}}";
+
+    private static bool IsGlance(HttpRequestMessage request) =>
+        IsGlanceBody(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+
+    private static bool IsGlanceBody(string body) =>
+        body.Contains("\"model\":\"claude-haiku-5-5\"", StringComparison.Ordinal);
 
     private static Dictionary<string, string?> Env(params (string Key, string? Value)[] values) =>
         values.ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -110,6 +123,8 @@ public sealed class BuilderBraincaseTests : IDisposable
     [InlineData("{\"liveCalls\":true,\"effort\":\"turbo\"}", BuilderBraincaseIssue.Invalid)]
     [InlineData("{\"liveCalls\":true,\"apiKey\":\"sk-ant-synthetic\"}", BuilderBraincaseIssue.Invalid)]
     [InlineData("{\"liveCalls\":true,\"model\":\"claude-unknown-9\"}", BuilderBraincaseIssue.UnknownModel)]
+    [InlineData("{\"liveCalls\":true,\"glanceModel\":\"claude-unknown-9\"}", BuilderBraincaseIssue.UnknownModel)]
+    [InlineData("{\"liveCalls\":true,\"glanceModel\":null}", BuilderBraincaseIssue.Invalid)]
     public void DamagedOrUnknownSettings_AlwaysResolveToOff(string json, BuilderBraincaseIssue expected)
     {
         Directory.CreateDirectory(_root);
@@ -119,6 +134,32 @@ public sealed class BuilderBraincaseTests : IDisposable
 
         Assert.Equal(expected, issue);
         Assert.False(settings.LiveCalls);
+    }
+
+    [Fact]
+    public void TheGlance_DefaultsToHaiku_AndAnEmptyGlanceModelTurnsItOff()
+    {
+        Directory.CreateDirectory(_root);
+        File.WriteAllText(Path.Combine(_root, BuilderBraincaseSettings.FileName), "{\"liveCalls\":true}");
+        var (defaulted, _) = BuilderBraincaseSettings.LoadOrCreate(_root);
+        Assert.Equal(("claude-haiku-5-5", true), (defaulted.GlanceModel, defaulted.GlanceEnabled));
+
+        File.WriteAllText(Path.Combine(_root, BuilderBraincaseSettings.FileName), "{\"liveCalls\":true,\"glanceModel\":\"\"}");
+        var (off, issue) = BuilderBraincaseSettings.LoadOrCreate(_root);
+        Assert.Equal((BuilderBraincaseIssue.None, false), (issue, off.GlanceEnabled));
+        Assert.Null(off.ToProviderOptions().GlanceModel);
+
+        var selection = BuilderBraincase.Compose(_root, new InMemoryCredentialStore());
+        try
+        {
+            Assert.True(selection.LiveCallsEnabled);
+            Assert.False(selection.GlanceEnabled);
+            Assert.Null(selection.Bridge!.DailyCostBudget!.GlanceInputCostPerMillionUnits);
+        }
+        finally
+        {
+            (selection.Provider as IDisposable)?.Dispose();
+        }
     }
 
     // ---- pricing and selection -----------------------------------------------------
@@ -157,7 +198,9 @@ public sealed class BuilderBraincaseTests : IDisposable
         {
             Assert.IsType<AnthropicSemanticProvider>(on.Provider);
             Assert.True(on.LiveCallsEnabled);
-            Assert.Equal(new DailyCostBudget(4m, 5m, 25m), on.Bridge!.DailyCostBudget);
+            // Both lanes under one limit: the Inspect at Opus prices, Glances at Haiku prices.
+            Assert.Equal(new DailyCostBudget(4m, 5m, 25m) { GlanceInputCostPerMillionUnits = 0.10m, GlanceOutputCostPerMillionUnits = 0.50m }, on.Bridge!.DailyCostBudget);
+            Assert.True(on.GlanceEnabled);
         }
     }
 
@@ -241,8 +284,16 @@ public sealed class BuilderBraincaseTests : IDisposable
     {
         using var store = new InMemoryCredentialStore();
         store.Set(RealSemanticProviderShell.PrimaryCredentialName, ProtectedCredential.FromCharacters("sk-ant-synthetic-test-only"));
-        var transport = new FakeTransport(_ => Answer());
+        var transport = new FakeTransport(request => IsGlance(request) ? Answer(GlanceText) : Answer());
         var provider = new AnthropicSemanticProvider(store, new AnthropicProviderOptions { LiveCallsEnabled = true }, new HttpClient(transport), ownsHttp: true, baseUrl: new Uri("https://fake.invalid"));
+
+        // Glances off: exactly one call.
+        var single = await BraincaseLiveCheck.RunWithAsync(
+            new AnthropicSemanticProvider(store, new AnthropicProviderOptions { LiveCallsEnabled = true }, new HttpClient(new FakeTransport(_ => Answer())), ownsHttp: true, baseUrl: new Uri("https://fake.invalid")),
+            BuilderBraincaseSettings.Off with { GlanceModel = "" },
+            CancellationToken.None);
+        Assert.Equal(LiveCheckVerdict.Passed, single.Verdict);
+        Assert.Empty(single.GlanceLatencies);
 
         var result = await BraincaseLiveCheck.RunWithAsync(provider, BuilderBraincaseSettings.Off, CancellationToken.None);
 
@@ -251,7 +302,18 @@ public sealed class BuilderBraincaseTests : IDisposable
         Assert.Equal(1, result.Observations);
         Assert.Equal((900, 60), (result.InputUnits, result.OutputUnits));
         Assert.Equal(new DailyCostBudget(1m, 5m, 25m).CostOf(900, 60), result.EstimatedCost);
-        Assert.Single(transport.Calls);
+
+        // One detailed call, then five Glances on the Glance model, each timed and parsed.
+        Assert.Equal(1 + BraincaseLiveCheck.GlanceSamples, transport.Calls.Count);
+        Assert.False(IsGlanceBody(transport.Bodies[0]));
+        Assert.All(transport.Bodies.Skip(1), body =>
+        {
+            Assert.True(IsGlanceBody(body));
+            Assert.Contains("\"thinking\":{\"type\":\"disabled\"}", body, StringComparison.Ordinal);
+        });
+        Assert.Equal(BraincaseLiveCheck.GlanceSamples, result.GlanceLatencies.Count);
+        Assert.Equal(0, result.GlanceFailures);
+        Assert.Equal(new DailyCostBudget(1m, 0.10m, 0.50m).CostOf(900 * 5, 60 * 5), result.GlanceCost);
         Assert.StartsWith("\u0089PNG", Encoding.Latin1.GetString(BraincaseLiveCheck.SyntheticScene().AsSpan(0, 4)), StringComparison.Ordinal);
     }
 

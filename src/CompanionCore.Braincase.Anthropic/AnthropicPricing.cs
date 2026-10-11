@@ -38,4 +38,25 @@ public static class AnthropicPricing
 
         return new DailyCostBudget(dollarsPerDay, price.Input, price.Output);
     }
+
+    /// <summary>
+    /// The budget for both lanes (VIS-02): the Inspect model's prices, plus the Glance model's
+    /// prices for Glances. One dollars-per-day limit covers both. Null when either model is unknown.
+    /// </summary>
+    public static DailyCostBudget? BudgetFor(string model, string? glanceModel, decimal dollarsPerDay)
+    {
+        if (BudgetFor(model, dollarsPerDay) is not { } budget)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrEmpty(glanceModel))
+        {
+            return budget;
+        }
+
+        return PerMillion.TryGetValue(glanceModel, out var glance)
+            ? budget with { GlanceInputCostPerMillionUnits = glance.Input, GlanceOutputCostPerMillionUnits = glance.Output }
+            : null;
+    }
 }
