@@ -51,10 +51,22 @@ A per-region digest is kept in worker RAM only, to detect change. The Glance and
 ## Personal Round Judgments
 
 - **J1 — Text never leaves the worker** (above).
+- **J2 — Reads run off the frame path, one at a time.** The frame lends a crop and moves on; the read finishes on a background slot. Neither the ≤100 ms Sniff nor sheet composition ever waits on OCR. A frame that arrives while a read is in flight simply doesn't start another.
+- **J3 — Small changes and quiet regions are still read.** A subtitle swap can move one grid cell by only 2–6 %, which the pixel Sniff rightly calls a near-duplicate. So the Text Sniff:
+  - looks at per-cell change on every frame, duplicates included, with its own lower threshold (`TextCellChange` 0.02);
+  - re-reads any text region left unread for 2 s, so a change the pixels missed is still caught;
+  - prefers the most-moved region over a merely stale one.
+- **J4 — Only changes are reported.** Words appeared, changed, or vanished. An unchanged reading stays inside the worker, as counts in its metrics. This is the packet's "after change" in its truest form: the words changed, not just the pixels.
+- **J5 — The text reflex habituates per region.** It uses the Sniff reflex's recovery model with a stronger rate (0.7).
+  - A HUD clock that ticks every half second fades to nothing within a few seconds, and stops asking for Glances once it falls below half novelty.
+  - The dialogue band is its own region, so a new line there is always fresh.
+  - Vanished words are weaker evidence (lower novelty, salience, and confidence) and never ask for a look.
 
 ## Deferred findings
 
 - **Real OCR accuracy on game fonts** is verified on Boss's PC. CI has no rendered game text.
+- **The real-process path carries no text in CI.** The synthetic worker has no recognizer, so `TextSniffProduced` over the pipe is covered by protocol round-trip and shape tests, plus the in-process engine test. The live end-to-end path is exercised on Boss's PC.
+- **Region layout is the default one.** A game whose dialogue sits elsewhere (mid-screen speech bubbles, say) is read only through the corners and the band; Glances still see the whole sheet. Learning per-game text regions waits for VIS-04 or later.
 - **VIS-04:** the bundled local scene model.
 
 ## Paw Gate
