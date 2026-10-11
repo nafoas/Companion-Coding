@@ -492,38 +492,43 @@ public sealed class OutOfProcessCaptureWorkerTests
                 CaptureWorkerTestSupport.CreateGrant(generation: 8),
                 CancellationToken.None));
 
-        await worker.RequestPhotographAsync(grant, CancellationToken.None);
-        await CaptureWorkerTestSupport.WaitUntilAsync(
-            () => !photographs.IsEmpty,
-            TimeSpan.FromSeconds(10));
-
-        // The photograph is pinned: it is handed over after any orientation and before
-        // any regional sheet, however many regional sheets arrived meanwhile.
-        AttentionSheet? photograph = null;
-        await CaptureWorkerTestSupport.WaitUntilAsync(
-            () =>
-            {
-                var sheet = worker.TakeLatestAttentionSheet();
-                if (sheet?.Metadata.Kind == AttentionSheetKind.Photograph)
-                {
-                    photograph = sheet;
-                    return true;
-                }
-
-                sheet?.Dispose();
-                return false;
-            },
-            TimeSpan.FromSeconds(10));
-        using (photograph)
+        // Several in a row while regional sheets keep arriving: each photograph's notice is
+        // delivered once and never coalesced away by a newer regional sheet.
+        for (var taken = 1; taken <= 3; taken++)
         {
-            var metadata = photograph!.Metadata;
-            Assert.True(metadata.Matches(grant));
-            Assert.Equal((metadata.SourceWidth, metadata.SourceHeight), (metadata.SheetWidth, metadata.SheetHeight));
-            var decoded = PngTestDecoder.Decode(photograph.EncodedImage.Span);
-            Assert.Equal((metadata.SheetWidth, metadata.SheetHeight), (decoded.Width, decoded.Height));
+            await worker.RequestPhotographAsync(grant, CancellationToken.None);
+            await CaptureWorkerTestSupport.WaitUntilAsync(
+                () => photographs.Count >= taken,
+                TimeSpan.FromSeconds(10));
+
+            // The photograph is pinned: it is handed over after any orientation and before
+            // any regional sheet, however many regional sheets arrived meanwhile.
+            AttentionSheet? photograph = null;
+            await CaptureWorkerTestSupport.WaitUntilAsync(
+                () =>
+                {
+                    var sheet = worker.TakeLatestAttentionSheet();
+                    if (sheet?.Metadata.Kind == AttentionSheetKind.Photograph)
+                    {
+                        photograph = sheet;
+                        return true;
+                    }
+
+                    sheet?.Dispose();
+                    return false;
+                },
+                TimeSpan.FromSeconds(10));
+            using (photograph)
+            {
+                var metadata = photograph!.Metadata;
+                Assert.True(metadata.Matches(grant));
+                Assert.Equal((metadata.SourceWidth, metadata.SourceHeight), (metadata.SheetWidth, metadata.SheetHeight));
+                var decoded = PngTestDecoder.Decode(photograph.EncodedImage.Span);
+                Assert.Equal((metadata.SheetWidth, metadata.SheetHeight), (decoded.Width, decoded.Height));
+            }
         }
 
-        Assert.Single(photographs);
+        Assert.Equal(3, photographs.Count);
         await worker.StopAndClearAsync(CancellationToken.None);
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             worker.RequestPhotographAsync(grant, CancellationToken.None));
