@@ -28,6 +28,12 @@ public interface ICaptureWorker : IDisposable
     /// </summary>
     event EventHandler<TextSniffSignal>? TextSniffProduced;
 
+    /// <summary>
+    /// A Scene Sniff (VIS-04): the local vision model saw a different scene. Bounded numbers and
+    /// a fixed-vocabulary label only. Consumers must pass it through privacy admission first.
+    /// </summary>
+    event EventHandler<SceneSniffSignal>? SceneSniffProduced;
+
     Task StartAsync(CaptureAuthorizationGrant authorization, CancellationToken cancellationToken);
 
     Task StopAsync(CancellationToken cancellationToken);

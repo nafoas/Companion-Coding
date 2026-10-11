@@ -12,7 +12,7 @@ namespace CompanionCore.Capture.Contracts;
 /// </summary>
 public static class CaptureIpcProtocol
 {
-    public const int Version = 6;
+    public const int Version = 7;
     public const int MaximumMessageBytes = 64 * 1024;
     public const int HandshakeNonceHexLength = 64;
 
@@ -282,6 +282,7 @@ public enum CaptureIpcMessageKind
     SniffProduced,
     SetCadence,
     TextSniffProduced,
+    SceneSniffProduced,
 }
 
 public enum CaptureWorkerErrorCode
@@ -369,6 +370,7 @@ public sealed record CaptureIpcMessage
     public AttentionSheetMetadata? AttentionSheet { get; init; }
     public SniffSignal? Sniff { get; init; }
     public TextSniffSignal? TextSniff { get; init; }
+    public SceneSniffSignal? SceneSniff { get; init; }
     public CaptureCadence? Cadence { get; init; }
     public int PayloadLength { get; init; }
     public string? PayloadSha256 { get; init; }

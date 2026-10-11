@@ -42,6 +42,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private readonly Task _sniffDispatcher;
     private long _lastSniffSequence;
     private long _lastTextSniffSequence;
+    private long _lastSceneSniffSequence;
     private NamedPipeServerStream? _pipe;
     private Process? _process;
     private CancellationTokenSource? _readerLifetime;
@@ -103,6 +104,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     public event EventHandler<SniffSignal>? SniffProduced;
 
     public event EventHandler<TextSniffSignal>? TextSniffProduced;
+
+    public event EventHandler<SceneSniffSignal>? SceneSniffProduced;
 
     internal CaptureWorkerOwnedResourceObservation ObserveOwnedResources()
     {
@@ -459,6 +462,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 _lastSequence = 0;
                 _lastSniffSequence = 0;
                 _lastTextSniffSequence = 0;
+                _lastSceneSniffSequence = 0;
                 _lastDispatchedSequence = 0;
                 _lastAttentionSheetSequence = 0;
                 ClearAttentionSheetsUnsafe();
@@ -777,6 +781,10 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                         PublishTextSniffIfCurrent(message, workerEpoch);
                         break;
 
+                    case CaptureIpcMessageKind.SceneSniffProduced:
+                        PublishSceneSniffIfCurrent(message, workerEpoch);
+                        break;
+
                     default:
                         throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
                 }
@@ -934,6 +942,74 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         _sniffEvents.Writer.TryWrite(textEvent);
     }
 
+    private void PublishSceneSniffIfCurrent(CaptureIpcMessage message, long workerEpoch)
+    {
+        SceneSniffClientEvent sceneEvent;
+        lock (_stateGate)
+        {
+            var grant = _currentGrant;
+            if (workerEpoch != _workerEpoch)
+            {
+                return;
+            }
+
+            ValidateSceneSniffNotificationShape(message);
+            if (grant is null || Status != CaptureWorkerStatus.Running || !_admitFrames)
+            {
+                return;
+            }
+
+            // Scene reads run one at a time over ever-later frames, so their sequence strictly
+            // increases; anything else is a compromised peer.
+            if (!message.Authorization!.Matches(grant)
+                || !message.SceneSniff!.Matches(grant)
+                || message.SceneSniff.SourceSequenceNumber <= _lastSceneSniffSequence)
+            {
+                throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
+            }
+
+            _lastSceneSniffSequence = message.SceneSniff.SourceSequenceNumber;
+            sceneEvent = new SceneSniffClientEvent(workerEpoch, grant, message.SceneSniff);
+        }
+
+        _sniffEvents.Writer.TryWrite(sceneEvent);
+    }
+
+    internal static void ValidateSceneSniffNotificationShape(CaptureIpcMessage message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        if (message.CorrelationId != Guid.Empty
+            || message.ControlSequence != 0
+            || message.HandshakeNonce is not null
+            || message.Authorization is null
+            || message.SceneSniff is null
+            || message.Sniff is not null
+            || message.TextSniff is not null
+            || !message.SceneSniff.IsProtocolSafe()
+            || message.SequenceNumber != message.SceneSniff.SourceSequenceNumber
+            || message.Authorization.TargetSessionId != message.SceneSniff.TargetSessionId
+            || message.Authorization.Generation != message.SceneSniff.Generation
+            || message.Timestamp != default
+            || message.Width != 0
+            || message.Height != 0
+            || message.AccountedBytes != 0
+            || message.Status != CaptureWorkerStatus.Stopped
+            || message.StatusReason != CaptureWorkerStatusReason.None
+            || message.Metrics is not null
+            || message.ClearedFrameCount != 0
+            || message.ClearedBytes != 0
+            || message.ErrorCode != CaptureWorkerErrorCode.None
+            || message.ManualRegion is not null
+            || message.ClearManualRegion
+            || message.AttentionSheet is not null
+            || message.Cadence is not null
+            || message.PayloadLength != 0
+            || message.PayloadSha256 is not null)
+        {
+            throw new CaptureProtocolException(CaptureWorkerErrorCode.MalformedMessage);
+        }
+    }
+
     internal static void ValidateTextSniffNotificationShape(CaptureIpcMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -977,6 +1053,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             || message.Authorization is null
             || message.Sniff is null
             || message.TextSniff is not null
+            || message.SceneSniff is not null
             || !message.Sniff.IsProtocolSafe()
             || message.SequenceNumber != message.Sniff.SourceSequenceNumber
             || message.Authorization.TargetSessionId != message.Sniff.TargetSessionId
@@ -1110,6 +1187,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             || message.ClearManualRegion
             || message.Sniff is not null
             || message.TextSniff is not null
+            || message.SceneSniff is not null
             || message.Cadence is not null
             || message.AttentionSheet is null
             || !message.AttentionSheet.IsProtocolSafe()
@@ -1181,6 +1259,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             _lastSequence = 0;
             _lastSniffSequence = 0;
             _lastTextSniffSequence = 0;
+            _lastSceneSniffSequence = 0;
             _admitFrames = false;
             _lastDispatchedSequence = 0;
             _lastAttentionSheetSequence = 0;
@@ -1330,6 +1409,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             _lastSequence = 0;
             _lastSniffSequence = 0;
             _lastTextSniffSequence = 0;
+            _lastSceneSniffSequence = 0;
             _lastDispatchedSequence = 0;
             _lastAttentionSheetSequence = 0;
             ClearAttentionSheetsUnsafe();
@@ -1439,6 +1519,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 _lastSequence = 0;
                 _lastSniffSequence = 0;
                 _lastTextSniffSequence = 0;
+                _lastSceneSniffSequence = 0;
                 _lastDispatchedSequence = 0;
                 _lastAttentionSheetSequence = 0;
                 ClearAttentionSheetsUnsafe();
@@ -1562,6 +1643,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 {
                     SniffClientEvent sniff => sniff.Grant,
                     TextSniffClientEvent text => text.Grant,
+                    SceneSniffClientEvent scene => scene.Grant,
                     _ => null,
                 };
                 lock (_stateGate)
@@ -1573,6 +1655,23 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                     {
                         continue;
                     }
+                }
+
+                if (clientEvent is SceneSniffClientEvent sceneEvent)
+                {
+                    foreach (EventHandler<SceneSniffSignal> handler in
+                             SceneSniffProduced?.GetInvocationList().Cast<EventHandler<SceneSniffSignal>>() ?? [])
+                    {
+                        try
+                        {
+                            handler(this, sceneEvent.SceneSniff);
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+
+                    continue;
                 }
 
                 if (clientEvent is TextSniffClientEvent textEvent)
@@ -1828,6 +1927,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private static bool HasVisualPayloadFields(CaptureIpcMessage message) =>
         message.Sniff is not null
         || message.TextSniff is not null
+        || message.SceneSniff is not null
         || message.Cadence is not null
         || message.ManualRegion is not null
         || message.ClearManualRegion
@@ -1931,6 +2031,11 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         long WorkerEpoch,
         CaptureAuthorizationGrant Grant,
         SniffSignal Sniff) : ClientEvent(WorkerEpoch);
+
+    private sealed record SceneSniffClientEvent(
+        long WorkerEpoch,
+        CaptureAuthorizationGrant Grant,
+        SceneSniffSignal SceneSniff) : ClientEvent(WorkerEpoch);
 
     private sealed record TextSniffClientEvent(
         long WorkerEpoch,

@@ -103,6 +103,8 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
 
     public event EventHandler<TextSniffSignal>? TextSniffProduced;
 
+    public event EventHandler<SceneSniffSignal>? SceneSniffProduced;
+
     /// <summary>Every cadence the orchestrator set, in order.</summary>
     public List<CaptureCadence> Cadences { get; } = [];
 
@@ -158,6 +160,36 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
         };
         SniffProduced?.Invoke(this, sniff);
         return sniff;
+    }
+
+    /// <summary>Emits one Scene Sniff (numbers and a vocabulary label) for the current grant, like the real worker's scene model.</summary>
+    public SceneSniffSignal EmitSceneSniff(
+        DateTimeOffset timestamp,
+        double novelty = 0.4,
+        string label = "combat",
+        double confidence = 0.2,
+        CaptureAuthorizationGrant? grant = null)
+    {
+        var authorization = grant ?? _grant ?? throw new InvalidOperationException("No grant.");
+        var index = label.Length == 0 ? SceneVocabulary.Unsure : SceneVocabulary.Keys.ToList().IndexOf(label);
+        var scene = new SceneSniffSignal
+        {
+            TargetSessionId = authorization.TargetSessionId,
+            Generation = authorization.Generation,
+            Target = authorization.Target,
+            SourceSequenceNumber = Interlocked.Increment(ref _sequence),
+            SourceTimestamp = timestamp,
+            SourceWidth = SourceWidth,
+            SourceHeight = SourceHeight,
+            SourceAccountedBytes = (long)SourceWidth * SourceHeight * 4,
+            Novelty = novelty,
+            Shift = novelty >= 0.20,
+            Label = index,
+            LabelConfidence = index == SceneVocabulary.Unsure ? 0 : confidence,
+            ComputeMicroseconds = 30_000,
+        };
+        SceneSniffProduced?.Invoke(this, scene);
+        return scene;
     }
 
     /// <summary>Emits one Text Sniff (counts only) for the current grant, like the real worker's text reader.</summary>
