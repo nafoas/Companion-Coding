@@ -1,6 +1,6 @@
 # CAL-03 — Failure-Mode Hardening and Known-Limitations Report (Stage 11, part 3)
 
-Status: **active — gate review**
+Status: **accepted** — Paw Gate PASS; PR #49 squash-merged as `039a641fe5269d2b4c08650f775248df3b32c952`
 Authorized: 2026-10-11 by Boss ("Stage 11 should start now, and then stop at Stage 12").
 Accepted remote base: `07a2d5ba547e7c6da6e11eab2991761daeba6995`
 Working branch: `agent/cal-03-failure-hardening`
@@ -59,7 +59,17 @@ This packet proves the composed runtime survives them, and fixes the defect that
 
 ## Paw Gate
 
-Pending CI. Local: Orchestration 68/68 (stable across repeated runs). Mutation: 8 mutants, 8 killed.
+Gate result: **PASS** on 2026-10-11.
+
+- **CI.** Head `dcface9`: push run `38099942669` and PR run `38099951518` each passed **963/963** on the first attempt.
+- **Artifacts:**
+  - archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- **Merge.**
+  - The merge ref had exact parents `07a2d5b` and `dcface9`, and a tree equal to the head tree `99b0427`.
+  - It was squash-merged through the expected-head fence as `039a641`.
+
+Local: Orchestration 68/68 (stable across repeated runs). Mutation: 8 mutants, 8 killed.
 
 ## Deferred findings
 
