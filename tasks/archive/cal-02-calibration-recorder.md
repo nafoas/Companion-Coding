@@ -1,6 +1,6 @@
 # CAL-02 — Calibration Recorder, Report, and Soak Protocol (Stage 11, part 2)
 
-Status: **active — gate review**
+Status: **accepted** — Paw Gate PASS; PR #47 squash-merged as `002aec598d9cae5730743e8f787fd27113085f26`
 Authorized: 2026-10-11 by Boss ("Stage 11 should start now, and then stop at Stage 12").
 Accepted remote base: `50b4dd260c99dc45f87902d07811013cf89a926b`
 Working branch: `agent/cal-02-calibration-recorder`
@@ -54,7 +54,17 @@ This packet builds the instrument. The measurements themselves need Boss's hardw
 
 ## Paw Gate
 
-Pending CI.
+Gate result: **PASS** on 2026-10-11.
+
+- **First CI (`17803b7`):** push run `38098832724` and PR run `38098841564` passed 955/956. One test-only Windows assumption failed: a default-share read of a log still open for writing. It was fixed in `ce22d99` by reading after the writer closes, and by asserting that a live log stays readable with shared access, which is how the report reads. There was no product change.
+- **Head `ce22d99`:** push run `38099088822` and PR run `38099091132` each passed **956/956**. The real App recorded `CALIBRATION SAMPLES:3 FAILURES:0`.
+- **Artifacts:**
+  - archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- **Merge.**
+  - The merge ref had exact parents `50b4dd2` and `ce22d99`, and a tree equal to the head tree `b5e1033`.
+  - It was squash-merged through the expected-head fence as `002aec5`.
+- **Local:** 0 warnings, 0 vulnerable packages, 939/939 on Linux. Mutation: 16 mutants; 15 killed, 1 equivalent.
 
 ## Deferred findings
 
