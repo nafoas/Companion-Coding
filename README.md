@@ -109,7 +109,15 @@ It also pins every agreed number as the running default. Merged as `a330a3ca5fcb
 
 **CAL-02** (PR #47) added privacy-safe calibration recording (`--calibration-log`), a report tool, and the soak protocol in `docs/Calibration-Protocol.md`. Merged as `002aec598d9cae5730743e8f787fd27113085f26`.
 
-Stage 11 continues with failure hardening; the final thresholds await Boss's measured report. Stage 12 (credentials and live API) requires Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**CAL-03** (PR #49) hardened failure modes:
+
+- unreadable state is preserved and never silently replaced;
+- the conversation lineage is kept;
+- crash-loop, disk-full, rollback, and capture-fault tests were added.
+
+It also published `docs/Known-Limitations.md`. Merged as `039a641fe5269d2b4c08650f775248df3b32c952`.
+
+Stage 11 local work is complete; the final thresholds await Boss's measured report. Stage 12 (credentials and live API) requires Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 
