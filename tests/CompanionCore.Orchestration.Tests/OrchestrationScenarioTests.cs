@@ -182,7 +182,7 @@ public sealed class OrchestrationScenarioTests
     }
 
     [Fact]
-    public async Task Scenario6_CameraActionTakesAVerifiedPhotographFromTheNextSheet()
+    public async Task Scenario6_CameraActionTakesAVerifiedNativeResolutionPhotograph()
     {
         await using var harness = await CreateAsync();
         var grant = await harness.AuthorizeAsync();
@@ -198,7 +198,9 @@ public sealed class OrchestrationScenarioTests
         var inspection = await harness.Orchestrator.Keepsakes.InspectAsync(saved.PhotographId!.Value);
         Assert.Equal(InspectionStatus.Verified, inspection.Status);
         var entry = Assert.Single(await harness.Orchestrator.Keepsakes.ListAsync());
-        Assert.Equal((ScriptedCaptureWorker.SheetWidth, ScriptedCaptureWorker.SheetHeight), (entry.Width, entry.Height));
+        // The worker's native-resolution photograph, not the attention sheet's downscaled region.
+        Assert.Equal(1, harness.Worker.PhotographRequests);
+        Assert.Equal((ScriptedCaptureWorker.SourceWidth, ScriptedCaptureWorker.SourceHeight), (entry.Width, entry.Height));
         Assert.Equal($"target-session:{grant.TargetSessionId:N}", entry.Session);
         Assert.False((await harness.Orchestrator.GetSnapshotAsync()).PhotographPending);
 

@@ -79,7 +79,11 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
 {
     internal const int SheetWidth = 64;
     internal const int SheetHeight = 48;
+    internal const int SourceWidth = 640;
+    internal const int SourceHeight = 480;
     private readonly Queue<AttentionSheet> _sheets = new();
+    private AttentionSheet? _pinnedPhotograph;
+    private bool _photographArmed;
     private long _sequence;
     private CaptureAuthorizationGrant? _grant;
 
@@ -127,10 +131,39 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
 
     public Task RequestOrientationAsync(CaptureAuthorizationGrant authorization, CancellationToken cancellationToken) => Task.CompletedTask;
 
+    public int PhotographRequests { get; private set; }
+
+    /// <summary>When set, photograph requests fail (an older worker, or a worker fault).</summary>
+    public Exception? PhotographRequestFailure { get; set; }
+
+    /// <summary>Like the real worker, the next emitted frame becomes a native-resolution photograph.</summary>
+    public Task RequestPhotographAsync(CaptureAuthorizationGrant authorization, CancellationToken cancellationToken)
+    {
+        PhotographRequests++;
+        if (PhotographRequestFailure is { } failure)
+        {
+            return Task.FromException(failure);
+        }
+
+        if (Status != CaptureWorkerStatus.Running || !ReferenceEquals(authorization, _grant))
+        {
+            return Task.FromException(new InvalidOperationException("Grant is not active."));
+        }
+
+        _photographArmed = true;
+        return Task.CompletedTask;
+    }
+
     public AttentionSheet? TakeLatestAttentionSheet()
     {
         lock (_sheets)
         {
+            if (_pinnedPhotograph is { } photograph)
+            {
+                _pinnedPhotograph = null;
+                return photograph;
+            }
+
             while (_sheets.Count > 1)
             {
                 _sheets.Dequeue().Dispose();
@@ -144,11 +177,16 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
         Task.FromResult(new CaptureWorkerMetrics { Status = Status });
 
     /// <summary>Emits one admitted frame and its orientation sheet for the current grant.</summary>
-    public AttentionSheet EmitSheet(DateTimeOffset timestamp, byte shade = 90, double changeScore = 0.5, CaptureAuthorizationGrant? grant = null, byte[]? payload = null)
+    /// <remarks>A requested photograph is taken from the next frame unless <paramref name="inFlight"/>
+    /// marks a sheet already composed before the request (it leaves the request armed).</remarks>
+    public AttentionSheet EmitSheet(DateTimeOffset timestamp, byte shade = 90, double changeScore = 0.5, CaptureAuthorizationGrant? grant = null, byte[]? payload = null, bool inFlight = false)
     {
         var authorization = grant ?? _grant ?? throw new InvalidOperationException("No grant.");
         var sequence = Interlocked.Increment(ref _sequence);
-        var png = payload ?? EncodeUniform(SheetWidth, SheetHeight, shade);
+        var photograph = _photographArmed && !inFlight;
+        _photographArmed &= inFlight;
+        var (width, height) = photograph ? (SourceWidth, SourceHeight) : (SheetWidth, SheetHeight);
+        var png = payload ?? EncodeUniform(width, height, shade);
         var metadata = new AttentionSheetMetadata
         {
             TargetSessionId = authorization.TargetSessionId,
@@ -156,12 +194,12 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
             Target = authorization.Target,
             SourceSequenceNumber = sequence,
             SourceTimestamp = timestamp,
-            SourceWidth = 640,
-            SourceHeight = 480,
-            SheetWidth = SheetWidth,
-            SheetHeight = SheetHeight,
+            SourceWidth = SourceWidth,
+            SourceHeight = SourceHeight,
+            SheetWidth = width,
+            SheetHeight = height,
             EncodedByteLength = png.Length,
-            Kind = AttentionSheetKind.Orientation,
+            Kind = photograph ? AttentionSheetKind.Photograph : AttentionSheetKind.Orientation,
             ChangeScore = changeScore,
             Regions =
             [
@@ -169,8 +207,8 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
                 {
                     Kind = AttentionRegionKind.FullContext,
                     NormalizedSource = new NormalizedRegion(0, 0, 1, 1),
-                    SourcePixels = new PixelRect(0, 0, 640, 480),
-                    SheetPixels = new PixelRect(0, 0, SheetWidth, SheetHeight),
+                    SourcePixels = new PixelRect(0, 0, SourceWidth, SourceHeight),
+                    SheetPixels = new PixelRect(0, 0, width, height),
                 },
             ],
         };
@@ -179,10 +217,18 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
         Emitted.Add(sheet);
         lock (_sheets)
         {
-            _sheets.Enqueue(sheet);
+            if (photograph)
+            {
+                _pinnedPhotograph?.Dispose();
+                _pinnedPhotograph = sheet;
+            }
+            else
+            {
+                _sheets.Enqueue(sheet);
+            }
         }
 
-        FrameProduced?.Invoke(this, new CaptureFrameMetadata(authorization, sequence, timestamp, 640, 480));
+        FrameProduced?.Invoke(this, new CaptureFrameMetadata(authorization, sequence, timestamp, SourceWidth, SourceHeight));
         AttentionSheetProduced?.Invoke(this, metadata);
         return sheet;
     }
@@ -191,8 +237,11 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
 
     private void Clear()
     {
+        _photographArmed = false;
         lock (_sheets)
         {
+            _pinnedPhotograph?.Dispose();
+            _pinnedPhotograph = null;
             while (_sheets.Count > 0)
             {
                 _sheets.Dequeue().Dispose();

@@ -11,7 +11,11 @@ internal static class PngEncoder
     private static readonly byte[] Signature = [137, 80, 78, 71, 13, 10, 26, 10];
     private static readonly uint[] CrcTable = BuildCrcTable();
 
-    internal static byte[] Encode(OwnedBgra32Buffer canvas)
+    internal static byte[] Encode(OwnedBgra32Buffer canvas) =>
+        TryEncode(canvas) ?? throw new InvalidOperationException("The encoded attention sheet exceeds its hard bound.");
+
+    /// <summary>Encodes within <see cref="AttentionSheet.MaximumEncodedBytes"/>, or returns null when it cannot fit.</summary>
+    internal static byte[]? TryEncode(OwnedBgra32Buffer canvas)
     {
         ArgumentNullException.ThrowIfNull(canvas);
         var rawLength = checked((canvas.Width * 4 + 1) * canvas.Height);
@@ -40,6 +44,11 @@ internal static class PngEncoder
                         }
 
                         zlib.Write(row);
+                        if (compressed.Length > AttentionSheet.MaximumEncodedBytes)
+                        {
+                            // Already past the bound: stop compressing early.
+                            return null;
+                        }
                     }
                 }
                 finally
@@ -48,9 +57,14 @@ internal static class PngEncoder
                 }
             }
 
-            if (compressed.Length <= 0 || compressed.Length > AttentionSheet.MaximumEncodedBytes)
+            if (compressed.Length > AttentionSheet.MaximumEncodedBytes)
             {
-                throw new InvalidOperationException("The encoded attention sheet exceeds its hard bound.");
+                return null;
+            }
+
+            if (compressed.Length <= 0)
+            {
+                throw new InvalidOperationException("The encoded attention sheet is empty.");
             }
 
             output = new MemoryStream(capacity: checked((int)compressed.Length + 128));
@@ -65,7 +79,7 @@ internal static class PngEncoder
             WriteChunk(output, "IEND", ReadOnlySpan<byte>.Empty);
             if (output.Length > AttentionSheet.MaximumEncodedBytes)
             {
-                throw new InvalidOperationException("The encoded attention sheet exceeds its hard bound.");
+                return null;
             }
 
             return output.ToArray();

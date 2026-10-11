@@ -4,6 +4,12 @@ public enum AttentionSheetKind
 {
     Orientation,
     Regional,
+
+    /// <summary>
+    /// One keepsake photograph, requested explicitly while the camera action is shown: the
+    /// whole authorized target at its native resolution (halved only to fit the bounds).
+    /// </summary>
+    Photograph,
 }
 
 public enum AttentionRegionKind
@@ -110,7 +116,13 @@ public sealed record AttentionSheetMetadata
             || Regions[0].NormalizedSource != new NormalizedRegion(0, 0, 1, 1)
             || Regions[0].SourcePixels != new PixelRect(0, 0, SourceWidth, SourceHeight)
             || (Kind == AttentionSheetKind.Orientation && Regions.Length != 1)
-            || (Kind == AttentionSheetKind.Regional && Regions.Length < 2))
+            || (Kind == AttentionSheetKind.Regional && Regions.Length < 2)
+            || (Kind == AttentionSheetKind.Photograph
+                && (Regions.Length != 1
+                    || Regions[0].SheetPixels != new PixelRect(0, 0, SheetWidth, SheetHeight)
+                    || SheetWidth > SourceWidth
+                    || SheetHeight > SourceHeight
+                    || Math.Max(SheetWidth, SheetHeight) > AttentionSheet.MaximumPhotographEdge)))
         {
             return false;
         }

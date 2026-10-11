@@ -13,6 +13,9 @@ public sealed class AttentionSheet : IDisposable
 
     public const int MaximumEncodedBytes = 8 * 1024 * 1024;
     public const int MaximumRetainedSheets = 2;
+
+    /// <summary>A photograph sheet's longest edge (the keepsake camera's source bound).</summary>
+    public const int MaximumPhotographEdge = 8192;
     public const string MediaType = "image/png";
 
     private byte[]? _encodedImage;

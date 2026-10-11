@@ -12,7 +12,7 @@ namespace CompanionCore.Capture.Contracts;
 /// </summary>
 public static class CaptureIpcProtocol
 {
-    public const int Version = 3;
+    public const int Version = 4;
     public const int MaximumMessageBytes = 64 * 1024;
     public const int HandshakeNonceHexLength = 64;
 
@@ -278,6 +278,7 @@ public enum CaptureIpcMessageKind
     StatusChanged,
     AttentionSheetProduced,
     RequestOrientation,
+    RequestPhotograph,
 }
 
 public enum CaptureWorkerErrorCode

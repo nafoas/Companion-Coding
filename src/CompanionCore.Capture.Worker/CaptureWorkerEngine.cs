@@ -289,6 +289,39 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Arms one photograph for the active grant: the next usable frame becomes a
+    /// native-resolution photograph sheet. Only the authorized target is ever used, and
+    /// any reset (stop, resize, fault, new grant) disarms it.
+    /// </summary>
+    internal async Task RequestPhotographAsync(
+        CaptureIpcAuthorization authorization,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(authorization);
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_status != CaptureWorkerStatus.Running
+                || _authorization is null
+                || !_authorization.Matches(authorization))
+            {
+                throw new InvalidOperationException("The photograph request does not match the active capture grant.");
+            }
+
+            _visual.RequestPhotograph();
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
+    internal bool PhotographPending => _visual.PhotographPending;
+
+    internal long PhotographSheets => _visual.PhotographSheets;
+
     private void CompleteManualRegionUpdate(
         CaptureIpcAuthorization authorization,
         bool responseCommitted)

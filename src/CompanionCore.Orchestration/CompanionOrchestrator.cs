@@ -72,6 +72,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private WatchbunEngine? _watchbun;
     private ActiveSession? _session;
     private CameraAction? _pendingPhoto;
+    private bool _photographRequested;
     private Task? _loop;
     private bool _bridgeInFlight;
     private BridgeOutcomeKind? _lastBraincase;
@@ -195,13 +196,17 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             return Task.FromResult(update.Refusal);
         });
 
-    /// <summary>Shows the camera action; the next current sheet becomes the photograph.</summary>
+    /// <summary>
+    /// Shows the camera action and asks the capture worker for one native-resolution
+    /// photograph of the authorized target. If the worker cannot take one, the next
+    /// current sheet's full-context region becomes the photograph instead.
+    /// </summary>
     public Task<KeepsakeRefusal> TakePhotographAsync() =>
-        InvokeAsync(() =>
+        InvokeAsync(async () =>
         {
             if (_session is not { } session)
             {
-                return Task.FromResult(KeepsakeRefusal.UnknownAction);
+                return KeepsakeRefusal.UnknownAction;
             }
 
             var begun = _camera.BeginCameraAction(session.Grant, Now());
@@ -213,9 +218,19 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             if (begun.Action is { } action)
             {
                 _pendingPhoto = action;
+                _photographRequested = false;
+                try
+                {
+                    await _c.Controller.RequestPhotographAsync(_shutdown.Token).ConfigureAwait(false);
+                    _photographRequested = true;
+                }
+                catch (Exception exception) when (exception is not OutOfMemoryException and not OperationCanceledException)
+                {
+                    // Degraded but honest: the photograph comes from the sheet resolution.
+                }
             }
 
-            return Task.FromResult(begun.Refusal);
+            return begun.Refusal;
         });
 
     /// <summary>Boss's explicit photograph deletion; the record stays and a superseding note is appended.</summary>
@@ -596,9 +611,18 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             return;
         }
 
-        if (_pendingPhoto is { } action)
+        var isPhotograph = sheet.Metadata.Kind == AttentionSheetKind.Photograph;
+        if (_pendingPhoto is { } action && (isPhotograph || !_photographRequested))
         {
             await PhotographAsync(session, action, sheet).ConfigureAwait(false);
+            return;
+        }
+
+        if (isPhotograph)
+        {
+            // A photograph never reaches the semantic bridge; without its camera action it
+            // is released at once (RAM-only).
+            sheet.Dispose();
             return;
         }
 
@@ -681,6 +705,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private async Task PhotographAsync(ActiveSession session, CameraAction action, AttentionSheet sheet)
     {
         PhotographFrame? frame = null;
+        var isPhotograph = sheet.Metadata.Kind == AttentionSheetKind.Photograph;
         try
         {
             using (sheet)
@@ -707,7 +732,13 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
                 .ConfigureAwait(false);
             if (result.Refusal == KeepsakeRefusal.OutsideWindow && Now() <= action.ExpiresAt)
             {
-                // An older sheet: keep waiting for one captured inside the action window.
+                // An older sheet: keep waiting for one captured inside the action window. A
+                // photograph taken from a frame already in flight asks again for a newer one.
+                if (isPhotograph)
+                {
+                    await RequestPhotographAgainAsync().ConfigureAwait(false);
+                }
+
                 return;
             }
 
@@ -728,6 +759,19 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             {
                 Array.Clear(pixels);
             }
+        }
+    }
+
+    private async Task RequestPhotographAgainAsync()
+    {
+        try
+        {
+            await _c.Controller.RequestPhotographAsync(_shutdown.Token).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException and not OperationCanceledException)
+        {
+            // Fall back to the next sheet's full-context region.
+            _photographRequested = false;
         }
     }
 

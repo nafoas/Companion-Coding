@@ -462,6 +462,73 @@ public sealed class OutOfProcessCaptureWorkerTests
             worker.RequestOrientationAsync(grant, CancellationToken.None));
     }
 
+    [Fact]
+    public async Task RequestPhotograph_ReturnsOneNativeResolutionPhotographOfTheActiveGrantOnly()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        var photographs = new ConcurrentQueue<AttentionSheetMetadata>();
+        var anySheet = 0;
+        worker.AttentionSheetProduced += (_, metadata) =>
+        {
+            Interlocked.Increment(ref anySheet);
+            if (metadata.Kind == AttentionSheetKind.Photograph)
+            {
+                photographs.Enqueue(metadata);
+            }
+        };
+
+        await worker.StartAsync(grant, CancellationToken.None);
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => Volatile.Read(ref anySheet) >= 1,
+            TimeSpan.FromSeconds(10));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            worker.RequestPhotographAsync(
+                CaptureWorkerTestSupport.CreateGrant(generation: 8),
+                CancellationToken.None));
+
+        await worker.RequestPhotographAsync(grant, CancellationToken.None);
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () => !photographs.IsEmpty,
+            TimeSpan.FromSeconds(10));
+
+        // The photograph is pinned: it is handed over after any orientation and before
+        // any regional sheet, however many regional sheets arrived meanwhile.
+        AttentionSheet? photograph = null;
+        await CaptureWorkerTestSupport.WaitUntilAsync(
+            () =>
+            {
+                var sheet = worker.TakeLatestAttentionSheet();
+                if (sheet?.Metadata.Kind == AttentionSheetKind.Photograph)
+                {
+                    photograph = sheet;
+                    return true;
+                }
+
+                sheet?.Dispose();
+                return false;
+            },
+            TimeSpan.FromSeconds(10));
+        using (photograph)
+        {
+            var metadata = photograph!.Metadata;
+            Assert.True(metadata.Matches(grant));
+            Assert.Equal((metadata.SourceWidth, metadata.SourceHeight), (metadata.SheetWidth, metadata.SheetHeight));
+            var decoded = PngTestDecoder.Decode(photograph.EncodedImage.Span);
+            Assert.Equal((metadata.SheetWidth, metadata.SheetHeight), (decoded.Width, decoded.Height));
+        }
+
+        Assert.Single(photographs);
+        await worker.StopAndClearAsync(CancellationToken.None);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            worker.RequestPhotographAsync(grant, CancellationToken.None));
+    }
+
     private static OutOfProcessCaptureWorker CreateWorker() =>
         new(CaptureWorkerLaunchOptions.ForPrivateSafeSyntheticTests());
 
