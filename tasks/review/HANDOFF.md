@@ -2,37 +2,56 @@
 
 ## Task
 
-No task is active. The last accepted packet is DEF-02 (`tasks/archive/def-02-full-resolution-photographs.md`), merged through PR #53 as `98ae435ff71ddb75d4a9e847d7520cd82966146f`.
+LIVE-01 — Claude Braincase Adapter (`tasks/active/live-01-claude-adapter.md`), Stage 12 part 1.
 
-Builder: Claude.
-
-**Construction is stopped before Stage 12, per Boss's direction.**
+- Branch: `agent/live-01-claude-adapter`.
+- Base: `main` `ef0d959`.
+- Builder: Claude.
 
 ## Changed
 
-This docs-only change records Boss's calibration decision (2026-10-11):
-
-- The agreed values are the accepted configuration, adjusted only if real use shows a need.
-- The calibration protocol is now an optional diagnostic.
-
-It also records Boss's continuity rule (2026-10-11):
-
-- Prince is one unbroken line of Bun.
-- Nothing restores, rolls back, or deletes his memories on its own.
-- Repair is opt-in only.
-- Older exports are never imported (closes DEF-01 D1).
+- **New `src/CompanionCore.Braincase.Anthropic`.** It holds `AnthropicSemanticProvider` and is the only networking assembly in the Braincase path, using the official `Anthropic` SDK 12.55.0.
+- **`ProviderUnavailableReason`** gains `CredentialsRejected` and `RequestRejected`.
+- **Tests:**
+  - `AnthropicProviderTests` (18, fake transport only);
+  - the bridge no-networking test also forbids the SDK and the adapter.
+- Solution and lock files.
 
 ## Verification
 
-- This change is docs-only, with no code change; the values were already the running defaults (CAL-01).
-- Last product evidence: DEF-02 head `d58807c` passed 1002/1002 on Windows CI.
+- **Local:** full gate green: 1003/1003 on Linux, 0 warnings, no vulnerable packages (the new SDK included).
+- **Mutation:** 17 mutants: 15 killed, 2 equivalent (defense in depth).
+- **Windows CI:** pending.
+- **No live call has been made, and no real credential exists anywhere in this repository or environment.**
 
 ## Remaining
 
-These need Boss:
+LIVE-02:
 
-- **Stage 12.** Real credentials and live API use need Boss's explicit direction.
+- key storage;
+- budget setup;
+- composition;
+- the live validation script.
+
+Then CORE-12.
+
+## Risks and assumptions
+
+- The SDK requires the API key as a string for each call (J4).
+- The default model is `claude-opus-5-5` at low effort, and it is configurable.
+
+## Personal Round Judgments
+
+LIVE-01 J1–J4, recorded in the packet.
+
+## Review focus
+
+- The bridge stays network-free.
+- Live calls are off by default.
+- Authority fields are local.
+- Append-only proposals.
+- No secret in replies or diagnostics.
 
 ## Next safe task
 
-None without Boss's decision.
+LIVE-02.
