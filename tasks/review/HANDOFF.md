@@ -8,11 +8,15 @@ Builder: Claude.
 
 **Stage 12 is built and waits for Boss.**
 
+## VIS-02 (accepted)
+
+Glance (Haiku, peripheral) and Inspect (focus), merged through PR #67 as `da7ea82`. It passed 1102/1102 on Windows CI. The packet is `tasks/archive/vis-02-glance-inspect.md`.
+
+**Next safe task:** VIS-03, local text reading with Windows' built-in OCR. Then VIS-04, the bundled local scene model.
+
 ## VIS-01 (accepted)
 
 The Sniff, part 1 of Boss's Vision upgrade, merged through PR #65 as `2defb17`. It passed 1076/1076 on Windows CI, including the real-process sniff latency test (p95 ≤ 100 ms). The packet is `tasks/archive/vis-01-sniff-foundation.md`.
-
-**Next safe task:** VIS-02, Glance (Haiku, peripheral) and Inspect (focus). Then VIS-03 (local text reading) and VIS-04 (bundled local scene model).
 
 ## FIX-02 (accepted)
 

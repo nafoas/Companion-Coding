@@ -9,7 +9,8 @@ Boss decided on 2026-10-11 that the agreed values are the accepted configuration
 | Item | Status | If it needs to change |
 |---|---|---|
 | Resource bounds (512 MB ring and 256 MB visual working memory, raised by Boss for VIS-01; at most 3 frames; 1 vision request; worker growth watchdog) | Accepted | Run the protocol on the symptom; adjust that bound (CAL-02 D1) |
-| Local cadence (VIS-01: Noticing 250 ms, Engaged 150 ms, Bnuy Mode 100 ms; the Sniff ≤100 ms on CI) | Accepted (Boss, 2026-10-11) | Tune from play; Glance and Inspect tiers follow in VIS-02 |
+| Local cadence (VIS-01: Noticing 250 ms, Engaged 150 ms, Bnuy Mode 100 ms; the Sniff ≤100 ms on CI) | Accepted (Boss, 2026-10-11) | Tune from play |
+| Glance cadence (VIS-02: the Glance's own recommendation, clamped to 2–30 s; 5 s Glance timeout) | Accepted (Boss, 2026-10-11) | Glance latency is unmeasured until Boss runs `BraincaseCheck --live`; tune from those numbers |
 | Semantic cadence (Noticing 12 s, Engaged 6 s, Bnuy Mode floor 3 s) and Watchbun hours | Accepted as agreed | Tune from play |
 | Attention, conversation, transcript, recall, and Watchbun numeric tuning | Behavior settled; defaults in force | Tune from play |
 

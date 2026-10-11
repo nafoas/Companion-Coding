@@ -144,7 +144,9 @@ Boss's one-time setup and first live test are in `docs/Builder-Braincase-Setup.m
 - His attention moves at once, calmly: a looping animation habituates, and only understanding enters Bnuy Mode.
 - RAM budgets were raised, so 4K works.
 
-The Glance (Haiku, peripheral vision) and Inspect come next in VIS-02. Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
+Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
+
+**VIS-02** (PR #67) adds the Glance, Prince's quick peripheral vision on Haiku. It adds to his attention without replacing his main focus: the detailed Inspect, the only source of memories. Both lanes share one dollars-per-day Bun Budget. `BraincaseCheck --live` now times Glances on Boss's PC. Merged as `da7ea8293c0fce7f46fe3aa86b45af4ea2429c9c`.
 
 Stage 12 is built and waits for Boss: first the live check, then the milestone hand-run and the Core Bun Approval Hop. Personality waits for Stage 13.
 
