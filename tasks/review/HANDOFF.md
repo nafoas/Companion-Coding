@@ -8,6 +8,21 @@ Builder: Claude.
 
 **Stage 12 is built and waits for Boss.**
 
+## VIS-03 (in review)
+
+The Text Sniff, part 3 of Boss's Vision upgrade. Packet: `tasks/active/vis-03-text-sniff.md`. Branch: `agent/vis-03-text-sniff`.
+
+- **What it adds.** Windows' built-in OCR reads the dialogue band and the upper corners, off the frame path, one read at a time. A region is read when it moved, even by a near-duplicate subtitle swap, or when it has gone 2 s unread. Each region is read at most once per 500 ms.
+- **What leaves the worker.** Only "the words changed" goes out, as counts in protocol v6 `TextSniffProduced`. The words themselves never leave the worker.
+- **Admission.** Each Text Sniff passes the same privacy admission as sniffs and sheets.
+- **Prince's reaction.** New words perk his ears (below Bnuy Mode) and bring the next Glance forward. Each region habituates. Vanished words are weaker evidence.
+- **Tests.**
+  - Worker: `TextSniffTests` (15).
+  - Controller: 2 admission tests.
+  - Orchestrator: `OrchestrationTextSniffTests` (5).
+  - Mutation pass: 33 of 34 mutants caught; the one survivor is equivalent and documented in the packet.
+- **For the reviewer:** the J2–J5 judgments in the packet, and the deferred real-process and OCR-accuracy checks on Boss's PC.
+
 ## VIS-02 (accepted)
 
 Glance (Haiku, peripheral) and Inspect (focus), merged through PR #67 as `da7ea82`. It passed 1102/1102 on Windows CI. The packet is `tasks/archive/vis-02-glance-inspect.md`.

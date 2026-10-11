@@ -71,4 +71,18 @@ A per-region digest is kept in worker RAM only, to detect change. The Glance and
 
 ## Paw Gate
 
-_(pending)_
+### Mutation pass
+
+34 hand-written mutants, run against the focused test projects. 33 are caught.
+
+- **First run:** 29 caught.
+- **Four survivors were real gaps,** now closed with new tests:
+  - the longest-unread refresh order (`WhenEveryRegionIsStale_TheLongestUnreadIsRefreshedFirst`);
+  - Reset clearing region state (`AReset_ForgetsTheWordsAndTheSpacing`, which asserts the region read);
+  - a failing recognizer reading as nothing (a direct `ReadAsync` assertion);
+  - the client's text-shape check on the authorization's session id.
+- **One survivor is equivalent.** The orchestrator's own stale-grant check on Text Sniffs sits behind the controller's grant and privacy admission, which already drops them (`ATextSniff_IsExposedOnlyThroughPrivacyAdmission…`). It is kept as defense in depth, like the Sniff reflex's.
+
+### Gate
+
+_(local gate and CI evidence below)_

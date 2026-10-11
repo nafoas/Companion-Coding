@@ -21,6 +21,8 @@ public sealed class TextSniffTests
 
     private static readonly int UpperLeftCellIndex = 0;
 
+    private static readonly int UpperRightCellIndex = SniffSignal.GridColumns - 1;
+
     private static readonly int CenterCellIndex = (2 * SniffSignal.GridColumns) + 3;
 
     [Fact]
@@ -141,6 +143,39 @@ public sealed class TextSniffTests
     }
 
     [Fact]
+    public void WhenEveryRegionIsStale_TheLongestUnreadIsRefreshedFirst()
+    {
+        using var sniffer = new TextSniffer(new ScriptedRecognizer());
+        var t0 = CaptureWorkerTestSupport.FixedTime;
+        Assert.Equal(AttentionRegionKind.UpperRight, sniffer.TakeDue(t0, Changes((UpperRightCellIndex, 0.3)))?.Kind);
+        Assert.Equal(AttentionRegionKind.LowerDialogueInventory, sniffer.TakeDue(t0.AddMilliseconds(100), Changes((DialogueCellIndex, 0.3)))?.Kind);
+        Assert.Equal(AttentionRegionKind.UpperLeft, sniffer.TakeDue(t0.AddMilliseconds(200), Changes((UpperLeftCellIndex, 0.3)))?.Kind);
+
+        Assert.Equal(AttentionRegionKind.UpperRight, sniffer.TakeDue(t0.AddSeconds(5), Changes())?.Kind);
+        Assert.Equal(AttentionRegionKind.LowerDialogueInventory, sniffer.TakeDue(t0.AddSeconds(5.1), Changes())?.Kind);
+        Assert.Equal(AttentionRegionKind.UpperLeft, sniffer.TakeDue(t0.AddSeconds(5.2), Changes())?.Kind);
+    }
+
+    [Fact]
+    public async Task AReset_ForgetsTheWordsAndTheSpacing()
+    {
+        var recognizer = new ScriptedRecognizer { Words = ["Same words"] };
+        using var sniffer = new TextSniffer(recognizer);
+        using var pixels = OwnedBgra32Buffer.Allocate(320, 180);
+        var texts = new List<TextSniffSignal>();
+        Assert.True(sniffer.TryStart(pixels, Changes((DialogueCellIndex, 0.3)), Source(0), texts.Add));
+        await sniffer.DrainAsync();
+        Assert.Single(texts);
+
+        // A new grant: the same words, read at once, are new to it.
+        sniffer.Reset();
+        Assert.True(sniffer.TryStart(pixels, Changes((DialogueCellIndex, 0.3)), Source(100), texts.Add));
+        await sniffer.DrainAsync();
+        Assert.Equal(2, texts.Count);
+        Assert.Equal(AttentionRegionKind.LowerDialogueInventory, texts[^1].RegionKind);
+    }
+
+    [Fact]
     public async Task ASubtitleSwapTooSmallToSniff_IsStillRead()
     {
         var recognizer = new ScriptedRecognizer { Words = ["Line one"] };
@@ -204,6 +239,8 @@ public sealed class TextSniffTests
         using var sniffer = new TextSniffer(recognizer);
         using var pixels = OwnedBgra32Buffer.Allocate(320, 180);
         var texts = new List<TextSniffSignal>();
+        var dialogue = TextSniffer.TextLikelyRegions.First(region => region.Kind == AttentionRegionKind.LowerDialogueInventory);
+        Assert.Null(await sniffer.ReadAsync(pixels, dialogue, Source(0), CancellationToken.None));
         Assert.True(sniffer.TryStart(pixels, Changes((DialogueCellIndex, 0.3)), Source(0), texts.Add));
         await sniffer.DrainAsync();
         Assert.Empty(texts);
@@ -338,6 +375,7 @@ public sealed class TextSniffTests
         Assert.Throws<CaptureProtocolException>(() => OutOfProcessCaptureWorker.ValidateTextSniffNotificationShape(read with { Sniff = SniffTests.Valid() }));
         Assert.Throws<CaptureProtocolException>(() => OutOfProcessCaptureWorker.ValidateTextSniffNotificationShape(read with { Cadence = CaptureCadence.Noticing }));
         Assert.Throws<CaptureProtocolException>(() => OutOfProcessCaptureWorker.ValidateTextSniffNotificationShape(read with { Authorization = authorization with { Generation = 8 } }));
+        Assert.Throws<CaptureProtocolException>(() => OutOfProcessCaptureWorker.ValidateTextSniffNotificationShape(read with { Authorization = authorization with { TargetSessionId = Guid.NewGuid() } }));
         Assert.Throws<CaptureProtocolException>(() => OutOfProcessCaptureWorker.ValidateTextSniffNotificationShape(read with { TextSniff = null }));
 
         // A sniff notification may not smuggle a text sniff, nor a command carry one.
