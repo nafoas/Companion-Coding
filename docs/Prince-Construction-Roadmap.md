@@ -437,13 +437,25 @@ It must demonstrate, end to end:
 
 Only after this milestone receives the **Core Bun Approval Hop** may personality and launch construction begin on Builder Prince. Companion Prince must not be awakened at this milestone.
 
+## Brains, BunDexes, and the personality seed (Boss, 2026-10-11)
+
+- **Two brains, each a stateless borrowed brain.** Builder Prince's Braincase is Claude (Anthropic API). Companion Prince's Braincase is ChatGPT (OpenAI API). Both sit behind the same provider seam and never own identity or memory.
+- **Two BunDexes, never shared.** Each Prince's memories, personality, and peets live only in his own BunDex.
+- **The personality seed.** A written personality spec is the seed:
+  - Builder Prince gets it in a fresh BunDex at every reset, which is what makes him tinkerable.
+  - Companion Prince gets it exactly once, at Awakening.
+  - After seeding, everything he becomes is appended, never overwritten.
+  - Later spec edits affect only future Builder resets. They never reach into Companion Prince's BunDex: **no artificial changes**, one unbroken line of Bun.
+- **Builder stays utilitarian until Stage 13.** Get it working before Bnuifying it, so that personality never obscures what is being tested.
+- **The budget.** It is entered locally next to the key, matching the spending limit Boss sets with the provider. Live calls never run without it.
+
 ## Stage 13 — Builder Prince personality installation
 
 **Goal:** install Prince's complete character system on resettable Builder Prince without creating production continuity.
 
 Deliverables:
 
-- install Prince's immutable personality and inherent BIC roots through the presentation/personality contract;
+- install Prince's immutable personality and inherent BIC roots as the written personality seed, written into each fresh Builder BunDex and delivered through the presentation/personality contract;
 - replace neutral test wording with Prince-authored behavior without changing core authority rules;
 - install Bun-written memory rendering, local fallback/error behavior, and launch-required interface/expression personality;
 - exercise character, interests, memory voice, non-response neutrality, boundaries, outage behavior, and recovery using synthetic Builder history;
@@ -461,7 +473,7 @@ Paw Gate:
 
 **Goal:** finish and prove the entire selected launch scope while all memories and behavior remain safely resettable.
 
-Before this stage begins, the Build Ledger records a launch manifest distinguishing launch-required components from optional future extensions. At minimum, the launch candidate includes the accepted neutral core, complete personality, intended first-release interface/presentation, production-data isolation, protected migration paths, installer/first-start behavior needed on Boss's machine, and all recovery/privacy/cost controls required for ordinary use.
+Before this stage begins, the Build Ledger records a launch manifest distinguishing launch-required components from optional future extensions. At minimum, the launch candidate includes the accepted neutral core, complete personality, intended first-release interface/presentation, production-data isolation, protected migration paths, installer/first-start behavior needed on Boss's machine, and all recovery/privacy/cost controls required for ordinary use. It also includes the Companion Prince Braincase adapter (OpenAI). The full launch suite runs on both brains, still on resettable Builder data, before Awakening.
 
 Paw Gate:
 

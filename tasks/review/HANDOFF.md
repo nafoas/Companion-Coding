@@ -2,55 +2,35 @@
 
 ## Task
 
-LIVE-01 — Claude Braincase Adapter (`tasks/active/live-01-claude-adapter.md`), Stage 12 part 1.
+No task is active. The last accepted packets are:
 
-- Branch: `agent/live-01-claude-adapter`.
-- Base: `main` `ef0d959`.
-- Builder: Claude.
+- LIVE-01 (`tasks/archive/live-01-claude-adapter.md`), merged through PR #56 as `eeed55cb93e13ef43240611171926d7d589a0159`;
+- FIX-01 (PR #57, `ad79773`).
+
+Builder: Claude.
 
 ## Changed
 
-- **New `src/CompanionCore.Braincase.Anthropic`.** It holds `AnthropicSemanticProvider` and is the only networking assembly in the Braincase path, using the official `Anthropic` SDK 12.55.0.
-- **`ProviderUnavailableReason`** gains `CredentialsRejected` and `RequestRejected`.
-- **Tests:**
-  - `AnthropicProviderTests` (18, fake transport only);
-  - the bridge no-networking test also forbids the SDK and the adapter.
-- Solution and lock files.
+This docs-only reconciliation:
+
+- archives LIVE-01;
+- records the FIX-01 entry and Boss's decision (two brains, two BunDexes, the personality seed, Builder neutral until Stage 13, the local budget);
+- updates `docs/Prince-Construction-Roadmap.md`, `BUILD_LEDGER.md`, and `README.md`;
+- resets this handoff.
 
 ## Verification
 
-- **Local:** full gate green: 1003/1003 on Linux, 0 warnings, no vulnerable packages (the new SDK included).
-- **Mutation:** 17 mutants: 15 killed, 2 equivalent (defense in depth).
-- **Windows CI:** pending.
-- **No live call has been made, and no real credential exists anywhere in this repository or environment.**
+- LIVE-01 head `8be00b6`, tree `304d6c3`: push run `38111625201` and PR run `38111628552` passed 1020/1020 with verified artifacts.
+- The merge ref had exact parents and an equal tree.
 
 ## Remaining
 
-LIVE-02:
-
-- key storage;
-- budget setup;
-- composition;
-- the live validation script.
-
-Then CORE-12.
-
-## Risks and assumptions
-
-- The SDK requires the API key as a string for each call (J4).
-- The default model is `claude-opus-5-5` at low effort, and it is configurable.
-
-## Personal Round Judgments
-
-LIVE-01 J1–J4, recorded in the packet.
-
-## Review focus
-
-- The bridge stays network-free.
-- Live calls are off by default.
-- Authority fields are local.
-- Append-only proposals.
-- No secret in replies or diagnostics.
+- **LIVE-02:**
+  - Windows Credential Manager key storage;
+  - local key and budget setup;
+  - App composition selecting the Claude provider;
+  - the live validation script Boss runs.
+- **Then CORE-12.**
 
 ## Next safe task
 
