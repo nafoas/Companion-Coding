@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\CompanionCore.Memory\CompanionCore.Memory.csproj" />
     <ProjectReference Include="..\..\src\CompanionCore.Privacy\CompanionCore.Privacy.csproj" />
     <ProjectReference Include="..\..\src\CompanionCore.Runtime\CompanionCore.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\CompanionCore.Braincase.Anthropic\CompanionCore.Braincase.Anthropic.csproj" />
   </ItemGroup>
 
   <ItemGroup>
