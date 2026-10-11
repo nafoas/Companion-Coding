@@ -22,6 +22,7 @@
     <ProjectReference Include="..\CompanionCore.TargetAuth.Windows\CompanionCore.TargetAuth.Windows.csproj" />
     <ProjectReference Include="..\CompanionCore.Calibration\CompanionCore.Calibration.csproj" />
     <ProjectReference Include="..\CompanionCore.Orchestration\CompanionCore.Orchestration.csproj" />
+    <ProjectReference Include="..\CompanionCore.Braincase.Anthropic\CompanionCore.Braincase.Anthropic.csproj" />
     <ProjectReference Include="..\CompanionCore.Platform.Windows\CompanionCore.Platform.Windows.csproj" />
   </ItemGroup>
 

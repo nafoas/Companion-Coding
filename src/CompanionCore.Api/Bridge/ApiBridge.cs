@@ -307,23 +307,25 @@ public sealed class ApiBridge : IAsyncDisposable
             sheet.EncodedImage);
         var estimatedInputUnits = EstimateInputUnits(request);
 
-        if (_options.DailyInputUnitBudget is { } budget)
+        var budgetDay = DateOnly.FromDateTime(now.UtcDateTime);
+        var overBudget =
+            (_options.DailyInputUnitBudget is { } budget
+                && state.UsageInputUnitsOn(budgetDay) + estimatedInputUnits > budget)
+            || (_options.DailyCostBudget is { } cost
+                && cost.CostOf(state.UsageInputUnitsOn(budgetDay) + estimatedInputUnits, state.UsageOutputUnitsOn(budgetDay)) > cost.LimitPerDay);
+        if (overBudget)
         {
-            var today = DateOnly.FromDateTime(now.UtcDateTime);
-            if (state.UsageInputUnitsOn(today) + estimatedInputUnits > budget)
-            {
-                var nextDay = new DateTimeOffset(today.AddDays(1).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
-                return EnterNap(
-                    sheet,
-                    operationId,
-                    started: false,
-                    attempts: 0,
-                    inputUnits: 0,
-                    BraincaseNapReason.LocalBudget,
-                    nextDay,
-                    TimeSpan.Zero,
-                    announce: !isProbe);
-            }
+            var nextDay = new DateTimeOffset(budgetDay.AddDays(1).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            return EnterNap(
+                sheet,
+                operationId,
+                started: false,
+                attempts: 0,
+                inputUnits: 0,
+                BraincaseNapReason.LocalBudget,
+                nextDay,
+                TimeSpan.Zero,
+                announce: !isProbe);
         }
 
         if (!TryAppend(new BraincaseJournalEntry
@@ -470,6 +472,7 @@ public sealed class ApiBridge : IAsyncDisposable
                 operationId,
                 attempts,
                 inputUnits,
+                estimatedInputUnits,
                 isProbe,
                 packet,
                 description,
@@ -483,6 +486,7 @@ public sealed class ApiBridge : IAsyncDisposable
         Guid operationId,
         int attempts,
         long inputUnits,
+        long attemptInputEstimate,
         bool isProbe,
         ResumePacket packet,
         AttentionSheetDescription description,
@@ -525,6 +529,13 @@ public sealed class ApiBridge : IAsyncDisposable
             parsed = null;
         }
         var outputUnits = parsed?.OutputUnits ?? (Encoding.UTF8.GetByteCount(responseJson) + 3) / 4;
+
+        // A provider-reported input count replaces the local estimate for the answered attempt,
+        // so the daily budget follows real usage; earlier failed attempts keep their estimates.
+        if (parsed?.InputUnits is { } reportedInput)
+        {
+            inputUnits = Math.Max(0, inputUnits - attemptInputEstimate) + reportedInput;
+        }
         if (invalid != SemanticResponseInvalidReason.None)
         {
             Interlocked.Increment(ref _invalidResponses);

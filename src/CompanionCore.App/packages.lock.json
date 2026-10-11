@@ -2,6 +2,14 @@
   "version": 1,
   "dependencies": {
     "net10.0-windows10.0.19041": {
+      "Anthropic": {
+        "type": "Transitive",
+        "resolved": "12.55.0",
+        "contentHash": "Gpf6no4CBXnB2RwP1BItFgwXQcsGNX4rKcgYEdoMOVgnCIZ8xODdueEJrklCEFUh5CPld7xGmfDKZz5y0U59uQ==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.5.1"
+        }
+      },
       "Microsoft.Data.Sqlite": {
         "type": "Transitive",
         "resolved": "10.0.10",
@@ -19,6 +27,11 @@
         "dependencies": {
           "SQLitePCLRaw.core": "2.1.11"
         }
+      },
+      "Microsoft.Extensions.AI.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.5.1",
+        "contentHash": "nB0l3IlsVbNeUxsE7nZNb9GY8rP1OSeqpj0pseORPejt474HNKEauTWTLdSJPkSvPlRMxowZNMo6nyp7APAiSg=="
       },
       "SQLitePCLRaw.bundle_e_sqlite3": {
         "type": "Transitive",
@@ -60,6 +73,13 @@
         "type": "Project",
         "dependencies": {
           "CompanionCore.Capture.Contracts": "[1.0.0, )"
+        }
+      },
+      "companioncore.braincase.anthropic": {
+        "type": "Project",
+        "dependencies": {
+          "Anthropic": "[12.55.0, )",
+          "CompanionCore.Api": "[1.0.0, )"
         }
       },
       "companioncore.calibration": {

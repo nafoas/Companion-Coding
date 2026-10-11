@@ -95,6 +95,9 @@ public sealed record BridgeOptions
     /// <summary>Optional local daily input-unit budget. Null means no local budget.</summary>
     public long? DailyInputUnitBudget { get; init; }
 
+    /// <summary>Optional local daily spending limit (the Bun Budget). Null means no cost limit.</summary>
+    public DailyCostBudget? DailyCostBudget { get; init; }
+
     internal void Validate()
     {
         if (MaximumAttempts is < 1 or > 10
@@ -109,11 +112,29 @@ public sealed record BridgeOptions
             || RateLimitMaximum < RateLimitMinimum
             || RateLimitDefault < RateLimitMinimum
             || RateLimitDefault > RateLimitMaximum
-            || DailyInputUnitBudget is <= 0)
+            || DailyInputUnitBudget is <= 0
+            || DailyCostBudget is { IsValid: false })
         {
             throw new ArgumentOutOfRangeException(nameof(BridgeOptions), "Bridge bounds are invalid.");
         }
     }
+}
+
+/// <summary>
+/// The Bun Budget: a local daily spending limit (UTC day) in the provider's currency,
+/// priced per million input and output units. Reaching it puts the Braincase to sleep
+/// until the next day; it never touches memory.
+/// </summary>
+public sealed record DailyCostBudget(decimal LimitPerDay, decimal InputCostPerMillionUnits, decimal OutputCostPerMillionUnits)
+{
+    internal bool IsValid =>
+        LimitPerDay is > 0 and <= 100_000
+        && InputCostPerMillionUnits is >= 0 and <= 10_000
+        && OutputCostPerMillionUnits is >= 0 and <= 10_000
+        && InputCostPerMillionUnits + OutputCostPerMillionUnits > 0;
+
+    public decimal CostOf(long inputUnits, long outputUnits) =>
+        ((inputUnits * InputCostPerMillionUnits) + (outputUnits * OutputCostPerMillionUnits)) / 1_000_000m;
 }
 
 /// <summary>Hidden technical diagnostics, returned only on explicit request.</summary>
