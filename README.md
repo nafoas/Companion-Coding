@@ -98,7 +98,16 @@ Two real launches restore the same conversation lineage. It passed both Windows 
 
 No product defect was found. It passed both Windows gates at 929/929 and merged as `c1787e03070588e7a2d46af1dda95f42ccaff332`.
 
-Stage 11 (calibration on the target PC) and Stage 12 (credentials and live API) require Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**CAL-01** (PR #45) began Stage 11. It enforces the cadence agreed in the design conversation:
+
+- 1 s local capture spacing;
+- Noticing 12 s or triggered;
+- Engaged 6 s;
+- a 3 s Bnuy Mode floor.
+
+It also pins every agreed number as the running default. Merged as `a330a3ca5fcbcfbf67d63f51910b2233e0daf708`.
+
+Stage 11 continues with calibration tooling and failure hardening. Stage 12 (credentials and live API) requires Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 

@@ -1,6 +1,6 @@
 # CAL-01 — Agreed Calibration Numbers and Cadence Enforcement (Stage 11, part 1)
 
-Status: **active — gate review**
+Status: **accepted** — Paw Gate PASS; PR #45 squash-merged as `a330a3ca5fcbcfbf67d63f51910b2233e0daf708`
 Authorized: 2026-10-11 by Boss ("Stage 11 should start now, and then stop at Stage 12. I think we already discussed the calibration in the PDF somewhere, see if you can find the numbers we agreed on").
 Accepted remote base: `ee15d2a79caa21e7c9049571a13ce70912695b4a`
 Working branch: `agent/cal-01-agreed-cadence`
@@ -44,7 +44,17 @@ Illustrative, not agreed: the adaptive next-check intervals (20–30 s static, 2
 
 ## Paw Gate
 
-Pending CI. Local:
+Gate result: **PASS** on 2026-10-11.
+
+- **CI.** Head `3c731c4`: push run `38097858502` and PR run `38097870359` each passed **943/943** on the first attempt. This includes the real Windows capture worker tests with the 1 s spacing.
+- **Artifacts:**
+  - archive digests verified;
+  - attention-sheet PNG: 792×621, `sha256:5eb11c967890ac8b3fb4cfcc1b5892ed8462c77598a3e0e78abc939f73b046dd`.
+- **Merge.**
+  - The merge ref had exact parents `ee15d2a` and `3c731c4`, and a tree equal to the head tree `c990426`.
+  - It was squash-merged through the expected-head fence as `a330a3c`.
+
+Local:
 
 - Release build with `/warnaserror`: 0 warnings, 0 errors.
 - Capture Worker 73/73, Orchestration 61/61.
