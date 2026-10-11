@@ -20,6 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="SceneReference.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\CompanionCore.Capture.Contracts\CompanionCore.Capture.Contracts.csproj" />
     <ProjectReference Include="..\..\src\CompanionCore.Capture.Client\CompanionCore.Capture.Client.csproj" />
     <ProjectReference Include="..\..\src\CompanionCore.Capture.Worker\CompanionCore.Capture.Worker.csproj" />

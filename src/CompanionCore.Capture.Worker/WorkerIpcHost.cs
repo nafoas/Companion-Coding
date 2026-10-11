@@ -38,6 +38,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         _engine.AttentionSheetProduced += OnAttentionSheetProduced;
         _engine.SniffProduced += OnSniffProduced;
         _engine.TextSniffProduced += OnTextSniffProduced;
+        _engine.SceneSniffProduced += OnSceneSniffProduced;
     }
 
     internal async Task<int> RunAsync(CancellationToken cancellationToken)
@@ -289,6 +290,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
             || !cadenceShapeIsValid
             || command.Sniff is not null
             || command.TextSniff is not null
+            || command.SceneSniff is not null
             || command.Kind is not (
                 CaptureIpcMessageKind.Start
                 or CaptureIpcMessageKind.Stop
@@ -399,6 +401,32 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         });
     }
 
+    private void OnSceneSniffProduced(object? sender, SceneSniffSignal scene)
+    {
+        var target = scene.Target;
+        if (target is null || !scene.IsProtocolSafe())
+        {
+            return;
+        }
+
+        // Numbers and a fixed-vocabulary label only: the embedding never left the Scene Sniff.
+        _notifications.Writer.TryWrite(new CaptureIpcMessage
+        {
+            Kind = CaptureIpcMessageKind.SceneSniffProduced,
+            Authorization = new CaptureIpcAuthorization
+            {
+                TargetSessionId = scene.TargetSessionId,
+                Generation = scene.Generation,
+                WindowId = target.WindowId,
+                ProcessId = target.ProcessId,
+                ExecutableFileName = target.ExecutableFileName,
+                ExecutablePathFingerprint = target.ExecutablePathFingerprint,
+            },
+            SequenceNumber = scene.SourceSequenceNumber,
+            SceneSniff = scene,
+        });
+    }
+
     private void OnStatusChanged(object? sender, CaptureWorkerStatusChanged change)
     {
         // Status is a fence, not best-effort telemetry. Write it synchronously so a
@@ -498,6 +526,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
     private static bool HasVisualPayloadFields(CaptureIpcMessage message) =>
         message.Sniff is not null
         || message.TextSniff is not null
+        || message.SceneSniff is not null
         || message.Cadence is not null
         || message.ManualRegion is not null
         || message.ClearManualRegion
@@ -518,6 +547,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         _engine.AttentionSheetProduced -= OnAttentionSheetProduced;
         _engine.SniffProduced -= OnSniffProduced;
         _engine.TextSniffProduced -= OnTextSniffProduced;
+        _engine.SceneSniffProduced -= OnSceneSniffProduced;
         _notifications.Writer.TryComplete();
         _lifetime.Cancel();
         if (_notificationWriter is not null)

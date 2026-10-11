@@ -13,6 +13,7 @@ internal sealed class VisualObservationPipeline : IDisposable
     private readonly FrameChangeDetector _changeDetector = new();
     private readonly StaggeredRegionScheduler _scheduler = new();
     private readonly TextSniffer _text;
+    private readonly SceneSniffer _scene;
     private NormalizedRegion? _manualRegion;
     private bool _orientationPending = true;
     private bool _photographPending;
@@ -39,26 +40,38 @@ internal sealed class VisualObservationPipeline : IDisposable
     private DateTimeOffset? _lastRegionalSheetAt;
     private bool _disposed;
 
-    internal VisualObservationPipeline(ITextRecognizer? textRecognizer = null)
+    internal VisualObservationPipeline(ITextRecognizer? textRecognizer = null, ISceneEmbedder? sceneEmbedder = null)
     {
         _text = new TextSniffer(textRecognizer ?? UnavailableTextRecognizer.Instance);
+        _scene = new SceneSniffer(sceneEmbedder ?? UnavailableSceneEmbedder.Instance);
     }
 
     /// <summary>The Text Sniff (VIS-03) fed by this pipeline's frames.</summary>
     internal TextSniffer Text => _text;
 
+    /// <summary>The Scene Sniff (VIS-04) fed by this pipeline's frames.</summary>
+    internal SceneSniffer Scene => _scene;
+
     internal ValueTask<OwnedWorkerAttentionSheet?> ProcessAsync(
         CaptureSourceFrame frame,
         CaptureIpcAuthorization authorization,
         CancellationToken cancellationToken) =>
-        ProcessAsync(frame, authorization, onSniff: null, onText: null, cancellationToken);
+        ProcessAsync(frame, authorization, onSniff: null, onText: null, onScene: null, cancellationToken);
 
     internal ValueTask<OwnedWorkerAttentionSheet?> ProcessAsync(
         CaptureSourceFrame frame,
         CaptureIpcAuthorization authorization,
         Action<SniffSignal>? onSniff,
         CancellationToken cancellationToken) =>
-        ProcessAsync(frame, authorization, onSniff, onText: null, cancellationToken);
+        ProcessAsync(frame, authorization, onSniff, onText: null, onScene: null, cancellationToken);
+
+    internal ValueTask<OwnedWorkerAttentionSheet?> ProcessAsync(
+        CaptureSourceFrame frame,
+        CaptureIpcAuthorization authorization,
+        Action<SniffSignal>? onSniff,
+        Action<TextSniffSignal>? onText,
+        CancellationToken cancellationToken) =>
+        ProcessAsync(frame, authorization, onSniff, onText, onScene: null, cancellationToken);
 
     /// <summary>
     /// Sniffs the frame first — before any sheet work, so noticing never waits on
@@ -66,13 +79,15 @@ internal sealed class VisualObservationPipeline : IDisposable
     /// orientation, a photograph, a forced sheet, a sniff trigger, or the sheet spacing.
     /// After the sniff, a due text-likely region is handed to the Text Sniff, which reads it
     /// in the background (also for a near-duplicate frame) and reports through
-    /// <paramref name="onText"/>; no frame waits on a read.
+    /// <paramref name="onText"/>. A changed frame is also handed, downscaled, to the Scene
+    /// Sniff when a read is due (<paramref name="onScene"/>). No frame waits on a read.
     /// </summary>
     internal async ValueTask<OwnedWorkerAttentionSheet?> ProcessAsync(
         CaptureSourceFrame frame,
         CaptureIpcAuthorization authorization,
         Action<SniffSignal>? onSniff,
         Action<TextSniffSignal>? onText,
+        Action<SceneSniffSignal>? onScene,
         CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -216,6 +231,7 @@ internal sealed class VisualObservationPipeline : IDisposable
             if (!photograph)
             {
                 StartTextSniff(frame, authorization, pixels, change, onText);
+                StartSceneSniff(frame, authorization, pixels, sniff?.IsTrigger == true, onScene);
             }
 
             if (!photograph && !sheetOwed)
@@ -332,12 +348,38 @@ internal sealed class VisualObservationPipeline : IDisposable
             _text.TryStart(
                 pixels,
                 cellChanges,
-                new TextSniffSource(authorization, frame.SequenceNumber, frame.Timestamp, frame.Width, frame.Height, frame.AccountedBytes),
+                new SniffSource(authorization, frame.SequenceNumber, frame.Timestamp, frame.Width, frame.Height, frame.AccountedBytes),
                 onText);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
             // Reading text is best effort; the Sniff and sheets carry on without it.
+        }
+    }
+
+    private void StartSceneSniff(
+        CaptureSourceFrame frame,
+        CaptureIpcAuthorization authorization,
+        OwnedBgra32Buffer pixels,
+        bool trigger,
+        Action<SceneSniffSignal>? onScene)
+    {
+        if (onScene is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _scene.TryStart(
+                pixels,
+                trigger,
+                new SniffSource(authorization, frame.SequenceNumber, frame.Timestamp, frame.Width, frame.Height, frame.AccountedBytes),
+                onScene);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // Scene reading is best effort; the Sniff and sheets carry on without it.
         }
     }
 
@@ -626,6 +668,7 @@ internal sealed class VisualObservationPipeline : IDisposable
             _lastRegionalSheetAt = null;
             _stateVersion = checked(_stateVersion + 1);
             _text.Reset();
+            _scene.Reset();
         }
     }
 
@@ -726,6 +769,7 @@ internal sealed class VisualObservationPipeline : IDisposable
 
         // Outside the gate: disposing waits for a read in flight.
         _text.Dispose();
+        _scene.Dispose();
     }
 }
 

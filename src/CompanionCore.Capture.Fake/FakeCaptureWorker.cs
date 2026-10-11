@@ -54,6 +54,13 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         remove { }
     }
 
+    /// <summary>The synthetic fake sees no scenes; it has no pixels.</summary>
+    public event EventHandler<SceneSniffSignal>? SceneSniffProduced
+    {
+        add { }
+        remove { }
+    }
+
     /// <summary>The last cadence accepted for the active grant (null until one is set).</summary>
     public CaptureCadence? Cadence { get; private set; }
 

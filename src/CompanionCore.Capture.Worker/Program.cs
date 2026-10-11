@@ -23,7 +23,12 @@ internal static class Program
                     : CaptureWorkerEngine.DefaultCadence.SheetSpacing,
                 textRecognizer: options.UseSyntheticSource
                     ? null
-                    : WindowsOcrTextRecognizer.Create());
+                    : WindowsOcrTextRecognizer.Create(),
+                sceneEmbedder: options.UseSyntheticSource
+                    ? null
+                    : new DeferredSceneEmbedder(() => OnnxSceneEmbedder.Create(
+                        OnnxSceneEmbedder.DefaultModelPath,
+                        SceneLabelTable.Default.Dimensions)));
             await using var host = new WorkerIpcHost(options, engine);
             return await host.RunAsync(CancellationToken.None).ConfigureAwait(false);
         }

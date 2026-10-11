@@ -223,3 +223,93 @@ public sealed record TextSniffSignal
         && (Lines > 0 || Characters == 0)
         && ComputeMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds;
 }
+
+/// <summary>
+/// The Scene Sniff's fixed, neutral vocabulary (VIS-04). A label's index is its wire value;
+/// the list is append-only. The words are descriptions of kinds of scenes, never anything
+/// read from the screen.
+/// </summary>
+public static class SceneVocabulary
+{
+    public static IReadOnlyList<string> Keys { get; } =
+    [
+        "menu", "loading", "map", "inventory", "dialogue", "cutscene", "combat", "boss",
+        "explosion", "closeup", "landscape", "dungeon", "town", "underwater", "driving", "flying",
+        "game-over", "victory", "crafting", "shop", "puzzle", "night", "snow", "desert",
+        "forest", "space", "interior", "character-creation", "dark", "title", "platformer", "strategy",
+    ];
+
+    /// <summary>No label was confident enough.</summary>
+    public const int Unsure = -1;
+
+    public static string? KeyOf(int label) => label >= 0 && label < Keys.Count ? Keys[label] : null;
+}
+
+/// <summary>
+/// One Scene Sniff (VIS-04): the local vision model read the frame and found it a different
+/// scene from the one it last reported. It carries no embedding and no pixels: only how far
+/// the scene moved, whether it is a full shift, and the closest label in the fixed
+/// <see cref="SceneVocabulary"/>. It passes the same privacy admission as sniffs and sheets.
+/// </summary>
+public sealed record SceneSniffSignal
+{
+    public Guid TargetSessionId { get; init; }
+
+    public long Generation { get; init; }
+
+    public CaptureTargetIdentity? Target { get; init; }
+
+    public long SourceSequenceNumber { get; init; }
+
+    public DateTimeOffset SourceTimestamp { get; init; }
+
+    public int SourceWidth { get; init; }
+
+    public int SourceHeight { get; init; }
+
+    public long SourceAccountedBytes { get; init; }
+
+    /// <summary>1 − cosine similarity to the scene last reported (1 for the first reading), in [0, 1].</summary>
+    public double Novelty { get; init; }
+
+    /// <summary>A different scene altogether, not just part of one changing.</summary>
+    public bool Shift { get; init; }
+
+    /// <summary>The closest <see cref="SceneVocabulary"/> label, or <see cref="SceneVocabulary.Unsure"/>.</summary>
+    public int Label { get; init; } = SceneVocabulary.Unsure;
+
+    /// <summary>The model's calibrated confidence in <see cref="Label"/>, in [0, 1] (0 when unsure).</summary>
+    public double LabelConfidence { get; init; }
+
+    /// <summary>The read ran on the GPU (DirectML).</summary>
+    public bool Accelerated { get; init; }
+
+    public long ComputeMicroseconds { get; init; }
+
+    public CaptureFrameMetadata ToFrameMetadata(CaptureAuthorizationGrant grant) =>
+        new(grant, SourceSequenceNumber, SourceTimestamp, SourceWidth, SourceHeight, SourceAccountedBytes);
+
+    public bool Matches(CaptureAuthorizationGrant grant) =>
+        grant is not null
+        && TargetSessionId == grant.TargetSessionId
+        && Generation == grant.Generation
+        && Target == grant.Target;
+
+    public bool IsProtocolSafe() =>
+        TargetSessionId != Guid.Empty
+        && Generation > 0
+        && Target is not null
+        && SourceSequenceNumber > 0
+        && SourceTimestamp != default
+        && SourceWidth > 0
+        && SourceHeight > 0
+        && SourceAccountedBytes is > 0 and <= CaptureWorkerMetrics.ScreenshotBudgetBytes
+        && double.IsFinite(Novelty)
+        && Novelty is >= 0 and <= 1
+        && Label >= SceneVocabulary.Unsure
+        && Label < SceneVocabulary.Keys.Count
+        && double.IsFinite(LabelConfidence)
+        && LabelConfidence is >= 0 and <= 1
+        && (Label != SceneVocabulary.Unsure || LabelConfidence == 0)
+        && ComputeMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds;
+}

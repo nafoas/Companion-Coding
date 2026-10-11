@@ -216,7 +216,7 @@ internal sealed class TextSniffer : IDisposable
     internal bool TryStart(
         OwnedBgra32Buffer pixels,
         ReadOnlySpan<double> cellChanges,
-        TextSniffSource source,
+        SniffSource source,
         Action<TextSniffSignal> onText)
     {
         ArgumentNullException.ThrowIfNull(pixels);
@@ -342,7 +342,7 @@ internal sealed class TextSniffer : IDisposable
     internal async ValueTask<TextSniffSignal?> ReadAsync(
         OwnedBgra32Buffer pixels,
         VisualRegion region,
-        TextSniffSource source,
+        SniffSource source,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(pixels);
@@ -353,7 +353,7 @@ internal sealed class TextSniffer : IDisposable
     private async ValueTask<TextSniffSignal?> ReadCropAsync(
         OwnedBgra32Buffer crop,
         VisualRegion region,
-        TextSniffSource source,
+        SniffSource source,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -528,8 +528,8 @@ internal sealed class TextSniffer : IDisposable
     }
 }
 
-/// <summary>The authorized frame a Text Sniff reads, as signal metadata.</summary>
-internal sealed record TextSniffSource(
+/// <summary>The authorized frame a Text or Scene Sniff reads, as signal metadata.</summary>
+internal sealed record SniffSource(
     CaptureIpcAuthorization Authorization,
     long SequenceNumber,
     DateTimeOffset Timestamp,

@@ -68,6 +68,11 @@ public sealed record SniffDiagnostics(
     public long TextReceived { get; init; }
 
     public long TextForwarded { get; init; }
+
+    /// <summary>Scene Sniffs received and forwarded as evidence (VIS-04).</summary>
+    public long SceneReceived { get; init; }
+
+    public long SceneForwarded { get; init; }
 }
 
 /// <summary>
@@ -114,6 +119,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private readonly LatencyWindow _sniffLatency = new(256);
     private long _sniffsReceived;
     private long _textSniffsReceived;
+    private long _sceneSniffsReceived;
     private bool _sniffTriggerPending;
     private bool _glanceInFlight;
     private bool _inspectWanted;
@@ -164,6 +170,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         _c.Controller.AttentionSheetAvailable += OnSheetAvailable;
         _c.Controller.SniffAvailable += OnSniffAvailable;
         _c.Controller.TextSniffAvailable += OnTextSniffAvailable;
+        _c.Controller.SceneSniffAvailable += OnSceneSniffAvailable;
         if (_c.Platform is { } platform)
         {
             platform.ForegroundChanged += OnForeground;
@@ -218,6 +225,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         {
             TextReceived = Interlocked.Read(ref _textSniffsReceived),
             TextForwarded = Volatile.Read(ref _session)?.Text.Forwarded ?? 0,
+            SceneReceived = Interlocked.Read(ref _sceneSniffsReceived),
+            SceneForwarded = Volatile.Read(ref _session)?.Scene.Forwarded ?? 0,
         };
     }
 
@@ -335,6 +344,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         _c.Controller.AttentionSheetAvailable -= OnSheetAvailable;
         _c.Controller.SniffAvailable -= OnSniffAvailable;
         _c.Controller.TextSniffAvailable -= OnTextSniffAvailable;
+        _c.Controller.SceneSniffAvailable -= OnSceneSniffAvailable;
         if (_c.Platform is { } platform)
         {
             platform.ForegroundChanged -= OnForeground;
@@ -545,6 +555,44 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// The scene reflex (VIS-04), on the same lane as the Sniff: a different scene perks his
+    /// ears at once and, on a full shift into a still-novel scene, brings the next Glance forward.
+    /// </summary>
+    private void OnSceneSniffAvailable(object? sender, SceneSniffSignal scene)
+    {
+        Interlocked.Increment(ref _sceneSniffsReceived);
+        var session = Volatile.Read(ref _session);
+        if (session is null || Volatile.Read(ref _disposed) != 0 || !scene.Matches(session.Grant))
+        {
+            return;
+        }
+
+        try
+        {
+            var (interest, glanceNow) = session.Scene.Evaluate(scene);
+            if (interest is null)
+            {
+                return;
+            }
+
+            var update = session.Attention.Observe(interest with { Timestamp = Max(Now(), session.Attention.Current.AsOf) });
+            foreach (var intent in update.Intents)
+            {
+                Publish(new CompanionNotice(CompanionNoticeKind.Attention, Attention: intent));
+            }
+
+            if (update.Transitioned || update.Intents.Count > 0 || glanceNow)
+            {
+                Post(() => ApplyReflexAsync(session, update, glanceNow));
+            }
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            RecordFault(exception);
+        }
+    }
+
     private Task ApplyReflexAsync(ActiveSession session, AttentionUpdate? update, bool trigger)
     {
         if (!ReferenceEquals(session, _session))
@@ -694,6 +742,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         public SniffReflex Reflex { get; } = new(attention.Configuration);
 
         public TextReflex Text { get; } = new(attention.Configuration);
+
+        public SceneReflex Scene { get; } = new(attention.Configuration);
 
         /// <summary>The attention state whose consequences (conversation, cadence) were last applied.</summary>
         public AttentionState? AppliedState { get; set; }

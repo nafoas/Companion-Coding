@@ -15,4 +15,54 @@
     <ProjectReference Include="..\CompanionCore.Capture.Contracts\CompanionCore.Capture.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- VIS-04: the Scene Sniff's local vision model runs on ONNX Runtime (DirectML GPU, CPU fallback). -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.4" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Microsoft_AI_DirectML_Bin_Dir_Windows_x64)' != ''">
+    <!-- The DirectML package copies its runtime only for platform-specific builds; the worker is
+         AnyCPU, so the x64 redistributable is placed next to it for ONNX Runtime's DML provider. -->
+    <Content Include="$(Microsoft_AI_DirectML_Bin_Dir_Windows_x64)\DirectML.dll" Link="DirectML.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="SceneLabels.json" LogicalName="CompanionCore.Capture.Worker.SceneLabels.json" />
+  </ItemGroup>
+
+  <!--
+    VIS-04: the Scene Sniff's vision model (SigLIP base/16, Apache-2.0) ships with the worker
+    but is not committed. It is fetched once into a git-ignored cache keyed by its digest,
+    verified on every build, and copied next to the worker. Building with
+    -p:CompanionSkipSceneModel=true leaves it out; the Scene Sniff then reports unavailable.
+  -->
+  <PropertyGroup>
+    <SceneModelUrl>https://huggingface.co/Xenova/siglip-base-patch16-224/resolve/4649052661e53c7000355844105f8a1792088239/onnx/vision_model.onnx</SceneModelUrl>
+    <SceneModelSha256>f89d41bac7f4d4b87e010a467d93f98689d708916ed22f5a07f96fdfa26f475f</SceneModelSha256>
+    <CompanionModelCache Condition="'$(CompanionModelCache)' == ''">$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..', '.model-cache'))</CompanionModelCache>
+    <SceneModelCacheDirectory>$([MSBuild]::NormalizeDirectory('$(CompanionModelCache)', 'siglip-base-patch16-224-$(SceneModelSha256)'))</SceneModelCacheDirectory>
+    <SceneModelCachePath>$(SceneModelCacheDirectory)vision_model.onnx</SceneModelCachePath>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(CompanionSkipSceneModel)' != 'true'">
+    <None Include="$(SceneModelCachePath)" Link="models\siglip\vision_model.onnx" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
+  <Target Name="FetchSceneModel" BeforeTargets="BeforeBuild" Condition="'$(CompanionSkipSceneModel)' != 'true'">
+    <DownloadFile Condition="!Exists('$(SceneModelCachePath)')"
+                  SourceUrl="$(SceneModelUrl)"
+                  DestinationFolder="$(SceneModelCacheDirectory)"
+                  DestinationFileName="vision_model.onnx.partial"
+                  Retries="3"
+                  RetryDelayMilliseconds="5000" />
+    <VerifyFileHash Condition="!Exists('$(SceneModelCachePath)')"
+                    File="$(SceneModelCacheDirectory)vision_model.onnx.partial"
+                    Hash="$(SceneModelSha256)"
+                    Algorithm="SHA256" />
+    <Move Condition="!Exists('$(SceneModelCachePath)')"
+          SourceFiles="$(SceneModelCacheDirectory)vision_model.onnx.partial"
+          DestinationFiles="$(SceneModelCachePath)" />
+    <VerifyFileHash File="$(SceneModelCachePath)" Hash="$(SceneModelSha256)" Algorithm="SHA256" />
+  </Target>
+
 </Project>

@@ -39,11 +39,22 @@
       <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\CompanionCore.Capture.Worker.runtimeconfig.json" />
       <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\Microsoft.Windows.SDK.NET.dll" />
       <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\WinRT.Runtime.dll" />
+      <!-- VIS-04: the Scene Sniff's ONNX Runtime, DirectML, native runtimes, and model. -->
+      <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\Microsoft.ML.OnnxRuntime.dll" />
+      <CaptureWorkerOutput Include="$(CaptureWorkerOutputDirectory)\DirectML.dll" />
+      <CaptureWorkerRuntime Include="$(CaptureWorkerOutputDirectory)\runtimes\**\*.dll" />
+      <CaptureWorkerModel Include="$(CaptureWorkerOutputDirectory)\models\**\*.onnx" />
     </ItemGroup>
     <Copy SourceFiles="@(CaptureWorkerOutput)"
           DestinationFolder="$(TargetDir)"
           SkipUnchangedFiles="true"
           Condition="Exists('%(CaptureWorkerOutput.Identity)')" />
+    <Copy SourceFiles="@(CaptureWorkerRuntime)"
+          DestinationFiles="@(CaptureWorkerRuntime->'$(TargetDir)runtimes\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(CaptureWorkerModel)"
+          DestinationFiles="@(CaptureWorkerModel->'$(TargetDir)models\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

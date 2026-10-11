@@ -44,7 +44,8 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         int maximumFrames = CaptureWorkerMetrics.MaximumSourceFrames,
         TimeSpan minimumFrameSpacing = default,
         TimeSpan sheetSpacing = default,
-        ITextRecognizer? textRecognizer = null)
+        ITextRecognizer? textRecognizer = null,
+        ISceneEmbedder? sceneEmbedder = null)
     {
         if (minimumFrameSpacing < TimeSpan.Zero || minimumFrameSpacing > TimeSpan.FromMinutes(1))
         {
@@ -61,7 +62,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         _frameSpacingTicks = minimumFrameSpacing.Ticks;
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _clock = clock ?? SystemClock.Instance;
-        _visual = new VisualObservationPipeline(textRecognizer);
+        _visual = new VisualObservationPipeline(textRecognizer, sceneEmbedder);
         _visual.SetSheetSpacing(sheetSpacing);
         _watchdog = new CaptureResourceWatchdog();
         _pipeline = pipeline ?? new CaptureFramePipeline(
@@ -84,6 +85,9 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
 
     /// <summary>Raised when a Text Sniff saw words appear, change, or vanish (VIS-03); counts only.</summary>
     internal event EventHandler<TextSniffSignal>? TextSniffProduced;
+
+    /// <summary>Raised when the Scene Sniff saw a different scene (VIS-04); bounded numbers only.</summary>
+    internal event EventHandler<SceneSniffSignal>? SceneSniffProduced;
 
     internal event EventHandler? VisualStateReset;
 
@@ -207,6 +211,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
 
         var visual = _visual.Snapshot();
         var text = _visual.Text.Snapshot();
+        var scene = _visual.Scene.Snapshot();
         var metrics = _pipeline.Snapshot(
             Environment.ProcessId,
             _status,
@@ -240,6 +245,12 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             TextChanges = text.Changes,
             LastTextReadMicroseconds = text.LastMicroseconds,
             MaximumTextReadMicroseconds = text.MaximumMicroseconds,
+            SceneModelAvailable = _visual.Scene.IsAvailable,
+            SceneModelAccelerated = _visual.Scene.IsAvailable && _visual.Scene.IsAccelerated,
+            SceneReads = scene.Reads,
+            SceneChanges = scene.Changes,
+            LastSceneReadMicroseconds = scene.LastMicroseconds,
+            MaximumSceneReadMicroseconds = scene.MaximumMicroseconds,
             FrameSpacing = Clamp(FrameSpacing, CaptureCadence.MaximumFrameSpacing),
             SheetSpacing = Clamp(SheetSpacing, CaptureCadence.MaximumSheetSpacing),
         };
@@ -519,7 +530,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         var visualCompleted = false;
         try
         {
-            sheet = await _visual.ProcessAsync(frame, authorization, PublishSniff, PublishText, cancellationToken)
+            sheet = await _visual.ProcessAsync(frame, authorization, PublishSniff, PublishText, PublishScene, cancellationToken)
                 .ConfigureAwait(false);
             visualCompleted = true;
             if (sheet is null)
@@ -607,6 +618,27 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         }
     }
 
+    private void PublishScene(SceneSniffSignal scene)
+    {
+        var current = Volatile.Read(ref _authorization);
+        if (_status != CaptureWorkerStatus.Running
+            || current is null
+            || current.TargetSessionId != scene.TargetSessionId
+            || current.Generation != scene.Generation)
+        {
+            return;
+        }
+
+        try
+        {
+            SceneSniffProduced?.Invoke(this, scene);
+        }
+        catch (Exception)
+        {
+            // Scenes are best effort; a transport failure never stalls the frame path.
+        }
+    }
+
     private CaptureWorkerMetrics GetMetricsWithoutWatchdog()
     {
         using var process = Process.GetCurrentProcess();
@@ -625,6 +657,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
 
         var visual = _visual.Snapshot();
         var text = _visual.Text.Snapshot();
+        var scene = _visual.Scene.Snapshot();
         return _pipeline.Snapshot(
             Environment.ProcessId,
             _status,
@@ -657,6 +690,12 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             TextChanges = text.Changes,
             LastTextReadMicroseconds = text.LastMicroseconds,
             MaximumTextReadMicroseconds = text.MaximumMicroseconds,
+            SceneModelAvailable = _visual.Scene.IsAvailable,
+            SceneModelAccelerated = _visual.Scene.IsAvailable && _visual.Scene.IsAccelerated,
+            SceneReads = scene.Reads,
+            SceneChanges = scene.Changes,
+            LastSceneReadMicroseconds = scene.LastMicroseconds,
+            MaximumSceneReadMicroseconds = scene.MaximumMicroseconds,
             FrameSpacing = Clamp(FrameSpacing, CaptureCadence.MaximumFrameSpacing),
             SheetSpacing = Clamp(SheetSpacing, CaptureCadence.MaximumSheetSpacing),
         };

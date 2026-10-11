@@ -19,6 +19,14 @@ jobs:
         with:
           global-json-file: global.json
 
+      # VIS-04: the Scene Sniff's vision model is fetched by the build (digest-verified) and
+      # kept out of git; caching it by digest spares every run the 372 MB download.
+      - name: Cache the scene model
+        uses: actions/cache@v4
+        with:
+          path: .model-cache
+          key: scene-model-siglip-base-patch16-224-f89d41bac7f4d4b87e010a467d93f98689d708916ed22f5a07f96fdfa26f475f
+
       - name: Restore (locked mode)
         run: dotnet restore CompanionCore.slnx --locked-mode
 

@@ -442,7 +442,7 @@ public sealed class TextSniffTests
         ComputeMicroseconds = 25_000,
     };
 
-    private static TextSniffSource Source(int milliseconds) => new(
+    private static SniffSource Source(int milliseconds) => new(
         CaptureWorkerTestSupport.CreateAuthorization(),
         milliseconds + 1,
         CaptureWorkerTestSupport.FixedTime.AddMilliseconds(milliseconds),

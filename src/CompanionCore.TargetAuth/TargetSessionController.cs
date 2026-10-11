@@ -64,6 +64,7 @@ public sealed class TargetSessionController : IAsyncDisposable
         _worker.AttentionSheetProduced += OnAttentionSheetProduced;
         _worker.SniffProduced += OnSniffProduced;
         _worker.TextSniffProduced += OnTextSniffProduced;
+        _worker.SceneSniffProduced += OnSceneSniffProduced;
     }
 
     public event EventHandler<CaptureFrameMetadata>? FrameAdmitted;
@@ -84,6 +85,12 @@ public sealed class TargetSessionController : IAsyncDisposable
     /// admission, raised inside the admission lease like <see cref="SniffAvailable"/>.
     /// </summary>
     public event EventHandler<TextSniffSignal>? TextSniffAvailable;
+
+    /// <summary>
+    /// A Scene Sniff (VIS-04; numbers and a fixed-vocabulary label only) whose source frame
+    /// passed privacy admission, raised inside the admission lease like <see cref="SniffAvailable"/>.
+    /// </summary>
+    public event EventHandler<SceneSniffSignal>? SceneSniffAvailable;
 
     public TargetSessionSnapshot CurrentSession => _authorization.CurrentSession;
 
@@ -621,6 +628,7 @@ public sealed class TargetSessionController : IAsyncDisposable
         _worker.AttentionSheetProduced -= OnAttentionSheetProduced;
         _worker.SniffProduced -= OnSniffProduced;
         _worker.TextSniffProduced -= OnTextSniffProduced;
+        _worker.SceneSniffProduced -= OnSceneSniffProduced;
         await _operationLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
@@ -810,6 +818,47 @@ public sealed class TargetSessionController : IAsyncDisposable
             try
             {
                 TextSniffAvailable?.Invoke(this, text);
+            }
+            catch (Exception)
+            {
+                // An observer failure never breaks admission.
+            }
+        });
+    }
+
+    private void OnSceneSniffProduced(object? sender, SceneSniffSignal scene)
+    {
+        var grant = CurrentSession.Grant;
+        if (grant is null || !_authorization.IsCurrent(grant) || !scene.Matches(grant) || !scene.IsProtocolSafe())
+        {
+            return;
+        }
+
+        CaptureFrameMetadata frame;
+        try
+        {
+            frame = scene.ToFrameMetadata(grant);
+        }
+        catch (ArgumentException)
+        {
+            return;
+        }
+
+        PrivacyAssessment assessment;
+        try
+        {
+            assessment = _assessmentProvider(frame) ?? PrivacyAssessment.Unavailable;
+        }
+        catch (Exception)
+        {
+            assessment = PrivacyAssessment.Unavailable;
+        }
+
+        _frameGate.TryAdmit(frame, assessment, _ =>
+        {
+            try
+            {
+                SceneSniffAvailable?.Invoke(this, scene);
             }
             catch (Exception)
             {

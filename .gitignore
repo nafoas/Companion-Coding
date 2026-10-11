@@ -11,6 +11,7 @@ out/
 # Dependencies and caches
 node_modules/
 .cache/
+.model-cache/
 coverage/
 TestResults/
 *.user

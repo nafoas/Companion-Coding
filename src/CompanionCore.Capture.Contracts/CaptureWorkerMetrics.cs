@@ -99,6 +99,19 @@ public sealed record CaptureWorkerMetrics
 
     public long MaximumTextReadMicroseconds { get; init; }
 
+    /// <summary>VIS-04: whether the local scene model is loaded, whether it runs on the GPU, and how it is doing.</summary>
+    public bool SceneModelAvailable { get; init; }
+
+    public bool SceneModelAccelerated { get; init; }
+
+    public long SceneReads { get; init; }
+
+    public long SceneChanges { get; init; }
+
+    public long LastSceneReadMicroseconds { get; init; }
+
+    public long MaximumSceneReadMicroseconds { get; init; }
+
     public TimeSpan SheetSpacing { get; init; }
 
     public static CaptureWorkerMetrics Empty { get; } = new();
@@ -161,5 +174,11 @@ public sealed record CaptureWorkerMetrics
         && TextChanges is >= 0 && TextChanges <= TextReads
         && LastTextReadMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
         && MaximumTextReadMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
-        && LastTextReadMicroseconds <= MaximumTextReadMicroseconds;
+        && LastTextReadMicroseconds <= MaximumTextReadMicroseconds
+        && SceneReads >= 0
+        && SceneChanges is >= 0 && SceneChanges <= SceneReads
+        && LastSceneReadMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
+        && MaximumSceneReadMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
+        && LastSceneReadMicroseconds <= MaximumSceneReadMicroseconds
+        && (SceneModelAvailable || !SceneModelAccelerated);
 }
