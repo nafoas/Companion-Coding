@@ -44,6 +44,12 @@ public enum BridgeOutcomeKind
     PrivacyFenced = 8,
     LocalStateUnavailable = 9,
     Disposed = 10,
+
+    /// <summary>A Glance answered (VIS-02).</summary>
+    Glanced = 11,
+
+    /// <summary>A Glance did not come back in time, or came back unusable; it has no effect.</summary>
+    Missed = 12,
 }
 
 public sealed record BridgeMemoryResult(
@@ -64,6 +70,9 @@ public sealed record BridgeOutcome(
     ProviderUnavailableReason UnavailableReason = ProviderUnavailableReason.None,
     SemanticResponseInvalidReason InvalidReason = SemanticResponseInvalidReason.None)
 {
+    /// <summary>The Glance reading, present only for <see cref="BridgeOutcomeKind.Glanced"/>.</summary>
+    public GlanceReading? Glance { get; init; }
+
     internal static BridgeOutcome Simple(BridgeOutcomeKind kind, Guid operationId = default, int attempts = 0) =>
         new(kind, operationId, attempts, null, BridgeMemoryResult.None);
 }
@@ -77,6 +86,9 @@ public sealed record BridgeOptions
     public int MaximumAttempts { get; init; } = 3;
 
     public TimeSpan AttemptTimeout { get; init; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>A Glance is one attempt; past this it is stale and missed (VIS-02).</summary>
+    public TimeSpan GlanceTimeout { get; init; } = TimeSpan.FromSeconds(5);
 
     public TimeSpan InitialBackoff { get; init; } = TimeSpan.FromMilliseconds(500);
 
@@ -103,6 +115,8 @@ public sealed record BridgeOptions
         if (MaximumAttempts is < 1 or > 10
             || AttemptTimeout <= TimeSpan.Zero
             || AttemptTimeout > TimeSpan.FromMinutes(10)
+            || GlanceTimeout <= TimeSpan.Zero
+            || GlanceTimeout > TimeSpan.FromMinutes(1)
             || InitialBackoff < TimeSpan.Zero
             || MaximumBackoff < InitialBackoff
             || MaximumBackoff > TimeSpan.FromMinutes(5)
@@ -127,14 +141,27 @@ public sealed record BridgeOptions
 /// </summary>
 public sealed record DailyCostBudget(decimal LimitPerDay, decimal InputCostPerMillionUnits, decimal OutputCostPerMillionUnits)
 {
+    /// <summary>Glance-lane prices (VIS-02); null means the Glance is priced like the Inspect.</summary>
+    public decimal? GlanceInputCostPerMillionUnits { get; init; }
+
+    public decimal? GlanceOutputCostPerMillionUnits { get; init; }
+
     internal bool IsValid =>
         LimitPerDay is > 0 and <= 100_000
         && InputCostPerMillionUnits is >= 0 and <= 10_000
         && OutputCostPerMillionUnits is >= 0 and <= 10_000
-        && InputCostPerMillionUnits + OutputCostPerMillionUnits > 0;
+        && InputCostPerMillionUnits + OutputCostPerMillionUnits > 0
+        && GlanceInputCostPerMillionUnits is null or (>= 0 and <= 10_000)
+        && GlanceOutputCostPerMillionUnits is null or (>= 0 and <= 10_000);
 
     public decimal CostOf(long inputUnits, long outputUnits) =>
         ((inputUnits * InputCostPerMillionUnits) + (outputUnits * OutputCostPerMillionUnits)) / 1_000_000m;
+
+    /// <summary>The day's spend across both lanes, each at its own prices.</summary>
+    public decimal CostOf(long inputUnits, long outputUnits, long glanceInputUnits, long glanceOutputUnits) =>
+        CostOf(inputUnits, outputUnits)
+        + (((glanceInputUnits * (GlanceInputCostPerMillionUnits ?? InputCostPerMillionUnits))
+            + (glanceOutputUnits * (GlanceOutputCostPerMillionUnits ?? OutputCostPerMillionUnits))) / 1_000_000m);
 }
 
 /// <summary>Hidden technical diagnostics, returned only on explicit request.</summary>

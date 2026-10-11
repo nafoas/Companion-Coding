@@ -36,6 +36,16 @@ internal sealed class BraincaseJournalState
 
     internal long UsageDayOutputUnits { get; private set; }
 
+    internal long Glances { get; private set; }
+
+    internal long UsageDayGlanceInputUnits { get; private set; }
+
+    internal long UsageDayGlanceOutputUnits { get; private set; }
+
+    internal long GlanceInputUnitsOn(DateOnly day) => UsageDay == day ? UsageDayGlanceInputUnits : 0;
+
+    internal long GlanceOutputUnitsOn(DateOnly day) => UsageDay == day ? UsageDayGlanceOutputUnits : 0;
+
     internal long UsageInputUnitsOn(DateOnly day) => UsageDay == day ? UsageDayInputUnits : 0;
 
     internal long UsageOutputUnitsOn(DateOnly day) => UsageDay == day ? UsageDayOutputUnits : 0;
@@ -63,6 +73,11 @@ internal sealed class BraincaseJournalState
                 }
 
                 AddUsage(DateOnly.FromDateTime(entry.At.UtcDateTime), entry.InputUnits ?? 0, entry.OutputUnits ?? 0);
+                break;
+            case BraincaseJournalEntryType.Glanced:
+                RequireOperation(entry);
+                Glances++;
+                AddUsage(DateOnly.FromDateTime(entry.At.UtcDateTime), entry.InputUnits ?? 0, entry.OutputUnits ?? 0, glance: true);
                 break;
             case BraincaseJournalEntryType.Interrupted:
                 Interrupted++;
@@ -110,6 +125,9 @@ internal sealed class BraincaseJournalState
                 UsageDay = snapshot.UsageDay;
                 UsageDayInputUnits = snapshot.UsageDayInputUnits;
                 UsageDayOutputUnits = snapshot.UsageDayOutputUnits;
+                Glances = snapshot.Glances ?? 0;
+                UsageDayGlanceInputUnits = snapshot.UsageDayGlanceInputUnits ?? 0;
+                UsageDayGlanceOutputUnits = snapshot.UsageDayGlanceOutputUnits ?? 0;
                 break;
             default:
                 throw new FormatException("Unknown journal entry type.");
@@ -131,9 +149,12 @@ internal sealed class BraincaseJournalState
         UsageDay = UsageDay,
         UsageDayInputUnits = UsageDayInputUnits,
         UsageDayOutputUnits = UsageDayOutputUnits,
+        Glances = Glances == 0 ? null : Glances,
+        UsageDayGlanceInputUnits = UsageDayGlanceInputUnits == 0 ? null : UsageDayGlanceInputUnits,
+        UsageDayGlanceOutputUnits = UsageDayGlanceOutputUnits == 0 ? null : UsageDayGlanceOutputUnits,
     };
 
-    private void AddUsage(DateOnly day, long input, long output)
+    private void AddUsage(DateOnly day, long input, long output, bool glance = false)
     {
         TotalInputUnits += input;
         TotalOutputUnits += output;
@@ -142,10 +163,20 @@ internal sealed class BraincaseJournalState
             UsageDay = day;
             UsageDayInputUnits = 0;
             UsageDayOutputUnits = 0;
+            UsageDayGlanceInputUnits = 0;
+            UsageDayGlanceOutputUnits = 0;
         }
 
-        UsageDayInputUnits += input;
-        UsageDayOutputUnits += output;
+        if (glance)
+        {
+            UsageDayGlanceInputUnits += input;
+            UsageDayGlanceOutputUnits += output;
+        }
+        else
+        {
+            UsageDayInputUnits += input;
+            UsageDayOutputUnits += output;
+        }
     }
 
     private static Guid RequireOperation(BraincaseJournalEntry entry) =>
