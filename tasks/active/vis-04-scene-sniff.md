@@ -68,8 +68,26 @@ The agreed plan said "CLIP". OpenAI's CLIP model card says "any deployed use cas
 
 ## Deferred findings
 
-_(none yet)_
+- **GPU speed is measured on Boss's PC.** CI runners have no GPU, so the CPU won the warm-up race there.
+  - CI's CPU numbers (2 threads on a shared VM): 3.3 s to load, 388 ms median read.
+  - The read runs off the frame path, one at a time, so CPU speed limits only how often scenes are compared, never the Sniff.
+  - `BraincaseCheck` does not time the scene model. The worker metrics report `SceneModelAccelerated` and the read times.
+- **The vocabulary is generic.** Per-game labels, and learning a scene's look over time, wait for later work.
+- **The thresholds are measured on photographs.** Change 0.10 and shift 0.20 are accepted defaults, to be tuned from play.
 
 ## Paw Gate
 
-_(pending)_
+### Mutation pass
+
+44 hand-written mutants, run against the focused test projects. 43 are caught.
+
+- **First run:** 38 failed a test, and 1 hung its test until the 300 s timeout ("deferred until loaded" made the load block), which also counts as caught.
+- **Three survivors were real gaps,** now closed:
+  - a failing model read is returned as nothing (a direct `Read` assertion);
+  - only Sniff triggers bring a read forward: a changed, non-trigger frame waits for the refresh;
+  - a visual reset forgets the reference scene.
+- **One survivor is equivalent ("missing model").** Without the existence check, the load still fails and reports unavailable; the check is only a fast path.
+
+### Gate
+
+_(local gate and CI evidence below)_

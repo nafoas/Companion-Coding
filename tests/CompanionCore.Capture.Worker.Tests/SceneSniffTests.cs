@@ -157,6 +157,7 @@ public sealed class SceneSniffTests
         using var sniffer = new SceneSniffer(embedder);
         using var pixels = Pattern(320, 180);
         var scenes = new List<SceneSniffSignal>();
+        Assert.Null(sniffer.Read(Tensor(), Source(0), CancellationToken.None));
         Assert.True(sniffer.TryStart(pixels, trigger: false, Source(0), scenes.Add));
         await sniffer.DrainAsync();
         Assert.Empty(scenes);
@@ -203,9 +204,24 @@ public sealed class SceneSniffTests
         Assert.Equal(2, scenes.Count);
         Assert.True(scenes[^1].Shift);
 
-        // Duplicate frames are never read.
-        await Process(4, 1500, DialogueBox, shade: 120);
+        // A changed frame that is no trigger (the box's shade shifts a little) waits for the refresh.
+        await Process(4, 700, DialogueBox, shade: 145);
         Assert.Equal(2, embedder.Reads);
+
+        // Duplicate frames are never read, even when a refresh is due.
+        await Process(5, 1500, DialogueBox, shade: 145);
+        Assert.Equal(2, embedder.Reads);
+
+        // A changed frame after the refresh interval is read.
+        await Process(6, 1600, DialogueBox, shade: 170);
+        Assert.Equal(3, embedder.Reads);
+
+        // A visual reset (a new grant or target) forgets the scene: the next frame is read and new.
+        pipeline.Reset();
+        embedder.Next = Unit(0.5);
+        await Process(7, 1700, DialogueBox, shade: 195);
+        Assert.Equal(4, embedder.Reads);
+        Assert.Equal(1d, scenes[^1].Novelty);
     }
 
     [Fact]
