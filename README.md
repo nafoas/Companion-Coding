@@ -135,6 +135,8 @@ Boss's one-time setup and first live test are in `docs/Builder-Braincase-Setup.m
 
 **CORE-12** (PR #61) adds placeholder commands for every orchestrator action, plus `docs/Core-Prince-Milestone.md`, Boss's guided run of the ten Stage 12 milestone checks. Merged as `18b5215e3bc5810d76937465314a55ed57ba323a`.
 
+**FIX-02** (PR #63) makes the orchestration test harness wait by wall clock instead of by poll count, and report bridge diagnostics if it ever times out. It fixes a crash-loop test that timed out on a loaded Windows runner. Test-only. Merged as `288c81f3373a6b2a170c655e1ade5590cb4e9da1`.
+
 Stage 12 is built and waits for Boss: first the live check, then the milestone hand-run and the Core Bun Approval Hop. Personality waits for Stage 13.
 
 ## Important boundaries
