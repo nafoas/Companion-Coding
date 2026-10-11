@@ -2,31 +2,64 @@
 
 ## Task
 
-No task is active. The last accepted packet is CAL-03 (`tasks/archive/cal-03-failure-hardening.md`), merged through PR #49 as `039a641fe5269d2b4c08650f775248df3b32c952`.
+DEF-01 — Long-Session Consolidation and Single-File Vault Export (`tasks/active/def-01-consolidation-and-export.md`). These are the smaller deferred items, part 1.
 
-**Stage 11 local work is complete.**
-
-Builder: Claude.
+- Branch: `agent/def-01-deferred-items`.
+- Base: `main` `63c38cf`.
+- Builder: Claude.
 
 ## Changed
 
-This docs-only reconciliation:
+- **Memory.** Added `MemoryRepository.RetrieveSessionPageAsync`, a read-only keyset page over one session in record-id order, with 1 test.
+- **Orchestration.** `ConsolidateAsync` now:
+  - streams every original of the session;
+  - commits the consolidation in parts that each fit one atomic append;
+  - gives each part a stable operation id, where part 0 keeps the intent's id.
 
-- archives CAL-03;
-- updates `BUILD_LEDGER.md` and `README.md`;
-- resets this handoff.
+  Added `PlannedRecords` and `PartOperationId`.
+- **Vault.** New `VaultExport`, which:
+  - validates both archives;
+  - wraps them unchanged with a checksummed manifest in one `.zip`;
+  - writes atomically and never overwrites;
+  - verifies the result.
+- **Host.**
+  - `CompanionHost.ExportVaultAsync(path)` takes a fresh backup and then exports.
+  - `CompanionHost.VerifyVaultExportAsync(path)`.
+- **Tests:**
+  - `OrchestrationLongSessionTests` (4);
+  - `OrchestrationVaultExportTests` (5);
+  - `MemoryPagingTests` (+1).
 
 ## Verification
 
-- CAL-03 head `dcface9`, tree `99b0427`: push run `38099942669` and PR run `38099951518` passed 963/963 with verified artifacts.
-- The merge ref had exact parents and an equal tree.
+- **Local:**
+  - 0 warnings, 0 vulnerable packages;
+  - full gate green on Linux;
+  - Orchestration 81/81;
+  - Memory 89/89.
+- **Mutation:** 24 mutants: 19 killed and 5 equivalent (defense in depth), recorded in the packet.
+- **Windows CI:** pending (expected about 977).
 
 ## Remaining
 
-- Merge this reconciliation.
-- Then the smaller deferred items.
+- CI, merge, and closure.
+- Then DEF-02 (full-resolution photographs).
 - Stop before Stage 12.
+
+## Risks and assumptions
+
+- An export older than the live journal is refused by Bnuy Repairs. Importing it would accept losing later memories, and that is Boss's decision (D1).
+
+## Personal Round Judgments
+
+DEF-01 J1–J2, recorded in the packet.
+
+## Review focus
+
+- A replay of the parts appends nothing.
+- Every original is consolidated exactly once.
+- The export never overwrites, and never writes inside the data root.
 
 ## Next safe task
 
-DEF-01 — Smaller deferred items.
+DEF-02 — Full-resolution photographs.

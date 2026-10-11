@@ -132,6 +132,38 @@ internal sealed partial class MemoryStore
             orderByRecordId: true);
     }
 
+    internal Task<IReadOnlyList<RetrievedMemory>> RetrieveSessionPageAsync(
+        string sessionReference,
+        Guid? afterRecordId,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionReference);
+        if (sessionReference.Length > MemoryProposalValidator.MaximumKeyCharacters
+            || limit is < 1 or > MemoryQuery.MaximumLimit
+            || afterRecordId == Guid.Empty)
+        {
+            throw new ArgumentException("The session page request is unbounded or invalid.");
+        }
+
+        return RetrieveWhereAsync(
+            afterRecordId is null
+                ? "r.session_reference = $session"
+                : "r.session_reference = $session AND r.record_id > $after",
+            command =>
+            {
+                command.Parameters.AddWithValue("$session", sessionReference);
+                if (afterRecordId is { } after)
+                {
+                    command.Parameters.AddWithValue("$after", after.ToString("D"));
+                }
+            },
+            limit,
+            cancellationToken,
+            orderByRecordId: true);
+    }
+
     private async Task<IReadOnlyList<RetrievedMemory>> RetrieveWhereAsync(
         string whereClause,
         Action<Microsoft.Data.Sqlite.SqliteCommand> bind,

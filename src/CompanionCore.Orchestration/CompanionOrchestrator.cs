@@ -149,6 +149,18 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
     public long Faults => Interlocked.Read(ref _faults);
 
+    /// <summary>
+    /// Single-file Da Bun Vault export: a fresh Vault backup, then one verified file at
+    /// <paramref name="destinationPath"/>. Serialized with every other Vault operation.
+    /// </summary>
+    internal Task<VaultExportReport> ExportVaultAsync(MemoryStoreLocation location, string destinationPath) =>
+        InvokeAsync(async () =>
+        {
+            await DaBunVault.BackUpAsync(_c.Repository, _c.Keepsakes, _c.State, _shutdown.Token).ConfigureAwait(false);
+            Publish(new CompanionNotice(CompanionNoticeKind.VaultBackedUp));
+            return await VaultExport.ExportAsync(location, destinationPath, Now(), _shutdown.Token).ConfigureAwait(false);
+        });
+
     public Task TickAsync() => InvokeAsync(TickCoreAsync);
 
     public Task<WatchbunRefusal> AnswerQuietCheckAsync(QuietAnswer answer) =>
@@ -985,28 +997,89 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             await WriteJsonAsync(ConsolidationStateName, pending.ToArray()).ConfigureAwait(false);
         }
 
-        var originals = await _c.Repository
-            .RetrieveAsync(new MemoryQuery { SessionReference = intent.Session, Limit = MemoryQuery.MaximumLimit }, _shutdown.Token)
-            .ConfigureAwait(false);
-        var entries = originals.Where(memory => RecallMetadata.Parse(memory.Record.RetrievalMetadataJson).Kind
-            is not RecallRecordKind.Summary and not RecallRecordKind.Highlight).ToArray();
-        if (entries.Length > 0)
+        // Stream every original of the session in record-id order (however long the session)
+        // and commit it in parts that each fit one atomic append. The partition is a pure
+        // function of the session's originals, so a replay reproduces every part exactly.
+        var part = 0;
+        var consolidated = 0;
+        var batch = new List<RetrievedMemory>();
+        var batchHighlights = 0;
+        Guid? after = null;
+        while (true)
         {
-            var plan = ConsolidationPlanner.PlanSessionSummary(intent.OperationId, intent.Now, intent.Session, intent.Game, save: null, entries);
-            var result = await _c.Repository.WriteGate.SubmitAsync(plan.Proposal, _shutdown.Token).ConfigureAwait(false);
-            if (!result.IsAccepted)
+            var page = await _c.Repository
+                .RetrieveSessionPageAsync(intent.Session, after, MemoryQuery.MaximumLimit, _shutdown.Token)
+                .ConfigureAwait(false);
+            foreach (var memory in page)
             {
-                // Left pending; the next start or consolidation replays it.
+                var metadata = RecallMetadata.Parse(memory.Record.RetrievalMetadataJson);
+                if (metadata.Kind is RecallRecordKind.Summary or RecallRecordKind.Highlight)
+                {
+                    continue;
+                }
+
+                var highlight = metadata.Highlight ? 1 : 0;
+                if (PlannedRecords(batch.Count + 1, batchHighlights + highlight) > ConsolidationPlanner.MaximumRecordsPerConsolidation)
+                {
+                    if (!await CommitPartAsync(intent, part++, batch).ConfigureAwait(false))
+                    {
+                        return;
+                    }
+
+                    consolidated += batch.Count;
+                    batch.Clear();
+                    batchHighlights = 0;
+                }
+
+                batch.Add(memory);
+                batchHighlights += highlight;
+            }
+
+            if (page.Count < MemoryQuery.MaximumLimit)
+            {
+                break;
+            }
+
+            after = page[^1].Record.RecordId;
+        }
+
+        if (batch.Count > 0)
+        {
+            if (!await CommitPartAsync(intent, part, batch).ConfigureAwait(false))
+            {
                 return;
             }
 
-            Publish(new CompanionNotice(CompanionNoticeKind.Consolidated, Key: intent.Session, Count: entries.Length));
+            consolidated += batch.Count;
+        }
+
+        if (consolidated > 0)
+        {
+            Publish(new CompanionNotice(CompanionNoticeKind.Consolidated, Key: intent.Session, Count: consolidated));
         }
 
         var remaining = await ReadPendingAsync().ConfigureAwait(false);
         remaining.RemoveAll(item => item.Session == intent.Session);
         await WriteJsonAsync(ConsolidationStateName, remaining.ToArray()).ConfigureAwait(false);
         _watchbunSessions.Remove(intent.Session);
+    }
+
+    /// <summary>Records one consolidation part would append: a summary per source chunk plus each highlight.</summary>
+    internal static int PlannedRecords(int entries, int highlights) =>
+        ((entries + ConsolidationPlanner.MaximumSourcesPerSummary - 1) / ConsolidationPlanner.MaximumSourcesPerSummary) + highlights;
+
+    /// <summary>The operation id of one consolidation part; part 0 keeps the intent's own id.</summary>
+    internal static Guid PartOperationId(Guid intentOperation, int part) =>
+        part == 0 ? intentOperation : DeriveId("consolidation-part", $"{intentOperation:N}:{part}");
+
+    private async Task<bool> CommitPartAsync(PendingConsolidation intent, int part, IReadOnlyList<RetrievedMemory> entries)
+    {
+        var plan = ConsolidationPlanner.PlanSessionSummary(
+            PartOperationId(intent.OperationId, part), intent.Now, intent.Session, intent.Game, save: null, entries);
+        var result = await _c.Repository.WriteGate.SubmitAsync(plan.Proposal, _shutdown.Token).ConfigureAwait(false);
+
+        // A refused part leaves the intent pending; the next start or consolidation replays it.
+        return result.IsAccepted;
     }
 
     private async Task<List<PendingConsolidation>> ReadPendingAsync() =>
