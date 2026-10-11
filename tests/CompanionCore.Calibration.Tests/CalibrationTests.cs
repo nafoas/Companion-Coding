@@ -46,13 +46,22 @@ public sealed class CalibrationTests : IDisposable
     [Fact]
     public void TheRecorder_WritesOneJsonLinePerSample_WithOnlyNumbersAndStateNames()
     {
-        using var recorder = new CalibrationRecorder(_root);
-        recorder.Append(Sample(0, attention: "Engaged", watchbun: "Watching", workerPrivate: 90 * Mib));
-        recorder.Append(Sample(1));
+        string file;
+        using (var recorder = new CalibrationRecorder(_root))
+        {
+            recorder.Append(Sample(0, attention: "Engaged", watchbun: "Watching", workerPrivate: 90 * Mib));
+            recorder.Append(Sample(1));
+            file = recorder.CurrentFile!;
+            Assert.Equal(2, recorder.Written);
 
-        var lines = File.ReadAllLines(recorder.CurrentFile!);
+            // A live log stays readable for the report tool while Prince keeps writing.
+            using var live = new StreamReader(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            Assert.NotNull(live.ReadLine());
+        }
+
+        // Read only after the writer closed: Windows refuses a default-share read of a file open for writing.
+        var lines = File.ReadAllLines(file);
         Assert.Equal(2, lines.Length);
-        Assert.Equal(2, recorder.Written);
         using var document = JsonDocument.Parse(lines[0]);
         foreach (var property in document.RootElement.EnumerateObject())
         {
