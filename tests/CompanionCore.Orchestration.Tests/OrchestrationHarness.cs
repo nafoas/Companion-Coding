@@ -428,7 +428,10 @@ internal sealed class OrchestrationHarness : IAsyncDisposable
     /// <summary>Flushes the mailbox and any in-flight bridge work.</summary>
     internal async Task SettleAsync()
     {
-        for (var attempt = 0; attempt < 400; attempt++)
+        // A wall-clock deadline, not a poll count: on a loaded Windows runner a bridge
+        // operation's durable writes can take seconds, and Task.Delay(10) sleeps ~15 ms there.
+        var deadline = DateTime.UtcNow.AddMilliseconds(SettleTimeoutMs);
+        while (true)
         {
             var snapshot = await Orchestrator.GetSnapshotAsync();
             if (!snapshot.BridgeInFlight)
@@ -437,11 +440,20 @@ internal sealed class OrchestrationHarness : IAsyncDisposable
                 return;
             }
 
+            if (DateTime.UtcNow > deadline)
+            {
+                var d = Host.Bridge.GetDiagnosticsSnapshot();
+                throw new TimeoutException(
+                    $"The orchestrator did not settle. Bridge: operations={d.OperationsStarted} completed={d.OperationsCompleted} "
+                    + $"interrupted={d.OperationsInterrupted} attempts={d.AttemptsSent} retries={d.Retries} timeouts={d.Timeouts} "
+                    + $"busy={d.Busy} nap={d.Nap.Reason}; provider calls={Provider.CallCount}; faults={Orchestrator.Faults}.");
+            }
+
             await Task.Delay(10);
         }
-
-        throw new TimeoutException("The orchestrator did not settle.");
     }
+
+    private const int SettleTimeoutMs = 30_000;
 
     internal async Task<CompanionOrchestrator.PendingConsolidation[]> PendingConsolidationsAsync()
     {
