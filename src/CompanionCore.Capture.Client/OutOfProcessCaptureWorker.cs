@@ -57,6 +57,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private AttentionSheet? _pinnedOrientation;
     private AttentionSheet? _pinnedPhotograph;
     private AttentionSheetMetadata? _pendingOrientationNotice;
+    private AttentionSheetMetadata? _pendingPhotographNotice;
     private bool _orientationSourceDispatched;
     private bool _admitFrames;
     private bool _expectedExit;
@@ -846,6 +847,10 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             {
                 _pinnedPhotograph?.Dispose();
                 _pinnedPhotograph = sheet;
+
+                // Like the orientation, a photograph's notice is never coalesced away by a
+                // newer regional sheet; it is sent once, after its own source frame.
+                _pendingPhotographNotice = sheet.Metadata;
             }
             else
             {
@@ -1377,6 +1382,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     private void DispatchLatestAttentionSheetIfCurrent(long workerEpoch)
     {
         AttentionSheetMetadata? orientation = null;
+        AttentionSheetMetadata? photograph = null;
         AttentionSheetMetadata? latestMetadata = null;
         lock (_stateGate)
         {
@@ -1420,6 +1426,22 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 }
             }
 
+            if (_pendingPhotographNotice is { } pendingPhotograph)
+            {
+                if (!pendingPhotograph.Matches(_currentGrant))
+                {
+                    _pendingPhotographNotice = null;
+                }
+                else if (pendingPhotograph.SourceSequenceNumber <= _lastDispatchedSequence)
+                {
+                    photograph = pendingPhotograph;
+                    _pendingPhotographNotice = null;
+                    _lastDispatchedAttentionSheetSequence = Math.Max(
+                        _lastDispatchedAttentionSheetSequence,
+                        pendingPhotograph.SourceSequenceNumber);
+                }
+            }
+
             if (_latestAttentionMetadata is { } latest
                 && latest.Matches(_currentGrant)
                 && latest.SourceSequenceNumber <= _lastDispatchedSequence
@@ -1433,6 +1455,11 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         if (orientation is not null)
         {
             RaiseAttentionSheetProduced(orientation);
+        }
+
+        if (photograph is not null)
+        {
+            RaiseAttentionSheetProduced(photograph);
         }
 
         if (latestMetadata is not null)
@@ -1552,6 +1579,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         _pinnedOrientation = null;
         _pinnedPhotograph?.Dispose();
         _pinnedPhotograph = null;
+        _pendingPhotographNotice = null;
         _pendingOrientationNotice = null;
         _orientationSourceDispatched = false;
         _latestAttentionMetadata = null;
