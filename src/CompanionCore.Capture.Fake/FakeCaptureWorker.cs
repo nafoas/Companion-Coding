@@ -47,6 +47,13 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         remove { }
     }
 
+    /// <summary>The synthetic fake reads no text; it has no pixels.</summary>
+    public event EventHandler<TextSniffSignal>? TextSniffProduced
+    {
+        add { }
+        remove { }
+    }
+
     /// <summary>The last cadence accepted for the active grant (null until one is set).</summary>
     public CaptureCadence? Cadence { get; private set; }
 

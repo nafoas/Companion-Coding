@@ -150,3 +150,76 @@ public sealed record CaptureCadence
         && SheetSpacing >= FrameSpacing
         && SheetSpacing <= MaximumSheetSpacing;
 }
+
+/// <summary>
+/// One Text Sniff (VIS-03): Windows' built-in text recognition read a text-likely region
+/// after the Sniff saw it change. It carries no text, only bounded counts and whether the
+/// words changed since that region was last read; the recognized text never leaves the
+/// capture worker. It passes the same privacy admission as sniffs and sheets.
+/// </summary>
+public sealed record TextSniffSignal
+{
+    public const int MaximumLines = 128;
+
+    public const int MaximumCharacters = 16_384;
+
+    public Guid TargetSessionId { get; init; }
+
+    public long Generation { get; init; }
+
+    public CaptureTargetIdentity? Target { get; init; }
+
+    public long SourceSequenceNumber { get; init; }
+
+    public DateTimeOffset SourceTimestamp { get; init; }
+
+    public int SourceWidth { get; init; }
+
+    public int SourceHeight { get; init; }
+
+    public long SourceAccountedBytes { get; init; }
+
+    /// <summary>The text-likely layout region that was read.</summary>
+    public AttentionRegionKind RegionKind { get; init; }
+
+    public NormalizedRegion Region { get; init; }
+
+    public int Lines { get; init; }
+
+    public int Characters { get; init; }
+
+    /// <summary>The words differ from the last reading of this region (appeared, changed, or vanished).</summary>
+    public bool TextChanged { get; init; }
+
+    public long ComputeMicroseconds { get; init; }
+
+    /// <summary>New or different words are present (not merely vanished).</summary>
+    [JsonIgnore]
+    public bool NewText => TextChanged && Lines > 0;
+
+    public CaptureFrameMetadata ToFrameMetadata(CaptureAuthorizationGrant grant) =>
+        new(grant, SourceSequenceNumber, SourceTimestamp, SourceWidth, SourceHeight, SourceAccountedBytes);
+
+    public bool Matches(CaptureAuthorizationGrant grant) =>
+        grant is not null
+        && TargetSessionId == grant.TargetSessionId
+        && Generation == grant.Generation
+        && Target == grant.Target;
+
+    public bool IsProtocolSafe() =>
+        TargetSessionId != Guid.Empty
+        && Generation > 0
+        && Target is not null
+        && SourceSequenceNumber > 0
+        && SourceTimestamp != default
+        && SourceWidth > 0
+        && SourceHeight > 0
+        && SourceAccountedBytes is > 0 and <= CaptureWorkerMetrics.ScreenshotBudgetBytes
+        && Enum.IsDefined(RegionKind)
+        && RegionKind is not (AttentionRegionKind.FullContext or AttentionRegionKind.ManualFocus)
+        && Region.IsValid
+        && Lines is >= 0 and <= MaximumLines
+        && Characters is >= 0 and <= MaximumCharacters
+        && (Lines > 0 || Characters == 0)
+        && ComputeMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds;
+}

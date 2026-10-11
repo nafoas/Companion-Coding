@@ -22,6 +22,12 @@ public interface ICaptureWorker : IDisposable
     /// </summary>
     event EventHandler<SniffSignal>? SniffProduced;
 
+    /// <summary>
+    /// A Text Sniff (VIS-03): counts only, never text. Consumers must pass it through
+    /// privacy admission before using it.
+    /// </summary>
+    event EventHandler<TextSniffSignal>? TextSniffProduced;
+
     Task StartAsync(CaptureAuthorizationGrant authorization, CancellationToken cancellationToken);
 
     Task StopAsync(CancellationToken cancellationToken);

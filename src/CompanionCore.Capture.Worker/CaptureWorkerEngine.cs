@@ -43,7 +43,8 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         ISystemClock? clock = null,
         int maximumFrames = CaptureWorkerMetrics.MaximumSourceFrames,
         TimeSpan minimumFrameSpacing = default,
-        TimeSpan sheetSpacing = default)
+        TimeSpan sheetSpacing = default,
+        ITextRecognizer? textRecognizer = null)
     {
         if (minimumFrameSpacing < TimeSpan.Zero || minimumFrameSpacing > TimeSpan.FromMinutes(1))
         {
@@ -60,7 +61,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         _frameSpacingTicks = minimumFrameSpacing.Ticks;
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _clock = clock ?? SystemClock.Instance;
-        _visual = new VisualObservationPipeline();
+        _visual = new VisualObservationPipeline(textRecognizer);
         _visual.SetSheetSpacing(sheetSpacing);
         _watchdog = new CaptureResourceWatchdog();
         _pipeline = pipeline ?? new CaptureFramePipeline(
@@ -80,6 +81,9 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
 
     /// <summary>Raised for every sniff, before its frame's sheet work (VIS-01).</summary>
     internal event EventHandler<SniffSignal>? SniffProduced;
+
+    /// <summary>Raised when a Text Sniff saw words appear, change, or vanish (VIS-03); counts only.</summary>
+    internal event EventHandler<TextSniffSignal>? TextSniffProduced;
 
     internal event EventHandler? VisualStateReset;
 
@@ -202,6 +206,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         }
 
         var visual = _visual.Snapshot();
+        var text = _visual.Text.Snapshot();
         var metrics = _pipeline.Snapshot(
             Environment.ProcessId,
             _status,
@@ -230,6 +235,11 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             Sniffs = visual.Sniffs,
             LastSniffMicroseconds = visual.LastSniffMicroseconds,
             MaximumSniffMicroseconds = visual.MaximumSniffMicroseconds,
+            TextRecognitionAvailable = _visual.Text.IsAvailable,
+            TextReads = text.Reads,
+            TextChanges = text.Changes,
+            LastTextReadMicroseconds = text.LastMicroseconds,
+            MaximumTextReadMicroseconds = text.MaximumMicroseconds,
             FrameSpacing = Clamp(FrameSpacing, CaptureCadence.MaximumFrameSpacing),
             SheetSpacing = Clamp(SheetSpacing, CaptureCadence.MaximumSheetSpacing),
         };
@@ -509,7 +519,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         var visualCompleted = false;
         try
         {
-            sheet = await _visual.ProcessAsync(frame, authorization, PublishSniff, cancellationToken)
+            sheet = await _visual.ProcessAsync(frame, authorization, PublishSniff, PublishText, cancellationToken)
                 .ConfigureAwait(false);
             visualCompleted = true;
             if (sheet is null)
@@ -576,6 +586,27 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         }
     }
 
+    private void PublishText(TextSniffSignal text)
+    {
+        var current = Volatile.Read(ref _authorization);
+        if (_status != CaptureWorkerStatus.Running
+            || current is null
+            || current.TargetSessionId != text.TargetSessionId
+            || current.Generation != text.Generation)
+        {
+            return;
+        }
+
+        try
+        {
+            TextSniffProduced?.Invoke(this, text);
+        }
+        catch (Exception)
+        {
+            // Text is best effort; a transport failure never stalls the frame path.
+        }
+    }
+
     private CaptureWorkerMetrics GetMetricsWithoutWatchdog()
     {
         using var process = Process.GetCurrentProcess();
@@ -593,6 +624,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         }
 
         var visual = _visual.Snapshot();
+        var text = _visual.Text.Snapshot();
         return _pipeline.Snapshot(
             Environment.ProcessId,
             _status,
@@ -620,6 +652,11 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             Sniffs = visual.Sniffs,
             LastSniffMicroseconds = visual.LastSniffMicroseconds,
             MaximumSniffMicroseconds = visual.MaximumSniffMicroseconds,
+            TextRecognitionAvailable = _visual.Text.IsAvailable,
+            TextReads = text.Reads,
+            TextChanges = text.Changes,
+            LastTextReadMicroseconds = text.LastMicroseconds,
+            MaximumTextReadMicroseconds = text.MaximumMicroseconds,
             FrameSpacing = Clamp(FrameSpacing, CaptureCadence.MaximumFrameSpacing),
             SheetSpacing = Clamp(SheetSpacing, CaptureCadence.MaximumSheetSpacing),
         };

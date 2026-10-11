@@ -63,6 +63,7 @@ public sealed class TargetSessionController : IAsyncDisposable
         _worker.FrameProduced += OnFrameProduced;
         _worker.AttentionSheetProduced += OnAttentionSheetProduced;
         _worker.SniffProduced += OnSniffProduced;
+        _worker.TextSniffProduced += OnTextSniffProduced;
     }
 
     public event EventHandler<CaptureFrameMetadata>? FrameAdmitted;
@@ -77,6 +78,12 @@ public sealed class TargetSessionController : IAsyncDisposable
     /// either precedes it or waits for it; consumers must return quickly.
     /// </summary>
     public event EventHandler<SniffSignal>? SniffAvailable;
+
+    /// <summary>
+    /// A Text Sniff (VIS-03; counts only, never text) whose source frame passed privacy
+    /// admission, raised inside the admission lease like <see cref="SniffAvailable"/>.
+    /// </summary>
+    public event EventHandler<TextSniffSignal>? TextSniffAvailable;
 
     public TargetSessionSnapshot CurrentSession => _authorization.CurrentSession;
 
@@ -613,6 +620,7 @@ public sealed class TargetSessionController : IAsyncDisposable
         _worker.FrameProduced -= OnFrameProduced;
         _worker.AttentionSheetProduced -= OnAttentionSheetProduced;
         _worker.SniffProduced -= OnSniffProduced;
+        _worker.TextSniffProduced -= OnTextSniffProduced;
         await _operationLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
@@ -761,6 +769,47 @@ public sealed class TargetSessionController : IAsyncDisposable
             try
             {
                 SniffAvailable?.Invoke(this, sniff);
+            }
+            catch (Exception)
+            {
+                // An observer failure never breaks admission.
+            }
+        });
+    }
+
+    private void OnTextSniffProduced(object? sender, TextSniffSignal text)
+    {
+        var grant = CurrentSession.Grant;
+        if (grant is null || !_authorization.IsCurrent(grant) || !text.Matches(grant) || !text.IsProtocolSafe())
+        {
+            return;
+        }
+
+        CaptureFrameMetadata frame;
+        try
+        {
+            frame = text.ToFrameMetadata(grant);
+        }
+        catch (ArgumentException)
+        {
+            return;
+        }
+
+        PrivacyAssessment assessment;
+        try
+        {
+            assessment = _assessmentProvider(frame) ?? PrivacyAssessment.Unavailable;
+        }
+        catch (Exception)
+        {
+            assessment = PrivacyAssessment.Unavailable;
+        }
+
+        _frameGate.TryAdmit(frame, assessment, _ =>
+        {
+            try
+            {
+                TextSniffAvailable?.Invoke(this, text);
             }
             catch (Exception)
             {

@@ -101,6 +101,8 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
 
     public event EventHandler<SniffSignal>? SniffProduced;
 
+    public event EventHandler<TextSniffSignal>? TextSniffProduced;
+
     /// <summary>Every cadence the orchestrator set, in order.</summary>
     public List<CaptureCadence> Cadences { get; } = [];
 
@@ -156,6 +158,40 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
         };
         SniffProduced?.Invoke(this, sniff);
         return sniff;
+    }
+
+    /// <summary>Emits one Text Sniff (counts only) for the current grant, like the real worker's text reader.</summary>
+    public TextSniffSignal EmitTextSniff(
+        DateTimeOffset timestamp,
+        int lines = 2,
+        AttentionRegionKind kind = AttentionRegionKind.LowerDialogueInventory,
+        CaptureAuthorizationGrant? grant = null)
+    {
+        var authorization = grant ?? _grant ?? throw new InvalidOperationException("No grant.");
+        var text = new TextSniffSignal
+        {
+            TargetSessionId = authorization.TargetSessionId,
+            Generation = authorization.Generation,
+            Target = authorization.Target,
+            SourceSequenceNumber = Interlocked.Increment(ref _sequence),
+            SourceTimestamp = timestamp,
+            SourceWidth = SourceWidth,
+            SourceHeight = SourceHeight,
+            SourceAccountedBytes = (long)SourceWidth * SourceHeight * 4,
+            RegionKind = kind,
+            Region = kind switch
+            {
+                AttentionRegionKind.UpperLeft => new NormalizedRegion(0, 0, 0.35, 0.32),
+                AttentionRegionKind.UpperRight => new NormalizedRegion(0.65, 0, 0.35, 0.32),
+                _ => new NormalizedRegion(0.05, 0.65, 0.90, 0.32),
+            },
+            Lines = lines,
+            Characters = lines * 24,
+            TextChanged = true,
+            ComputeMicroseconds = 20_000,
+        };
+        TextSniffProduced?.Invoke(this, text);
+        return text;
     }
 
     public Task StartAsync(CaptureAuthorizationGrant authorization, CancellationToken cancellationToken)

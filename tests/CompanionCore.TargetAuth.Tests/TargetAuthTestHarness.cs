@@ -174,6 +174,8 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
 
     public event EventHandler<SniffSignal>? SniffProduced;
 
+    public event EventHandler<TextSniffSignal>? TextSniffProduced;
+
     internal List<CaptureCadence> Cadences { get; } = [];
 
     public Task SetCadenceAsync(
@@ -216,6 +218,30 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
         };
         SniffProduced?.Invoke(this, sniff);
         return sniff;
+    }
+
+    /// <summary>Raises one Text Sniff (counts only) for <paramref name="grant"/> (the current grant by default).</summary>
+    internal TextSniffSignal EmitTextSniff(CaptureAuthorizationGrant? grant = null, int lines = 1)
+    {
+        var authorization = grant ?? LastGrant ?? throw new InvalidOperationException("No grant.");
+        var text = new TextSniffSignal
+        {
+            TargetSessionId = authorization.TargetSessionId,
+            Generation = authorization.Generation,
+            Target = authorization.Target,
+            SourceSequenceNumber = Interlocked.Increment(ref _sequence),
+            SourceTimestamp = DateTimeOffset.UtcNow,
+            SourceWidth = 640,
+            SourceHeight = 480,
+            SourceAccountedBytes = 640L * 480 * 4,
+            RegionKind = AttentionRegionKind.LowerDialogueInventory,
+            Region = new NormalizedRegion(0.05, 0.65, 0.90, 0.32),
+            Lines = lines,
+            Characters = lines * 20,
+            TextChanged = true,
+        };
+        TextSniffProduced?.Invoke(this, text);
+        return text;
     }
 
     internal Func<CaptureAuthorizationGrant, CancellationToken, Task>? StartHandler { get; set; }

@@ -88,6 +88,17 @@ public sealed record CaptureWorkerMetrics
 
     public TimeSpan FrameSpacing { get; init; }
 
+    /// <summary>VIS-03: whether Windows text recognition is available, and how it is doing.</summary>
+    public bool TextRecognitionAvailable { get; init; }
+
+    public long TextReads { get; init; }
+
+    public long TextChanges { get; init; }
+
+    public long LastTextReadMicroseconds { get; init; }
+
+    public long MaximumTextReadMicroseconds { get; init; }
+
     public TimeSpan SheetSpacing { get; init; }
 
     public static CaptureWorkerMetrics Empty { get; } = new();
@@ -145,5 +156,10 @@ public sealed record CaptureWorkerMetrics
         && FrameSpacing >= TimeSpan.Zero
         && FrameSpacing <= CaptureCadence.MaximumFrameSpacing
         && SheetSpacing >= TimeSpan.Zero
-        && SheetSpacing <= CaptureCadence.MaximumSheetSpacing;
+        && SheetSpacing <= CaptureCadence.MaximumSheetSpacing
+        && TextReads >= 0
+        && TextChanges is >= 0 && TextChanges <= TextReads
+        && LastTextReadMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
+        && MaximumTextReadMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
+        && LastTextReadMicroseconds <= MaximumTextReadMicroseconds;
 }

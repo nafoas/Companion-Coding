@@ -56,19 +56,28 @@ internal sealed class FrameChangeDetector : IDisposable
 
         var score = difference / (signature.Length * 255d);
         var grid = SniffGrid.From(score, cellDifference, cellSamples);
+        var cellChanges = new double[cellDifference.Length];
+        for (var cell = 0; cell < cellChanges.Length; cell++)
+        {
+            cellChanges[cell] = cellSamples[cell] == 0 ? 0 : cellDifference[cell] / (cellSamples[cell] * 255d);
+        }
 
         // A frame is a duplicate only when the whole frame is still and no single cell
         // moved noticeably: a small dialogue icon matters even when the screen barely changed.
         if (score <= NearDuplicateThreshold && grid.HotChange < SniffGrid.CellChanged)
         {
             CryptographicOperations.ZeroMemory(signature);
-            return new FrameChangeResult(score, IsDuplicate: true, GeometryChanged: false);
+            return new FrameChangeResult(score, IsDuplicate: true, GeometryChanged: false)
+            {
+                CellChanges = cellChanges,
+            };
         }
 
         ReplaceBaseline(signature, pixels.Width, pixels.Height, signatureWidth, signatureHeight);
         return new FrameChangeResult(score, IsDuplicate: false, GeometryChanged: false)
         {
             Grid = grid,
+            CellChanges = cellChanges,
         };
     }
 
@@ -142,6 +151,13 @@ internal readonly record struct FrameChangeResult(
 {
     /// <summary>The per-cell analysis; present only for an ordinary changed frame.</summary>
     internal SniffGrid? Grid { get; init; }
+
+    /// <summary>
+    /// Each grid cell's change against the last accepted frame (row-major), also for a
+    /// near-duplicate: a subtitle swap can be too small to count as a changed frame, yet
+    /// still be worth a Text Sniff (VIS-03). Absent on a first or resized frame.
+    /// </summary>
+    internal double[]? CellChanges { get; init; }
 }
 
 /// <summary>
