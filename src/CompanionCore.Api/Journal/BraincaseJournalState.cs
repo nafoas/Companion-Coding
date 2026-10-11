@@ -34,7 +34,11 @@ internal sealed class BraincaseJournalState
 
     internal long UsageDayInputUnits { get; private set; }
 
+    internal long UsageDayOutputUnits { get; private set; }
+
     internal long UsageInputUnitsOn(DateOnly day) => UsageDay == day ? UsageDayInputUnits : 0;
+
+    internal long UsageOutputUnitsOn(DateOnly day) => UsageDay == day ? UsageDayOutputUnits : 0;
 
     internal void Apply(BraincaseJournalEntry entry)
     {
@@ -105,6 +109,7 @@ internal sealed class BraincaseJournalState
                 TotalOutputUnits = snapshot.TotalOutputUnits;
                 UsageDay = snapshot.UsageDay;
                 UsageDayInputUnits = snapshot.UsageDayInputUnits;
+                UsageDayOutputUnits = snapshot.UsageDayOutputUnits;
                 break;
             default:
                 throw new FormatException("Unknown journal entry type.");
@@ -125,6 +130,7 @@ internal sealed class BraincaseJournalState
         TotalOutputUnits = TotalOutputUnits,
         UsageDay = UsageDay,
         UsageDayInputUnits = UsageDayInputUnits,
+        UsageDayOutputUnits = UsageDayOutputUnits,
     };
 
     private void AddUsage(DateOnly day, long input, long output)
@@ -135,9 +141,11 @@ internal sealed class BraincaseJournalState
         {
             UsageDay = day;
             UsageDayInputUnits = 0;
+            UsageDayOutputUnits = 0;
         }
 
         UsageDayInputUnits += input;
+        UsageDayOutputUnits += output;
     }
 
     private static Guid RequireOperation(BraincaseJournalEntry entry) =>

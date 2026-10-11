@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows.Threading;
 using CompanionCore.Api;
+using CompanionCore.Braincase;
 using CompanionCore.Memory;
 using CompanionCore.Orchestration;
 using CompanionCore.Platform.Windows;
@@ -15,9 +16,11 @@ namespace CompanionCore.App;
 
 /// <summary>
 /// Composes the accepted orchestration core into the App: one <see cref="CompanionHost"/>
-/// on the development data root (or an isolated test root in test mode), the offline
-/// Braincase shell, real Windows platform signals, a bounded dispatcher tick, and the
-/// system lock/sleep notifications. Nothing here holds a credential or opens the network.
+/// on the development data root (or an isolated test root in test mode), Builder Prince's
+/// Braincase as chosen by his settings file (the offline shell unless live Claude calls are
+/// turned on, always under the dollars-per-day Bun Budget), real Windows platform signals, a
+/// bounded dispatcher tick, and the system lock/sleep notifications. Nothing here holds a key:
+/// sign-in comes from <c>ant auth login</c> or ANTHROPIC_API_KEY.
 /// </summary>
 internal sealed class CompanionComposition : IAsyncDisposable
 {
@@ -30,13 +33,21 @@ internal sealed class CompanionComposition : IAsyncDisposable
 
     private readonly DispatcherTimer _timer;
     private readonly InMemoryCredentialStore _credentials;
+    private readonly ISemanticProvider _provider;
     private bool _ticking;
     private bool _disposed;
 
-    private CompanionComposition(CompanionHost host, WindowsPlatformSignals platform, InMemoryCredentialStore credentials, Dispatcher dispatcher)
+    private CompanionComposition(
+        CompanionHost host,
+        WindowsPlatformSignals platform,
+        InMemoryCredentialStore credentials,
+        BuilderBraincaseSelection braincase,
+        Dispatcher dispatcher)
     {
         Host = host;
         _credentials = credentials;
+        _provider = braincase.Provider;
+        Braincase = braincase;
         Platform = platform;
         SystemEvents.SessionSwitch += OnSessionSwitch;
         SystemEvents.PowerModeChanged += OnPowerModeChanged;
@@ -45,6 +56,9 @@ internal sealed class CompanionComposition : IAsyncDisposable
     }
 
     public CompanionHost Host { get; }
+
+    /// <summary>Which Braincase Builder Prince runs with, and whether live calls are on.</summary>
+    public BuilderBraincaseSelection Braincase { get; }
 
     public WindowsPlatformSignals Platform { get; }
 
@@ -84,23 +98,26 @@ internal sealed class CompanionComposition : IAsyncDisposable
         Dispatcher dispatcher)
     {
         var credentials = new InMemoryCredentialStore();
+        var braincase = BuilderBraincase.Compose(location.RootPath, credentials);
         var platform = new WindowsPlatformSignals(new WindowsPlatformNative(), new WindowsTargetDiscovery());
         try
         {
-            var options = new CompanionHostOptions(location, privacy, controller, new RealSemanticProviderShell(credentials), credentials)
+            var options = new CompanionHostOptions(location, privacy, controller, braincase.Provider, credentials)
             {
                 Platform = platform,
                 Diagnostics = diagnostics,
                 Notice = (_, notice) => onNotice(notice),
+                Bridge = braincase.Bridge,
             };
 
             // Off the dispatcher's synchronization context, so the start can never wait on this thread.
             var host = Task.Run(() => CompanionHost.OpenAsync(options)).GetAwaiter().GetResult();
-            return new CompanionComposition(host, platform, credentials, dispatcher);
+            return new CompanionComposition(host, platform, credentials, braincase, dispatcher);
         }
         catch
         {
             platform.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            (braincase.Provider as IDisposable)?.Dispose();
             credentials.Dispose();
             throw;
         }
@@ -150,6 +167,7 @@ internal sealed class CompanionComposition : IAsyncDisposable
         finally
         {
             await Platform.DisposeAsync().ConfigureAwait(false);
+            (_provider as IDisposable)?.Dispose();
             _credentials.Dispose();
         }
     }

@@ -19,6 +19,12 @@ public sealed record AnthropicProviderOptions
     /// <summary>The one opt-in for paid, live calls. Off by default.</summary>
     public bool LiveCallsEnabled { get; init; }
 
+    /// <summary>
+    /// When no key is stored locally, use the SDK's own sign-in instead: an <c>ant auth login</c>
+    /// profile or the ANTHROPIC_API_KEY environment variable. Off by default.
+    /// </summary>
+    public bool AllowAmbientCredentials { get; init; }
+
     public string Model { get; init; } = DefaultModel;
 
     /// <summary>Thinking depth: low, medium, high, xhigh, or max. Perception is latency-sensitive, so low.</summary>
@@ -86,10 +92,11 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
     private readonly HttpClient _http;
     private readonly bool _ownsHttp;
     private readonly Uri? _baseUrl;
+    private readonly Func<bool> _ambientCredentials;
     private bool _disposed;
 
     public AnthropicSemanticProvider(ICredentialStore credentials, AnthropicProviderOptions options)
-        : this(credentials, options, new HttpClient(), ownsHttp: true, baseUrl: null)
+        : this(credentials, options, new HttpClient(), ownsHttp: true, baseUrl: null, AnthropicSignIn.IsAvailable)
     {
     }
 
@@ -99,8 +106,10 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
         AnthropicProviderOptions options,
         HttpClient http,
         bool ownsHttp,
-        Uri? baseUrl)
+        Uri? baseUrl,
+        Func<bool>? ambientCredentials = null)
     {
+        _ambientCredentials = ambientCredentials ?? (static () => false);
         _credentials = credentials ?? throw new ArgumentNullException(nameof(credentials));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _options.Validate();
@@ -131,33 +140,22 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
             return ProviderReply.Unavailable(ProviderUnavailableReason.RequestRejected);
         }
 
-        // The SDK takes the key as a string, so the clear value lives only for this call.
-        if (!_credentials.TryUse(
+        // A key in the local store wins. Otherwise the SDK's own sign-in resolution is used
+        // (an `ant auth login` profile or ANTHROPIC_API_KEY), when that is allowed and present.
+        // The SDK takes the key as a string, so a stored key's clear value lives only for this call.
+        string? apiKey = null;
+        var stored = _credentials.TryUse(
                 RealSemanticProviderShell.PrimaryCredentialName,
                 0,
                 static (secret, _) => Encoding.UTF8.GetString(secret),
-                out var apiKey)
-            || string.IsNullOrEmpty(apiKey))
+                out apiKey)
+            && !string.IsNullOrEmpty(apiKey);
+        if (!stored && !(_options.AllowAmbientCredentials && _ambientCredentials()))
         {
             return ProviderReply.Unavailable(ProviderUnavailableReason.CredentialsMissing);
         }
 
-        var client = _baseUrl is null
-            ? new AnthropicClient
-            {
-                ApiKey = apiKey,
-                HttpClient = _http,
-                MaxRetries = 0, // The bridge owns bounded retries, backoff, and Naptime.
-                Timeout = _options.RequestTimeout,
-            }
-            : new AnthropicClient
-            {
-                ApiKey = apiKey,
-                HttpClient = _http,
-                MaxRetries = 0,
-                Timeout = _options.RequestTimeout,
-                BaseUrl = _baseUrl.ToString().TrimEnd('/'),
-            };
+        var client = CreateClient(stored ? apiKey : null);
 
         BetaMessage message;
         try
@@ -179,6 +177,19 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
         }
 
         return ToReply(request, message);
+    }
+
+    private AnthropicClient CreateClient(string? apiKey)
+    {
+        // MaxRetries = 0: the bridge owns bounded retries, backoff, and Naptime.
+        var baseUrl = _baseUrl?.ToString().TrimEnd('/');
+        return (apiKey, baseUrl) switch
+        {
+            (null, null) => new AnthropicClient { HttpClient = _http, MaxRetries = 0, Timeout = _options.RequestTimeout },
+            (null, _) => new AnthropicClient { HttpClient = _http, MaxRetries = 0, Timeout = _options.RequestTimeout, BaseUrl = baseUrl },
+            (_, null) => new AnthropicClient { ApiKey = apiKey, HttpClient = _http, MaxRetries = 0, Timeout = _options.RequestTimeout },
+            _ => new AnthropicClient { ApiKey = apiKey, HttpClient = _http, MaxRetries = 0, Timeout = _options.RequestTimeout, BaseUrl = baseUrl },
+        };
     }
 
     internal MessageCreateParams BuildParameters(SemanticRequest request)

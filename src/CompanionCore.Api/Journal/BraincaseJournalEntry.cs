@@ -82,4 +82,7 @@ internal sealed class BraincaseJournalSnapshot
     public DateOnly? UsageDay { get; set; }
 
     public long UsageDayInputUnits { get; set; }
+
+    /// <summary>Added with the daily cost budget (LIVE-02); absent in older snapshots, read as zero.</summary>
+    public long UsageDayOutputUnits { get; set; }
 }

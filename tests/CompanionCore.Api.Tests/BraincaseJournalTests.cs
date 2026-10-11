@@ -174,6 +174,11 @@ public sealed class BraincaseJournalTests
         Assert.Equal(before.Completed, after.Completed);
         Assert.Equal(before.NapEpisodes, after.NapEpisodes);
         Assert.Equal(before.TotalInputUnits, after.TotalInputUnits);
+        Assert.Equal(before.UsageDayInputUnits, after.UsageDayInputUnits);
+
+        // The day's output usage (the Bun Budget's other half) survives compaction too.
+        Assert.True(after.UsageDayOutputUnits > 0);
+        Assert.Equal(before.UsageDayOutputUnits, after.UsageDayOutputUnits);
         Assert.Equal("after.compaction", after.RecentSubjects[0]);
     }
 

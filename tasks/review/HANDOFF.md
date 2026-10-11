@@ -2,36 +2,44 @@
 
 ## Task
 
-No task is active. The last accepted packets are:
+LIVE-02 — Sign-in, Dollar Bun Budget, Composition, and First-Run Check (`tasks/active/live-02-signin-budget.md`), Stage 12 part 2.
 
-- LIVE-01 (`tasks/archive/live-01-claude-adapter.md`), merged through PR #56 as `eeed55cb93e13ef43240611171926d7d589a0159`;
-- FIX-01 (PR #57, `ad79773`).
-
-Builder: Claude.
+- Branch: `agent/live-02-signin-budget`.
+- Base: `main` `e8d3d7e`.
+- Builder: Claude.
 
 ## Changed
 
-This docs-only reconciliation:
-
-- archives LIVE-01;
-- records the FIX-01 entry and Boss's decision (two brains, two BunDexes, the personality seed, Builder neutral until Stage 13, the local budget);
-- updates `docs/Prince-Construction-Roadmap.md`, `BUILD_LEDGER.md`, and `README.md`;
-- resets this handoff.
+- **Bridge:** `DailyCostBudget`; the journal keeps the day's output units; a reported input count replaces the estimate.
+- **Adapter assembly:**
+  - `AnthropicSignIn`;
+  - `AllowAmbientCredentials`;
+  - `AnthropicPricing`;
+  - `BuilderBraincaseSettings`;
+  - `BuilderBraincase.Compose`;
+  - `BraincaseLiveCheck`.
+- **Api:** IVT to the adapter assembly (strict parser and request construction only).
+- **App:** composition selects Builder Prince's Braincase from his settings and passes the bridge budget.
+- **New tool:** `tools/CompanionCore.BraincaseCheck`.
+- **New doc:** `docs/Builder-Braincase-Setup.md`.
+- **Tests:**
+  - `BridgeCostBudgetTests` (8);
+  - `BuilderBraincaseTests` (14);
+  - the journal compaction test extended.
 
 ## Verification
 
-- LIVE-01 head `8be00b6`, tree `304d6c3`: push run `38111625201` and PR run `38111628552` passed 1020/1020 with verified artifacts.
-- The merge ref had exact parents and an equal tree.
+- **Local:** full gate green: 1025/1025 on Linux, 0 warnings, no vulnerable packages.
+- **Mutation:** 19 mutants, 19 killed.
+- **Offline check-program smoke run:** passed.
+- **No live call has been made, and no real key exists in this environment.**
 
 ## Remaining
 
-- **LIVE-02:**
-  - Windows Credential Manager key storage;
-  - local key and budget setup;
-  - App composition selecting the Claude provider;
-  - the live validation script Boss runs.
-- **Then CORE-12.**
+- CI, merge, and closure.
+- Then Boss's first live run (D1).
+- CORE-12.
 
 ## Next safe task
 
-LIVE-02.
+CORE-12 (the placeholder controls and milestone run can be built before Boss's live run).
