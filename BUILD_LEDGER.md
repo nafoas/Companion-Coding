@@ -109,6 +109,19 @@
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
 
+### FIX-02 — The orchestration test harness waits by the clock, not by poll count
+
+- **Found by** main CI run `38143070845` on `de2646a`: `ACrashLoop_NeverLosesOrDuplicatesMemory_AndKeepsOneLineage` threw "The orchestrator did not settle". It was the same unidentified local failure recorded in CORE-12.
+- **Cause.**
+  - `OrchestrationHarness.SettleAsync` gave up after 400 polls of `Task.Delay(10)`. That is about 4 s on Linux, and about 6 s on Windows, where a 10 ms delay sleeps about 15.6 ms.
+  - The crash-loop test runs five abrupt-restart cycles, each with durable SQLite and journal writes. Its Windows CI duration across seventeen earlier green runs was 3.7–15.7 s. The failing run took 17.4 s, which is about 6 s of failed settle plus the usual work.
+  - It ran while the Memory and Api suites ran in parallel (1 m 30 s and 1 m 43 s), so one settle passed the budget. The run gave no sign of a stuck bridge, and the failure never reproduced under local CPU and I/O load (40 isolated runs and 3 loaded full-suite runs).
+- **Fix (test-only).**
+  - `SettleAsync` uses a 30 s wall-clock deadline, like `WaitForAsync`.
+  - If it ever times out, the exception carries the bridge diagnostics (operations, attempts, timeouts, busy, nap), the provider call count, and orchestrator faults. A real hang identifies itself instead of looking like slowness.
+  - No product code, invariant, or assertion changed.
+- **Evidence.** Mutation: forcing "never settled" with a 300 ms deadline failed the test with the diagnostic message. The local gate passed 1026/1026, with 0 warnings and no vulnerable packages.
+
 ### CORE-12 — Placeholder commands and the guided Core Prince milestone (Stage 12, part 3)
 
 - Builder: Claude. Opened on 2026-10-11 under Boss's Stage 12 direction.

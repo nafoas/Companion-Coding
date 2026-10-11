@@ -8,7 +8,11 @@ Builder: Claude.
 
 **Stage 12 is built and waits for Boss.**
 
-## Changed
+## FIX-02 (in review)
+
+Main CI on `de2646a` (run `38143070845`) failed one test, `ACrashLoop_NeverLosesOrDuplicatesMemory_AndKeepsOneLineage`. Its settle wait gave up after a poll count (about 6 s on Windows) while a slow, loaded runner was still finishing durable writes. The fix is test-only: `OrchestrationHarness.SettleAsync` now uses a 30 s wall-clock deadline and reports bridge diagnostics if it ever times out. Ledger entry: FIX-02. Local gate: 1026/1026; the mutation was killed.
+
+## Changed (CORE-12 closure)
 
 This docs-only reconciliation:
 
