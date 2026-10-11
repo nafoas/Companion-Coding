@@ -1,6 +1,6 @@
 # LIVE-01 — Claude Braincase Adapter (Stage 12, part 1)
 
-Status: **active — gate review**
+Status: **accepted** — Paw Gate PASS; PR #56 squash-merged as `eeed55cb93e13ef43240611171926d7d589a0159`
 Authorized: 2026-10-11 by Boss ("Let's try Stage 12"). Builder Bnuy uses Claude as his Braincase. The Finalized Bnuy will use ChatGPT. Builder stays neutral until Stage 13 ("Let's get it working before we Bnuify it").
 Accepted remote base: `ef0d959dabe6fd74e72eac297f00552d0a2911f8`
 Working branch: `agent/live-01-claude-adapter`
@@ -107,7 +107,13 @@ Builder: Claude
 
 ## Paw Gate
 
-Pending.
+**PASS.**
+
+- **First CI.** Head `40d459b` passed PR run `38110790557` at 1020/1020. Its push run `38110780702` failed one unrelated test: a race in the DEF-02 capture client that coalesced away a photograph's notice. That race was root-caused and fixed in FIX-01 (PR #57, `ad79773`) and merged into this branch.
+- **Final CI.** Head `8be00b63b2c897e1390fb42631037d27b6816fca` passed push run `38111625201` and PR run `38111628552` at 1020/1020, with verified artifacts.
+- **Local.** The full gate passed: 1003/1003 on Linux, 0 warnings, and no vulnerable packages, the new SDK included.
+- **Merge ref.** Parents were exactly `ad79773` and `8be00b6`, and the tree equalled the head tree (`304d6c3`).
+- **Merge.** Squash-merged through the expected-head fence.
 
 ## Deferred findings
 

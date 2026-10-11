@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. Stage 10's keepsakes and complete recovery (KEEP-01, KEEP-02) are complete. WIRE-01 composes every subsystem into one tested orchestration core, and WIRE-02 runs it in the real Windows App. Stage 11 local hardening (CAL-01–03) and the smaller deferred items (DEF-01, DEF-02) are complete. Boss accepted the agreed calibration values as the configuration, adjusted only on evidence. Stage 12 live API awaits Boss.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. Stage 10's keepsakes and complete recovery (KEEP-01, KEEP-02) are complete. WIRE-01 composes every subsystem into one tested orchestration core, and WIRE-02 runs it in the real Windows App. Stage 11 local hardening (CAL-01–03) and the smaller deferred items (DEF-01, DEF-02) are complete. Boss accepted the agreed calibration values as the configuration, adjusted only on evidence. **Stage 12 is in progress:** Builder Prince's Braincase is Claude (LIVE-01), and the Finalized Bun will use ChatGPT. Each has his own BunDex.
 
 ## Builder workflow
 
@@ -121,7 +121,11 @@ It also published `docs/Known-Limitations.md`. Merged as `039a641fe5269d2b4c0865
 
 **DEF-02** (PR #53) takes keepsake photographs from the authorized target's native frame, within every existing bound, and never uploads them. Merged as `98ae435ff71ddb75d4a9e847d7520cd82966146f`.
 
-Stage 11 and the smaller deferred items are complete; the agreed calibration values are the accepted configuration, adjusted only on evidence. Construction has stopped before Stage 12 (credentials and live API), which requires Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
+Stage 11 and the smaller deferred items are complete; the agreed calibration values are the accepted configuration, adjusted only on evidence.
+
+**LIVE-01** (PR #56) adds the Claude Braincase adapter for Builder Prince. It is the only networking assembly, it is off by default, and every reply still passes the strict parser and the append-only allowlist. Merged as `eeed55cb93e13ef43240611171926d7d589a0159`. **FIX-01** (PR #57) keeps a photograph's notice from being coalesced away.
+
+Stage 12 continues with LIVE-02: protected key storage, the local budget, and the live validation run on Boss's PC. Personality waits for Stage 13.
 
 ## Important boundaries
 
@@ -131,6 +135,6 @@ Stage 11 and the smaller deferred items are complete; the agreed calibration val
 - Development data and eventual production data must remain physically separate.
 - Durable identity and memory are local and append-only to automated/API systems.
 - Capture requires authorization and remains restricted to one target.
-- Live paid API use and credentials require an explicit stop for the user; earlier work uses mocks and replay fixtures.
+- Live paid API use and credentials require Boss's explicit direction (given for Stage 12). Live calls run only on Boss's PC with his own key and budget; tests use mocks, replay fixtures, and a fake transport.
 
 See the documents in `docs/` for the complete specification and roadmap.
