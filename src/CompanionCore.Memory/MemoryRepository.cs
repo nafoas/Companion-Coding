@@ -168,6 +168,21 @@ public sealed class MemoryRepository : IAsyncDisposable
         return _store.RetrieveSubjectPrefixPageAsync(subjectPrefix, afterRecordId, limit, cancellationToken);
     }
 
+    /// <summary>
+    /// Read-only keyset page of one session's records, ordered by record ID, strictly after
+    /// <paramref name="afterRecordId"/>. Repeating with the last returned ID enumerates every
+    /// record of the session exactly once, however long the session is.
+    /// </summary>
+    public Task<IReadOnlyList<RetrievedMemory>> RetrieveSessionPageAsync(
+        string sessionReference,
+        Guid? afterRecordId,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _store.RetrieveSessionPageAsync(sessionReference, afterRecordId, limit, cancellationToken);
+    }
+
     /// <summary>Bounded read-only query; see <see cref="MemoryQuery"/>.</summary>
     public Task<IReadOnlyList<RetrievedMemory>> RetrieveAsync(
         MemoryQuery query,

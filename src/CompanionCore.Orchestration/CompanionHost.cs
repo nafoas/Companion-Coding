@@ -94,6 +94,27 @@ public sealed class CompanionHost : IAsyncDisposable
             cancellationToken);
     }
 
+    /// <summary>
+    /// Exports the whole Da Bun Vault (memory archive and companion archive) as one verified
+    /// file at an absolute <c>.zip</c> path outside the data root. Never overwrites a file.
+    /// </summary>
+    public async Task<VaultExportReport> ExportVaultAsync(string destinationPath)
+    {
+        await _lifecycle.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return await Orchestrator.ExportVaultAsync(_options.Location, destinationPath).ConfigureAwait(false);
+        }
+        finally
+        {
+            _lifecycle.Release();
+        }
+    }
+
+    /// <summary>Verifies a single-file Vault export without opening any data root.</summary>
+    public static Task VerifyVaultExportAsync(string exportPath) => VaultExport.VerifyAsync(exportPath, CancellationToken.None);
+
     /// <summary>Bnuy Repairs for the whole Vault. Only when no target session is active.</summary>
     public async Task<VaultRestoreReport> RepairAsync(CancellationToken cancellationToken = default)
     {
