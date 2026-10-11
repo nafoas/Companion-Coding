@@ -2,15 +2,15 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | **Stage 12 in progress** (Core Prince milestone). LIVE-01 (Claude adapter) and LIVE-02 (sign-in, dollars-per-day Bun Budget, composition, first-run check) accepted. Waiting on Boss's first live run (setup in `docs/Builder-Braincase-Setup.md`); CORE-12 next |
-| Active task | None between packets. Next: CORE-12 (placeholder controls and the guided milestone run); Boss's first live run whenever ready |
-| Working branch | Accepted product/evidence baseline on `main`: `f3115ef1087b9b80df65184201e601f84627fa05` (LIVE-02) |
+| Current stage | **Stage 12 built; awaiting Boss.** LIVE-01, LIVE-02, and CORE-12 accepted: Claude Braincase, sign-in and Bun Budget, placeholder commands, and the guided milestone. The Core Bun Approval Hop needs Boss's first live check (`docs/Builder-Braincase-Setup.md`) and milestone hand-run (`docs/Core-Prince-Milestone.md`). Stage 13 waits for that hop |
+| Active task | None. Waiting on Boss: the first live check, then the milestone hand-run and Core Bun Approval Hop |
+| Working branch | Accepted product/evidence baseline on `main`: `18b5215e3bc5810d76937465314a55ed57ba323a` (CORE-12) |
 | Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | Stage 12 authorized by Boss on 2026-10-11 ("Let's try Stage 12") |
 | Live API authorized | Stage 12 authorized. Live calls run only on Boss's PC, with his own key and budget, after LIVE-02. No live call has been made from the build environment, and no real credential exists in it |
-| Automated tests | LIVE-02 head `5a409867252b320ad2cd34a4ff3745be436a8881`, tree `5c6ee249f3b66d270e9b8c82647ba1522632736b`, passed push run `38140597709` and PR run `38140609683` at 1042/1042 with verified artifacts. The local gate passed 1025/1025 on Linux. |
-| Manual gate | LIVE-02 budget, sign-in, settings-safety, and mutation review passed. 19 mutants: 19 killed. PR #59 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `f3115ef1087b9b80df65184201e601f84627fa05` — LIVE-02 sign-in, Bun Budget, composition (PR #59) |
+| Automated tests | CORE-12 head `0d8b65b21247cbda05ca1b5802b9a1409f782709`, tree `c98917910594f88c69159f570d8870dd11a09848`, passed push run `38142489617` and PR run `38142501429` at 1044/1044 with verified artifacts. The local gate passed 1026/1026 on Linux. |
+| Manual gate | CORE-12 glue review passed: each placeholder command calls one existing command, and repair is opt-in with confirmation. PR #61 squash-merged through the expected-head fence. The milestone hand-run is Boss's. |
+| Accepted `main` baseline | `18b5215e3bc5810d76937465314a55ed57ba323a` — CORE-12 placeholder commands and the guided milestone (PR #61) |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are the accepted agreed defaults (Boss, 2026-10-11), adjusted only on evidence. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs come from the native frame (DEF-02) and are saved under the provisional 1280 edge; long sessions are consolidated completely in parts (DEF-01). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are accepted defaults, tuned from play; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
 | Deferred temptations | A public backup/repair command (KEEP-02 D1; the single-file export exists since DEF-01); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials.. On 2026-10-11 Boss decided the values agreed in the design conversation are the accepted calibration, changed up or down only if real use shows a need. Boss also decided that Prince is one unbroken line of continuous Bun: nothing ever restores, rolls back, or deletes his memories on its own; repair is opt-in only and may only continue his current line; older exports are never imported. |
@@ -108,6 +108,25 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### CORE-12 — Placeholder commands and the guided Core Prince milestone (Stage 12, part 3)
+
+- Builder: Claude. Opened on 2026-10-11 under Boss's Stage 12 direction.
+- **App panel.** A neutral "Companion commands (placeholder)" panel covers:
+  - replies to the Conversation Thread, and its lock;
+  - quiet-check answers and after-exit decisions;
+  - watch tasks and the photograph;
+  - Vault export, and opt-in Vault repair with confirmation;
+  - the Braincase status and a notice log.
+
+  Each button calls one existing command.
+- **Tests.**
+  - `CoreMilestoneWalkthroughTests` chains the ten milestone checks in one Prince's life.
+  - The `wired` mode reports the Braincase and the panel, and a Windows test proves that live calls on selects Claude without any call.
+- **`docs/Core-Prince-Milestone.md`** is Boss's hand-run.
+- Evidence: head `0d8b65b` (runs `38142489617` and `38142501429`) passed 1044/1044 with verified artifacts.
+- Merge: PR #61 squash-merged as `18b5215e3bc5810d76937465314a55ed57ba323a`.
+- Result: tooling passed and accepted. **The Core Bun Approval Hop awaits Boss.**
 
 ### LIVE-02 — Sign-in, dollars-per-day Bun Budget, composition, first-run check (Stage 12, part 2)
 
