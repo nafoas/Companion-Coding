@@ -2,44 +2,28 @@
 
 ## Task
 
-LIVE-02 — Sign-in, Dollar Bun Budget, Composition, and First-Run Check (`tasks/active/live-02-signin-budget.md`), Stage 12 part 2.
+No task is active. The last accepted packet is LIVE-02 (`tasks/archive/live-02-signin-budget.md`), merged through PR #59 as `f3115ef1087b9b80df65184201e601f84627fa05`.
 
-- Branch: `agent/live-02-signin-budget`.
-- Base: `main` `e8d3d7e`.
-- Builder: Claude.
+Builder: Claude.
 
 ## Changed
 
-- **Bridge:** `DailyCostBudget`; the journal keeps the day's output units; a reported input count replaces the estimate.
-- **Adapter assembly:**
-  - `AnthropicSignIn`;
-  - `AllowAmbientCredentials`;
-  - `AnthropicPricing`;
-  - `BuilderBraincaseSettings`;
-  - `BuilderBraincase.Compose`;
-  - `BraincaseLiveCheck`.
-- **Api:** IVT to the adapter assembly (strict parser and request construction only).
-- **App:** composition selects Builder Prince's Braincase from his settings and passes the bridge budget.
-- **New tool:** `tools/CompanionCore.BraincaseCheck`.
-- **New doc:** `docs/Builder-Braincase-Setup.md`.
-- **Tests:**
-  - `BridgeCostBudgetTests` (8);
-  - `BuilderBraincaseTests` (14);
-  - the journal compaction test extended.
+This docs-only reconciliation:
+
+- archives LIVE-02;
+- updates `BUILD_LEDGER.md` and `README.md`;
+- resets this handoff.
 
 ## Verification
 
-- **Local:** full gate green: 1025/1025 on Linux, 0 warnings, no vulnerable packages.
-- **Mutation:** 19 mutants, 19 killed.
-- **Offline check-program smoke run:** passed.
-- **No live call has been made, and no real key exists in this environment.**
+- LIVE-02 head `5a40986`, tree `5c6ee24`: push run `38140597709` and PR run `38140609683` passed 1042/1042 with verified artifacts.
+- The merge ref had exact parents and an equal tree.
 
 ## Remaining
 
-- CI, merge, and closure.
-- Then Boss's first live run (D1).
-- CORE-12.
+- **Boss's first live run,** following `docs/Builder-Braincase-Setup.md`: a Console account, then `setx ANTHROPIC_API_KEY` or `ant auth login`, then the check with `--live`.
+- **CORE-12:** placeholder controls and the guided Core Prince milestone run.
 
 ## Next safe task
 
-CORE-12 (the placeholder controls and milestone run can be built before Boss's live run).
+CORE-12.

@@ -125,7 +125,15 @@ Stage 11 and the smaller deferred items are complete; the agreed calibration val
 
 **LIVE-01** (PR #56) adds the Claude Braincase adapter for Builder Prince. It is the only networking assembly, it is off by default, and every reply still passes the strict parser and the append-only allowlist. Merged as `eeed55cb93e13ef43240611171926d7d589a0159`. **FIX-01** (PR #57) keeps a photograph's notice from being coalesced away.
 
-Stage 12 continues with LIVE-02: protected key storage, the local budget, and the live validation run on Boss's PC. Personality waits for Stage 13.
+**LIVE-02** (PR #59) adds three things:
+
+- Builder Prince uses the SDK's own sign-in, and stores no key.
+- A dollars-per-day Bun Budget.
+- A settings file that keeps live calls off by default.
+
+Boss's one-time setup and first live test are in `docs/Builder-Braincase-Setup.md`. Merged as `f3115ef1087b9b80df65184201e601f84627fa05`.
+
+Stage 12 continues with CORE-12, the placeholder controls and the guided Core Prince milestone run. Personality waits for Stage 13.
 
 ## Important boundaries
 
