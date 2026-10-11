@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using CompanionCore.Capture.Contracts;
 using CompanionCore.Orchestration;
@@ -85,6 +86,164 @@ public partial class MainWindow : Window
     public void RenderNotice(CompanionNotice notice)
     {
         _companionSink.Render(_adapter.Map(notice));
+        NoticeLog.Items.Insert(0, string.Create(
+            CultureInfo.InvariantCulture,
+            $"{DateTime.Now:HH:mm:ss}  {notice.Kind}{(notice.Key is { Length: > 0 } key ? $"  {key}" : string.Empty)}"));
+        while (NoticeLog.Items.Count > MaximumNoticeLogEntries)
+        {
+            NoticeLog.Items.RemoveAt(NoticeLog.Items.Count - 1);
+        }
+    }
+
+    private const int MaximumNoticeLogEntries = 200;
+
+    /// <summary>True once the placeholder commands are attached to the companion host.</summary>
+    internal bool CompanionCommandsEnabled => CompanionCommands.IsEnabled;
+
+    private CompanionComposition? _companion;
+
+    /// <summary>
+    /// CORE-12: enables the placeholder commands once the one companion host exists, and shows
+    /// which Braincase Builder Prince runs with. Every command goes through the orchestrator or
+    /// host; this window holds no authority of its own.
+    /// </summary>
+    internal void AttachCompanion(CompanionComposition companion)
+    {
+        _companion = companion;
+        var braincase = companion.Braincase;
+        BraincaseStatusText.Text = braincase.LiveCallsEnabled
+            ? $"Braincase: Claude, live calls on, Bun Budget ${braincase.Bridge!.DailyCostBudget!.LimitPerDay.ToString("0.00", CultureInfo.InvariantCulture)} per day."
+            : $"Braincase: offline (live calls off{(braincase.Issue == Braincase.BuilderBraincaseIssue.None ? string.Empty : $"; settings issue: {braincase.Issue}")}).";
+        CompanionCommands.IsEnabled = true;
+    }
+
+    private void ShowResult(string command, object result) =>
+        CompanionStatusText.Text = string.Create(CultureInfo.InvariantCulture, $"{command}: {result}");
+
+    private async Task RunCommandAsync(string command, Func<CompanionCore.Orchestration.CompanionOrchestrator, Task<string>> run)
+    {
+        if (_companion is not { } companion)
+        {
+            return;
+        }
+
+        try
+        {
+            ShowResult(command, await run(companion.Host.Orchestrator));
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or ObjectDisposedException)
+        {
+            ShowResult(command, "not available now");
+        }
+    }
+
+    private async void ReplyButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string tag } && Enum.TryParse<Conversation.UserTurnKind>(tag, out var kind))
+        {
+            await RunCommandAsync("Reply", async orchestrator => (await orchestrator.SubmitUserTurnAsync(new Conversation.UserTurn(kind))).ToString());
+        }
+    }
+
+    private async void ConversationLockCheckBox_Click(object sender, RoutedEventArgs e)
+    {
+        var locked = ConversationLockCheckBox.IsChecked == true;
+        await RunCommandAsync("Conversation lock", async orchestrator => (await orchestrator.SetConversationLockAsync(locked)).ToString());
+    }
+
+    private async void QuietButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string tag } && Enum.TryParse<Watchbun.QuietAnswer>(tag, out var answer))
+        {
+            await RunCommandAsync("Quiet check", async orchestrator => (await orchestrator.AnswerQuietCheckAsync(answer)).ToString());
+        }
+    }
+
+    private async void ExitButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string tag } && Enum.TryParse<Watchbun.ExitDecision>(tag, out var decision))
+        {
+            await RunCommandAsync("After exit", async orchestrator => (await orchestrator.DecideAfterExitAsync(decision)).ToString());
+        }
+    }
+
+    private async void AddWatchTaskButton_Click(object sender, RoutedEventArgs e)
+    {
+        var key = WatchTaskKeyBox.Text.Trim();
+        await RunCommandAsync("Watch task", async orchestrator => (await orchestrator.AddWatchTaskAsync(key)).ToString());
+    }
+
+    private async void TakePhotographButton_Click(object sender, RoutedEventArgs e) =>
+        await RunCommandAsync("Photograph", async orchestrator => (await orchestrator.TakePhotographAsync()).ToString());
+
+    private async void ExportVaultButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_companion is not { } companion)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export Vault",
+            Filter = "Vault export (*.zip)|*.zip",
+            FileName = string.Create(CultureInfo.InvariantCulture, $"vault-export-{DateTime.Now:yyyyMMdd-HHmmss}.zip"),
+            OverwritePrompt = false,
+        };
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var report = await companion.Host.ExportVaultAsync(dialog.FileName);
+            ShowResult("Vault export", string.Create(CultureInfo.InvariantCulture, $"verified, {report.Bytes} bytes"));
+        }
+        catch (Exception exception) when (exception is IOException or ArgumentException or InvalidOperationException or UnauthorizedAccessException)
+        {
+            ShowResult("Vault export", "refused (the file must be new and outside the data folder)");
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // Includes a Vault that did not validate; nothing was written.
+            ShowResult("Vault export", "refused (the Vault did not validate)");
+        }
+    }
+
+    private async void RepairVaultButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_companion is not { } companion)
+        {
+            return;
+        }
+
+        // Repair is opt-in only and only ever continues the current line of memories.
+        var confirm = MessageBox.Show(
+            this,
+            "Run Vault repair now? It only restores what is damaged or missing from the latest backup and never removes newer memories. End the target session first.",
+            "Repair Vault",
+            MessageBoxButton.OKCancel,
+            MessageBoxImage.Question,
+            MessageBoxResult.Cancel);
+        if (confirm != MessageBoxResult.OK)
+        {
+            return;
+        }
+
+        try
+        {
+            var report = await companion.Host.RepairAsync();
+            ShowResult("Vault repair", string.Create(CultureInfo.InvariantCulture, $"complete={report.Complete}, photographs restored={report.PhotographsRestored}"));
+        }
+        catch (InvalidOperationException)
+        {
+            ShowResult("Vault repair", "not available now (end the target session first)");
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            ShowResult("Vault repair", "could not run; nothing was changed");
+        }
     }
 
     private async void NapButton_Click(object sender, RoutedEventArgs e)

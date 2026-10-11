@@ -41,6 +41,45 @@ public sealed partial class WiredCompositionTests
             Assert.NotEqual(Guid.Empty, first.Lineage);
             Assert.Equal(first.Lineage, second.Lineage);
             Assert.True(Directory.Exists(Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Memory")));
+
+            // CORE-12 and LIVE-02: the placeholder commands attach, and Builder Prince's Braincase
+            // is offline by default, with a settings file created off.
+            Assert.Equal(("offline", true), (first.Braincase, first.Commands));
+            var settings = Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Memory", "braincase-settings.json");
+            Assert.Contains("\"liveCalls\": false", File.ReadAllText(settings), StringComparison.Ordinal);
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(root, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+        }
+    }
+
+    [Fact]
+    public void Wired_WithLiveCallsTurnedOn_SelectsClaude_WithoutMakingAnyCall()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var root = Path.Combine(Path.GetTempPath(), "CompanionCore.App.IntegrationTests", Guid.NewGuid().ToString("N"));
+        var run = Guid.NewGuid();
+        var memory = Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Memory");
+        try
+        {
+            // Nothing is ever captured in this mode, so no sheet and no call can exist.
+            Directory.CreateDirectory(memory);
+            File.WriteAllText(Path.Combine(memory, "braincase-settings.json"), "{\"liveCalls\":true,\"dollarsPerDay\":1}");
+
+            var launch = Launch($"\"--test-data-root={root}\" --test-run={run:D}");
+
+            Assert.Equal(("live", true, 0L), (launch.Braincase, launch.Commands, launch.Faults));
         }
         finally
         {
@@ -69,7 +108,7 @@ public sealed partial class WiredCompositionTests
         Assert.NotEqual(first.Lineage, second.Lineage);
     }
 
-    private (string Root, long Faults, Guid Lineage, int Unconsolidated) Launch(string arguments)
+    private (string Root, long Faults, Guid Lineage, int Unconsolidated, string Braincase, bool Commands) Launch(string arguments)
     {
         var result = AppProcess.Run("wired", arguments);
         _output.WriteLine($"wired: exit {result.ExitCode}, startup {result.StartupDuration.TotalSeconds:F3} s, exit {result.ExitDuration.TotalSeconds:F3} s: {result.StdOut.Trim()}");
@@ -81,9 +120,11 @@ public sealed partial class WiredCompositionTests
             match.Groups["root"].Value,
             long.Parse(match.Groups["faults"].Value, System.Globalization.CultureInfo.InvariantCulture),
             Guid.ParseExact(match.Groups["lineage"].Value, "N"),
-            int.Parse(match.Groups["unconsolidated"].Value, System.Globalization.CultureInfo.InvariantCulture));
+            int.Parse(match.Groups["unconsolidated"].Value, System.Globalization.CultureInfo.InvariantCulture),
+            match.Groups["braincase"].Value,
+            bool.Parse(match.Groups["commands"].Value));
     }
 
-    [GeneratedRegex(@"WIRED ROOT:(?<root>\w+) FAULTS:(?<faults>\d+) LINEAGE:(?<lineage>[0-9a-f]{32}) UNCONSOLIDATED:(?<unconsolidated>\d+) CONSTRUCTIONS:(?<constructions>\d+)")]
+    [GeneratedRegex(@"WIRED ROOT:(?<root>\w+) FAULTS:(?<faults>\d+) LINEAGE:(?<lineage>[0-9a-f]{32}) UNCONSOLIDATED:(?<unconsolidated>\d+) CONSTRUCTIONS:(?<constructions>\d+) BRAINCASE:(?<braincase>live|offline) COMMANDS:(?<commands>True|False)")]
     private static partial Regex WiredMarker();
 }
