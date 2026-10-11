@@ -102,8 +102,9 @@ public partial class App : Application
         window.RenderTransition(startResult);
 
         // The orchestration core: one host on the development root (an isolated test root in
-        // test mode), offline Braincase only. Notices are queued to the dispatcher, never
-        // awaited, so the orchestrator's mailbox can never wait on this thread.
+        // test mode), with Builder Prince's Braincase as his settings choose (offline unless live
+        // calls are turned on). Notices are queued to the dispatcher, never awaited, so the
+        // orchestrator's mailbox can never wait on this thread.
         _companion = CompanionComposition.Open(
             CompanionComposition.ResolveLocation(e.Args, testMode is not null),
             privacyState,
@@ -112,6 +113,7 @@ public partial class App : Application
             notice => Dispatcher.BeginInvoke(() => window.RenderNotice(notice)),
             Dispatcher);
         _companion.StartCalibration(e.Args, captureWorker);
+        window.AttachCompanion(_companion);
 
         if (testMode is not null)
         {
@@ -187,7 +189,8 @@ public partial class App : Application
                     Console.WriteLine(
                         $"WIRED ROOT:{companion.Host.Location.Kind} FAULTS:{snapshot.Faults} "
                         + $"LINEAGE:{snapshot.ConversationLineage:N} UNCONSOLIDATED:{snapshot.UnconsolidatedSessions.Count} "
-                        + $"CONSTRUCTIONS:{CompanionRuntime.ConstructionCount}");
+                        + $"CONSTRUCTIONS:{CompanionRuntime.ConstructionCount} "
+                        + $"BRAINCASE:{(companion.Braincase.LiveCallsEnabled ? "live" : "offline")} COMMANDS:{firstWindow.CompanionCommandsEnabled}");
                     var wiredStop = _runtime!.Stop();
                     firstWindow.RenderTransition(wiredStop);
                     firstWindow.Close();

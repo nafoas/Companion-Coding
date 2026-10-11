@@ -2,28 +2,33 @@
 
 ## Task
 
-No task is active. The last accepted packet is LIVE-02 (`tasks/archive/live-02-signin-budget.md`), merged through PR #59 as `f3115ef1087b9b80df65184201e601f84627fa05`.
+CORE-12 — Core Prince Milestone: Placeholder Controls and Guided Run (`tasks/active/core-12-milestone.md`), Stage 12 part 3.
 
-Builder: Claude.
+- Branch: `agent/core-12-milestone`.
+- Base: `main` `3a7b67e`.
+- Builder: Claude.
 
 ## Changed
 
-This docs-only reconciliation:
-
-- archives LIVE-02;
-- updates `BUILD_LEDGER.md` and `README.md`;
-- resets this handoff.
+- **App:**
+  - the placeholder commands panel in `MainWindow.xaml` and `.cs`;
+  - `AttachCompanion`;
+  - the `wired` marker reports the Braincase and commands.
+- **New doc:** `docs/Core-Prince-Milestone.md`.
+- **Tests:**
+  - `CoreMilestoneWalkthroughTests` (1);
+  - `WiredCompositionTests` extended, plus 1 new Windows test.
 
 ## Verification
 
-- LIVE-02 head `5a40986`, tree `5c6ee24`: push run `38140597709` and PR run `38140609683` passed 1042/1042 with verified artifacts.
-- The merge ref had exact parents and an equal tree.
+- **Local:** full gate green: 1026/1026 on Linux, 0 warnings, no vulnerable packages.
+- **Windows CI:** pending.
 
 ## Remaining
 
-- **Boss's first live run,** following `docs/Builder-Braincase-Setup.md`: a Console account, then `setx ANTHROPIC_API_KEY` or `ant auth login`, then the check with `--live`.
-- **CORE-12:** placeholder controls and the guided Core Prince milestone run.
+- CI, merge, and closure.
+- Then Boss's live first-run check (LIVE-02 D1) and the milestone hand-run (CORE-12 D1).
 
 ## Next safe task
 
-CORE-12.
+None without Boss: the Core Bun Approval Hop gates Stage 13.
