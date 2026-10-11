@@ -1,6 +1,6 @@
 # VIS-02 — Glance (peripheral vision) and Inspect (focus) (Vision upgrade, part 2)
 
-Status: **in review**
+Status: **accepted** — Paw Gate PASS; PR #67 squash-merged as `da7ea8293c0fce7f46fe3aa86b45af4ea2429c9c`.
 Authorized: 2026-10-11 by Boss:
 
 - "an efficient Haiku handler could work … I want this done now, with greatly reduced latency".
@@ -69,4 +69,9 @@ The Design BunDex's "Prince Glance" was agreed as a cheap, frequent look that as
 
 ## Paw Gate
 
-_(pending)_
+**PASS.**
+
+- **CI.** Head `d6a20c51c418d8be0869bb044b1cbfd513b66195` passed push run `38167891536` and PR run `38167905535` at 1102/1102, with verified artifacts.
+- **Local.** The full gate passed: 1084/1084, 0 warnings, no vulnerable packages.
+- **Merge ref.** Parents were exactly `df470e4` and `d6a20c5`, and the tree was equal.
+- **Merge.** Squash-merged through the expected-head fence.
