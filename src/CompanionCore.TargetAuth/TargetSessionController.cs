@@ -31,6 +31,7 @@ public sealed class TargetSessionController : IAsyncDisposable
 
     private AttentionSheet? _heldAttentionSheet;
     private AttentionSheet? _heldOrientation;
+    private AttentionSheet? _heldPhotograph;
     private long _visualAdmissionEpoch;
     private CaptureWorkerStatus _lastWorkerStatus = CaptureWorkerStatus.Stopped;
     private bool _orientationOutstanding;
@@ -417,6 +418,34 @@ public sealed class TargetSessionController : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Asks the worker for one native-resolution photograph of the current authorized
+    /// target. It is refused unless that target is authorized and current (never while
+    /// privacy-paused), and the resulting sheet passes the same frame admission as any other.
+    /// </summary>
+    public async Task RequestPhotographAsync(CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ThrowIfDisposed();
+            var grant = CurrentSession.Grant;
+            if (CurrentSession.Phase != TargetSessionPhase.Authorized
+                || grant is null
+                || !_authorization.IsCurrent(grant))
+            {
+                throw new InvalidOperationException("No current target can be photographed.");
+            }
+
+            await _worker.RequestPhotographAsync(grant, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
     public AttentionSheet? TakeLatestAttentionSheet()
     {
         ThrowIfDisposed();
@@ -441,11 +470,18 @@ public sealed class TargetSessionController : IAsyncDisposable
 
             if (incoming is not null)
             {
-                // The orientation has its own slot so a newer regional sheet can
-                // never displace it before it is delivered.
-                ref var slot = ref incoming.Metadata.Kind == AttentionSheetKind.Orientation
-                    ? ref _heldOrientation
-                    : ref _heldAttentionSheet;
+                // The orientation and a requested photograph each have their own slot,
+                // so a newer regional sheet can never displace them before delivery.
+                ref var slot = ref _heldAttentionSheet;
+                if (incoming.Metadata.Kind == AttentionSheetKind.Orientation)
+                {
+                    slot = ref _heldOrientation;
+                }
+                else if (incoming.Metadata.Kind == AttentionSheetKind.Photograph)
+                {
+                    slot = ref _heldPhotograph;
+                }
+
                 if (slot is null
                     || incoming.Metadata.SourceSequenceNumber
                         >= slot.Metadata.SourceSequenceNumber)
@@ -461,6 +497,11 @@ public sealed class TargetSessionController : IAsyncDisposable
             if (TryReleaseHeldUnsafe(ref _heldOrientation) is { } orientation)
             {
                 return orientation;
+            }
+
+            if (TryReleaseHeldUnsafe(ref _heldPhotograph) is { } photograph)
+            {
+                return photograph;
             }
 
             return TryReleaseHeldUnsafe(ref _heldAttentionSheet);
@@ -831,6 +872,8 @@ public sealed class TargetSessionController : IAsyncDisposable
             _heldAttentionSheet = null;
             _heldOrientation?.Dispose();
             _heldOrientation = null;
+            _heldPhotograph?.Dispose();
+            _heldPhotograph = null;
             _visualAdmissionEpoch = checked(_visualAdmissionEpoch + 1);
         }
     }

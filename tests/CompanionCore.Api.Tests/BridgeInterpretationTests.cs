@@ -116,6 +116,22 @@ public sealed class BridgeInterpretationTests
     }
 
     [Fact]
+    public async Task AKeepsakePhotograph_IsNeverUploaded()
+    {
+        await using var harness = await ApiTestHarness.CreateAsync();
+        var mock = new MockSemanticProvider();
+        var bridge = harness.OpenBridge(mock);
+        var grant = harness.Grant();
+        var photograph = ApiTestHarness.Sheet(grant, AttentionSheetKind.Photograph);
+
+        var outcome = await bridge.InterpretAttentionSheetAsync(photograph, grant);
+
+        Assert.Equal(BridgeOutcomeKind.NotAuthorized, outcome.Kind);
+        Assert.Equal(0, mock.CallCount);
+        Assert.Equal(0, photograph.Length);
+    }
+
+    [Fact]
     public async Task AlreadyDisposedSheet_IsRefused()
     {
         await using var harness = await ApiTestHarness.CreateAsync();

@@ -7,10 +7,10 @@ using CompanionCore.Keepsakes;
 namespace CompanionCore.Orchestration;
 
 /// <summary>
-/// Turns one authorized, RAM-only attention sheet into a keepsake frame: it decodes the
-/// capture worker's own strict PNG format (RGBA8, filter 0, verified CRCs) and crops the
-/// full-context region into a BGRA buffer. Nothing is written here; the keepsake camera
-/// remains the only durable-image path.
+/// Turns one authorized, RAM-only sheet into a keepsake frame: it decodes the capture
+/// worker's own strict PNG format (RGBA8, filter 0, verified CRCs) and takes the
+/// full-context region (the whole image of a photograph sheet) as a BGRA buffer. Nothing
+/// is written here; the keepsake camera remains the only durable-image path.
 /// </summary>
 internal static class SheetPhotographSource
 {
@@ -36,6 +36,19 @@ internal static class SheetPhotographSource
         }
 
         var rect = full.SheetPixels;
+        var frame = new CaptureFrameMetadata(grant, Math.Max(1, metadata.SourceSequenceNumber), metadata.SourceTimestamp, rect.Width, rect.Height);
+        if (rect == new PixelRect(0, 0, width, height))
+        {
+            // A whole-sheet region (a native-resolution photograph): swap channels in place,
+            // so a large photograph never holds a second full-size copy.
+            for (var offset = 0; offset < rgba.Length; offset += 4)
+            {
+                (rgba[offset], rgba[offset + 2]) = (rgba[offset + 2], rgba[offset]);
+            }
+
+            return new PhotographFrame(frame, rgba, width * 4);
+        }
+
         var bgra = new byte[checked(rect.Width * rect.Height * 4)];
         for (var y = 0; y < rect.Height; y++)
         {
@@ -53,7 +66,6 @@ internal static class SheetPhotographSource
         }
 
         Array.Clear(rgba);
-        var frame = new CaptureFrameMetadata(grant, Math.Max(1, metadata.SourceSequenceNumber), metadata.SourceTimestamp, rect.Width, rect.Height);
         return new PhotographFrame(frame, bgra, rect.Width * 4);
     }
 

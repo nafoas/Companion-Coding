@@ -39,10 +39,19 @@ public interface ICaptureWorker : IDisposable
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Asks the worker to turn its next usable frame into one <see cref="AttentionSheetKind.Photograph"/>
+    /// sheet: the whole authorized target at native resolution, halved only to fit the sheet
+    /// bounds. It requires the active grant and is used only while a camera action is shown.
+    /// </summary>
+    Task RequestPhotographAsync(
+        CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Transfers ownership of the next sheet the caller must see. An undelivered
-    /// orientation is handed over first and is never displaced by newer regional
-    /// sheets; otherwise the newest sheet is returned and any older queued sheet is
-    /// disposed. Returns null when no current sheet is available.
+    /// orientation is handed over first, then an undelivered photograph; neither is ever
+    /// displaced by newer regional sheets. Otherwise the newest sheet is returned and any
+    /// older queued sheet is disposed. Returns null when no current sheet is available.
     /// </summary>
     AttentionSheet? TakeLatestAttentionSheet();
 

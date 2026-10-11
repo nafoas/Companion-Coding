@@ -55,6 +55,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
     // regional retention until taken, and its notice is never coalesced away. Its
     // source frame is tracked exactly so the notice cannot precede or outlive it.
     private AttentionSheet? _pinnedOrientation;
+    private AttentionSheet? _pinnedPhotograph;
     private AttentionSheetMetadata? _pendingOrientationNotice;
     private bool _orientationSourceDispatched;
     private bool _admitFrames;
@@ -252,6 +253,43 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
         }
     }
 
+    public async Task RequestPhotographAsync(
+        CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(authorization);
+        cancellationToken.ThrowIfCancellationRequested();
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            lock (_stateGate)
+            {
+                if (Status != CaptureWorkerStatus.Running
+                    || !_admitFrames
+                    || _currentGrant is null
+                    || !GrantsMatch(_currentGrant, authorization))
+                {
+                    throw new InvalidOperationException(
+                        "The photograph request does not match the active capture grant.");
+                }
+            }
+
+            var response = await SendCommandAsync(
+                new CaptureIpcMessage
+                {
+                    Kind = CaptureIpcMessageKind.RequestPhotograph,
+                    Authorization = CaptureIpcAuthorization.FromGrant(authorization),
+                },
+                cancellationToken).ConfigureAwait(false);
+            UpdateMetrics(response.Metrics);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
     public AttentionSheet? TakeLatestAttentionSheet()
     {
         ThrowIfDisposed();
@@ -263,6 +301,13 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 // newest regional sheet stays retained for the next take.
                 _pinnedOrientation = null;
                 return orientation;
+            }
+
+            if (_pinnedPhotograph is { } photograph)
+            {
+                // A requested photograph is handed over next, before any regional sheet.
+                _pinnedPhotograph = null;
+                return photograph;
             }
 
             if (_attentionSheets.Count == 0)
@@ -797,15 +842,23 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
                 _orientationSourceDispatched =
                     sheet.Metadata.SourceSequenceNumber == _lastDispatchedSequence;
             }
+            else if (sheet.Metadata.Kind == AttentionSheetKind.Photograph)
+            {
+                _pinnedPhotograph?.Dispose();
+                _pinnedPhotograph = sheet;
+            }
             else
             {
                 _attentionSheets.Enqueue(sheet);
             }
 
-            // The pinned orientation counts toward the same two-sheet ceiling, so
-            // regional retention shrinks to the newest one while it is held.
-            var regionalCapacity = AttentionSheet.MaximumRetainedSheets
-                - (_pinnedOrientation is null ? 0 : 1);
+            // Pinned sheets count toward the same two-sheet ceiling, so regional
+            // retention shrinks while they are held.
+            var regionalCapacity = Math.Max(
+                0,
+                AttentionSheet.MaximumRetainedSheets
+                    - (_pinnedOrientation is null ? 0 : 1)
+                    - (_pinnedPhotograph is null ? 0 : 1));
             while (_attentionSheets.Count > regionalCapacity)
             {
                 _attentionSheets.Dequeue().Dispose();
@@ -1497,6 +1550,8 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
 
         _pinnedOrientation?.Dispose();
         _pinnedOrientation = null;
+        _pinnedPhotograph?.Dispose();
+        _pinnedPhotograph = null;
         _pendingOrientationNotice = null;
         _orientationSourceDispatched = false;
         _latestAttentionMetadata = null;

@@ -14,12 +14,14 @@ internal sealed class VisualObservationPipeline : IDisposable
     private readonly StaggeredRegionScheduler _scheduler = new();
     private NormalizedRegion? _manualRegion;
     private bool _orientationPending = true;
+    private bool _photographPending;
     private bool _forceNextSheet;
     private long _stateVersion = 1;
     private long _changedFrames;
     private long _duplicateFrames;
     private long _producedSheets;
     private long _orientationSheets;
+    private long _photographSheets;
     private long _droppedSheets;
     private int _currentSheets;
     private int _maximumSheets;
@@ -57,6 +59,7 @@ internal sealed class VisualObservationPipeline : IDisposable
         ComposedAttentionSheet? composed = null;
         long stateVersion = 0;
         var orientation = false;
+        var photograph = false;
         var stateCaptured = false;
         try
         {
@@ -73,8 +76,8 @@ internal sealed class VisualObservationPipeline : IDisposable
             }
 
             SetWorkingBytes(pixels.ByteLength);
-            IReadOnlyList<VisualRegion> regions;
-            FrameChangeResult change;
+            IReadOnlyList<VisualRegion> regions = [];
+            FrameChangeResult change = default;
             lock (_gate)
             {
                 if (_currentSheets >= AttentionSheet.MaximumRetainedSheets)
@@ -83,27 +86,44 @@ internal sealed class VisualObservationPipeline : IDisposable
                     return null;
                 }
 
-                change = _changeDetector.Evaluate(pixels);
-                _lastChangeScore = change.Score;
-                if (change.GeometryChanged)
+                if (_photographPending)
                 {
-                    _orientationPending = true;
-                    _scheduler.Reset();
+                    // A requested photograph takes this frame whole; it consumes no visual
+                    // change, so orientation and regional state are left untouched.
+                    _photographPending = false;
+                    photograph = true;
+                    stateVersion = _stateVersion;
+                    stateCaptured = true;
                 }
-
-                orientation = _orientationPending;
-                if (change.IsDuplicate && !orientation && !_forceNextSheet)
+                else
                 {
-                    _duplicateFrames++;
-                    return null;
-                }
+                    change = _changeDetector.Evaluate(pixels);
+                    _lastChangeScore = change.Score;
+                    if (change.GeometryChanged)
+                    {
+                        _orientationPending = true;
+                        _scheduler.Reset();
+                    }
 
-                _changedFrames++;
-                stateVersion = _stateVersion;
-                stateCaptured = true;
-                regions = orientation ? [] : _scheduler.TakeNext(_manualRegion);
-                _orientationPending = false;
-                _forceNextSheet = false;
+                    orientation = _orientationPending;
+                    if (change.IsDuplicate && !orientation && !_forceNextSheet)
+                    {
+                        _duplicateFrames++;
+                        return null;
+                    }
+
+                    _changedFrames++;
+                    stateVersion = _stateVersion;
+                    stateCaptured = true;
+                    regions = orientation ? [] : _scheduler.TakeNext(_manualRegion);
+                    _orientationPending = false;
+                    _forceNextSheet = false;
+                }
+            }
+
+            if (photograph)
+            {
+                return ProducePhotograph(frame, authorization, pixels, stateVersion);
             }
 
             composed = AttentionSheetComposer.Compose(
@@ -176,7 +196,8 @@ internal sealed class VisualObservationPipeline : IDisposable
                 if (!_disposed && stateCaptured && stateVersion == _stateVersion)
                 {
                     _orientationPending |= orientation;
-                    _forceNextSheet |= !orientation;
+                    _forceNextSheet |= !orientation && !photograph;
+                    _photographPending |= photograph;
                 }
 
                 _droppedSheets++;
@@ -190,6 +211,151 @@ internal sealed class VisualObservationPipeline : IDisposable
             pixels?.Dispose();
             SetWorkingBytes(0);
         }
+    }
+
+    /// <summary>
+    /// Encodes the whole source frame at native resolution. When the image is larger than
+    /// the photograph edge or its encoding exceeds the sheet bound, it is halved (2×2
+    /// average) and tried again; by 1280 pixels every image fits, so this always ends.
+    /// </summary>
+    private OwnedWorkerAttentionSheet? ProducePhotograph(
+        CaptureSourceFrame frame,
+        CaptureIpcAuthorization authorization,
+        OwnedBgra32Buffer pixels,
+        long stateVersion)
+    {
+        var canvas = pixels;
+        byte[]? encoded = null;
+        try
+        {
+            while (true)
+            {
+                var conservativePeak = checked(
+                    (long)pixels.ByteLength
+                    + (ReferenceEquals(canvas, pixels) ? 0 : canvas.ByteLength)
+                    + (2L * AttentionSheet.MaximumEncodedBytes));
+                if (conservativePeak > CaptureWorkerMetrics.VisualWorkingBudgetBytes)
+                {
+                    throw new InvalidOperationException("The photograph would exceed its hard working bound.");
+                }
+
+                SetWorkingBytes(conservativePeak);
+                if (Math.Max(canvas.Width, canvas.Height) <= AttentionSheet.MaximumPhotographEdge
+                    && PngEncoder.TryEncode(canvas) is { } fitted)
+                {
+                    encoded = fitted;
+                    break;
+                }
+
+                if (canvas.Width < 2 || canvas.Height < 2)
+                {
+                    throw new InvalidOperationException("The photograph cannot fit its bounds.");
+                }
+
+                var halved = Halve(canvas);
+                if (!ReferenceEquals(canvas, pixels))
+                {
+                    canvas.Dispose();
+                }
+
+                canvas = halved;
+            }
+
+            var metadata = new AttentionSheetMetadata
+            {
+                TargetSessionId = authorization.TargetSessionId,
+                Generation = authorization.Generation,
+                Target = new CaptureTargetIdentity(
+                    authorization.WindowId,
+                    authorization.ProcessId,
+                    authorization.ExecutableFileName,
+                    authorization.ExecutablePathFingerprint),
+                SourceSequenceNumber = frame.SequenceNumber,
+                SourceTimestamp = frame.Timestamp,
+                SourceWidth = frame.Width,
+                SourceHeight = frame.Height,
+                SheetWidth = canvas.Width,
+                SheetHeight = canvas.Height,
+                EncodedByteLength = encoded.Length,
+                Kind = AttentionSheetKind.Photograph,
+                ChangeScore = 0,
+                Regions =
+                [
+                    new AttentionSheetRegionMetadata
+                    {
+                        Kind = AttentionRegionKind.FullContext,
+                        NormalizedSource = VisualRegionLayout.FullContext,
+                        SourcePixels = new PixelRect(0, 0, frame.Width, frame.Height),
+                        SheetPixels = new PixelRect(0, 0, canvas.Width, canvas.Height),
+                    },
+                ],
+            };
+            if (!metadata.IsProtocolSafe())
+            {
+                throw new InvalidOperationException("Photograph metadata failed its strict contract.");
+            }
+
+            lock (_gate)
+            {
+                if (_disposed || stateVersion != _stateVersion)
+                {
+                    _droppedSheets++;
+                    CryptographicOperations.ZeroMemory(encoded);
+                    return null;
+                }
+
+                _producedSheets++;
+                _photographSheets++;
+                _currentSheets++;
+                _currentSheetBytes += encoded.Length;
+                _maximumSheets = Math.Max(_maximumSheets, _currentSheets);
+                _maximumSheetBytes = Math.Max(_maximumSheetBytes, _currentSheetBytes);
+            }
+
+            var sheet = new OwnedWorkerAttentionSheet(metadata, encoded, ReleaseSheet);
+            encoded = null;
+            return sheet;
+        }
+        finally
+        {
+            if (encoded is not null)
+            {
+                CryptographicOperations.ZeroMemory(encoded);
+            }
+
+            if (!ReferenceEquals(canvas, pixels))
+            {
+                canvas.Dispose();
+            }
+        }
+    }
+
+    /// <summary>2×2 box average; an odd last row or column is dropped.</summary>
+    internal static OwnedBgra32Buffer Halve(OwnedBgra32Buffer source)
+    {
+        var width = source.Width / 2;
+        var height = source.Height / 2;
+        var target = OwnedBgra32Buffer.Allocate(width, height);
+        var input = source.ReadOnlySpan;
+        var output = target.Span;
+        for (var y = 0; y < height; y++)
+        {
+            var top = (2 * y) * source.Stride;
+            var bottom = top + source.Stride;
+            var row = y * target.Stride;
+            for (var x = 0; x < width; x++)
+            {
+                var left = 8 * x;
+                for (var channel = 0; channel < 4; channel++)
+                {
+                    var sum = input[top + left + channel] + input[top + left + 4 + channel]
+                        + input[bottom + left + channel] + input[bottom + left + 4 + channel];
+                    output[row + (4 * x) + channel] = (byte)((sum + 2) / 4);
+                }
+            }
+        }
+
+        return target;
     }
 
     internal void SetManualRegion(NormalizedRegion? region)
@@ -214,6 +380,30 @@ internal sealed class VisualObservationPipeline : IDisposable
         }
     }
 
+    /// <summary>
+    /// Arms one photograph for the active grant: the next usable frame, even a duplicate,
+    /// becomes a <see cref="AttentionSheetKind.Photograph"/> sheet. Any reset disarms it.
+    /// </summary>
+    internal void RequestPhotograph()
+    {
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _photographPending = true;
+        }
+    }
+
+    internal bool PhotographPending
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _photographPending;
+            }
+        }
+    }
+
     internal void Reset(bool clearManualRegion = true)
     {
         lock (_gate)
@@ -230,9 +420,21 @@ internal sealed class VisualObservationPipeline : IDisposable
                 _manualRegion = null;
             }
             _orientationPending = true;
+            _photographPending = false;
             _forceNextSheet = false;
             _lastChangeScore = 0;
             _stateVersion = checked(_stateVersion + 1);
+        }
+    }
+
+    internal long PhotographSheets
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _photographSheets;
+            }
         }
     }
 
@@ -310,6 +512,7 @@ internal sealed class VisualObservationPipeline : IDisposable
             _scheduler.Reset();
             _manualRegion = null;
             _orientationPending = false;
+            _photographPending = false;
             _forceNextSheet = false;
             _currentWorkingBytes = 0;
             _stateVersion = checked(_stateVersion + 1);

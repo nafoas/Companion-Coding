@@ -143,6 +143,7 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
     private readonly Queue<CaptureFrameMetadata> _buffer = new();
     private readonly Queue<AttentionSheet> _sheets = new();
     private AttentionSheet? _pinnedOrientation;
+    private AttentionSheet? _pinnedPhotograph;
     private bool _disposed;
 
     public CaptureWorkerStatus Status { get; private set; } = CaptureWorkerStatus.Stopped;
@@ -278,16 +279,40 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
             : Task.CompletedTask;
     }
 
+    public int PhotographRequestCount { get; private set; }
+
+    public Task RequestPhotographAsync(
+        CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(authorization);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (Status != CaptureWorkerStatus.Running || !ReferenceEquals(authorization, LastGrant))
+        {
+            throw new InvalidOperationException("Grant is not active.");
+        }
+
+        PhotographRequestCount++;
+        return Task.CompletedTask;
+    }
+
     public AttentionSheet? TakeLatestAttentionSheet()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        // Mirrors the ICaptureWorker contract: an undelivered orientation first,
-        // otherwise the newest regional sheet.
+        // Mirrors the ICaptureWorker contract: an undelivered orientation first, then an
+        // undelivered photograph, otherwise the newest regional sheet.
         if (_pinnedOrientation is { } orientation)
         {
             _pinnedOrientation = null;
             return orientation;
+        }
+
+        if (_pinnedPhotograph is { } photograph)
+        {
+            _pinnedPhotograph = null;
+            return photograph;
         }
 
         while (_sheets.Count > 1)
@@ -361,13 +386,21 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
             _pinnedOrientation?.Dispose();
             _pinnedOrientation = sheet;
         }
+        else if (kind == AttentionSheetKind.Photograph)
+        {
+            _pinnedPhotograph?.Dispose();
+            _pinnedPhotograph = sheet;
+        }
         else
         {
             _sheets.Enqueue(sheet);
         }
 
-        var regionalCapacity = AttentionSheet.MaximumRetainedSheets
-            - (_pinnedOrientation is null ? 0 : 1);
+        var regionalCapacity = Math.Max(
+            0,
+            AttentionSheet.MaximumRetainedSheets
+                - (_pinnedOrientation is null ? 0 : 1)
+                - (_pinnedPhotograph is null ? 0 : 1));
         while (_sheets.Count > regionalCapacity)
         {
             _sheets.Dequeue().Dispose();
@@ -423,6 +456,8 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
 
         _pinnedOrientation?.Dispose();
         _pinnedOrientation = null;
+        _pinnedPhotograph?.Dispose();
+        _pinnedPhotograph = null;
     }
 
     private void SetStatus(

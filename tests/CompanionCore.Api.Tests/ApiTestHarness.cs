@@ -106,7 +106,9 @@ internal sealed class ApiTestHarness : IAsyncDisposable
             Kind = AttentionRegionKind.FullContext,
             NormalizedSource = new NormalizedRegion(0, 0, 1, 1),
             SourcePixels = new PixelRect(0, 0, 64, 64),
-            SheetPixels = new PixelRect(0, 0, 32, 32),
+
+            // A photograph's one region covers its whole sheet.
+            SheetPixels = kind == AttentionSheetKind.Photograph ? new PixelRect(0, 0, 64, 32) : new PixelRect(0, 0, 32, 32),
         };
         var center = new AttentionSheetRegionMetadata
         {

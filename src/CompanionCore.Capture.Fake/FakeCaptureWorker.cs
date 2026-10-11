@@ -142,6 +142,24 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         return Task.CompletedTask;
     }
 
+    public Task RequestPhotographAsync(
+        CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(authorization);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!ReferenceEquals(authorization, _currentAuthorization)
+            || Status != CaptureWorkerStatus.Running)
+        {
+            throw new InvalidOperationException("The photograph request does not match the active grant.");
+        }
+
+        // The synthetic fake produces no attention sheets, so no photograph follows;
+        // accepting the request proves only grant validation.
+        return Task.CompletedTask;
+    }
+
     public AttentionSheet? TakeLatestAttentionSheet()
     {
         ThrowIfDisposed();

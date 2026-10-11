@@ -138,7 +138,10 @@ public sealed class ApiBridge : IAsyncDisposable
                 return BridgeOutcome.Simple(BridgeOutcomeKind.Disposed);
             }
 
+            // A keepsake photograph is never uploaded: interpretation uses attention sheets only
+            // ("no full-resolution upload merely because the source display supports it").
             if (sheet.Length == 0
+                || sheet.Metadata.Kind == AttentionSheetKind.Photograph
                 || !sheet.Metadata.Matches(grant)
                 || !_privacy.IsCurrent(grant.Generation))
             {
