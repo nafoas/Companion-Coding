@@ -393,8 +393,9 @@ public sealed class WindowsPlatformSignalsTests
         var target = Identity();
         var probe = Watch(signals, native, target);
 
-        probe.State = ProcessProbeState.Exited;
+        // The exit code first: the poll loop runs concurrently and reports the code once it sees the exit.
         probe.ExitCode = 3;
+        probe.State = ProcessProbeState.Exited;
         var exit = await exited.Task.WaitAsync(TimeSpan.FromSeconds(10));
 
         Assert.Equal(3, exit.ExitCode);

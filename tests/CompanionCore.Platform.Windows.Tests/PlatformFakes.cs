@@ -14,16 +14,33 @@ internal sealed class ManualTime(DateTimeOffset start) : TimeProvider
 
 internal sealed class FakeProbe : IProcessProbe
 {
-    public ProcessProbeState State { get; set; } = ProcessProbeState.Running;
+    private readonly object _gate = new();
+    private ProcessProbeState _state = ProcessProbeState.Running;
+    private int _exitCode;
 
-    public int ExitCode { get; set; }
+    // Polled from the signals' background loop: reads and writes are fenced so a poll
+    // sees whole values. Tests set ExitCode before State.
+    public ProcessProbeState State
+    {
+        get { lock (_gate) { return _state; } }
+        set { lock (_gate) { _state = value; } }
+    }
+
+    public int ExitCode
+    {
+        get { lock (_gate) { return _exitCode; } }
+        set { lock (_gate) { _exitCode = value; } }
+    }
 
     public bool Disposed { get; private set; }
 
     public ProcessProbeState Poll(out int exitCode)
     {
-        exitCode = State == ProcessProbeState.Exited ? ExitCode : -1;
-        return State;
+        lock (_gate)
+        {
+            exitCode = _state == ProcessProbeState.Exited ? _exitCode : -1;
+            return _state;
+        }
     }
 
     public void Dispose() => Disposed = true;
