@@ -24,15 +24,21 @@ public sealed class OrchestrationSniffTests
             occupied.SetResult();
             await gate.Task;
         });
-        await occupied.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        try
+        {
+            await occupied.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            harness.Worker.EmitSniff(harness.Time.GetUtcNow(), hotChange: 0.5, motion: 0.4);
 
-        harness.Worker.EmitSniff(harness.Time.GetUtcNow(), hotChange: 0.5, motion: 0.4);
+            // The Attention notice arrived synchronously on the sniff's own thread.
+            Assert.Contains(harness.Notices, notice => notice.Kind == CompanionNoticeKind.Attention
+                && notice.Attention!.Kind == AttentionIntentKind.Observing);
+            Assert.False(busy.IsCompleted);
+        }
+        finally
+        {
+            gate.TrySetResult();
+        }
 
-        // The Attention notice arrived synchronously on the sniff's own thread.
-        Assert.Contains(harness.Notices, notice => notice.Kind == CompanionNoticeKind.Attention
-            && notice.Attention!.Kind == AttentionIntentKind.Observing);
-        Assert.False(busy.IsCompleted);
-        gate.SetResult();
         await busy;
         Assert.Equal(0, harness.Orchestrator.Faults);
     }
@@ -110,6 +116,41 @@ public sealed class OrchestrationSniffTests
         await harness.SettleAsync();
         await harness.WaitForAsync(() => harness.Worker.Cadences.Contains(CaptureCadence.BnuyMode));
         Assert.Equal(0, harness.Orchestrator.Faults);
+    }
+
+    [Fact]
+    public async Task TheCadence_IsReassertedAfterAResumeAndNowAndThen()
+    {
+        await using var harness = await CreateAsync();
+        await harness.AuthorizeAsync();
+        await harness.SettleAsync();
+        Assert.Single(harness.Worker.Cadences);
+
+        // A tick inside the interval sends nothing new.
+        harness.Time.Advance(TimeSpan.FromSeconds(2));
+        await harness.Orchestrator.TickAsync();
+        Assert.Single(harness.Worker.Cadences);
+
+        // Past it, the cadence is told again (a restarted worker may have lost it).
+        harness.Time.Advance(CompanionOrchestrator.CadenceReassertInterval);
+        await harness.Orchestrator.TickAsync();
+        await harness.WaitForAsync(() => harness.Worker.Cadences.Count == 2);
+        Assert.All(harness.Worker.Cadences, cadence => Assert.Equal(CaptureCadence.Noticing, cadence));
+    }
+
+    [Fact]
+    public async Task AResumedSession_IsToldItsCadenceAgainAtOnce()
+    {
+        await using var harness = await CreateAsync();
+        await harness.AuthorizeAsync();
+        await harness.SettleAsync();
+        Assert.Single(harness.Worker.Cadences);
+
+        // A privacy stop and explicit resume restart the worker at its default pace.
+        await harness.Controller.PrivacyStopAsync();
+        Assert.True((await harness.Controller.ResumeExplicitlyAsync()).Succeeded);
+        await harness.WaitForAsync(() => harness.Worker.Cadences.Count == 2);
+        Assert.Equal(CaptureCadence.Noticing, harness.Worker.Cadences[^1]);
     }
 
     [Fact]

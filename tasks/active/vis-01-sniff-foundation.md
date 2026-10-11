@@ -1,6 +1,6 @@
 # VIS-01 — The Sniff: fast local noticing within 100 ms (Vision upgrade, part 1)
 
-Status: **in progress**
+Status: **in review**
 Authorized: 2026-10-11 by Boss:
 
 - "he needs to see, notice, and respond, without an immersion killing delay … Glance ideally needs to be 100 ms or less, and happen frequently to catch even quick stuff … I want this done now, with greatly reduced latency. I have a strong PC, so allocate as much RAM is needed".
@@ -71,7 +71,15 @@ Local text reading (VIS-03) and the bundled local vision model (VIS-04) later ad
 
 ## Personal Round Judgments
 
-_(recorded during implementation)_
+- **J1 — Sniffs carry their own frame description.** The worker announces a frame only after its sheet work, so a sniff instead carries its source frame's size and accounting, and goes through the controller's same privacy admission gate on its own. The privacy rule is identical, and there is no wait on composition.
+- **J2 — Sniffs get their own event lane.** In the client, a small bounded lane: a sniff can never evict a frame or sheet, and a slow frame observer can never delay noticing.
+- **J3 — The reflex lane runs outside the mailbox.** The attention engine is already thread-safe. Notices are serialized by one lock, and the App hands them to the UI with `BeginInvoke`, so there is no deadlock. Conversation and cadence consequences go through the mailbox.
+- **J4 — Per-cell habituation, not region topics.** A looping cell fades in a few exposures and recovers with a 20 s half-life. The engine's topic habituation would have muted a whole region for about 10 minutes, so sniff evidence carries no topic. Weak evidence corroborates per region kind.
+- **J5 — A trigger-level change is trusted on first sight** (confidence 0.8). A single strong change, such as a pop-up in one cell, perks his ears at once; weaker change needs a second cell.
+- **J6 — Cell-aware duplicates.** A frame is a duplicate only when the whole frame is still and no single cell moved (cell change < 0.06). A small icon now counts even when the global change is tiny.
+- **J7 — A bounded, zeroing pixel pool.** At 4K, fresh 33 MB arrays every frame made the collector stall one copy from about 20 ms to about 180 ms. Pooled buffers (at most 4 per size, at most 256 MB retained) bring a 4K sniff back to about 10–30 ms in this container. Every buffer is zeroed before reuse, and fresh ones start zeroed.
+- **J8 — The cadence is re-asserted.** It is sent again at once on a resume or re-grant, every 10 s from the tick (a restarted worker may have lost it), and after a refused send.
+- **J9 — Re-armed orientation frames are sniffed too.** Only a first frame, which has no change baseline, is not sniffed.
 
 ## Deferred findings
 
@@ -79,6 +87,14 @@ _(recorded during implementation)_
 - **VIS-03:** local text reading.
 - **VIS-04:** the bundled local scene model.
 
+## Mutation pass
+
+- **33 mutants.** 31 were killed; 2 survive as deliberate defense in depth:
+  - the controller's "current grant" check before a cadence (worker status already gates it);
+  - the orchestrator's sniff grant check (the controller already admits only the current grant).
+- **The first round found three test gaps:** scene cut versus half screen, a trigger breaking through spacing, and the exact aimed region. Tests were added for all three.
+- **It also found two design issues,** both fixed: region-wide habituation, and resume not re-sending the cadence.
+
 ## Paw Gate
 
-_(pending)_
+_(pending CI)_

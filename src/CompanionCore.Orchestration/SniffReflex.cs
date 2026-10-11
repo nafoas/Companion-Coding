@@ -14,8 +14,10 @@ namespace CompanionCore.Orchestration;
 /// <item>Every event carries a score ceiling below Bnuy Mode: only understanding, or
 /// decisive evidence, can enter it.</item>
 /// </list>
-/// Region kinds are the corroboration topics, so change spread across one region's cells
-/// corroborates, while one cell repeating itself never does. A scene cut is a global
+/// Evidence carries no topic: habituation is this class's per-cell, quickly recovering
+/// kind (a waterfall must not mute a whole region for many minutes), and the engine
+/// corroborates weak evidence per region kind, so change spread across one region's cells
+/// corroborates while one cell repeating itself never does. A scene cut is a global
 /// transition, deduplicated and capped by the engine. Thread-safe; time comes from the
 /// sniffs' own source timestamps.
 /// </summary>
@@ -102,7 +104,6 @@ internal sealed class SniffReflex
                 Urgency: 0,
                 Persistence: 0.2,
                 Confidence: sniff.IsTrigger ? TriggerConfidence : Confidence),
-            TopicKey = $"sniff:{sniff.HotRegionKind}",
             EvidenceSource = $"sniff:cell:{sniff.HotCell}",
             ScoreCeiling = _ceiling,
         };
@@ -114,7 +115,6 @@ internal sealed class SniffReflex
                 RegionKind = AttentionRegionKind.FullContext,
                 Kind = AttentionEventKind.GlobalTransition,
                 TransitionKey = SceneCutTransition,
-                TopicKey = null,
             }
             : interest;
     }

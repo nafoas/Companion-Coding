@@ -103,6 +103,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private readonly LatencyWindow _sniffLatency = new(256);
     private long _sniffsReceived;
     private bool _sniffTriggerPending;
+    private DateTimeOffset _lastCadenceAssert;
+    internal static readonly TimeSpan CadenceReassertInterval = TimeSpan.FromSeconds(10);
 
     public CompanionOrchestrator(CompanionComponents components, OrchestratorOptions? options = null)
     {
@@ -530,14 +532,27 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
 
         session.AppliedCadence = cadence;
-        _ = SetCadenceAsync(cadence);
+        _lastCadenceAssert = Now();
+        _ = SetCadenceAsync(session, cadence);
     }
 
-    private async Task SetCadenceAsync(CaptureCadence cadence)
+    private async Task SetCadenceAsync(ActiveSession session, CaptureCadence cadence)
     {
         try
         {
-            await _c.Controller.SetCadenceAsync(cadence, _shutdown.Token).ConfigureAwait(false);
+            if (!await _c.Controller.SetCadenceAsync(cadence, _shutdown.Token).ConfigureAwait(false))
+            {
+                // Not running yet (or stopped): the next attention change or tick sends it again.
+                Post(() =>
+                {
+                    if (ReferenceEquals(session.AppliedCadence, cadence))
+                    {
+                        session.AppliedCadence = null;
+                    }
+
+                    return Task.CompletedTask;
+                });
+            }
         }
         catch (OperationCanceledException)
         {
@@ -630,7 +645,10 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
                 if (_session is { } session && _c.Controller.CurrentSession.Grant is { } refreshed
                     && refreshed.TargetSessionId == session.Grant.TargetSessionId)
                 {
+                    // The resumed worker starts at its default pace: tell it again.
                     session.Grant = refreshed;
+                    session.AppliedCadence = null;
+                    SyncAttentionState(session);
                 }
 
                 break;
@@ -678,7 +696,10 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         {
             if (current.Grant.TargetSessionId == grant.TargetSessionId)
             {
+                // A resumed grant restarts the worker at its default pace: tell it again.
                 current.Grant = grant;
+                current.AppliedCadence = null;
+                SyncAttentionState(current);
                 return;
             }
 
@@ -1060,6 +1081,14 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         if (_session is { } session)
         {
             HandleAttention(session, session.Attention.Advance(now));
+
+            // A worker restart (fault, watchdog, resume) returns it to its default pace;
+            // re-assert the attention cadence now and then so it never stays wrong for long.
+            if (session.AppliedCadence is null || now - _lastCadenceAssert >= CadenceReassertInterval || now < _lastCadenceAssert)
+            {
+                session.AppliedCadence = null;
+                SyncAttentionState(session);
+            }
         }
 
         HandleConversation(_conversation.Tick(now));

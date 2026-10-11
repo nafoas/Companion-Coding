@@ -48,8 +48,11 @@ public sealed class SniffTests
             // Inside the sheet spacing, the trigger still composes a sheet at once, aimed at the change.
             Assert.NotNull(sheet);
             Assert.Equal(AttentionSheetKind.Regional, sheet.Metadata.Kind);
-            Assert.Contains(sheet.Metadata.Regions, region => region.Kind == AttentionRegionKind.LowerDialogueInventory
-                && region.NormalizedSource.Y >= 0.5);
+            // The hot cells (columns 2–5, rows 4–5) padded by half a cell — not the default layout box.
+            var aimed = Assert.Single(sheet.Metadata.Regions, region => region.Kind == AttentionRegionKind.LowerDialogueInventory);
+            Assert.Equal(1.5 / SniffSignal.GridColumns, aimed.NormalizedSource.X, 6);
+            Assert.Equal(5d / SniffSignal.GridColumns, aimed.NormalizedSource.Width, 6);
+            Assert.Equal(3.5 / SniffSignal.GridRows, aimed.NormalizedSource.Y, 6);
             Assert.True(sheet.Metadata.IsProtocolSafe());
         }
     }
@@ -74,6 +77,48 @@ public sealed class SniffTests
         Assert.True(sniff.SceneCut);
         Assert.True(sniff.Motion >= SniffSignal.SceneCutMotion);
         Assert.True(sniff.IsTrigger);
+    }
+
+    [Fact]
+    public async Task AStrongChangeOverHalfTheScreen_IsNotASceneCut()
+    {
+        using var pipeline = new VisualObservationPipeline();
+        var authorization = CaptureWorkerTestSupport.CreateAuthorization();
+        var sniffs = new List<SniffSignal>();
+        using (var first = Frame(1, 0, patch: null, baseShade: 20))
+        using (await pipeline.ProcessAsync(first, authorization, sniffs.Add, CancellationToken.None))
+        {
+        }
+
+        // The whole left half changes brightly: plenty of global change, but not the whole scene.
+        using (var half = Frame(2, 100, patch: new NormalizedRegion(0, 0, 0.5, 1), baseShade: 20, patchShade: 250))
+        using (await pipeline.ProcessAsync(half, authorization, sniffs.Add, CancellationToken.None))
+        {
+        }
+
+        var sniff = Assert.Single(sniffs);
+        Assert.True(sniff.Change >= SniffSignal.SceneCutChange, $"change {sniff.Change}");
+        Assert.True(sniff.Motion < SniffSignal.SceneCutMotion);
+        Assert.False(sniff.SceneCut);
+        Assert.True(sniff.IsTrigger);
+    }
+
+    [Fact]
+    public async Task AReArmedOrientation_IsStillSniffed()
+    {
+        using var pipeline = new VisualObservationPipeline();
+        var authorization = CaptureWorkerTestSupport.CreateAuthorization();
+        var sniffs = new List<SniffSignal>();
+        using (var first = Frame(1, 0, patch: null))
+        using (await pipeline.ProcessAsync(first, authorization, sniffs.Add, CancellationToken.None))
+        {
+        }
+
+        pipeline.RequestOrientation();
+        using var changed = Frame(2, 100, patch: DialogueBox);
+        using var orientation = await pipeline.ProcessAsync(changed, authorization, sniffs.Add, CancellationToken.None);
+        Assert.Equal(AttentionSheetKind.Orientation, orientation!.Metadata.Kind);
+        Assert.Equal(AttentionRegionKind.LowerDialogueInventory, Assert.Single(sniffs).HotRegionKind);
     }
 
     [Fact]
@@ -112,6 +157,13 @@ public sealed class SniffTests
         var metrics = pipeline.Snapshot();
         Assert.Equal(4, metrics.Sniffs);
         Assert.Equal(3, metrics.SpacedSheets);
+
+        // Still inside that second, a trigger-level change breaks through the spacing.
+        using var strong = Frame(6, 500, patch: DialogueBox, baseShade: 70);
+        using var triggered = await pipeline.ProcessAsync(strong, authorization, sniffs.Add, CancellationToken.None);
+        Assert.True(sniffs[^1].IsTrigger);
+        Assert.NotNull(triggered);
+        Assert.Equal(AttentionSheetKind.Regional, triggered.Metadata.Kind);
     }
 
     [Fact]

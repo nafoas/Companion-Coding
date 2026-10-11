@@ -133,7 +133,7 @@ internal sealed class VisualObservationPipeline : IDisposable
                     }
 
                     _changedFrames++;
-                    if (change.Grid is { } grid && !orientation)
+                    if (change.Grid is { } grid)
                     {
                         sniff = BuildSniff(frame, authorization, grid);
                         _sniffs++;
