@@ -1,6 +1,6 @@
 # VIS-02 — Glance (peripheral vision) and Inspect (focus) (Vision upgrade, part 2)
 
-Status: **in progress**
+Status: **in review**
 Authorized: 2026-10-11 by Boss:
 
 - "an efficient Haiku handler could work … I want this done now, with greatly reduced latency".
@@ -47,7 +47,20 @@ The Design BunDex's "Prince Glance" was agreed as a cheap, frequent look that as
 
 ## Personal Round Judgments
 
-_(recorded during implementation)_
+- **J1 — One Braincase, two lanes, one journal.** A second bridge would have split the dollars-per-day budget and the nap into two ledgers. The Glance lane shares both, through a dedicated slot.
+- **J2 — A Glance has no Started entry.** It has no side effects to recover; a single `Glanced` entry records its usage. A crash mid-Glance can lose one Glance's accounting (about $0.0001).
+- **J3 — Only the Inspect lane probes a nap.** Napping is one state owned by one lane. A Glance outage or rate limit enters the same nap; a timeout or transient failure is just a missed Glance.
+- **J4 — A Glance carries no memories.** It sends an empty resume packet and uses a schema with no proposals. Any extra field, including an attempted memory, rejects the whole Glance.
+- **J5 — A Glance label is never shown.** It only becomes a bounded, neutral attention topic (`glance:…`). The decoded label is checked for credential echoes.
+- **J6 — A Glance's attention ceiling sits below Bnuy Mode.** Only an Inspect's understanding, or decisive evidence, enters it, matching the Sniff.
+- **J7 — Escalation queues one flag, not a list.** "Don't make him scatterbrained": however many Glances escalate during an Inspect, one more Inspect follows.
+- **J8 — The Glance is off unless configured.** It is on in the App when live calls are on and a Glance model is set. With it off, behavior is exactly as before, which every earlier test still proves.
+- **J9 — Haiku with thinking off at low effort.** That is the fastest allowed setting. No refusal fallback exists for Haiku, so a declined Glance is missed.
+
+## Mutation pass
+
+- **31 mutants.** 30 were killed; 1 survives as deliberate defense in depth: the raw-text credential check, since the decoded-label check catches every echo too.
+- **The first round found four test gaps:** timeout duration, the old journal shape after compaction, the 30 s ceiling clamp, and the ceiling masked by habituation. All four were fixed, and their mutants are now killed.
 
 ## Deferred findings
 

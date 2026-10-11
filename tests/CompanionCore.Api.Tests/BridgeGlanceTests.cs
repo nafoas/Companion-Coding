@@ -127,7 +127,9 @@ public sealed class BridgeGlanceTests
         bridge.NoticeRaised += (_, notice) => notices.Add(notice);
         var grant = harness.Grant();
 
+        var clock = System.Diagnostics.Stopwatch.StartNew();
         var missed = await bridge.GlanceAsync(ApiTestHarness.Sheet(grant), grant);
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(5), $"A stale glance waited {clock.Elapsed.TotalMilliseconds:F0} ms.");
         var unavailable = await bridge.GlanceAsync(ApiTestHarness.Sheet(grant), grant);
 
         Assert.Equal(BridgeOutcomeKind.Missed, missed.Kind);
@@ -262,6 +264,26 @@ public sealed class BridgeGlanceTests
         Assert.Null(raw.Glance);
         Assert.Null(escaped.Glance);
         Assert.DoesNotContain(harness.Diagnostics.Lines, line => line.Contains(marker, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ACompactedJournalWithoutGlances_KeepsThePreGlanceShape()
+    {
+        await using var harness = await ApiTestHarness.CreateAsync();
+        using (var journal = BraincaseJournal.Open(harness.StateLocation, ApiTestHarness.BaselineUtc, compactionThresholdBytes: 1024))
+        {
+            for (var index = 0; index < 20; index++)
+            {
+                var operation = Guid.NewGuid();
+                journal.Append(new BraincaseJournalEntry { At = ApiTestHarness.BaselineUtc, Type = BraincaseJournalEntryType.Started, Op = operation });
+                journal.Append(new BraincaseJournalEntry { At = ApiTestHarness.BaselineUtc, Type = BraincaseJournalEntryType.Completed, Op = operation, InputUnits = 10, OutputUnits = 1 });
+                journal.CompactIfNeeded(ApiTestHarness.BaselineUtc);
+            }
+        }
+
+        var text = File.ReadAllText(harness.StateLocation.JournalPath);
+        Assert.Contains("\"type\":\"snapshot\"", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("glance", text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

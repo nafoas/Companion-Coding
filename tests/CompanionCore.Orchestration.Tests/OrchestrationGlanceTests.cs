@@ -18,9 +18,10 @@ public sealed class OrchestrationGlanceTests
         bool escalate = false,
         int nextLookSeconds = 10,
         string changedRegion = "fullContext",
-        double confidence = 0.8) =>
+        double confidence = 0.8,
+        string label = "synthetic scene") =>
         MockSemanticProvider.Respond(request => MockSemanticProvider.GlanceResponseJson(
-            request, interest, confidence, changedRegion, "synthetic scene", escalate, nextLookSeconds));
+            request, interest, confidence, changedRegion, label, escalate, nextLookSeconds));
 
     [Fact]
     public async Task TheRoutineLook_IsAGlance()
@@ -56,14 +57,15 @@ public sealed class OrchestrationGlanceTests
         harness.Time.Advance(TimeSpan.FromSeconds(29));
         await harness.SheetAsync(changeScore: 0.05);
         Assert.Equal(2, harness.Provider.GlanceCount);
-
-        // A sniff noticed something: the very next sheet is glanced at, early.
-        harness.Worker.EmitSniff(harness.Time.GetUtcNow(), hotChange: 0.4, motion: 0.1);
-        await harness.SettleAsync();
+        harness.Time.Advance(TimeSpan.FromSeconds(1));
+        harness.Provider.EnqueueGlance(Glance(nextLookSeconds: 30));
         await harness.SheetAsync(changeScore: 0.05);
         Assert.Equal(3, harness.Provider.GlanceCount);
 
-        harness.Time.Advance(TimeSpan.FromSeconds(30));
+        // A sniff noticed something: the very next sheet is glanced at, early.
+        harness.Time.Advance(TimeSpan.FromSeconds(1));
+        harness.Worker.EmitSniff(harness.Time.GetUtcNow(), hotChange: 0.4, motion: 0.1);
+        await harness.SettleAsync();
         await harness.SheetAsync(changeScore: 0.05);
         Assert.Equal(4, harness.Provider.GlanceCount);
         Assert.Equal(0, harness.Provider.InspectCount);
@@ -152,7 +154,8 @@ public sealed class OrchestrationGlanceTests
         await harness.AuthorizeAsync();
         for (var index = 0; index < 20; index++)
         {
-            harness.Provider.EnqueueGlance(Glance(interest: 1, confidence: 1, nextLookSeconds: 2, changedRegion: "fullContext"));
+            // Distinct moments, so habituation cannot be what holds him back.
+            harness.Provider.EnqueueGlance(Glance(interest: 1, confidence: 1, nextLookSeconds: 2, changedRegion: "fullContext", label: $"moment {index}"));
             await harness.SheetAsync(changeScore: 0.05);
             harness.Time.Advance(TimeSpan.FromSeconds(2));
         }
