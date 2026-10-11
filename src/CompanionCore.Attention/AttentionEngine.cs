@@ -104,6 +104,9 @@ public sealed class AttentionEngine
     }
 
     /// <summary>Applies one piece of evidence.</summary>
+    /// <summary>The configuration this engine runs with.</summary>
+    public AttentionConfiguration Configuration => _config;
+
     public AttentionUpdate Observe(InterestEvent interestEvent)
     {
         ArgumentNullException.ThrowIfNull(interestEvent);
@@ -188,6 +191,11 @@ public sealed class AttentionEngine
                     }
 
                     break;
+            }
+
+            if (interestEvent.Kind != AttentionEventKind.Decisive && interestEvent.ScoreCeiling is { } ceiling)
+            {
+                contribution = Math.Min(contribution, Math.Max(0, ceiling - _score));
             }
 
             if (contribution > 0)

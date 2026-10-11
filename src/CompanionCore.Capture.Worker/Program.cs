@@ -17,7 +17,10 @@ internal static class Program
                     : 2,
                 minimumFrameSpacing: options.UseSyntheticSource
                     ? TimeSpan.Zero
-                    : CaptureWorkerEngine.AgreedLocalFrameSpacing);
+                    : CaptureWorkerEngine.DefaultCadence.FrameSpacing,
+                sheetSpacing: options.UseSyntheticSource
+                    ? TimeSpan.Zero
+                    : CaptureWorkerEngine.DefaultCadence.SheetSpacing);
             await using var host = new WorkerIpcHost(options, engine);
             return await host.RunAsync(CancellationToken.None).ConfigureAwait(false);
         }

@@ -114,8 +114,15 @@ public sealed class OrchestrationCadenceTests
         Assert.Equal(TimeSpan.FromHours(1), watchbun.QuietThreshold);
         Assert.Equal(TimeSpan.FromHours(1), watchbun.SecondQuietThreshold);
 
-        // Provisional memory protection: a 64 MB ring and at most three full-resolution frames.
-        Assert.Equal(64L * 1024 * 1024, CaptureWorkerMetrics.ScreenshotBudgetBytes);
+        // Memory protection, raised by Boss for VIS-01 ("I have a strong PC, so allocate as
+        // much RAM is needed"): a 512 MB ring so 4K frames fit, still at most three frames.
+        Assert.Equal(512L * 1024 * 1024, CaptureWorkerMetrics.ScreenshotBudgetBytes);
+        Assert.Equal(256L * 1024 * 1024, CaptureWorkerMetrics.VisualWorkingBudgetBytes);
         Assert.Equal(3, CaptureWorkerMetrics.MaximumSourceFrames);
+
+        // VIS-01 looking cadence: "happen frequently to catch even quick stuff".
+        Assert.Equal(TimeSpan.FromMilliseconds(250), CaptureCadence.Noticing.FrameSpacing);
+        Assert.Equal(TimeSpan.FromMilliseconds(150), CaptureCadence.Engaged.FrameSpacing);
+        Assert.Equal(TimeSpan.FromMilliseconds(100), CaptureCadence.BnuyMode.FrameSpacing);
     }
 }

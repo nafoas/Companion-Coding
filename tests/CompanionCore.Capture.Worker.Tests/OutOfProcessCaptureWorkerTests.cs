@@ -534,6 +534,82 @@ public sealed class OutOfProcessCaptureWorkerTests
             worker.RequestPhotographAsync(grant, CancellationToken.None));
     }
 
+    [Fact]
+    public async Task SniffsCrossTheProcessBoundary_WithinTheHundredMillisecondBudget()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        // VIS-01: from the worker's frame timestamp to the client's SniffProduced, through the
+        // real out-of-process worker and its pipe: 95th percentile within 100 ms, none past 250 ms.
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        var latencies = new ConcurrentQueue<TimeSpan>();
+        var sniffs = new ConcurrentQueue<SniffSignal>();
+        worker.SniffProduced += (_, sniff) =>
+        {
+            latencies.Enqueue(DateTimeOffset.UtcNow - sniff.SourceTimestamp);
+            sniffs.Enqueue(sniff);
+        };
+
+        await worker.StartAsync(grant, CancellationToken.None);
+        var deadline = DateTime.UtcNow.AddSeconds(30);
+        while (latencies.Count < 60 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(20);
+        }
+
+        var metrics = await worker.GetMetricsAsync(CancellationToken.None);
+        await worker.StopAndClearAsync(CancellationToken.None);
+
+        var sorted = latencies.OrderBy(latency => latency).ToArray();
+        Assert.True(sorted.Length >= 60, $"Only {sorted.Length} sniffs arrived.");
+        var p95 = sorted[(int)Math.Ceiling(sorted.Length * 0.95) - 1];
+        Assert.True(p95 <= TimeSpan.FromMilliseconds(100), $"p95 sniff latency {p95.TotalMilliseconds:F1} ms (max {sorted[^1].TotalMilliseconds:F1} ms).");
+        Assert.True(sorted[^1] <= TimeSpan.FromMilliseconds(250), $"max sniff latency {sorted[^1].TotalMilliseconds:F1} ms.");
+        Assert.All(sniffs, sniff =>
+        {
+            Assert.True(sniff.Matches(grant));
+            Assert.True(sniff.IsProtocolSafe());
+        });
+        Assert.True(sniffs.Select(sniff => sniff.SourceSequenceNumber).Zip(sniffs.Skip(1).Select(sniff => sniff.SourceSequenceNumber), (a, b) => b > a).All(increasing => increasing));
+        Assert.True(metrics.Sniffs >= sorted.Length);
+        Assert.True(metrics.IsProtocolSafe());
+    }
+
+    [Fact]
+    public async Task ACadence_ReachesTheWorkerProcess_AndPacesItsLooking()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var worker = CreateWorker();
+        var grant = CaptureWorkerTestSupport.CreateGrant();
+        await worker.StartAsync(grant, CancellationToken.None);
+        Assert.Equal(TimeSpan.Zero, (await worker.GetMetricsAsync(CancellationToken.None)).FrameSpacing);
+
+        await worker.SetCadenceAsync(grant, CaptureCadence.Noticing, CancellationToken.None);
+        var metrics = await worker.GetMetricsAsync(CancellationToken.None);
+        Assert.Equal(CaptureCadence.Noticing.FrameSpacing, metrics.FrameSpacing);
+        Assert.Equal(CaptureCadence.Noticing.SheetSpacing, metrics.SheetSpacing);
+
+        // At four looks a second, two seconds admit about eight frames, not two hundred.
+        var before = metrics.AcceptedFrames;
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        var after = (await worker.GetMetricsAsync(CancellationToken.None)).AcceptedFrames;
+        Assert.InRange(after - before, 1, 12);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            worker.SetCadenceAsync(CaptureWorkerTestSupport.CreateGrant(generation: 9), CaptureCadence.BnuyMode, CancellationToken.None));
+        await worker.StopAndClearAsync(CancellationToken.None);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            worker.SetCadenceAsync(grant, CaptureCadence.BnuyMode, CancellationToken.None));
+    }
+
     private static OutOfProcessCaptureWorker CreateWorker() =>
         new(CaptureWorkerLaunchOptions.ForPrivateSafeSyntheticTests());
 

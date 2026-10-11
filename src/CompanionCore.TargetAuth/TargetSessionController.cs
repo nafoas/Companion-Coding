@@ -62,6 +62,7 @@ public sealed class TargetSessionController : IAsyncDisposable
         _worker.StatusChanged += OnWorkerStatusChanged;
         _worker.FrameProduced += OnFrameProduced;
         _worker.AttentionSheetProduced += OnAttentionSheetProduced;
+        _worker.SniffProduced += OnSniffProduced;
     }
 
     public event EventHandler<CaptureFrameMetadata>? FrameAdmitted;
@@ -69,6 +70,13 @@ public sealed class TargetSessionController : IAsyncDisposable
     public event EventHandler<TargetSessionEvent>? SessionEvent;
 
     public event EventHandler<AttentionSheetMetadata>? AttentionSheetAvailable;
+
+    /// <summary>
+    /// A local Sniff whose source frame passed the same privacy admission as sheets
+    /// (VIS-01). It is raised synchronously inside the admission lease, so a privacy stop
+    /// either precedes it or waits for it; consumers must return quickly.
+    /// </summary>
+    public event EventHandler<SniffSignal>? SniffAvailable;
 
     public TargetSessionSnapshot CurrentSession => _authorization.CurrentSession;
 
@@ -446,6 +454,36 @@ public sealed class TargetSessionController : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Sets the worker's looking cadence for the current target. Returns false when no
+    /// target is current (the cadence is then simply not needed).
+    /// </summary>
+    public async Task<bool> SetCadenceAsync(CaptureCadence cadence, CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(cadence);
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ThrowIfDisposed();
+            var grant = CurrentSession.Grant;
+            if (CurrentSession.Phase != TargetSessionPhase.Authorized
+                || grant is null
+                || !_authorization.IsCurrent(grant)
+                || _worker.Status != CaptureWorkerStatus.Running)
+            {
+                return false;
+            }
+
+            await _worker.SetCadenceAsync(grant, cadence, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
     public AttentionSheet? TakeLatestAttentionSheet()
     {
         ThrowIfDisposed();
@@ -574,6 +612,7 @@ public sealed class TargetSessionController : IAsyncDisposable
         _worker.StatusChanged -= OnWorkerStatusChanged;
         _worker.FrameProduced -= OnFrameProduced;
         _worker.AttentionSheetProduced -= OnAttentionSheetProduced;
+        _worker.SniffProduced -= OnSniffProduced;
         await _operationLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
@@ -687,6 +726,47 @@ public sealed class TargetSessionController : IAsyncDisposable
 
                 CountFrameTowardOrientationBudget();
             });
+    }
+
+    private void OnSniffProduced(object? sender, SniffSignal sniff)
+    {
+        var grant = CurrentSession.Grant;
+        if (grant is null || !_authorization.IsCurrent(grant) || !sniff.Matches(grant))
+        {
+            return;
+        }
+
+        CaptureFrameMetadata frame;
+        try
+        {
+            frame = sniff.ToFrameMetadata(grant);
+        }
+        catch (ArgumentException)
+        {
+            return;
+        }
+
+        PrivacyAssessment assessment;
+        try
+        {
+            assessment = _assessmentProvider(frame) ?? PrivacyAssessment.Unavailable;
+        }
+        catch (Exception)
+        {
+            assessment = PrivacyAssessment.Unavailable;
+        }
+
+        _frameGate.TryAdmit(frame, assessment, _ =>
+        {
+            try
+            {
+                SniffAvailable?.Invoke(this, sniff);
+            }
+            catch (Exception)
+            {
+                // An observer failure never breaks admission.
+            }
+        });
     }
 
     private void OnAttentionSheetProduced(object? sender, AttentionSheetMetadata metadata)

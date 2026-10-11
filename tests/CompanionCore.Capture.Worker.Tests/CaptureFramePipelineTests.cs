@@ -154,7 +154,7 @@ public sealed class CaptureFramePipelineTests
     }
 
     [Fact]
-    public async Task BytePressure_EvictsOldestAndStaysBelowSixtyFourMiB()
+    public async Task BytePressure_EvictsOldestAndStaysWithinTheByteBudget()
     {
         await using var pipeline = new CaptureFramePipeline();
         pipeline.Resume();
@@ -163,7 +163,8 @@ public sealed class CaptureFramePipelineTests
             .ToArray();
         var published = 0;
         pipeline.FrameReady += (_, _) => Interlocked.Increment(ref published);
-        const long frameBytes = 24L * 1024 * 1024;
+        // Two frames fit the byte budget, a third does not, although the frame cap allows three.
+        const long frameBytes = CaptureWorkerMetrics.ScreenshotBudgetBytes * 3 / 8;
 
         for (var index = 0; index < resources.Length; index++)
         {
@@ -179,7 +180,7 @@ public sealed class CaptureFramePipelineTests
 
         var final = CaptureWorkerTestSupport.Snapshot(pipeline);
         Assert.Equal(2, final.RingFrameCount);
-        Assert.Equal(48L * 1024 * 1024, final.RingBytes);
+        Assert.Equal(2 * frameBytes, final.RingBytes);
         Assert.True(final.MaximumObservedAccountedBytes <= CaptureWorkerMetrics.ScreenshotBudgetBytes);
         Assert.True(final.MaximumObservedSourceFrames <= CaptureWorkerMetrics.MaximumSourceFrames);
 

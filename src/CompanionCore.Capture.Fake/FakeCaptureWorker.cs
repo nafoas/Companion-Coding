@@ -40,6 +40,16 @@ public sealed class FakeCaptureWorker : ICaptureWorker
         remove { }
     }
 
+    /// <summary>The synthetic fake never sniffs; it produces no pixels to compare.</summary>
+    public event EventHandler<SniffSignal>? SniffProduced
+    {
+        add { }
+        remove { }
+    }
+
+    /// <summary>The last cadence accepted for the active grant (null until one is set).</summary>
+    public CaptureCadence? Cadence { get; private set; }
+
     public Task StartAsync(
         CaptureAuthorizationGrant authorization,
         CancellationToken cancellationToken)
@@ -157,6 +167,26 @@ public sealed class FakeCaptureWorker : ICaptureWorker
 
         // The synthetic fake produces no attention sheets, so no photograph follows;
         // accepting the request proves only grant validation.
+        return Task.CompletedTask;
+    }
+
+    public Task SetCadenceAsync(
+        CaptureAuthorizationGrant authorization,
+        CaptureCadence cadence,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(authorization);
+        ArgumentNullException.ThrowIfNull(cadence);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!ReferenceEquals(authorization, _currentAuthorization)
+            || Status != CaptureWorkerStatus.Running
+            || !cadence.IsValid)
+        {
+            throw new InvalidOperationException("The cadence does not match the active grant.");
+        }
+
+        Cadence = cadence;
         return Task.CompletedTask;
     }
 

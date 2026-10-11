@@ -190,9 +190,9 @@ internal sealed class SyntheticCaptureSource : IWorkerCaptureSource
             cancellationToken.ThrowIfCancellationRequested();
             var source = Volatile.Read(ref _buffer)
                 ?? throw new ObjectDisposedException(nameof(SyntheticFrameResource));
-            var copy = GC.AllocateUninitializedArray<byte>(_length);
-            source.AsSpan(0, _length).CopyTo(copy);
-            return ValueTask.FromResult(new OwnedBgra32Buffer(_width, _height, copy));
+            var copy = OwnedBgra32Buffer.Allocate(_width, _height);
+            source.AsSpan(0, _length).CopyTo(copy.Span);
+            return ValueTask.FromResult(copy);
         }
 
         public void Dispose()
