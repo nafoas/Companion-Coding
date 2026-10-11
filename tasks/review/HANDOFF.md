@@ -2,53 +2,29 @@
 
 ## Task
 
-CAL-01 — Agreed Calibration Numbers and Cadence Enforcement (`tasks/active/cal-01-agreed-cadence.md`), Stage 11 part 1.
+No task is active. The last accepted packet is CAL-01 (`tasks/archive/cal-01-agreed-cadence.md`), merged through PR #45 as `a330a3ca5fcbcfbf67d63f51910b2233e0daf708`.
 
-- Branch: `agent/cal-01-agreed-cadence`.
-- Base: `main` `ee15d2a`.
-- Builder: Claude.
+Builder: Claude.
 
 ## Changed
 
-- **Worker:** `CaptureWorkerEngine` gains the agreed 1 s local frame spacing, used by the real source.
-- **Orchestration:** `SemanticCadence` on `OrchestratorOptions`, enforced in the sheet path.
-- **Tests:**
-  - an engine spacing test;
-  - `OrchestrationCadenceTests` (cadence end to end, the state mapping, validation, and agreed-number conformance);
-  - the harness defaults to an unthrottled cadence.
-- The packet.
+This docs-only reconciliation:
+
+- archives CAL-01 with its PASS record;
+- updates `BUILD_LEDGER.md` and `README.md`;
+- resets this handoff.
 
 ## Verification
 
-- **Local:**
-  - 0 warnings, 0 vulnerable packages;
-  - 928/928 on Linux.
-- **Mutation:** 12/12 killed.
-- **Windows CI:** pending (expected 943).
+- CAL-01 head `3c731c4`, tree `c990426`: push run `38097858502` and PR run `38097870359` passed 943/943 with verified artifacts.
+- The merge ref had exact parents and an equal tree.
 
 ## Remaining
 
-- CI, merge, and closure.
-- Then CAL-02 (calibration recorder and soak protocol) and CAL-03 (failure-mode hardening).
-
-## Risks and assumptions
-
-- The cadence values sit at the midpoints of the agreed ranges and stay calibration inputs.
-- Real-hardware CPU and RAM baselines are not yet measured.
-
-## Personal Round Judgments
-
-CAL-01 J1–J4, recorded in the packet.
-
-## Review focus
-
-- The cadence gate releases sheets (RAM-only).
-- The first frame after a reset is never spaced out.
-
-## Repository state
-
-- Branch `agent/cal-01-agreed-cadence`, based on `main` `ee15d2a`.
+- Merge this reconciliation.
+- Then CAL-02, CAL-03, and the smaller deferred items.
+- Stop before Stage 12 (credentials, live API).
 
 ## Next safe task
 
-CAL-02.
+CAL-02 — Calibration recorder, summarizer, and soak protocol.

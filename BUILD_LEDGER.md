@@ -2,15 +2,15 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stages 1–10 accepted. Pre-API wiring complete (WIRE-01, WIRE-02). AUDIT-01 re-verified every accepted task against the wired `main` |
-| Active task | None. Next: a roundtable with Boss. Stage 11 calibration (target-PC evidence) and Stage 12 / Task 12 (credentials, live API) still require Boss |
-| Working branch | Accepted product/evidence baseline on `main`: `c1787e03070588e7a2d46af1dda95f42ccaff332` (AUDIT-01) |
+| Current stage | Stage 11 (hardening and baseline calibration) in progress: CAL-01 enforced the agreed cadence and pinned the agreed numbers. Live-provider parts of Stage 11 are held for the Stage 12 stop (credentials) |
+| Active task | None between packets. Next: CAL-02 (calibration recorder and soak protocol), CAL-03 (failure-mode hardening), then the smaller deferred items; stop before Stage 12 |
+| Working branch | Accepted product/evidence baseline on `main`: `a330a3ca5fcbcfbf67d63f51910b2233e0daf708` (CAL-01) |
 | Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | AUDIT-01 head `8f02306f73da725957894dad6e49e07a32f6b156`, tree `74c6421284cc21ddc1b14dacff3d4002ca0d0104`, passed push run `38084310013` and PR run `38084321751` at 929/929 with verified artifacts. The local gate passed 914/914 on Linux. Five stressed full-suite runs: 85/85 project runs green. WIRE-02 closure post-merge `main` run `38079494506` passed. |
-| Manual gate | AUDIT-01 replayed or added 420 mutants across every accepted task: 403 killed, 16 equivalent (defense in depth), 1 unobservable. Every replayed set matched its accepted record. Five test gaps (A1–A5) were closed; no product defect was found. PR #43 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `c1787e03070588e7a2d46af1dda95f42ccaff332` — AUDIT-01 regression audit (PR #43) |
+| Automated tests | CAL-01 head `3c731c4b8aa309bf80679dba49f9cf80552b1079`, tree `c9904263b964c57dcbd7f8de06d3cdaf18cace59`, passed push run `38097858502` and PR run `38097870359` at 943/943 with verified artifacts. The local gate passed 928/928 on Linux. AUDIT-01 closure post-merge `main` run `38084870004` passed. |
+| Manual gate | CAL-01 agreement extraction (from the design PDF and the Design BunDex), actual-diff, and mutation review passed. 12 mutants: 12 killed. PR #45 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `a330a3ca5fcbcfbf67d63f51910b2233e0daf708` — CAL-01 agreed cadence (PR #45) |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs are taken at sheet resolution (WIRE-01 D2), and one session's consolidation reads at most 1000 originals (WIRE-01 D1). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
 | Deferred temptations | Single-file Vault export and a public backup/repair command (KEEP-02 D1); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
@@ -108,6 +108,23 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### CAL-01 — Agreed calibration numbers and cadence enforcement (Stage 11, part 1)
+
+- Builder: Claude. Opened on 2026-10-11 under Boss's direction to start Stage 11 from the numbers agreed in the design conversation.
+- **Agreed numbers found and confirmed in force:**
+  - the 64 MB ring;
+  - at most three full-resolution frames;
+  - one active vision request;
+  - the 1 h + 1 h Watchbun bedtime;
+  - the 30 s BIC clock.
+- **Newly enforced:**
+  - the agreed 1 s local capture spacing;
+  - a semantic cadence governor: Noticing 12 s (agreed 10–15 s) or triggered, Engaged 6 s (agreed 4–8 s), Bnuy Mode with a 3 s event floor.
+- **Deferred to measurement:** the final resource thresholds (8–12-hour soak); the Bun Budget number (Stage 12).
+- Evidence: head `3c731c4` (runs `38097858502` and `38097870359`) passed 943/943 with verified artifacts. Mutation pass: 12/12 killed.
+- Merge: PR #45 squash-merged as `a330a3ca5fcbcfbf67d63f51910b2233e0daf708`.
+- Result: passed and accepted.
 
 ### AUDIT-01 — Regression audit of every accepted task
 
