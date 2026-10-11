@@ -26,12 +26,11 @@ This is the Roadmap's Stage 11 "known-limitations report": everything that is de
 - Personality, final UI, animation, and audio (Deferred Paw Pile 3, 5, 6).
 - Multiple monitors (Deferred Paw Pile 1): one display is assumed; capture pauses otherwise.
 - Export, migration, and distribution of Prince to another PC (Deferred Paw Pile 7).
+- Importing a Vault export older than the live journal. That would accept losing later memories and needs Boss's decision (DEF-01 D1). The single-file export itself exists.
 
 ## Smaller deferred items (scheduled next)
 
 - Full-resolution photographs. They are currently taken at the attention sheet's full-context resolution (WIRE-01 D2).
-- A single-file Vault export (KEEP-02 D1).
-- Summaries for very long sessions. A session's consolidation currently reads its first 1000 originals; every original is kept regardless (WIRE-01 D1).
 
 ## Minor
 

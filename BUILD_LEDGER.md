@@ -2,17 +2,17 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 11 local hardening complete: CAL-01 (agreed cadence), CAL-02 (calibration recorder and soak protocol), CAL-03 (failure-mode hardening and the known-limitations report). Final thresholds await Boss's measured report; live-provider parts are held for the Stage 12 stop |
-| Active task | None between packets. Next: the smaller deferred items (full-resolution photographs, single-file Vault export, long-session consolidation); stop before Stage 12 |
-| Working branch | Accepted product/evidence baseline on `main`: `039a641fe5269d2b4c08650f775248df3b32c952` (CAL-03) |
+| Current stage | Stage 11 local hardening complete (CAL-01, CAL-02, CAL-03); final thresholds await Boss's measured report. Smaller deferred items in progress: DEF-01 (long-session consolidation, single-file Vault export) accepted. Live-provider parts are held for the Stage 12 stop |
+| Active task | None between packets. Next: DEF-02 (full-resolution photographs); then stop before Stage 12 |
+| Working branch | Accepted product/evidence baseline on `main`: `d510add3cc9b07b4bb4279c4138f051abb516e25` (DEF-01) |
 | Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | CAL-03 head `dcface951702fa2824c417572dcee7ee7f50008d`, tree `99b04271f9a735f8e6ea752ae074ec8a61f9ad99`, passed push run `38099942669` and PR run `38099951518` at 963/963 with verified artifacts. The local gate passed 946/946 on Linux. |
-| Manual gate | CAL-03 defect review (F1: unreadable state was silently replaced and the conversation lineage lost), preservation, and mutation review passed. 8 mutants: 8 killed. PR #49 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `039a641fe5269d2b4c08650f775248df3b32c952` — CAL-03 failure-mode hardening (PR #49) |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs are taken at sheet resolution (WIRE-01 D2), and one session's consolidation reads at most 1000 originals (WIRE-01 D1). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
-| Deferred temptations | Single-file Vault export and a public backup/repair command (KEEP-02 D1); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
+| Automated tests | DEF-01 head `b0c5af7673aadc81e9c1cc90cfe73ce56634c57f`, tree `f09d22af0e4ffb5ef5ac71afe288be9d623bc963`, passed push run `38102695266` and PR run `38102704355` at 977/977 with verified artifacts. The local gate passed 960/960 on Linux. |
+| Manual gate | DEF-01 replay-idempotency, export-safety, and mutation review passed. 24 mutants: 19 killed and 5 equivalent (defense in depth). PR #51 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `d510add3cc9b07b4bb4279c4138f051abb516e25` — DEF-01 long-session consolidation and single-file Vault export (PR #51) |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs are taken at sheet resolution (WIRE-01 D2); long sessions are consolidated completely in parts (DEF-01). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
+| Deferred temptations | A public backup/repair command (KEEP-02 D1; the single-file export exists since DEF-01) and importing an older export (DEF-01 D1, Boss's decision); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
 ## Gate history
@@ -108,6 +108,19 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### DEF-01 — Long-session consolidation and single-file Vault export (smaller deferred items, part 1)
+
+- Builder: Claude. Opened on 2026-10-11 under Boss's direction to do the smaller deferred items before Stage 12.
+- **WIRE-01 D1 — long sessions.** A session's consolidation now streams every original through a read-only keyset page and commits in parts that each fit one atomic append. Before this, a session with many highlights could exceed the 128-record bound and fail on every replay.
+  - Part 0 keeps the intent's id; later parts derive stable ids.
+  - A replay appends nothing.
+  - A refused part leaves the intent queued.
+- **KEEP-02 D1 — single-file Vault export.** `CompanionHost.ExportVaultAsync` takes a fresh backup, then writes the validated archives, unchanged, with a checksummed manifest into one `.zip` outside the data root. It writes atomically, never overwrites, and verifies the result. `VerifyVaultExportAsync` checks an export.
+- **Import of an older export is not done.** It would drop later memories and is refused by repairs (D1, Boss's decision).
+- Evidence: head `b0c5af7` (runs `38102695266` and `38102704355`) passed 977/977 with verified artifacts. Mutation pass: 24 mutants, 19 killed and 5 equivalent.
+- Merge: PR #51 squash-merged as `d510add3cc9b07b4bb4279c4138f051abb516e25`.
+- Result: passed and accepted.
 
 ### CAL-03 — Failure-mode hardening and known-limitations report (Stage 11, part 3)
 

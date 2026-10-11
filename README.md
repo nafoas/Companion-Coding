@@ -117,6 +117,8 @@ It also pins every agreed number as the running default. Merged as `a330a3ca5fcb
 
 It also published `docs/Known-Limitations.md`. Merged as `039a641fe5269d2b4c08650f775248df3b32c952`.
 
+**DEF-01** (PR #51) consolidates long sessions completely, in idempotent parts. It also adds a verified single-file Vault export (`CompanionHost.ExportVaultAsync`). Merged as `d510add3cc9b07b4bb4279c4138f051abb516e25`.
+
 Stage 11 local work is complete; the final thresholds await Boss's measured report. Stage 12 (credentials and live API) requires Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries

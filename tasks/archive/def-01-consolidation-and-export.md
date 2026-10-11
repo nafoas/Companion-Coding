@@ -1,6 +1,6 @@
 # DEF-01 — Long-Session Consolidation and Single-File Vault Export
 
-Status: **active — gate review**
+Status: **accepted** — Paw Gate PASS; PR #51 squash-merged as `d510add3cc9b07b4bb4279c4138f051abb516e25`
 Authorized: 2026-10-11 by Boss ("Once that is done, do the smaller deferred items, and then stop before stage 12").
 Accepted remote base: `63c38cfa30300a81279f0de319223b98c0d551bf`
 Working branch: `agent/def-01-deferred-items`
@@ -63,7 +63,12 @@ Now:
 
 ## Paw Gate
 
-Pending CI. Local: full gate green (0 warnings, 0 vulnerable packages); Orchestration 81/81, Memory 89/89.
+**PASS.**
+
+- **CI.** Head `b0c5af7673aadc81e9c1cc90cfe73ce56634c57f` passed push run `38102695266` and PR run `38102704355` at 977/977, with verified artifacts.
+- **Local.** The full gate is green: 960/960 on Linux, 0 warnings, 0 vulnerable packages.
+- **Merge ref.** Parents were exactly `63c38cf` and `b0c5af7`, and the tree equalled the head tree (`f09d22a`).
+- **Merge.** Squash-merged through the expected-head fence.
 
 ## Deferred findings
 
