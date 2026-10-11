@@ -42,6 +42,12 @@ public sealed record OrchestratorSnapshot(
 {
     /// <summary>The local Sniff reflex: counts and arrival latency (VIS-01).</summary>
     public SniffDiagnostics Sniff { get; init; } = SniffDiagnostics.Empty;
+
+    /// <summary>A Glance is in flight (VIS-02).</summary>
+    public bool GlanceInFlight { get; init; }
+
+    /// <summary>One closer look is waiting (VIS-02).</summary>
+    public bool InspectQueued { get; init; }
 }
 
 /// <summary>
@@ -103,6 +109,18 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private readonly LatencyWindow _sniffLatency = new(256);
     private long _sniffsReceived;
     private bool _sniffTriggerPending;
+    private bool _glanceInFlight;
+    private bool _inspectWanted;
+    private DateTimeOffset? _nextGlanceAt;
+    private DateTimeOffset? _lastGlanceAt;
+
+    /// <summary>The agreed adaptive-cadence bounds: never more often than 2 s, never longer than 30 s.</summary>
+    internal static readonly TimeSpan MinimumGlanceInterval = TimeSpan.FromSeconds(2);
+
+    internal static readonly TimeSpan MaximumGlanceInterval = TimeSpan.FromSeconds(30);
+
+    /// <summary>The Design BunDex: interest above 0.70 warrants a closer look.</summary>
+    internal const double GlanceEscalationInterest = 0.7;
     private DateTimeOffset _lastCadenceAssert;
     internal static readonly TimeSpan CadenceReassertInterval = TimeSpan.FromSeconds(10);
 
@@ -175,6 +193,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             _conversation.Checkpoint().CoordinatorId)
         {
             Sniff = SniffSnapshot(),
+            GlanceInFlight = _glanceInFlight,
+            InspectQueued = _inspectWanted,
         }));
 
     private SniffDiagnostics SniffSnapshot()
@@ -708,6 +728,9 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
         var reference = $"target-session:{grant.TargetSessionId:N}";
         _lastSemanticLook = null;
+        _inspectWanted = false;
+        _nextGlanceAt = null;
+        _lastGlanceAt = null;
         var transcript = SessionTranscript.Open(_c.Transcripts, grant.TargetSessionId, _c.Privacy, now);
         _session = new ActiveSession(
             grant,
@@ -836,6 +859,12 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
 
         var allowed = _watchbun?.Current.SemanticSpendingAllowed ?? true;
+        if (_options.Glance && allowed)
+        {
+            LookWithGlances(session, sheet);
+            return;
+        }
+
         if (_bridgeInFlight || !allowed)
         {
             sheet.Dispose();
@@ -858,7 +887,155 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
         _lastSemanticLook = now;
         _sniffTriggerPending = false;
+        DispatchInspect(session, sheet);
+    }
 
+    /// <summary>
+    /// VIS-02 looking: the routine look is a Glance (peripheral vision); the Inspect is the
+    /// main focus. A focus look runs when a Glance escalated, or at the event floor in Bnuy
+    /// Mode. Otherwise a Glance runs when one is due: at once after a sniff trigger, else at
+    /// the time the last Glance recommended. Glances keep running while an Inspect is in
+    /// flight (no tunnel vision) and never touch it (no overwritten focus).
+    /// </summary>
+    private void LookWithGlances(ActiveSession session, AttentionSheet sheet)
+    {
+        var now = Now();
+        var state = session.Attention.Current.State;
+        var focusDue = !_bridgeInFlight
+            && (_inspectWanted
+                || (state == AttentionState.HighAttention
+                    && (_lastSemanticLook is not { } lastFocus || now < lastFocus || now - lastFocus >= _options.SemanticCadence.EventFloor)));
+        if (focusDue)
+        {
+            _inspectWanted = false;
+            _lastSemanticLook = now;
+            DispatchInspect(session, sheet);
+            return;
+        }
+
+        var glanceDue = !_glanceInFlight
+            && (_sniffTriggerPending
+                || _nextGlanceAt is not { } due
+                || now >= due
+                || (_lastGlanceAt is { } lastGlance && now < lastGlance));
+        if (!glanceDue)
+        {
+            sheet.Dispose();
+            return;
+        }
+
+        // Until this Glance recommends otherwise, the next one follows the state's pace.
+        _sniffTriggerPending = false;
+        _lastGlanceAt = now;
+        _nextGlanceAt = now + _options.SemanticCadence.For(state, sheet.Metadata.ChangeScore);
+        _glanceInFlight = true;
+        var metadata = sheet.Metadata;
+        var grant = session.Grant;
+        var token = _shutdown.Token;
+        _ = Task.Run(async () =>
+        {
+            BridgeOutcome? outcome = null;
+            try
+            {
+                outcome = await _c.Bridge.GlanceAsync(sheet, grant, token).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                RecordFault(exception);
+            }
+
+            Post(() => ApplyGlanceOutcomeAsync(session, metadata, outcome));
+        });
+    }
+
+    private Task ApplyGlanceOutcomeAsync(ActiveSession session, AttentionSheetMetadata metadata, BridgeOutcome? outcome)
+    {
+        _glanceInFlight = false;
+        if (outcome is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var braincase = outcome.Kind == BridgeOutcomeKind.Glanced ? BridgeOutcomeKind.Interpreted : outcome.Kind;
+        if (braincase is BridgeOutcomeKind.Interpreted or BridgeOutcomeKind.Napping or BridgeOutcomeKind.Unavailable
+            && braincase != _lastBraincase)
+        {
+            _lastBraincase = braincase;
+            Publish(new CompanionNotice(CompanionNoticeKind.Braincase, Braincase: braincase, NapReason: _c.Bridge.NapStatus.Reason));
+        }
+
+        if (!ReferenceEquals(session, _session) || outcome.Kind != BridgeOutcomeKind.Glanced || outcome.Glance is not { } reading)
+        {
+            return Task.CompletedTask;
+        }
+
+        var now = Now();
+        var nextLook = reading.NextLook < MinimumGlanceInterval
+            ? MinimumGlanceInterval
+            : reading.NextLook > MaximumGlanceInterval ? MaximumGlanceInterval : reading.NextLook;
+        _nextGlanceAt = now + nextLook;
+
+        // Peripheral evidence: it adds to attention but cannot by itself enter Bnuy Mode.
+        var region = metadata.Regions.FirstOrDefault(candidate => candidate.Kind == reading.ChangedRegion)?.NormalizedSource
+            ?? new NormalizedRegion(0, 0, 1, 1);
+        HandleAttention(session, session.Attention.Observe(new InterestEvent
+        {
+            TargetSessionId = session.Grant.TargetSessionId,
+            Timestamp = Max(now, session.Attention.Current.AsOf),
+            Region = region,
+            RegionKind = reading.ChangedRegion,
+            Signals = new AttentionSignals(
+                Novelty: reading.Interest,
+                Change: reading.Interest,
+                Salience: reading.Interest,
+                Urgency: 0,
+                Persistence: 0.3,
+                Confidence: reading.Confidence),
+            TopicKey = GlanceTopic(reading.Label),
+            EvidenceSource = "glance",
+            EvidenceReferences = [reading.OperationId.ToString("N")],
+            ScoreCeiling = Math.Max(0, session.Attention.Configuration.HighEnter - 1),
+        }));
+
+        // One closer look waits at most: further escalations fold into it.
+        if (reading.Escalate || reading.Interest >= GlanceEscalationInterest)
+        {
+            _inspectWanted = true;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>A neutral, bounded topic from a Glance label (it is never shown as text).</summary>
+    internal static string? GlanceTopic(string label)
+    {
+        var builder = new System.Text.StringBuilder("glance:");
+        var dash = false;
+        foreach (var character in label.ToLowerInvariant())
+        {
+            if (character is (>= 'a' and <= 'z') or (>= '0' and <= '9'))
+            {
+                builder.Append(character);
+                dash = false;
+            }
+            else if (!dash && builder.Length > 7)
+            {
+                builder.Append('-');
+                dash = true;
+            }
+
+            if (builder.Length >= 7 + 48)
+            {
+                break;
+            }
+        }
+
+        var topic = builder.ToString().TrimEnd('-');
+        return topic.Length > 7 ? topic : null;
+    }
+
+    private void DispatchInspect(ActiveSession session, AttentionSheet sheet)
+    {
         _bridgeInFlight = true;
         var metadata = sheet.Metadata;
         var grant = session.Grant;

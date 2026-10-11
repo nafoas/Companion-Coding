@@ -35,7 +35,7 @@ if (dollarsArgument is not null)
     settings = settings with { DollarsPerDay = dollars };
 }
 
-Console.WriteLine($"  Model: {settings.Model} (effort {settings.Effort})");
+Console.WriteLine($"  Model: {settings.Model} (effort {settings.Effort}); Glance: {(settings.GlanceEnabled ? settings.GlanceModel : "off")}");
 Console.WriteLine($"  Bun Budget: ${settings.DollarsPerDay.ToString("0.00", CultureInfo.InvariantCulture)} per day (UTC)");
 Console.WriteLine($"  Live calls: {(settings.LiveCalls ? "on" : "off")}");
 
@@ -62,6 +62,14 @@ switch (result.Verdict)
         Console.WriteLine($"  Summary: {result.Summary}");
         Console.WriteLine($"  Observations: {result.Observations}");
         Console.WriteLine($"  Usage: {result.InputUnits} input, {result.OutputUnits} output tokens (about ${result.EstimatedCost.ToString("0.0000", CultureInfo.InvariantCulture)})");
+        if (result.GlanceLatencies.Count > 0)
+        {
+            var sorted = result.GlanceLatencies.Order().ToArray();
+            var each = string.Join(", ", result.GlanceLatencies.Select(latency => $"{latency.TotalMilliseconds:0} ms"));
+            Console.WriteLine($"  Glances ({settings.GlanceModel}): {each}");
+            Console.WriteLine($"  Glance median: {sorted[sorted.Length / 2].TotalMilliseconds:0} ms; failed: {result.GlanceFailures}; cost about ${result.GlanceCost.ToString("0.0000", CultureInfo.InvariantCulture)}");
+        }
+
         break;
     case LiveCheckVerdict.ProviderFailed:
         Console.WriteLine($"  The call failed: {result.FailureKind} {result.UnavailableReason}");

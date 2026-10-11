@@ -26,7 +26,16 @@ public sealed record LiveCheckResult(
     TimeSpan Latency,
     ProviderFailureKind FailureKind,
     ProviderUnavailableReason UnavailableReason,
-    SemanticResponseInvalidReason InvalidReason);
+    SemanticResponseInvalidReason InvalidReason)
+{
+    /// <summary>Each Glance's round trip (VIS-02); empty when the Glance is off or the Inspect failed.</summary>
+    public IReadOnlyList<TimeSpan> GlanceLatencies { get; init; } = [];
+
+    /// <summary>Glances that failed or were refused by the strict Glance parser.</summary>
+    public int GlanceFailures { get; init; }
+
+    public decimal GlanceCost { get; init; }
+}
 
 /// <summary>
 /// Boss's first live test: exactly one Claude call with a synthetic, private-safe image
@@ -37,6 +46,9 @@ public static class BraincaseLiveCheck
 {
     internal const int Width = 320;
     internal const int Height = 180;
+
+    /// <summary>Glances measured after the one detailed call: enough for a fair median.</summary>
+    internal const int GlanceSamples = 5;
 
     public static async Task<LiveCheckResult> RunAsync(BuilderBraincaseSettings settings, CancellationToken cancellationToken)
     {
@@ -99,6 +111,9 @@ public static class BraincaseLiveCheck
             var input = parsed!.InputUnits ?? 0;
             var output = parsed.OutputUnits ?? 0;
             var cost = AnthropicPricing.BudgetFor(settings.Model, 1m)?.CostOf(input, output) ?? 0m;
+            var (glanceLatencies, glanceFailures, glanceCost) = settings.GlanceEnabled
+                ? await MeasureGlancesAsync(provider, settings, image, cancellationToken).ConfigureAwait(false)
+                : ([], 0, 0m);
             return new LiveCheckResult(
                 LiveCheckVerdict.Passed,
                 parsed.Summary,
@@ -109,8 +124,61 @@ public static class BraincaseLiveCheck
                 latency,
                 ProviderFailureKind.None,
                 ProviderUnavailableReason.None,
-                SemanticResponseInvalidReason.None);
+                SemanticResponseInvalidReason.None)
+            {
+                GlanceLatencies = glanceLatencies,
+                GlanceFailures = glanceFailures,
+                GlanceCost = glanceCost,
+            };
         }
+    }
+
+    /// <summary>Boss's real Glance timing: a few quick looks at the same synthetic picture.</summary>
+    private static async Task<(IReadOnlyList<TimeSpan> Latencies, int Failures, decimal Cost)> MeasureGlancesAsync(
+        AnthropicSemanticProvider provider,
+        BuilderBraincaseSettings settings,
+        byte[] image,
+        CancellationToken cancellationToken)
+    {
+        var latencies = new List<TimeSpan>(GlanceSamples);
+        var failures = 0;
+        long input = 0;
+        long output = 0;
+        for (var sample = 0; sample < GlanceSamples; sample++)
+        {
+            var operation = Guid.NewGuid();
+            var request = new SemanticRequest(
+                operation,
+                SemanticOperationKind.Glance,
+                1,
+                new ResumePacket(Guid.NewGuid(), DateTimeOffset.UtcNow, "target-session:live-check", null, [], [], 0, false),
+                new AttentionSheetDescription(
+                    AttentionSheetKind.Orientation,
+                    [AttentionRegionKind.FullContext],
+                    Width,
+                    Height,
+                    Width,
+                    Height,
+                    AttentionSheet.MediaType,
+                    image.Length,
+                    Convert.ToHexStringLower(SHA256.HashData(image))),
+                image);
+            var clock = Stopwatch.StartNew();
+            var reply = await provider.InterpretAsync(request, cancellationToken).ConfigureAwait(false);
+            latencies.Add(clock.Elapsed);
+            if (!reply.IsSuccess
+                || !GlanceResponseParser.TryParse(reply.ResponseJson!, operation, [AttentionRegionKind.FullContext], out var glance, out _))
+            {
+                failures++;
+                continue;
+            }
+
+            input += glance!.InputUnits ?? 0;
+            output += glance.OutputUnits ?? 0;
+        }
+
+        var cost = AnthropicPricing.BudgetFor(settings.GlanceModel, 1m)?.CostOf(input, output) ?? 0m;
+        return (latencies, failures, cost);
     }
 
     private static LiveCheckResult Failed(LiveCheckVerdict verdict) =>

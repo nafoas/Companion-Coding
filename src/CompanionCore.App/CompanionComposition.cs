@@ -108,6 +108,9 @@ internal sealed class CompanionComposition : IAsyncDisposable
                 Diagnostics = diagnostics,
                 Notice = (_, notice) => onNotice(notice),
                 Bridge = braincase.Bridge,
+
+                // VIS-02: with live calls on and a Glance model set, routine looks are Glances.
+                Orchestrator = new OrchestratorOptions { Glance = braincase.LiveCallsEnabled && braincase.GlanceEnabled },
             };
 
             // Off the dispatcher's synchronization context, so the start can never wait on this thread.

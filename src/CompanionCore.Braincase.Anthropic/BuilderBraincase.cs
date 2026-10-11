@@ -7,7 +7,11 @@ public sealed record BuilderBraincaseSelection(
     ISemanticProvider Provider,
     BridgeOptions? Bridge,
     bool LiveCallsEnabled,
-    BuilderBraincaseIssue Issue);
+    BuilderBraincaseIssue Issue)
+{
+    /// <summary>Whether Prince glances with a fast model between detailed looks (VIS-02).</summary>
+    public bool GlanceEnabled { get; init; }
+}
 
 /// <summary>
 /// Selects Builder Prince's Braincase from his settings file. Live Claude calls run only
@@ -20,7 +24,8 @@ public static class BuilderBraincase
     {
         ArgumentNullException.ThrowIfNull(credentials);
         var (settings, issue) = BuilderBraincaseSettings.LoadOrCreate(rootPath);
-        if (!settings.LiveCalls || AnthropicPricing.BudgetFor(settings.Model, settings.DollarsPerDay) is not { } budget)
+        if (!settings.LiveCalls
+            || AnthropicPricing.BudgetFor(settings.Model, settings.GlanceEnabled ? settings.GlanceModel : null, settings.DollarsPerDay) is not { } budget)
         {
             return new(new RealSemanticProviderShell(credentials), null, false, issue);
         }
@@ -29,6 +34,9 @@ public static class BuilderBraincase
             new AnthropicSemanticProvider(credentials, settings.ToProviderOptions()),
             new BridgeOptions { DailyCostBudget = budget },
             true,
-            issue);
+            issue)
+        {
+            GlanceEnabled = settings.GlanceEnabled,
+        };
     }
 }

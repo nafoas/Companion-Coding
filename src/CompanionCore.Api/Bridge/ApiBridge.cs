@@ -28,6 +28,14 @@ public sealed class ApiBridge : IAsyncDisposable
     private readonly IDiagnosticsSink _diagnostics;
     private readonly BraincaseJournal _journal;
     private readonly SemaphoreSlim _operationSlot = new(1, 1);
+
+    // The Glance lane (VIS-02): at most one Glance alongside at most one Inspect.
+    private readonly SemaphoreSlim _glanceSlot = new(1, 1);
+    private long _glances;
+    private long _glancesMissed;
+    private long _glancesBusy;
+    private long _lastGlanceTicks;
+    private long _maximumGlanceTicks;
     private readonly CancellationTokenSource _lifetime = new();
     private readonly object _gate = new();
     private CancellationTokenSource _pendingWork = new();
@@ -178,6 +186,64 @@ public sealed class ApiBridge : IAsyncDisposable
     }
 
     /// <summary>
+    /// One Glance (VIS-02): a single, short, peripheral look at an authorized sheet. It runs
+    /// alongside an Inspect, never replaces one, and can never propose a memory. It obeys the
+    /// same privacy fence, nap, and daily budget; the bridge takes ownership of
+    /// <paramref name="sheet"/> and disposes (zeroes) it on every path.
+    /// </summary>
+    public async Task<BridgeOutcome> GlanceAsync(
+        AttentionSheet sheet,
+        CaptureAuthorizationGrant grant,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(sheet);
+        using (sheet)
+        {
+            ArgumentNullException.ThrowIfNull(grant);
+            if (Volatile.Read(ref _disposeState) != 0)
+            {
+                return BridgeOutcome.Simple(BridgeOutcomeKind.Disposed);
+            }
+
+            if (sheet.Length == 0
+                || sheet.Metadata.Kind == AttentionSheetKind.Photograph
+                || !sheet.Metadata.Matches(grant)
+                || !_privacy.IsCurrent(grant.Generation))
+            {
+                Interlocked.Increment(ref _notAuthorized);
+                return BridgeOutcome.Simple(BridgeOutcomeKind.NotAuthorized);
+            }
+
+            if (!_glanceSlot.Wait(0))
+            {
+                Interlocked.Increment(ref _glancesBusy);
+                return BridgeOutcome.Simple(Volatile.Read(ref _disposeState) != 0 ? BridgeOutcomeKind.Disposed : BridgeOutcomeKind.Busy);
+            }
+
+            try
+            {
+                if (Volatile.Read(ref _disposeState) != 0)
+                {
+                    return BridgeOutcome.Simple(BridgeOutcomeKind.Disposed);
+                }
+
+                return await RunGlanceAsync(sheet, grant, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _glanceSlot.Release();
+            }
+        }
+    }
+
+    public GlanceDiagnostics GetGlanceDiagnostics() => new(
+        Interlocked.Read(ref _glances),
+        Interlocked.Read(ref _glancesMissed),
+        Interlocked.Read(ref _glancesBusy),
+        TimeSpan.FromTicks(Interlocked.Read(ref _lastGlanceTicks)),
+        TimeSpan.FromTicks(Interlocked.Read(ref _maximumGlanceTicks)));
+
+    /// <summary>
     /// Cancels any in-flight request without retry, write, or output. The privacy stop
     /// path calls this; generation fencing still applies if a result races the call.
     /// </summary>
@@ -234,6 +300,7 @@ public sealed class ApiBridge : IAsyncDisposable
         // The in-flight operation observes cancellation (abandoning a non-cooperative
         // provider), records its outcome, and releases the slot; then the journal closes.
         await _operationSlot.WaitAsync().ConfigureAwait(false);
+        await _glanceSlot.WaitAsync().ConfigureAwait(false);
         _journal.Dispose();
         _lifetime.Dispose();
     }
@@ -308,12 +375,7 @@ public sealed class ApiBridge : IAsyncDisposable
         var estimatedInputUnits = EstimateInputUnits(request);
 
         var budgetDay = DateOnly.FromDateTime(now.UtcDateTime);
-        var overBudget =
-            (_options.DailyInputUnitBudget is { } budget
-                && state.UsageInputUnitsOn(budgetDay) + estimatedInputUnits > budget)
-            || (_options.DailyCostBudget is { } cost
-                && cost.CostOf(state.UsageInputUnitsOn(budgetDay) + estimatedInputUnits, state.UsageOutputUnitsOn(budgetDay)) > cost.LimitPerDay);
-        if (overBudget)
+        if (OverBudget(state, budgetDay, inspectInput: estimatedInputUnits, glanceInput: 0))
         {
             var nextDay = new DateTimeOffset(budgetDay.AddDays(1).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
             return EnterNap(
@@ -481,6 +543,213 @@ public sealed class ApiBridge : IAsyncDisposable
             .ConfigureAwait(false);
     }
 
+    private async Task<BridgeOutcome> RunGlanceAsync(
+        AttentionSheet sheet,
+        CaptureAuthorizationGrant grant,
+        CancellationToken cancellationToken)
+    {
+        if (_journalFaulted)
+        {
+            return BridgeOutcome.Simple(BridgeOutcomeKind.LocalStateUnavailable);
+        }
+
+        var now = _time.GetUtcNow();
+        var state = _journal.State;
+
+        // A napping Braincase sends nothing. Only the Inspect lane probes for waking.
+        if (state.NapReason != BraincaseNapReason.None)
+        {
+            Interlocked.Increment(ref _refusedWhileNapping);
+            return BridgeOutcome.Simple(BridgeOutcomeKind.Napping) with { NapReason = state.NapReason };
+        }
+
+        var operationId = Guid.CreateVersion7(now);
+        CancellationToken pendingToken;
+        lock (_gate)
+        {
+            pendingToken = _pendingWork.Token;
+        }
+
+        using var operation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _lifetime.Token, pendingToken);
+        var token = operation.Token;
+
+        // A Glance carries no memories: only the session and application it looks at.
+        var packet = new ResumePacket(
+            Guid.CreateVersion7(now),
+            now,
+            SessionReference(grant),
+            null,
+            [],
+            [],
+            0,
+            false);
+        var description = Describe(sheet);
+        var request = new SemanticRequest(operationId, SemanticOperationKind.Glance, attempt: 1, packet, description, sheet.EncodedImage);
+        var estimatedInputUnits = EstimateInputUnits(request);
+
+        var budgetDay = DateOnly.FromDateTime(now.UtcDateTime);
+        if (OverBudget(state, budgetDay, inspectInput: 0, glanceInput: estimatedInputUnits))
+        {
+            var nextDay = new DateTimeOffset(budgetDay.AddDays(1).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            return EnterNap(sheet, operationId, started: false, attempts: 0, inputUnits: 0, BraincaseNapReason.LocalBudget, nextDay, TimeSpan.Zero, announce: true);
+        }
+
+        if (!_privacy.IsCurrent(grant.Generation))
+        {
+            return BridgeOutcome.Simple(BridgeOutcomeKind.PrivacyFenced, operationId);
+        }
+
+        Interlocked.Increment(ref _attemptsSent);
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
+        AttemptResult result;
+        try
+        {
+            result = await InvokeAttemptAsync(request, token, _options.GlanceTimeout).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            RecordGlance(operationId, estimatedInputUnits, 0);
+            return BridgeOutcome.Simple(BridgeOutcomeKind.Cancelled, operationId, 1);
+        }
+        finally
+        {
+            sheet.Dispose();
+        }
+
+        var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(started);
+        Interlocked.Exchange(ref _lastGlanceTicks, elapsed.Ticks);
+        InterlockedMax(ref _maximumGlanceTicks, elapsed.Ticks);
+
+        if (result.Reply is not { IsSuccess: true } reply)
+        {
+            // The request may have been billed: count its estimate either way.
+            RecordGlance(operationId, estimatedInputUnits, 0);
+            switch (result.Reply?.FailureKind)
+            {
+                case ProviderFailureKind.Unavailable:
+                    AnnounceUnavailable(result.Reply.UnavailableReason);
+                    return BridgeOutcome.Simple(BridgeOutcomeKind.Unavailable, operationId, 1) with
+                    {
+                        UnavailableReason = result.Reply.UnavailableReason,
+                    };
+                case ProviderFailureKind.RateLimited:
+                    return EnterNap(sheet, operationId, started: false, 1, 0, BraincaseNapReason.RateLimited,
+                        _time.GetUtcNow() + ClampRetryAfter(result.Reply.RetryAfter), TimeSpan.Zero, announce: true);
+                case ProviderFailureKind.Outage:
+                    return EnterNap(sheet, operationId, started: false, 1, 0, BraincaseNapReason.Outage,
+                        _time.GetUtcNow() + _options.OutageInitialProbeInterval, _options.OutageInitialProbeInterval, announce: true);
+                default:
+                    // Timed out, transient, or faulted: a stale glance is simply missed.
+                    if (result.TimedOut)
+                    {
+                        Interlocked.Increment(ref _timeouts);
+                    }
+
+                    Interlocked.Increment(ref _glancesMissed);
+                    return BridgeOutcome.Simple(BridgeOutcomeKind.Missed, operationId, 1);
+            }
+        }
+
+        lock (_gate)
+        {
+            _announcedUnavailable = ProviderUnavailableReason.None;
+        }
+
+        var responseJson = reply.ResponseJson!;
+        ParsedGlance? parsed = null;
+        var invalid = _credentials.AnyAppearsIn(responseJson)
+            ? SemanticResponseInvalidReason.CredentialEcho
+            : GlanceResponseParser.TryParse(responseJson, operationId, description.RegionKinds.ToHashSet(), out parsed, out var parseReason)
+                ? SemanticResponseInvalidReason.None
+                : parseReason;
+        if (invalid == SemanticResponseInvalidReason.None && _credentials.AnyAppearsIn(parsed!.Label))
+        {
+            invalid = SemanticResponseInvalidReason.CredentialEcho;
+            parsed = null;
+        }
+
+        var inputUnits = parsed?.InputUnits ?? estimatedInputUnits;
+        var outputUnits = parsed?.OutputUnits ?? (Encoding.UTF8.GetByteCount(responseJson) + 3) / 4;
+        RecordGlance(operationId, inputUnits, outputUnits);
+        if (invalid != SemanticResponseInvalidReason.None)
+        {
+            Interlocked.Increment(ref _invalidResponses);
+            Interlocked.Increment(ref _glancesMissed);
+            return BridgeOutcome.Simple(BridgeOutcomeKind.InvalidResponse, operationId, 1) with { InvalidReason = invalid };
+        }
+
+        // Output is fenced like an Inspect's: a privacy stop during the look suppresses it.
+        if (!_privacy.IsCurrent(grant.Generation))
+        {
+            return BridgeOutcome.Simple(BridgeOutcomeKind.PrivacyFenced, operationId, 1);
+        }
+
+        Interlocked.Increment(ref _glances);
+        return BridgeOutcome.Simple(BridgeOutcomeKind.Glanced, operationId, 1) with
+        {
+            Glance = new GlanceReading(
+                operationId,
+                grant.TargetSessionId,
+                parsed!.Interest,
+                parsed.Confidence,
+                parsed.ChangedRegion,
+                parsed.Label,
+                parsed.Escalate,
+                parsed.NextLook),
+        };
+    }
+
+    /// <summary>The day's spend across both lanes, plus a pending estimate, against the Bun Budget.</summary>
+    private bool OverBudget(BraincaseJournalState state, DateOnly day, long inspectInput, long glanceInput)
+    {
+        var inspectIn = state.UsageInputUnitsOn(day);
+        var inspectOut = state.UsageOutputUnitsOn(day);
+        var glanceIn = state.GlanceInputUnitsOn(day);
+        var glanceOut = state.GlanceOutputUnitsOn(day);
+        return (_options.DailyInputUnitBudget is { } budget
+                && inspectIn + glanceIn + inspectInput + glanceInput > budget)
+            || (_options.DailyCostBudget is { } cost
+                && cost.CostOf(inspectIn + inspectInput, inspectOut, glanceIn + glanceInput, glanceOut) > cost.LimitPerDay);
+    }
+
+    private void RecordGlance(Guid operationId, long inputUnits, long outputUnits)
+    {
+        var now = _time.GetUtcNow();
+        if (TryAppend(new BraincaseJournalEntry
+            {
+                At = now,
+                Type = BraincaseJournalEntryType.Glanced,
+                Op = operationId,
+                InputUnits = inputUnits,
+                OutputUnits = outputUnits,
+            }))
+        {
+            try
+            {
+                _journal.CompactIfNeeded(now);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                Log("journal-compaction-failed", exception.GetType().Name);
+            }
+        }
+    }
+
+    private static void InterlockedMax(ref long target, long value)
+    {
+        var current = Interlocked.Read(ref target);
+        while (value > current)
+        {
+            var observed = Interlocked.CompareExchange(ref target, value, current);
+            if (observed == current)
+            {
+                return;
+            }
+
+            current = observed;
+        }
+    }
+
     private async Task<BridgeOutcome> ProcessSuccessAsync(
         string responseJson,
         Guid operationId,
@@ -614,7 +883,10 @@ public sealed class ApiBridge : IAsyncDisposable
             subjects);
     }
 
-    private async Task<AttemptResult> InvokeAttemptAsync(SemanticRequest request, CancellationToken token)
+    private Task<AttemptResult> InvokeAttemptAsync(SemanticRequest request, CancellationToken token) =>
+        InvokeAttemptAsync(request, token, _options.AttemptTimeout);
+
+    private async Task<AttemptResult> InvokeAttemptAsync(SemanticRequest request, CancellationToken token, TimeSpan timeout)
     {
         using var attempt = CancellationTokenSource.CreateLinkedTokenSource(token);
         Task<ProviderReply> call;
@@ -639,7 +911,7 @@ public sealed class ApiBridge : IAsyncDisposable
 
         try
         {
-            var reply = await call.WaitAsync(_options.AttemptTimeout, _time, token).ConfigureAwait(false);
+            var reply = await call.WaitAsync(timeout, _time, token).ConfigureAwait(false);
             return reply is null ? AttemptResult.Fault : new AttemptResult(reply, TimedOut: false);
         }
         catch (TimeoutException)

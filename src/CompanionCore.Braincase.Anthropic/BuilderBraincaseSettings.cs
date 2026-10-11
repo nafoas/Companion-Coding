@@ -37,6 +37,9 @@ public sealed record BuilderBraincaseSettings
 
     public string Effort { get; init; } = "low";
 
+    /// <summary>The Glance model (VIS-02), Prince's quick peripheral looks; "" turns the Glance off.</summary>
+    public string GlanceModel { get; init; } = AnthropicProviderOptions.DefaultGlanceModel;
+
     /// <summary>The Bun Budget: Builder Prince sleeps for the rest of the (UTC) day when it is spent.</summary>
     public decimal DollarsPerDay { get; init; } = DefaultDollarsPerDay;
 
@@ -63,12 +66,14 @@ public sealed record BuilderBraincaseSettings
             if (settings is null
                 || AnthropicProviderOptions.ParseEffort(settings.Effort) is null
                 || settings.DollarsPerDay is <= 0 or > 1000
-                || string.IsNullOrWhiteSpace(settings.Model))
+                || string.IsNullOrWhiteSpace(settings.Model)
+                || settings.GlanceModel is null)
             {
                 return (Off, BuilderBraincaseIssue.Invalid);
             }
 
             return AnthropicPricing.IsKnown(settings.Model)
+                && (settings.GlanceModel.Length == 0 || AnthropicPricing.IsKnown(settings.GlanceModel))
                 ? (settings, BuilderBraincaseIssue.None)
                 : (Off, BuilderBraincaseIssue.UnknownModel);
         }
@@ -99,5 +104,8 @@ public sealed record BuilderBraincaseSettings
         AllowAmbientCredentials = true,
         Model = Model,
         Effort = Effort,
+        GlanceModel = GlanceModel.Length == 0 ? null : GlanceModel,
     };
+
+    public bool GlanceEnabled => GlanceModel.Length > 0;
 }

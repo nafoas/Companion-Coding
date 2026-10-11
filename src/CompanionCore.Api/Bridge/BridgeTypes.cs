@@ -164,6 +164,14 @@ public sealed record DailyCostBudget(decimal LimitPerDay, decimal InputCostPerMi
             + (glanceOutputUnits * (GlanceOutputCostPerMillionUnits ?? OutputCostPerMillionUnits))) / 1_000_000m);
 }
 
+/// <summary>The Glance lane at a glance (VIS-02): counts and how long the last and slowest Glance took.</summary>
+public sealed record GlanceDiagnostics(
+    long Glanced,
+    long Missed,
+    long Busy,
+    TimeSpan LastLatency,
+    TimeSpan MaximumLatency);
+
 /// <summary>Hidden technical diagnostics, returned only on explicit request.</summary>
 public sealed record BridgeDiagnosticsSnapshot(
     long OperationsStarted,
