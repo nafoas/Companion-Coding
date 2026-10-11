@@ -148,6 +148,8 @@ Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 
 **VIS-02** (PR #67) adds the Glance, Prince's quick peripheral vision on Haiku. It adds to his attention without replacing his main focus: the detailed Inspect, the only source of memories. Both lanes share one dollars-per-day Bun Budget. `BraincaseCheck --live` now times Glances on Boss's PC. Merged as `da7ea8293c0fce7f46fe3aa86b45af4ea2429c9c`.
 
+**VIS-03** (PR #69) adds the Text Sniff: Windows' built-in text reader looks at the dialogue band and the upper corners. New words perk Prince's ears and bring his next Glance forward. The words themselves never leave the capture worker; only "the words changed" does, through the same privacy admission. Merged as `86deb5f0e2e54c8b516567e5d80a1d2c65aed627`.
+
 Stage 12 is built and waits for Boss: first the live check, then the milestone hand-run and the Core Bun Approval Hop. Personality waits for Stage 13.
 
 ## Important boundaries
