@@ -1,6 +1,6 @@
 # CORE-12 — Core Prince Milestone: Placeholder Controls and Guided Run (Stage 12, part 3)
 
-Status: **active — gate review**
+Status: **accepted (tooling)** — Paw Gate PASS; PR #61 squash-merged as `18b5215e3bc5810d76937465314a55ed57ba323a`. The milestone's Core Bun Approval Hop awaits Boss (D1).
 Authorized: 2026-10-11 by Boss ("Let's try Stage 12 … Tell me when you need me, until then you can work").
 Accepted remote base: `3a7b67e170ebbd628161a66eaa110a655d9d705c`
 Working branch: `agent/core-12-milestone`
@@ -53,7 +53,14 @@ The Roadmap's Stage 12 milestone is a stable placeholder-interface build that de
 
 ## Paw Gate
 
-Pending (CI). The milestone's acceptance is Boss's hand-run (D1).
+**PASS (tooling).**
+
+- **CI.** Head `0d8b65b21247cbda05ca1b5802b9a1409f782709` passed push run `38142489617` and PR run `38142501429` at 1044/1044, with verified artifacts. That count includes the new Windows wired tests and the ten-check walkthrough.
+- **Unidentified local failure.** It did not recur in CI.
+- **Local.** The full gate passed: 1026/1026 on Linux.
+- **Merge ref.** Parents were exactly `3a7b67e` and `0d8b65b`, and the tree equalled the head tree (`c989179`).
+- **Merge.** Squash-merged through the expected-head fence.
+- **The milestone itself** (the Core Bun Approval Hop) is Boss's hand-run (D1).
 
 ## Deferred findings
 

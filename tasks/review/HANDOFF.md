@@ -2,33 +2,30 @@
 
 ## Task
 
-CORE-12 — Core Prince Milestone: Placeholder Controls and Guided Run (`tasks/active/core-12-milestone.md`), Stage 12 part 3.
+No task is active. The last accepted packet is CORE-12 (`tasks/archive/core-12-milestone.md`), merged through PR #61 as `18b5215e3bc5810d76937465314a55ed57ba323a`.
 
-- Branch: `agent/core-12-milestone`.
-- Base: `main` `3a7b67e`.
-- Builder: Claude.
+Builder: Claude.
+
+**Stage 12 is built and waits for Boss.**
 
 ## Changed
 
-- **App:**
-  - the placeholder commands panel in `MainWindow.xaml` and `.cs`;
-  - `AttachCompanion`;
-  - the `wired` marker reports the Braincase and commands.
-- **New doc:** `docs/Core-Prince-Milestone.md`.
-- **Tests:**
-  - `CoreMilestoneWalkthroughTests` (1);
-  - `WiredCompositionTests` extended, plus 1 new Windows test.
+This docs-only reconciliation:
+
+- archives CORE-12;
+- updates `BUILD_LEDGER.md` and `README.md`;
+- resets this handoff.
 
 ## Verification
 
-- **Local:** full gate green: 1026/1026 on Linux, 0 warnings, no vulnerable packages.
-- **Windows CI:** pending.
+- CORE-12 head `0d8b65b`, tree `c989179`: push run `38142489617` and PR run `38142501429` passed 1044/1044 with verified artifacts.
+- The merge ref had exact parents and an equal tree.
 
-## Remaining
+## Remaining (Boss)
 
-- CI, merge, and closure.
-- Then Boss's live first-run check (LIVE-02 D1) and the milestone hand-run (CORE-12 D1).
+1. **The first live check.** Follow `docs/Builder-Braincase-Setup.md`: a Console account, then `setx ANTHROPIC_API_KEY` or `ant auth login`, then run `tools/CompanionCore.BraincaseCheck` with `--live` (and `--turn-on`).
+2. **The milestone hand-run** (`docs/Core-Prince-Milestone.md`), and the **Core Bun Approval Hop**.
 
 ## Next safe task
 
-None without Boss: the Core Bun Approval Hop gates Stage 13.
+None until the Core Bun Approval Hop. Stage 13, personality installation on Builder Prince, follows it.
