@@ -335,7 +335,9 @@ internal sealed class OrchestrationHarness : IAsyncDisposable
         {
             Platform = withPlatform ? Platform : null,
             Time = Time,
-            Orchestrator = options,
+
+            // Scenario tests drive many sheets at one instant; cadence has its own tests.
+            Orchestrator = options ?? new OrchestratorOptions { SemanticCadence = SemanticCadence.Unthrottled },
             Bridge = new BridgeOptions { InitialBackoff = TimeSpan.Zero, MaximumBackoff = TimeSpan.Zero },
             Notice = (_, notice) => Notices.Enqueue(notice),
         });

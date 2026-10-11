@@ -74,6 +74,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private Task? _loop;
     private bool _bridgeInFlight;
     private BridgeOutcomeKind? _lastBraincase;
+    private DateTimeOffset? _lastSemanticLook;
     private DateTimeOffset _lastPersist;
     private long _faults;
     private int _disposed;
@@ -471,6 +472,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
 
         var reference = $"target-session:{grant.TargetSessionId:N}";
+        _lastSemanticLook = null;
         var transcript = SessionTranscript.Open(_c.Transcripts, grant.TargetSessionId, _c.Privacy, now);
         _session = new ActiveSession(
             grant,
@@ -593,6 +595,16 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             sheet.Dispose();
             return;
         }
+
+        var now = Now();
+        var interval = _options.SemanticCadence.For(session.Attention.Current.State, sheet.Metadata.ChangeScore);
+        if (_lastSemanticLook is { } last && now >= last && now - last < interval)
+        {
+            sheet.Dispose();
+            return;
+        }
+
+        _lastSemanticLook = now;
 
         _bridgeInFlight = true;
         var metadata = sheet.Metadata;
