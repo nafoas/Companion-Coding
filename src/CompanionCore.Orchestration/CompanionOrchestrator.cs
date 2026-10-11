@@ -56,6 +56,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     internal const string ConsolidationStateName = "consolidation-pending";
     internal const string NeutralUrgentObservation = "[neutral urgent observation]";
     internal const string DefaultSave = "default";
+    internal const string UnreadableSuffix = ".unreadable";
 
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = false };
 
@@ -1045,35 +1046,56 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
     private async Task<ConversationCoordinator> RestoreConversationAsync(DateTimeOffset now, CancellationToken cancellationToken)
     {
-        try
+        var read = await _c.State.GetAsync(ConversationStateName, cancellationToken).ConfigureAwait(false);
+        if (read.Status == StateStatus.Missing || (read.Status == StateStatus.Verified && read.Payload.IsEmpty))
         {
-            if (await ReadJsonAsync<ConversationCheckpoint>(ConversationStateName, cancellationToken).ConfigureAwait(false) is { } checkpoint)
-            {
-                return ConversationCoordinator.Restore(checkpoint, _chance, _options.Conversation);
-            }
-        }
-        catch (ArgumentException)
-        {
-            // An invalid checkpoint starts fresh rather than restoring unvalidated state.
+            return new ConversationCoordinator(Guid.NewGuid(), now, _chance, _options.Conversation);
         }
 
-        return new ConversationCoordinator(Guid.NewGuid(), now, _chance, _options.Conversation);
+        if (read.Status == StateStatus.Verified)
+        {
+            try
+            {
+                if (JsonSerializer.Deserialize<ConversationCheckpoint>(read.Payload.Span, Json) is { } checkpoint)
+                {
+                    return ConversationCoordinator.Restore(checkpoint, _chance, _options.Conversation);
+                }
+            }
+            catch (Exception exception) when (exception is JsonException or ArgumentException)
+            {
+            }
+        }
+
+        // Unreadable (damaged, or written by a newer build): keep it aside before anything can
+        // overwrite it, and keep the one Conversation Thread lineage whenever its id survives.
+        await PreserveUnreadableAsync(ConversationStateName, read, cancellationToken).ConfigureAwait(false);
+        var lineage = read.Status == StateStatus.Verified ? LineageOf(read.Payload.Span) : null;
+        return new ConversationCoordinator(lineage ?? Guid.NewGuid(), now, _chance, _options.Conversation);
     }
 
     private async Task<WatchbunEngine?> RestoreWatchbunAsync(DateTimeOffset now, CancellationToken cancellationToken)
     {
-        try
+        var read = await _c.State.GetAsync(WatchbunStateName, cancellationToken).ConfigureAwait(false);
+        if (read.Status == StateStatus.Missing || (read.Status == StateStatus.Verified && read.Payload.IsEmpty))
         {
-            if (await ReadJsonAsync<WatchbunCheckpoint>(WatchbunStateName, cancellationToken).ConfigureAwait(false) is { } checkpoint)
-            {
-                return WatchbunEngine.Restore(checkpoint, now, _options.Watchbun);
-            }
-        }
-        catch (ArgumentException)
-        {
-            // Same as above.
+            return null;
         }
 
+        if (read.Status == StateStatus.Verified)
+        {
+            try
+            {
+                if (JsonSerializer.Deserialize<WatchbunCheckpoint>(read.Payload.Span, Json) is { } checkpoint)
+                {
+                    return WatchbunEngine.Restore(checkpoint, now, _options.Watchbun);
+                }
+            }
+            catch (Exception exception) when (exception is JsonException or ArgumentException)
+            {
+            }
+        }
+
+        await PreserveUnreadableAsync(WatchbunStateName, read, cancellationToken).ConfigureAwait(false);
         return null;
     }
 
@@ -1081,14 +1103,69 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         where T : class
     {
         var read = await _c.State.GetAsync(name, cancellationToken).ConfigureAwait(false);
-        if (read.Status != StateStatus.Verified || read.Payload.IsEmpty)
+        if (read.Status == StateStatus.Missing || (read.Status == StateStatus.Verified && read.Payload.IsEmpty))
         {
             return null;
         }
 
+        if (read.Status == StateStatus.Verified)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<T>(read.Payload.Span, Json);
+            }
+            catch (JsonException)
+            {
+            }
+        }
+
+        await PreserveUnreadableAsync(name, read, cancellationToken).ConfigureAwait(false);
+        return null;
+    }
+
+    /// <summary>
+    /// Keeps a state entry this build cannot use under <c>&lt;name&gt;.unreadable</c>, as a valid
+    /// entry (so it never blocks a Vault backup), before the next checkpoint overwrites the
+    /// original. The first preserved copy is never replaced. Reported as a contained fault.
+    /// </summary>
+    private async Task PreserveUnreadableAsync(string name, StateRead read, CancellationToken cancellationToken)
+    {
+        var preserved = name + UnreadableSuffix;
         try
         {
-            return JsonSerializer.Deserialize<T>(read.Payload.Span, Json);
+            if ((await _c.State.GetAsync(preserved, cancellationToken).ConfigureAwait(false)).Status != StateStatus.Missing)
+            {
+                return;
+            }
+
+            var bytes = read.Status == StateStatus.Verified
+                ? read.Payload.ToArray()
+                : await File.ReadAllBytesAsync(_c.State.PathFor(name), cancellationToken).ConfigureAwait(false);
+            await _c.State.PutAsync(preserved, bytes.AsMemory(0, Math.Min(bytes.Length, VaultStateStore.MaximumPayloadBytes)), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            // Preservation is best effort; the failure itself is reported below.
+        }
+        finally
+        {
+            Interlocked.Increment(ref _faults);
+            Publish(new CompanionNotice(CompanionNoticeKind.Fault, Key: $"UnreadableState:{name}"));
+        }
+    }
+
+    private static Guid? LineageOf(ReadOnlySpan<byte> payload)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(payload.ToArray());
+            return document.RootElement.ValueKind == JsonValueKind.Object
+                && document.RootElement.TryGetProperty(nameof(ConversationCheckpoint.CoordinatorId), out var id)
+                && id.TryGetGuid(out var lineage)
+                && lineage != Guid.Empty
+                    ? lineage
+                    : null;
         }
         catch (JsonException)
         {
