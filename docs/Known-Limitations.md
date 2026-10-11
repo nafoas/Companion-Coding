@@ -2,16 +2,29 @@
 
 This is the Roadmap's Stage 11 "known-limitations report": everything that is deliberately unfinished, provisional, or unverified, consolidated from the packet records. Nothing here weakens an invariant.
 
-## Needs Boss's PC (calibration)
+## Calibration (accepted values; adjusted on evidence)
 
-| Item | Status | How it closes |
+Boss decided on 2026-10-11 that the agreed values are the accepted configuration, adjusted up or down only if real use shows a need. `docs/Calibration-Protocol.md` is the optional diagnostic for that.
+
+| Item | Status | If it needs to change |
 |---|---|---|
-| Final resource thresholds (soft, worker restart, Naptime) | Provisional bounds in force: 64 MB ring, at most 3 frames, worker growth watchdog | Run `docs/Calibration-Protocol.md` and send the report (CAL-02 D1) |
-| 8–12-hour soak | Tooling ready; not yet run | Same protocol |
-| Real lock/sleep notifications | Forwarding proven on CI; a real lock and suspend are unverified | Lock and sleep during the soak (WIRE-02 D4) |
-| Minimized and exclusive-fullscreen capture | Unsupported without target-PC evidence | Observe during calibration |
-| State-aware local cadence (2 s Noticing, 0.5 s Investigating) | A fixed 1 s spacing sits inside both agreed ranges | Revisit after the measured CPU baseline (CAL-01 D1) |
-| Attention, conversation, transcript, recall, and Watchbun numeric tuning | Behavior settled; numbers provisional | Calibration and play testing |
+| Resource bounds (64 MB ring, at most 3 frames, 1 vision request, worker growth watchdog) | Accepted as agreed | Run the protocol on the symptom; adjust that bound (CAL-02 D1) |
+| Local cadence (1 s, inside Noticing 1–2 s and Investigating 0.5–1 s) | Accepted as agreed | A state-aware split if CPU or responsiveness calls for it (CAL-01 D1) |
+| Semantic cadence (Noticing 12 s, Engaged 6 s, Bnuy Mode floor 3 s) and Watchbun hours | Accepted as agreed | Tune from play |
+| Attention, conversation, transcript, recall, and Watchbun numeric tuning | Behavior settled; defaults in force | Tune from play |
+
+### Unverified on Boss's PC (observed in normal use)
+
+- Real lock and sleep notifications. Forwarding is proven on CI; a real lock and suspend are unverified (WIRE-02 D4).
+- Minimized and exclusive-fullscreen capture. Unsupported without target-PC evidence.
+
+## Continuity rule (Boss, 2026-10-11)
+
+Prince is one unbroken line of continuous Bun:
+
+- Nothing restores, rolls back, or deletes his memories on its own.
+- Repair is opt-in and only continues his current line.
+- An older Vault export is never imported (closes DEF-01 D1).
 
 ## Needs Stage 12 (stop condition: credentials and live API)
 
@@ -26,7 +39,6 @@ This is the Roadmap's Stage 11 "known-limitations report": everything that is de
 - Personality, final UI, animation, and audio (Deferred Paw Pile 3, 5, 6).
 - Multiple monitors (Deferred Paw Pile 1): one display is assumed; capture pauses otherwise.
 - Export, migration, and distribution of Prince to another PC (Deferred Paw Pile 7).
-- Importing a Vault export older than the live journal. That would accept losing later memories and needs Boss's decision (DEF-01 D1). The single-file export itself exists.
 
 ## Smaller deferred items
 
