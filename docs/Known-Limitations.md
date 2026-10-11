@@ -28,9 +28,15 @@ This is the Roadmap's Stage 11 "known-limitations report": everything that is de
 - Export, migration, and distribution of Prince to another PC (Deferred Paw Pile 7).
 - Importing a Vault export older than the live journal. That would accept losing later memories and needs Boss's decision (DEF-01 D1). The single-file export itself exists.
 
-## Smaller deferred items (scheduled next)
+## Smaller deferred items
 
-- Full-resolution photographs. They are currently taken at the attention sheet's full-context resolution (WIRE-01 D2).
+All done:
+
+- long-session consolidation (DEF-01);
+- single-file Vault export (DEF-01);
+- full-resolution photographs (DEF-02).
+
+The saved keepsake edge (1280) remains provisional photograph-storage tuning.
 
 ## Minor
 

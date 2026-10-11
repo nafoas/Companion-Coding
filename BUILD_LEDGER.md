@@ -2,16 +2,16 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | Stage 11 local hardening complete (CAL-01, CAL-02, CAL-03); final thresholds await Boss's measured report. Smaller deferred items in progress: DEF-01 (long-session consolidation, single-file Vault export) accepted. Live-provider parts are held for the Stage 12 stop |
-| Active task | None between packets. Next: DEF-02 (full-resolution photographs); then stop before Stage 12 |
-| Working branch | Accepted product/evidence baseline on `main`: `d510add3cc9b07b4bb4279c4138f051abb516e25` (DEF-01) |
+| Current stage | Stage 11 local hardening complete (CAL-01, CAL-02, CAL-03); final thresholds await Boss's measured report. The smaller deferred items are complete: DEF-01 (long-session consolidation, single-file Vault export) and DEF-02 (full-resolution photographs). Construction stops before Stage 12 |
+| Active task | None. **Stopped before Stage 12** (real credentials and live API) per Boss's direction; Stage 12 needs Boss's decision |
+| Working branch | Accepted product/evidence baseline on `main`: `98ae435ff71ddb75d4a9e847d7520cd82966146f` (DEF-02) |
 | Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | No active packet |
 | Live API authorized | No. The real provider is a transport-free shell; credentials and live calls remain Task 12 stop conditions |
-| Automated tests | DEF-01 head `b0c5af7673aadc81e9c1cc90cfe73ce56634c57f`, tree `f09d22af0e4ffb5ef5ac71afe288be9d623bc963`, passed push run `38102695266` and PR run `38102704355` at 977/977 with verified artifacts. The local gate passed 960/960 on Linux. |
-| Manual gate | DEF-01 replay-idempotency, export-safety, and mutation review passed. 24 mutants: 19 killed and 5 equivalent (defense in depth). PR #51 squash-merged through the expected-head fence. |
-| Accepted `main` baseline | `d510add3cc9b07b4bb4279c4138f051abb516e25` — DEF-01 long-session consolidation and single-file Vault export (PR #51) |
-| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs are taken at sheet resolution (WIRE-01 D2); long sessions are consolidated completely in parts (DEF-01). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
+| Automated tests | DEF-02 head `d58807c499c1d4f213ff8ad5152ee1b37cb2c4bc`, tree `1c9f13a3a869ebc21cbb2c5ac0923c03840bbfa1`, passed push run `38104142116` and PR run `38104151642` at 1002/1002 with verified artifacts, including the real worker-process photograph test. The local gate passed 985/985 on Linux. |
+| Manual gate | DEF-02 privacy, authorization, bound, and mutation review passed. 27 mutants: 24 killed and 3 equivalent (defense in depth). PR #53 squash-merged through the expected-head fence. |
+| Accepted `main` baseline | `98ae435ff71ddb75d4a9e847d7520cd82966146f` — DEF-02 full-resolution keepsake photographs (PR #53) |
+| Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are provisional until Stage 11 calibration. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs come from the native frame (DEF-02) and are saved under the provisional 1280 edge; long sessions are consolidated completely in parts (DEF-01). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are provisional until Stage 11; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
 | Deferred temptations | A public backup/repair command (KEEP-02 D1; the single-file export exists since DEF-01) and importing an older export (DEF-01 D1, Boss's decision); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials. |
 
@@ -108,6 +108,27 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### DEF-02 — Full-resolution keepsake photographs (smaller deferred items, part 2)
+
+- Builder: Claude. Opened on 2026-10-11 under Boss's direction to do the smaller deferred items before Stage 12.
+- **WIRE-01 D2.** Keepsake photographs now come from the authorized target's native frame instead of an attention sheet's downscaled region:
+  - a new `AttentionSheetKind.Photograph`;
+  - a `RequestPhotograph` command (capture IPC protocol 4).
+- **Worker.**
+  - A request arms one photograph for the active grant only, and any reset disarms it.
+  - The photograph consumes no visual change.
+  - It is halved only to fit the existing 8 MiB payload and 64 MiB working bounds. No bound was raised.
+- **Client and controller.** A photograph has its own slot, never displaced by regional sheets. It passes the same privacy frame admission, and is requested only for the current authorized target.
+- **Orchestrator.**
+  - Ordinary sheets keep flowing to attention while the camera waits.
+  - An older frame asks again.
+  - A refused request falls back to the sheet resolution.
+- **Bridge.** `ApiBridge` refuses photograph sheets, so a photograph is never uploaded.
+- The saved keepsake stays the design's compressed copy under the provisional 1280 edge.
+- Evidence: head `d58807c` (runs `38104142116` and `38104151642`) passed 1002/1002 with verified artifacts. Mutation pass: 27 mutants, 24 killed and 3 equivalent.
+- Merge: PR #53 squash-merged as `98ae435ff71ddb75d4a9e847d7520cd82966146f`.
+- Result: passed and accepted. **The smaller deferred items are complete; construction stops before Stage 12.**
 
 ### DEF-01 — Long-session consolidation and single-file Vault export (smaller deferred items, part 1)
 

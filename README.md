@@ -2,7 +2,7 @@
 
 A staged, local-first Windows companion-engine project built through evidence-gated vertical slices.
 
-Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. Stage 10's keepsakes and complete recovery (KEEP-01, KEEP-02) are complete. WIRE-01 composes every subsystem into one tested orchestration core, and WIRE-02 runs it in the real Windows App. Stage 11 calibration and Stage 12 live API await Boss.
+Task 0's architecture, the R0 direct-build controls, Tasks 1–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, the R2 Stage 4 recertification, R3 reliable orientation delivery, and R5 App test timing are accepted. Stage 5's stateless Braincase bridge (mock and replay only), Stage 6's neutral attention engine, Stage 7's conversation coordinator with its session transcript, Stage 8's memory consolidation and recall mechanics, and Stage 9's Watchbun continuity are complete. Stage 10's keepsakes and complete recovery (KEEP-01, KEEP-02) are complete. WIRE-01 composes every subsystem into one tested orchestration core, and WIRE-02 runs it in the real Windows App. Stage 11 local hardening (CAL-01–03) and the smaller deferred items (DEF-01, DEF-02) are complete. The final calibration thresholds (Boss's measured report) and Stage 12 live API await Boss.
 
 ## Builder workflow
 
@@ -119,7 +119,9 @@ It also published `docs/Known-Limitations.md`. Merged as `039a641fe5269d2b4c0865
 
 **DEF-01** (PR #51) consolidates long sessions completely, in idempotent parts. It also adds a verified single-file Vault export (`CompanionHost.ExportVaultAsync`). Merged as `d510add3cc9b07b4bb4279c4138f051abb516e25`.
 
-Stage 11 local work is complete; the final thresholds await Boss's measured report. Stage 12 (credentials and live API) requires Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
+**DEF-02** (PR #53) takes keepsake photographs from the authorized target's native frame, within every existing bound, and never uploads them. Merged as `98ae435ff71ddb75d4a9e847d7520cd82966146f`.
+
+Stage 11 local work and the smaller deferred items are complete; the final thresholds await Boss's measured report. Construction has stopped before Stage 12 (credentials and live API), which requires Boss's direction. Personality, live API use, durable product images, and the remaining later behavior stay deferred.
 
 ## Important boundaries
 
