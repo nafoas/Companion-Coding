@@ -2,7 +2,13 @@
 
 Question 9 in the design conversation set the rule: **provisional leak protection from day one, final limits from real measurements.** This protocol produces those measurements. Everything recorded is numbers and state names only: memory, handles, CPU, frame counts, attention and Watchbun state, and Braincase usage counters. No screenshots, titles, paths, game text, or memories are ever written.
 
-## Agreed values already in force (CAL-01)
+## Boss's decision (2026-10-11): the agreed values are the configuration
+
+Boss decided that the values agreed in the design conversation are the accepted running configuration, not a placeholder awaiting measurement. "If it needs to go up or down, we change it."
+
+So this protocol is **optional**. It is a diagnostic tool for when real use suggests a value is too tight or too loose, such as a stutter, a worker restart, or Prince feeling too slow or too eager. It is no longer a gate. Any adjustment is a small, reviewed change to the value concerned. No invariant changes, and no committed memory is ever affected.
+
+## Agreed values in force (CAL-01)
 
 | Item | Value |
 |---|---|
@@ -57,12 +63,11 @@ This writes `calibration-report.md` beside the samples, containing:
   - emergency Naptime: 3×;
   - each capped at a quarter of physical memory, comfortably above legitimate peaks and far below anything that threatens the 32 GB system.
 
-## 4. Send the report back
+## 4. When an adjustment is wanted, send the report back
 
 Paste `calibration-report.md` into the chat. The Builder then:
 
-- sets the final soft, restart, and Naptime thresholds from it;
-- confirms or adjusts the cadence values;
-- investigates any *SustainedGrowth* verdict before the thresholds are finalized.
+- adjusts only the values the report (or the observed problem) shows need to change;
+- investigates any *SustainedGrowth* verdict first, because growth is a leak to fix, not a limit to raise.
 
 No resource response may ever delete, rewrite, or summarize away committed BunDex memories.
