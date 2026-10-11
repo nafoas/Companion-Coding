@@ -59,6 +59,12 @@ The agreed plan said "CLIP". OpenAI's CLIP model card says "any deployed use cas
 
 - **J1 — SigLIP instead of CLIP**, for a clear shipping license (above).
 - **J2 — Embeddings never leave the worker** (above).
+- **J3 — Library telemetry.**
+  - ONNX Runtime's Windows telemetry is on by default. The worker turns it off before loading the model.
+  - DirectML has no switch of its own. Its diagnostics follow the Windows diagnostic-data setting, like Direct3D and the GPU driver.
+  - Neither ever receives anything but the local model's GPU work. This is flagged to Boss.
+- **J4 — The CPU never takes every core.** The CPU fallback uses at most half the cores, and at most 4 threads, so a running game keeps its own. The DirectML/CPU choice is a measured warm-up race at load.
+- **J5 — A whole-frame squash, as SigLIP was trained.** The frame is area-sampled to 224×224 with 4×4 taps per pixel, so the HUD and the screen's edges are seen too.
 
 ## Deferred findings
 

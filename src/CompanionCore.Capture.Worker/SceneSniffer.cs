@@ -131,6 +131,10 @@ internal sealed class OnnxSceneEmbedder : ISceneEmbedder
             return UnavailableSceneEmbedder.Instance;
         }
 
+        // ONNX Runtime's official Windows builds emit usage telemetry by default; Prince's
+        // worker turns it off before any session exists.
+        DisableTelemetry();
+
         var cpu = TryLoad(modelPath, accelerated: false, dimensions);
         var gpu = tryAccelerated && OperatingSystem.IsWindows() ? TryLoad(modelPath, accelerated: true, dimensions) : null;
         if (cpu is null && gpu is null)
@@ -151,6 +155,18 @@ internal sealed class OnnxSceneEmbedder : ISceneEmbedder
 
         gpu.Embedder.Dispose();
         return cpu.Embedder;
+    }
+
+    private static void DisableTelemetry()
+    {
+        try
+        {
+            Microsoft.ML.OnnxRuntime.OrtEnv.Instance().DisableTelemetryEvents();
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // No runtime, no telemetry: the load below reports unavailable.
+        }
     }
 
     private static Loaded? TryLoad(string modelPath, bool accelerated, int dimensions)
@@ -332,6 +348,9 @@ internal sealed class SceneLabelTable
     internal string VisionModelSha256 { get; private init; } = string.Empty;
 
     internal static SceneLabelTable Default { get; } = LoadEmbedded();
+
+    /// <summary>A copy of one label's text embedding (tests and diagnostics).</summary>
+    internal float[] EmbeddingOf(int label) => (float[])_labels[label].Clone();
 
     /// <summary>The closest label and its calibrated confidence; unsure below <paramref name="minimumConfidence"/>.</summary>
     internal (int Label, double Confidence) Score(ReadOnlySpan<float> embedding, double minimumConfidence)

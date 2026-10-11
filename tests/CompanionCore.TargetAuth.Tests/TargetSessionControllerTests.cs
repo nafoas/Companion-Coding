@@ -798,6 +798,49 @@ public sealed class TargetSessionControllerTests
     }
 
     [Fact]
+    public async Task ASceneSniff_IsExposedOnlyThroughPrivacyAdmission_AndNeverAfterAPrivacyStop()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(harness, worker);
+        var available = new List<SceneSniffSignal>();
+        controller.SceneSniffAvailable += (_, scene) => available.Add(scene);
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+        var grant = worker.LastGrant!;
+
+        var scene = worker.EmitSceneSniff(grant);
+        Assert.Equal(scene, Assert.Single(available));
+
+        // Another grant, or a malformed signal, is never exposed.
+        worker.EmitSceneSniff(CaptureAuthorizationGrant.Issue(Guid.NewGuid(), grant.Generation, grant.Target));
+        worker.EmitSceneSniff(grant, novelty: 2);
+        worker.EmitSceneSniff(grant, label: SceneVocabulary.Keys.Count);
+        Assert.Single(available);
+
+        await controller.PrivacyStopAsync();
+        worker.EmitSceneSniff(grant);
+        Assert.Single(available);
+    }
+
+    [Fact]
+    public async Task APrivacyRejectedFrame_NeverExposesItsSceneSniff()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(
+            harness,
+            worker,
+            _ => PrivacyAssessment.ClearlySensitive(SensitiveContentKind.Credential));
+        var available = 0;
+        controller.SceneSniffAvailable += (_, _) => available++;
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+
+        worker.EmitSceneSniff(worker.LastGrant!);
+
+        Assert.Equal(0, available);
+    }
+
+    [Fact]
     public async Task ACadence_ReachesTheWorkerOnlyForTheCurrentTarget()
     {
         await using var harness = await TargetAuthTestHarness.CreateAsync();

@@ -1019,6 +1019,7 @@ public sealed class OutOfProcessCaptureWorker : ICaptureWorker
             || message.Authorization is null
             || message.TextSniff is null
             || message.Sniff is not null
+            || message.SceneSniff is not null
             || !message.TextSniff.IsProtocolSafe()
             || message.SequenceNumber != message.TextSniff.SourceSequenceNumber
             || message.Authorization.TargetSessionId != message.TextSniff.TargetSessionId
