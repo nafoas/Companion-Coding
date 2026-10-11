@@ -156,6 +156,7 @@
       "companioncore.app": {
         "type": "Project",
         "dependencies": {
+          "CompanionCore.Calibration": "[1.0.0, )",
           "CompanionCore.Capture.Client": "[1.0.0, )",
           "CompanionCore.Capture.Contracts": "[1.0.0, )",
           "CompanionCore.Orchestration": "[1.0.0, )",
@@ -172,6 +173,9 @@
         "dependencies": {
           "CompanionCore.Capture.Contracts": "[1.0.0, )"
         }
+      },
+      "companioncore.calibration": {
+        "type": "Project"
       },
       "companioncore.capture.client": {
         "type": "Project",

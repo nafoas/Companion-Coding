@@ -25,6 +25,8 @@ internal sealed class CompanionComposition : IAsyncDisposable
 
     private const string TestDataRootArgument = "--test-data-root=";
     private const string TestRunArgument = "--test-run=";
+    internal const string CalibrationArgument = "--calibration-log";
+    private const string CalibrationIntervalArgument = "--calibration-interval-ms=";
 
     private readonly DispatcherTimer _timer;
     private readonly InMemoryCredentialStore _credentials;
@@ -45,6 +47,9 @@ internal sealed class CompanionComposition : IAsyncDisposable
     public CompanionHost Host { get; }
 
     public WindowsPlatformSignals Platform { get; }
+
+    /// <summary>Present only when the App was started with <c>--calibration-log</c>.</summary>
+    public CalibrationSampler? Calibration { get; private set; }
 
     /// <summary>Tick failures contained so far (a failed tick never stops the timer).</summary>
     public long TickFailures { get; private set; }
@@ -101,6 +106,27 @@ internal sealed class CompanionComposition : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Stage 11 calibration: with <c>--calibration-log</c>, samples resource numbers and typed
+    /// states beside the memory root (privacy-safe and bounded). Otherwise does nothing.
+    /// </summary>
+    public void StartCalibration(IReadOnlyList<string> args, Capture.Contracts.ICaptureWorker worker)
+    {
+        if (Calibration is not null || !args.Contains(CalibrationArgument, StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var interval = int.TryParse(Argument(args, CalibrationIntervalArgument), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var milliseconds)
+            ? TimeSpan.FromMilliseconds(milliseconds)
+            : CalibrationSampler.DefaultInterval;
+        Calibration = new CalibrationSampler(
+            new Calibration.CalibrationRecorder(CalibrationSampler.DirectoryFor(Host.Location)),
+            Host,
+            worker,
+            interval);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
@@ -109,6 +135,11 @@ internal sealed class CompanionComposition : IAsyncDisposable
         }
 
         _disposed = true;
+        if (Calibration is not null)
+        {
+            await Calibration.DisposeAsync().ConfigureAwait(false);
+        }
+
         _timer.Stop();
         SystemEvents.SessionSwitch -= OnSessionSwitch;
         SystemEvents.PowerModeChanged -= OnPowerModeChanged;
