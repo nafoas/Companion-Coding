@@ -1,6 +1,6 @@
 # DEF-02 — Full-Resolution Keepsake Photographs
 
-Status: **active — gate review**
+Status: **accepted** — Paw Gate PASS; PR #53 squash-merged as `98ae435ff71ddb75d4a9e847d7520cd82966146f`
 Authorized: 2026-10-11 by Boss ("Once that is done, do the smaller deferred items, and then stop before stage 12").
 Accepted remote base: `48545775b664e5094117c1561a0d3927f813dc1d`
 Working branch: `agent/def-02-full-resolution-photographs`
@@ -96,7 +96,13 @@ The client's pinned slot is exercised only by the Windows process test.
 
 ## Paw Gate
 
-Pending.
+**PASS.**
+
+- **CI.** Head `d58807c499c1d4f213ff8ad5152ee1b37cb2c4bc` passed push run `38104142116` and PR run `38104151642` at 1002/1002, with verified artifacts.
+- **Real worker process on Windows.** `RequestPhotograph_ReturnsOneNativeResolutionPhotographOfTheActiveGrantOnly` executed and passed in both runs.
+- **Local.** The full gate is green: 985/985 on Linux, 0 warnings, 0 vulnerable packages.
+- **Merge ref.** Parents were exactly `4854577` and `d58807c`, and the tree equalled the head tree (`1c9f13a`).
+- **Merge.** Squash-merged through the expected-head fence.
 
 ## Deferred findings
 
