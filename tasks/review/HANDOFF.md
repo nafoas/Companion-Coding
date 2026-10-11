@@ -12,7 +12,7 @@ Builder: Claude.
 
 The Text Sniff, part 3 of Boss's Vision upgrade, merged through PR #69 as `86deb5f`. It passed 1123/1123 on Windows CI, where the real OCR engine was available. The packet is `tasks/archive/vis-03-text-sniff.md`.
 
-**Next safe task:** FIX-03, the test-only race in the platform exit test. Then VIS-04, the bundled local scene model.
+**FIX-03** (test-only race in the platform exit test) is in review on `agent/fix-03-exit-test-race`. **Next safe task:** VIS-04, the bundled local scene model.
 
 ## VIS-02 (accepted)
 

@@ -173,6 +173,20 @@
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
 
+### FIX-03 — The platform exit test sets the exit code before the exit
+
+- **Found during the VIS-03 gate.** Windows CI run `38169845132` (a VIS-03 WIP head) failed `WindowsPlatformSignalsTests.TheLoop_ObservesAnExit_AndDisposeIsIdempotent` with "Expected 3, Actual 0". VIS-03 touches no platform code.
+- **Cause: a test race.**
+  - The test wrote the fake probe's `State = Exited` before its `ExitCode = 3`.
+  - `WindowsPlatformSignals` polls on a background loop. Its first iteration polls at once when it is scheduled after `WatchTarget`, as can happen on a loaded runner. A poll between the two writes reports exit code 0.
+- **Fix (test-only).**
+  - The test writes the exit code first.
+  - `FakeProbe` fences its fields and reads them together under one lock, for the cross-thread poll.
+  - No product code, invariant, or assertion changed.
+- **Evidence.**
+  - Widening the gap between the writes with the loop already polling reproduced the CI failure exactly ("Expected 3, Actual 0"). The fixed order passed under the same timing.
+  - The platform suite passed 22/22 three times.
+
 ### FIX-02 — The orchestration test harness waits by the clock, not by poll count
 
 - **Found by** main CI run `38143070845` on `de2646a`: `ACrashLoop_NeverLosesOrDuplicatesMemory_AndKeepsOneLineage` threw "The orchestrator did not settle". It was the same unidentified local failure recorded in CORE-12.
