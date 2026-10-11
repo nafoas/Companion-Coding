@@ -18,6 +18,14 @@ Boss decided on 2026-10-11 that the agreed values are the accepted configuration
 - Real lock and sleep notifications. Forwarding is proven on CI; a real lock and suspend are unverified (WIRE-02 D4).
 - Minimized and exclusive-fullscreen capture. Unsupported without target-PC evidence.
 
+## Continuity rule (Boss, 2026-10-11)
+
+Prince is one unbroken line of continuous Bun:
+
+- Nothing restores, rolls back, or deletes his memories on its own.
+- Repair is opt-in and only continues his current line.
+- An older Vault export is never imported (closes DEF-01 D1).
+
 ## Needs Stage 12 (stop condition: credentials and live API)
 
 - The real remote semantic provider, protected key storage, and first live calls.
@@ -31,7 +39,6 @@ Boss decided on 2026-10-11 that the agreed values are the accepted configuration
 - Personality, final UI, animation, and audio (Deferred Paw Pile 3, 5, 6).
 - Multiple monitors (Deferred Paw Pile 1): one display is assumed; capture pauses otherwise.
 - Export, migration, and distribution of Prince to another PC (Deferred Paw Pile 7).
-- Importing a Vault export older than the live journal. That would accept losing later memories and needs Boss's decision (DEF-01 D1). The single-file export itself exists.
 
 ## Smaller deferred items
 

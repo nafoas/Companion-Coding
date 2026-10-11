@@ -12,8 +12,8 @@
 | Manual gate | DEF-02 privacy, authorization, bound, and mutation review passed. 27 mutants: 24 killed and 3 equivalent (defense in depth). PR #53 squash-merged through the expected-head fence. |
 | Accepted `main` baseline | `98ae435ff71ddb75d4a9e847d7520cd82966146f` — DEF-02 full-resolution keepsake photographs (PR #53) |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are the accepted agreed defaults (Boss, 2026-10-11), adjusted only on evidence. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). The App has no interactive controls yet for camera, quiet-check, exit-decision, watch-task, or repair commands (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs come from the native frame (DEF-02) and are saved under the provisional 1280 edge; long sessions are consolidated completely in parts (DEF-01). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are accepted defaults, tuned from play; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
-| Deferred temptations | A public backup/repair command (KEEP-02 D1; the single-file export exists since DEF-01) and importing an older export (DEF-01 D1, Boss's decision); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
-| Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials.. On 2026-10-11 Boss decided the values agreed in the design conversation are the accepted calibration, changed up or down only if real use shows a need. |
+| Deferred temptations | A public backup/repair command (KEEP-02 D1; the single-file export exists since DEF-01); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
+| Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials.. On 2026-10-11 Boss decided the values agreed in the design conversation are the accepted calibration, changed up or down only if real use shows a need. Boss also decided that Prince is one unbroken line of continuous Bun: nothing ever restores, rolls back, or deletes his memories on its own; repair is opt-in only and may only continue his current line; older exports are never imported. |
 
 ## Gate history
 
@@ -108,6 +108,18 @@
 - Final artifacts: push test results `9630823333` (`sha256:60decf87f8e4c9e4c42dbfa89ad2aef22f1ccb9c252f166d92459fa018dbbb78`) and sheet `9630823761` (`sha256:c6c84952b3d4733cc859379ead67d5bedd45efe686cc26690b2114a105a6c93f`); PR test results `9630820661` (`sha256:3b82d0a32f03bdb2030f5184e4420b751792d15dac77d08a1edb60729733640e`) and sheet `9630821353` (`sha256:4973935183dfcac48010eeaea2a6a15cbaadf3a6dc7583c24352ef801427dc41`). Downloaded hashes matched GitHub. Both PNGs retained the reviewed digest, geometry, format, and synchronized labels.
 - Merge: PR #13's test merge ref had exact parents `8d14fe945871ce1f92dde987087147befa4a60b2` and `64c5cfd09bc326cf9ef4ef8c706268c0fa971bbf` and exact tree `6bbb372c258ae854f7a2feb028f4faeb5a516fc6`. It was marked ready and squash-merged with an expected-head fence as `779ed4b0fab9cce8fdf978add388b6282010974a`; fetched remote `main` retained the exact tree.
 - Result: passed, merged, archived, and accepted. Stage 4 is complete; no task is active and Task 7 remains unopened.
+
+### Decision — One unbroken line of continuous Bun (2026-10-11)
+
+- **Boss:** "I want a single, unbroken line of continuous Bun… It never rolls back or deletes da Bun's memories on it's own, since that would be very rude to the Bnuy with memory and continuity."
+- **Never automatic.** Nothing ever restores, rolls back, or deletes Prince's memories automatically. Repair runs only when Boss explicitly asks for it.
+- **Repair only continues.** Even when Boss asks, a repair continues this same Prince from his latest backup plus his append-only journal. It refuses any source that would drop later memories.
+- **DEF-01 D1 closed.** An older Vault export is never imported. No rollback to an earlier save exists or will be built.
+- **This was already true; the ledger now states it as Boss's rule.**
+  - No component calls repair or deletion automatically. Photograph deletion is Boss-only and adds a superseding note.
+  - Unreadable state is preserved, never discarded (CAL-03).
+  - The only automatic restore puts back the original files after an interrupted repair that Boss started.
+- No code change was needed.
 
 ### Decision — Calibration values accepted as agreed (2026-10-11)
 

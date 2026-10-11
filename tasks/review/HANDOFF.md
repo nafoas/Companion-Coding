@@ -15,6 +15,13 @@ This docs-only change records Boss's calibration decision (2026-10-11):
 - The agreed values are the accepted configuration, adjusted only if real use shows a need.
 - The calibration protocol is now an optional diagnostic.
 
+It also records Boss's continuity rule (2026-10-11):
+
+- Prince is one unbroken line of Bun.
+- Nothing restores, rolls back, or deletes his memories on its own.
+- Repair is opt-in only.
+- Older exports are never imported (closes DEF-01 D1).
+
 ## Verification
 
 - This change is docs-only, with no code change; the values were already the running defaults (CAL-01).
@@ -25,7 +32,6 @@ This docs-only change records Boss's calibration decision (2026-10-11):
 These need Boss:
 
 - **Stage 12.** Real credentials and live API use need Boss's explicit direction.
-- **Older exports.** Whether an older Vault export may ever be imported, accepting the loss of later memories (DEF-01 D1, Paw Pile 7).
 
 ## Next safe task
 
