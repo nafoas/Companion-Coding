@@ -23,12 +23,31 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
     private Task _watchdogCleanup = Task.CompletedTask;
     private bool _disposed;
 
+    /// <summary>
+    /// The agreed local capture cadence (Design BunDex, provisional capture timing): Noticing
+    /// compares every 1–2 s and Investigating every 0.5–1 s; 1 s is the one spacing inside
+    /// both. Frames arriving sooner are released at once, so local comparison never runs at
+    /// the display's frame rate.
+    /// </summary>
+    internal static readonly TimeSpan AgreedLocalFrameSpacing = TimeSpan.FromSeconds(1);
+
+    private readonly TimeSpan _minimumFrameSpacing;
+    private DateTimeOffset? _lastOfferedFrame;
+    private long _spacedOutFrames;
+
     internal CaptureWorkerEngine(
         IWorkerCaptureSource source,
         CaptureFramePipeline? pipeline = null,
         ISystemClock? clock = null,
-        int maximumFrames = CaptureWorkerMetrics.MaximumSourceFrames)
+        int maximumFrames = CaptureWorkerMetrics.MaximumSourceFrames,
+        TimeSpan minimumFrameSpacing = default)
     {
+        if (minimumFrameSpacing < TimeSpan.Zero || minimumFrameSpacing > TimeSpan.FromMinutes(1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(minimumFrameSpacing));
+        }
+
+        _minimumFrameSpacing = minimumFrameSpacing;
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _clock = clock ?? SystemClock.Instance;
         _visual = new VisualObservationPipeline();
@@ -52,6 +71,9 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
 
     internal CaptureWorkerStatus Status => _status;
 
+    /// <summary>Frames released at arrival because they came sooner than the agreed spacing.</summary>
+    internal long SpacedOutFrames => Interlocked.Read(ref _spacedOutFrames);
+
     internal async Task StartAsync(
         CaptureIpcAuthorization authorization,
         CancellationToken cancellationToken)
@@ -68,6 +90,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             }
 
             _authorization = authorization;
+            _lastOfferedFrame = null;
             _visual.Reset();
             _watchdog.Reset();
             Interlocked.Exchange(ref _watchdogFaultPending, 0);
@@ -300,6 +323,17 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             return;
         }
 
+        if (_minimumFrameSpacing > TimeSpan.Zero
+            && _lastOfferedFrame is { } last
+            && frame.Timestamp >= last
+            && frame.Timestamp - last < _minimumFrameSpacing)
+        {
+            Interlocked.Increment(ref _spacedOutFrames);
+            frame.Dispose();
+            return;
+        }
+
+        _lastOfferedFrame = frame.Timestamp;
         frame.AssignSequence(Interlocked.Increment(ref _sequence));
         _pipeline.TryOffer(frame);
     }
@@ -324,6 +358,8 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
 
         if (change.ClearRetainedFrames)
         {
+            // The first frame after a reset (resize, stall, fault) is never spaced out.
+            _lastOfferedFrame = null;
             try
             {
                 _pipeline.Pause();

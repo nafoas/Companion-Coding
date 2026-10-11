@@ -14,7 +14,10 @@ internal static class Program
                 source,
                 maximumFrames: options.UseSyntheticSource
                     ? CompanionCore.Capture.Contracts.CaptureWorkerMetrics.MaximumSourceFrames
-                    : 2);
+                    : 2,
+                minimumFrameSpacing: options.UseSyntheticSource
+                    ? TimeSpan.Zero
+                    : CaptureWorkerEngine.AgreedLocalFrameSpacing);
             await using var host = new WorkerIpcHost(options, engine);
             return await host.RunAsync(CancellationToken.None).ConfigureAwait(false);
         }
