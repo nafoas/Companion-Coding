@@ -1,6 +1,6 @@
 # VIS-01 — The Sniff: fast local noticing within 100 ms (Vision upgrade, part 1)
 
-Status: **in review**
+Status: **accepted** — Paw Gate PASS; PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 Authorized: 2026-10-11 by Boss:
 
 - "he needs to see, notice, and respond, without an immersion killing delay … Glance ideally needs to be 100 ms or less, and happen frequently to catch even quick stuff … I want this done now, with greatly reduced latency. I have a strong PC, so allocate as much RAM is needed".
@@ -97,4 +97,11 @@ Local text reading (VIS-03) and the bundled local vision model (VIS-04) later ad
 
 ## Paw Gate
 
-_(pending CI)_
+**PASS.**
+
+- **CI.** Head `2c5baecee576e86ecb9351cdb7bcc922d24043d9` passed push run `38161132869` and PR run `38161148925` at 1076/1076 with verified artifacts.
+  - `SniffsCrossTheProcessBoundary_WithinTheHundredMillisecondBudget` passed on both runs: the real out-of-process worker on Windows, p95 ≤ 100 ms and max ≤ 250 ms.
+  - So did `ACadence_ReachesTheWorkerProcess_AndPacesItsLooking`.
+- **Local.** The full gate passed: 1058/1058, 0 warnings, no vulnerable packages.
+- **Merge ref.** Parents were exactly `3797652` and `2c5baec`, and the tree was equal.
+- **Merge.** Squash-merged through the expected-head fence.

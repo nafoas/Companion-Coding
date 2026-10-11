@@ -8,6 +8,12 @@ Builder: Claude.
 
 **Stage 12 is built and waits for Boss.**
 
+## VIS-01 (accepted)
+
+The Sniff, part 1 of Boss's Vision upgrade, merged through PR #65 as `2defb17`. It passed 1076/1076 on Windows CI, including the real-process sniff latency test (p95 ≤ 100 ms). The packet is `tasks/archive/vis-01-sniff-foundation.md`.
+
+**Next safe task:** VIS-02, Glance (Haiku, peripheral) and Inspect (focus). Then VIS-03 (local text reading) and VIS-04 (bundled local scene model).
+
 ## FIX-02 (accepted)
 
 Main CI on `de2646a` failed one crash-loop test whose settle wait gave up by poll count on a slow runner. The test-only fix (PR #63, `288c81f`) waits by wall clock and reports bridge diagnostics on timeout. It passed 1044/1044 on both CI runs. Ledger entry: FIX-02.

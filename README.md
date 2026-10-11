@@ -137,6 +137,15 @@ Boss's one-time setup and first live test are in `docs/Builder-Braincase-Setup.m
 
 **FIX-02** (PR #63) makes the orchestration test harness wait by wall clock instead of by poll count, and report bridge diagnostics if it ever times out. It fixes a crash-loop test that timed out on a loaded Windows runner. Test-only. Merged as `288c81f3373a6b2a170c655e1ade5590cb4e9da1`.
 
+**VIS-01** (PR #65) is the first part of Boss's Vision upgrade, the Sniff:
+
+- Every changed frame is read on Boss's PC within 100 ms, before any image work.
+- Prince looks 4 to 10 times a second, depending on his attention.
+- His attention moves at once, calmly: a looping animation habituates, and only understanding enters Bnuy Mode.
+- RAM budgets were raised, so 4K works.
+
+The Glance (Haiku, peripheral vision) and Inspect come next in VIS-02. Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
+
 Stage 12 is built and waits for Boss: first the live check, then the milestone hand-run and the Core Bun Approval Hop. Personality waits for Stage 13.
 
 ## Important boundaries

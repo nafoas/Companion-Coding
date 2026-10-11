@@ -8,8 +8,8 @@ Boss decided on 2026-10-11 that the agreed values are the accepted configuration
 
 | Item | Status | If it needs to change |
 |---|---|---|
-| Resource bounds (64 MB ring, at most 3 frames, 1 vision request, worker growth watchdog) | Accepted as agreed | Run the protocol on the symptom; adjust that bound (CAL-02 D1) |
-| Local cadence (1 s, inside Noticing 1–2 s and Investigating 0.5–1 s) | Accepted as agreed | A state-aware split if CPU or responsiveness calls for it (CAL-01 D1) |
+| Resource bounds (512 MB ring and 256 MB visual working memory, raised by Boss for VIS-01; at most 3 frames; 1 vision request; worker growth watchdog) | Accepted | Run the protocol on the symptom; adjust that bound (CAL-02 D1) |
+| Local cadence (VIS-01: Noticing 250 ms, Engaged 150 ms, Bnuy Mode 100 ms; the Sniff ≤100 ms on CI) | Accepted (Boss, 2026-10-11) | Tune from play; Glance and Inspect tiers follow in VIS-02 |
 | Semantic cadence (Noticing 12 s, Engaged 6 s, Bnuy Mode floor 3 s) and Watchbun hours | Accepted as agreed | Tune from play |
 | Attention, conversation, transcript, recall, and Watchbun numeric tuning | Behavior settled; defaults in force | Tune from play |
 
