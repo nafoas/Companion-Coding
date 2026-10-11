@@ -4,6 +4,7 @@
     <Project Path="src/CompanionCore.App/CompanionCore.App.csproj" />
     <Project Path="src/CompanionCore.Attention/CompanionCore.Attention.csproj" />
     <Project Path="src/CompanionCore.Capture.Contracts/CompanionCore.Capture.Contracts.csproj" />
+    <Project Path="src/CompanionCore.Braincase.Anthropic/CompanionCore.Braincase.Anthropic.csproj" />
     <Project Path="src/CompanionCore.Calibration/CompanionCore.Calibration.csproj" />
     <Project Path="src/CompanionCore.Capture.Client/CompanionCore.Capture.Client.csproj" />
     <Project Path="src/CompanionCore.Capture.Fake/CompanionCore.Capture.Fake.csproj" />

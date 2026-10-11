@@ -17,6 +17,12 @@ public enum ProviderUnavailableReason
     LiveCallsDisabled = 3,
     FixturesUnavailable = 4,
     NoMatchingFixture = 5,
+
+    /// <summary>The provider refused the configured credential (unauthorized or forbidden).</summary>
+    CredentialsRejected = 6,
+
+    /// <summary>The provider refused the request itself; retrying the same request cannot help.</summary>
+    RequestRejected = 7,
 }
 
 /// <summary>

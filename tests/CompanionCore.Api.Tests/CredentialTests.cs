@@ -259,6 +259,10 @@ public sealed class CredentialTests
             "System.Net.WebSockets.Client",
             "System.Net.Security",
             "System.Net.Quic",
+
+            // The live Claude adapter lives in its own assembly (LIVE-01); the bridge never references it.
+            "Anthropic",
+            "CompanionCore.Braincase.Anthropic",
         ];
         var assemblies = new[]
         {
