@@ -1,6 +1,6 @@
 # LIVE-02 — Sign-in, Dollar Bun Budget, Composition, and First-Run Check (Stage 12, part 2)
 
-Status: **active — gate review**
+Status: **accepted** — Paw Gate PASS; PR #59 squash-merged as `f3115ef1087b9b80df65184201e601f84627fa05`
 Authorized: 2026-10-11 by Boss ("This is just for the Builder Bnuy, just put the key somewhere convenient. Dollars per day works … Tell me when you need me, until then you can work").
 Accepted remote base: `e8d3d7ebd46f2d7ff80ce671dc6aa58d30aa2fbe`
 Working branch: `agent/live-02-signin-budget`
@@ -89,7 +89,12 @@ Four of these were first survivors, killed after the tests were strengthened.
 
 ## Paw Gate
 
-Pending.
+**PASS.**
+
+- **CI.** Head `5a409867252b320ad2cd34a4ff3745be436a8881` passed push run `38140597709` and PR run `38140609683` at 1042/1042, with verified artifacts. That count includes the Windows App integration tests with the new composition.
+- **Local.** The full gate passed: 1025/1025 on Linux, 0 warnings, and no vulnerable packages.
+- **Merge ref.** Parents were exactly `e8d3d7e` and `5a40986`, and the tree equalled the head tree (`5c6ee24`).
+- **Merge.** Squash-merged through the expected-head fence.
 
 ## Deferred findings
 
