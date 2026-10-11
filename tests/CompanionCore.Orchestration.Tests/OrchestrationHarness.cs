@@ -99,6 +99,65 @@ internal sealed class ScriptedCaptureWorker : ICaptureWorker
 
     public event EventHandler<AttentionSheetMetadata>? AttentionSheetProduced;
 
+    public event EventHandler<SniffSignal>? SniffProduced;
+
+    /// <summary>Every cadence the orchestrator set, in order.</summary>
+    public List<CaptureCadence> Cadences { get; } = [];
+
+    public Task SetCadenceAsync(CaptureAuthorizationGrant authorization, CaptureCadence cadence, CancellationToken cancellationToken)
+    {
+        if (Status != CaptureWorkerStatus.Running || !ReferenceEquals(authorization, _grant) || !cadence.IsValid)
+        {
+            return Task.FromException(new InvalidOperationException("Grant is not active."));
+        }
+
+        lock (Cadences)
+        {
+            Cadences.Add(cadence);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Emits one local Sniff for the current grant, like the real worker does before sheet work.</summary>
+    public SniffSignal EmitSniff(
+        DateTimeOffset timestamp,
+        double hotChange = 0.3,
+        double motion = 0.1,
+        int hotCell = 20,
+        bool sceneCut = false,
+        AttentionRegionKind kind = AttentionRegionKind.CenterEnvironment,
+        CaptureAuthorizationGrant? grant = null)
+    {
+        var authorization = grant ?? _grant ?? throw new InvalidOperationException("No grant.");
+        var column = hotCell % SniffSignal.GridColumns;
+        var row = hotCell / SniffSignal.GridColumns;
+        var sniff = new SniffSignal
+        {
+            TargetSessionId = authorization.TargetSessionId,
+            Generation = authorization.Generation,
+            Target = authorization.Target,
+            SourceSequenceNumber = Interlocked.Increment(ref _sequence),
+            SourceTimestamp = timestamp,
+            SourceWidth = SourceWidth,
+            SourceHeight = SourceHeight,
+            SourceAccountedBytes = (long)SourceWidth * SourceHeight * 4,
+            Change = Math.Min(hotChange, motion),
+            HotChange = hotChange,
+            Motion = motion,
+            SceneCut = sceneCut,
+            HotRegion = new NormalizedRegion(
+                column / (double)SniffSignal.GridColumns,
+                row / (double)SniffSignal.GridRows,
+                1d / SniffSignal.GridColumns,
+                1d / SniffSignal.GridRows),
+            HotRegionKind = kind,
+            HotCell = hotCell,
+        };
+        SniffProduced?.Invoke(this, sniff);
+        return sniff;
+    }
+
     public Task StartAsync(CaptureAuthorizationGrant authorization, CancellationToken cancellationToken)
     {
         _grant = authorization;

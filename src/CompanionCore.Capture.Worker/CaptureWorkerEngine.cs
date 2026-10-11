@@ -24,14 +24,16 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
     private bool _disposed;
 
     /// <summary>
-    /// The agreed local capture cadence (Design BunDex, provisional capture timing): Noticing
-    /// compares every 1–2 s and Investigating every 0.5–1 s; 1 s is the one spacing inside
-    /// both. Frames arriving sooner are released at once, so local comparison never runs at
-    /// the display's frame rate.
+    /// The default local cadence before Prince's attention sets one: Noticing, four looks a
+    /// second (VIS-01; Boss, 2026-10-11, "happen frequently to catch even quick stuff").
+    /// Frames arriving sooner are released at once, so the Sniff never runs at the
+    /// display's frame rate.
     /// </summary>
-    internal static readonly TimeSpan AgreedLocalFrameSpacing = TimeSpan.FromSeconds(1);
+    internal static readonly CaptureCadence DefaultCadence = CaptureCadence.Noticing;
 
-    private readonly TimeSpan _minimumFrameSpacing;
+    private readonly TimeSpan _initialFrameSpacing;
+    private readonly TimeSpan _initialSheetSpacing;
+    private long _frameSpacingTicks;
     private DateTimeOffset? _lastOfferedFrame;
     private long _spacedOutFrames;
 
@@ -40,17 +42,26 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         CaptureFramePipeline? pipeline = null,
         ISystemClock? clock = null,
         int maximumFrames = CaptureWorkerMetrics.MaximumSourceFrames,
-        TimeSpan minimumFrameSpacing = default)
+        TimeSpan minimumFrameSpacing = default,
+        TimeSpan sheetSpacing = default)
     {
         if (minimumFrameSpacing < TimeSpan.Zero || minimumFrameSpacing > TimeSpan.FromMinutes(1))
         {
             throw new ArgumentOutOfRangeException(nameof(minimumFrameSpacing));
         }
 
-        _minimumFrameSpacing = minimumFrameSpacing;
+        if (sheetSpacing < TimeSpan.Zero || sheetSpacing > CaptureCadence.MaximumSheetSpacing)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sheetSpacing));
+        }
+
+        _initialFrameSpacing = minimumFrameSpacing;
+        _initialSheetSpacing = sheetSpacing;
+        _frameSpacingTicks = minimumFrameSpacing.Ticks;
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _clock = clock ?? SystemClock.Instance;
         _visual = new VisualObservationPipeline();
+        _visual.SetSheetSpacing(sheetSpacing);
         _watchdog = new CaptureResourceWatchdog();
         _pipeline = pipeline ?? new CaptureFramePipeline(
             _clock,
@@ -67,12 +78,19 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
 
     internal event EventHandler<OwnedWorkerAttentionSheet>? AttentionSheetProduced;
 
+    /// <summary>Raised for every sniff, before its frame's sheet work (VIS-01).</summary>
+    internal event EventHandler<SniffSignal>? SniffProduced;
+
     internal event EventHandler? VisualStateReset;
 
     internal CaptureWorkerStatus Status => _status;
 
     /// <summary>Frames released at arrival because they came sooner than the agreed spacing.</summary>
     internal long SpacedOutFrames => Interlocked.Read(ref _spacedOutFrames);
+
+    internal TimeSpan FrameSpacing => TimeSpan.FromTicks(Interlocked.Read(ref _frameSpacingTicks));
+
+    internal TimeSpan SheetSpacing => _visual.SheetSpacing;
 
     internal async Task StartAsync(
         CaptureIpcAuthorization authorization,
@@ -91,6 +109,8 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
 
             _authorization = authorization;
             _lastOfferedFrame = null;
+            Interlocked.Exchange(ref _frameSpacingTicks, _initialFrameSpacing.Ticks);
+            _visual.SetSheetSpacing(_initialSheetSpacing);
             _visual.Reset();
             _watchdog.Reset();
             Interlocked.Exchange(ref _watchdogFaultPending, 0);
@@ -207,6 +227,11 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             MaximumObservedVisualWorkingBytes = visual.MaximumWorkingBytes,
             LastChangeScore = visual.LastChangeScore,
             ResourceWatchdogTrips = Interlocked.Read(ref _watchdogTrips),
+            Sniffs = visual.Sniffs,
+            LastSniffMicroseconds = visual.LastSniffMicroseconds,
+            MaximumSniffMicroseconds = visual.MaximumSniffMicroseconds,
+            FrameSpacing = Clamp(FrameSpacing, CaptureCadence.MaximumFrameSpacing),
+            SheetSpacing = Clamp(SheetSpacing, CaptureCadence.MaximumSheetSpacing),
         };
         EvaluateWatchdog(metrics);
         return metrics with
@@ -290,6 +315,42 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
     }
 
     /// <summary>
+    /// Sets how often the worker looks and composes sheets, from Prince's attention state.
+    /// It requires the active grant; the next frame already follows the new spacing.
+    /// </summary>
+    internal async Task SetCadenceAsync(
+        CaptureIpcAuthorization authorization,
+        CaptureCadence cadence,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(authorization);
+        ArgumentNullException.ThrowIfNull(cadence);
+        if (!cadence.IsValid)
+        {
+            throw new ArgumentOutOfRangeException(nameof(cadence));
+        }
+
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_status != CaptureWorkerStatus.Running
+                || _authorization is null
+                || !_authorization.Matches(authorization))
+            {
+                throw new InvalidOperationException("The cadence does not match the active capture grant.");
+            }
+
+            Interlocked.Exchange(ref _frameSpacingTicks, cadence.FrameSpacing.Ticks);
+            _visual.SetSheetSpacing(cadence.SheetSpacing);
+        }
+        finally
+        {
+            _operationLock.Release();
+        }
+    }
+
+    /// <summary>
     /// Arms one photograph for the active grant: the next usable frame becomes a
     /// native-resolution photograph sheet. Only the authorized target is ever used, and
     /// any reset (stop, resize, fault, new grant) disarms it.
@@ -356,10 +417,12 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             return;
         }
 
-        if (_minimumFrameSpacing > TimeSpan.Zero
+        frame.MarkArrived();
+        var spacing = FrameSpacing;
+        if (spacing > TimeSpan.Zero
             && _lastOfferedFrame is { } last
             && frame.Timestamp >= last
-            && frame.Timestamp - last < _minimumFrameSpacing)
+            && frame.Timestamp - last < spacing)
         {
             Interlocked.Increment(ref _spacedOutFrames);
             frame.Dispose();
@@ -446,7 +509,7 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         var visualCompleted = false;
         try
         {
-            sheet = await _visual.ProcessAsync(frame, authorization, cancellationToken)
+            sheet = await _visual.ProcessAsync(frame, authorization, PublishSniff, cancellationToken)
                 .ConfigureAwait(false);
             visualCompleted = true;
             if (sheet is null)
@@ -492,6 +555,27 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
         }
     }
 
+    private void PublishSniff(SniffSignal sniff)
+    {
+        var current = Volatile.Read(ref _authorization);
+        if (_status != CaptureWorkerStatus.Running
+            || current is null
+            || current.TargetSessionId != sniff.TargetSessionId
+            || current.Generation != sniff.Generation)
+        {
+            return;
+        }
+
+        try
+        {
+            SniffProduced?.Invoke(this, sniff);
+        }
+        catch (Exception)
+        {
+            // A transport failure never stalls sheet work; the sheet path reports drops.
+        }
+    }
+
     private CaptureWorkerMetrics GetMetricsWithoutWatchdog()
     {
         using var process = Process.GetCurrentProcess();
@@ -533,8 +617,15 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             MaximumObservedVisualWorkingBytes = visual.MaximumWorkingBytes,
             LastChangeScore = visual.LastChangeScore,
             ResourceWatchdogTrips = Interlocked.Read(ref _watchdogTrips),
+            Sniffs = visual.Sniffs,
+            LastSniffMicroseconds = visual.LastSniffMicroseconds,
+            MaximumSniffMicroseconds = visual.MaximumSniffMicroseconds,
+            FrameSpacing = Clamp(FrameSpacing, CaptureCadence.MaximumFrameSpacing),
+            SheetSpacing = Clamp(SheetSpacing, CaptureCadence.MaximumSheetSpacing),
         };
     }
+
+    private static TimeSpan Clamp(TimeSpan value, TimeSpan maximum) => value > maximum ? maximum : value;
 
     private void EvaluateWatchdog(CaptureWorkerMetrics metrics)
     {

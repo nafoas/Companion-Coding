@@ -36,6 +36,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         _engine.FrameProduced += OnFrameProduced;
         _engine.StatusChanged += OnStatusChanged;
         _engine.AttentionSheetProduced += OnAttentionSheetProduced;
+        _engine.SniffProduced += OnSniffProduced;
     }
 
     internal async Task<int> RunAsync(CancellationToken cancellationToken)
@@ -216,6 +217,17 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
                     await SendSuccessAsync(command, cancellationToken).ConfigureAwait(false);
                     return false;
 
+                case CaptureIpcMessageKind.SetCadence:
+                    if (command.Authorization is null || command.Cadence is null)
+                    {
+                        throw new CaptureProtocolException(CaptureWorkerErrorCode.InvalidAuthorization);
+                    }
+
+                    await _engine.SetCadenceAsync(command.Authorization, command.Cadence, cancellationToken)
+                        .ConfigureAwait(false);
+                    await SendSuccessAsync(command, cancellationToken).ConfigureAwait(false);
+                    return false;
+
                 case CaptureIpcMessageKind.Shutdown:
                     if (_engine.Status != CaptureWorkerStatus.Stopped)
                     {
@@ -260,15 +272,21 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
                 CaptureIpcMessageKind.Start
                 or CaptureIpcMessageKind.SetManualRegion
                 or CaptureIpcMessageKind.RequestOrientation
-                or CaptureIpcMessageKind.RequestPhotograph)
+                or CaptureIpcMessageKind.RequestPhotograph
+                or CaptureIpcMessageKind.SetCadence)
             ? command.Authorization is not null
             : command.Authorization is null;
+        var cadenceShapeIsValid = command.Kind == CaptureIpcMessageKind.SetCadence
+            ? command.Cadence is { IsValid: true }
+            : command.Cadence is null;
         var manualShapeIsValid = command.Kind == CaptureIpcMessageKind.SetManualRegion
             ? command.ClearManualRegion != command.ManualRegion.HasValue
                 && (command.ManualRegion is null || command.ManualRegion.Value.IsValid)
             : command.ManualRegion is null && !command.ClearManualRegion;
         if (!authorizationShapeIsValid
             || !manualShapeIsValid
+            || !cadenceShapeIsValid
+            || command.Sniff is not null
             || command.Kind is not (
                 CaptureIpcMessageKind.Start
                 or CaptureIpcMessageKind.Stop
@@ -277,6 +295,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
                 or CaptureIpcMessageKind.SetManualRegion
                 or CaptureIpcMessageKind.RequestOrientation
                 or CaptureIpcMessageKind.RequestPhotograph
+                or CaptureIpcMessageKind.SetCadence
                 or CaptureIpcMessageKind.Shutdown)
             || command.HandshakeNonce is not null
             || command.SequenceNumber != 0
@@ -322,6 +341,33 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
             Width = frame.Width,
             Height = frame.Height,
             AccountedBytes = frame.AccountedBytes,
+        });
+    }
+
+    private void OnSniffProduced(object? sender, SniffSignal sniff)
+    {
+        var target = sniff.Target;
+        if (target is null)
+        {
+            return;
+        }
+
+        // Sniffs ride the ordered notification channel behind their frame's FrameProduced,
+        // so the consumer always admits the frame first.
+        _notifications.Writer.TryWrite(new CaptureIpcMessage
+        {
+            Kind = CaptureIpcMessageKind.SniffProduced,
+            Authorization = new CaptureIpcAuthorization
+            {
+                TargetSessionId = sniff.TargetSessionId,
+                Generation = sniff.Generation,
+                WindowId = target.WindowId,
+                ProcessId = target.ProcessId,
+                ExecutableFileName = target.ExecutableFileName,
+                ExecutablePathFingerprint = target.ExecutablePathFingerprint,
+            },
+            SequenceNumber = sniff.SourceSequenceNumber,
+            Sniff = sniff,
         });
     }
 
@@ -422,7 +468,9 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
     }
 
     private static bool HasVisualPayloadFields(CaptureIpcMessage message) =>
-        message.ManualRegion is not null
+        message.Sniff is not null
+        || message.Cadence is not null
+        || message.ManualRegion is not null
         || message.ClearManualRegion
         || message.AttentionSheet is not null
         || message.PayloadLength != 0
@@ -439,6 +487,7 @@ internal sealed class WorkerIpcHost : IAsyncDisposable
         _engine.FrameProduced -= OnFrameProduced;
         _engine.StatusChanged -= OnStatusChanged;
         _engine.AttentionSheetProduced -= OnAttentionSheetProduced;
+        _engine.SniffProduced -= OnSniffProduced;
         _notifications.Writer.TryComplete();
         _lifetime.Cancel();
         if (_notificationWriter is not null)

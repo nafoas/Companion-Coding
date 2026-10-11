@@ -30,11 +30,29 @@ internal sealed class VisualObservationPipeline : IDisposable
     private long _currentWorkingBytes;
     private long _maximumWorkingBytes;
     private double _lastChangeScore;
+    private long _sniffs;
+    private long _spacedSheets;
+    private long _lastSniffMicroseconds;
+    private long _maximumSniffMicroseconds;
+    private TimeSpan _sheetSpacing;
+    private DateTimeOffset? _lastRegionalSheetAt;
     private bool _disposed;
 
+    internal ValueTask<OwnedWorkerAttentionSheet?> ProcessAsync(
+        CaptureSourceFrame frame,
+        CaptureIpcAuthorization authorization,
+        CancellationToken cancellationToken) =>
+        ProcessAsync(frame, authorization, onSniff: null, cancellationToken);
+
+    /// <summary>
+    /// Sniffs the frame first — before any sheet work, so noticing never waits on
+    /// composition or encoding — then composes a sheet only when one is owed: an
+    /// orientation, a photograph, a forced sheet, a sniff trigger, or the sheet spacing.
+    /// </summary>
     internal async ValueTask<OwnedWorkerAttentionSheet?> ProcessAsync(
         CaptureSourceFrame frame,
         CaptureIpcAuthorization authorization,
+        Action<SniffSignal>? onSniff,
         CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -78,9 +96,11 @@ internal sealed class VisualObservationPipeline : IDisposable
             SetWorkingBytes(pixels.ByteLength);
             IReadOnlyList<VisualRegion> regions = [];
             FrameChangeResult change = default;
+            SniffSignal? sniff = null;
+            var sheetOwed = true;
             lock (_gate)
             {
-                if (_currentSheets >= AttentionSheet.MaximumRetainedSheets)
+                if (_photographPending && _currentSheets >= AttentionSheet.MaximumRetainedSheets)
                 {
                     _droppedSheets++;
                     return null;
@@ -113,12 +133,59 @@ internal sealed class VisualObservationPipeline : IDisposable
                     }
 
                     _changedFrames++;
-                    stateVersion = _stateVersion;
-                    stateCaptured = true;
-                    regions = orientation ? [] : _scheduler.TakeNext(_manualRegion);
-                    _orientationPending = false;
-                    _forceNextSheet = false;
+                    if (change.Grid is { } grid && !orientation)
+                    {
+                        sniff = BuildSniff(frame, authorization, grid);
+                        _sniffs++;
+                    }
+
+                    var trigger = sniff?.IsTrigger == true;
+                    var spacingElapsed = _lastRegionalSheetAt is not { } lastSheet
+                        || frame.Timestamp < lastSheet
+                        || frame.Timestamp - lastSheet >= _sheetSpacing;
+                    sheetOwed = orientation || _forceNextSheet || trigger || spacingElapsed;
+                    if (sheetOwed && _currentSheets >= AttentionSheet.MaximumRetainedSheets)
+                    {
+                        _droppedSheets++;
+                        sheetOwed = false;
+                    }
+
+                    if (sheetOwed)
+                    {
+                        stateVersion = _stateVersion;
+                        stateCaptured = true;
+                        regions = orientation
+                            ? []
+                            : _scheduler.TakeNext(_manualRegion, trigger ? FocusOn(sniff!) : null);
+                        _orientationPending = false;
+                        _forceNextSheet = false;
+                        if (!orientation)
+                        {
+                            _lastRegionalSheetAt = frame.Timestamp;
+                        }
+                    }
+                    else
+                    {
+                        _spacedSheets++;
+                    }
                 }
+            }
+
+            if (sniff is not null)
+            {
+                sniff = sniff with { ComputeMicroseconds = ElapsedMicroseconds(frame) };
+                lock (_gate)
+                {
+                    _lastSniffMicroseconds = sniff.ComputeMicroseconds;
+                    _maximumSniffMicroseconds = Math.Max(_maximumSniffMicroseconds, sniff.ComputeMicroseconds);
+                }
+
+                onSniff?.Invoke(sniff);
+            }
+
+            if (!photograph && !sheetOwed)
+            {
+                return null;
             }
 
             if (photograph)
@@ -358,6 +425,78 @@ internal sealed class VisualObservationPipeline : IDisposable
         return target;
     }
 
+    /// <summary>How often an ordinary changed frame becomes a regional sheet; a trigger never waits.</summary>
+    internal void SetSheetSpacing(TimeSpan spacing)
+    {
+        if (spacing < TimeSpan.Zero || spacing > CaptureCadence.MaximumSheetSpacing)
+        {
+            throw new ArgumentOutOfRangeException(nameof(spacing));
+        }
+
+        lock (_gate)
+        {
+            _sheetSpacing = spacing;
+        }
+    }
+
+    internal TimeSpan SheetSpacing
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _sheetSpacing;
+            }
+        }
+    }
+
+    private static SniffSignal BuildSniff(
+        CaptureSourceFrame frame,
+        CaptureIpcAuthorization authorization,
+        SniffGrid grid) => new()
+    {
+        TargetSessionId = authorization.TargetSessionId,
+        Generation = authorization.Generation,
+        Target = new CaptureTargetIdentity(
+            authorization.WindowId,
+            authorization.ProcessId,
+            authorization.ExecutableFileName,
+            authorization.ExecutablePathFingerprint),
+        SourceSequenceNumber = frame.SequenceNumber,
+        SourceTimestamp = frame.Timestamp,
+        SourceWidth = frame.Width,
+        SourceHeight = frame.Height,
+        SourceAccountedBytes = frame.AccountedBytes,
+        Change = grid.Change,
+        HotChange = grid.HotChange,
+        Motion = grid.Motion,
+        SceneCut = grid.SceneCut,
+        HotRegion = grid.HotRegion,
+        HotRegionKind = VisualRegionLayout.NearestKind(grid.HotRegion),
+        HotCell = grid.HotCell,
+    };
+
+    /// <summary>A triggered sheet looks straight at the hot region, padded by half a cell.</summary>
+    private static VisualRegion FocusOn(SniffSignal sniff)
+    {
+        const double padX = 0.5 / SniffSignal.GridColumns;
+        const double padY = 0.5 / SniffSignal.GridRows;
+        var hot = sniff.HotRegion;
+        var x = Math.Max(0, hot.X - padX);
+        var y = Math.Max(0, hot.Y - padY);
+        var right = Math.Min(1, hot.X + hot.Width + padX);
+        var bottom = Math.Min(1, hot.Y + hot.Height + padY);
+        return new VisualRegion(sniff.HotRegionKind, new NormalizedRegion(x, y, right - x, bottom - y));
+    }
+
+    private static long ElapsedMicroseconds(CaptureSourceFrame frame) =>
+        frame.ArrivedAtTimestamp == 0
+            ? 0
+            : Math.Clamp(
+                (long)System.Diagnostics.Stopwatch.GetElapsedTime(frame.ArrivedAtTimestamp).TotalMicroseconds,
+                0,
+                SniffSignal.MaximumComputeMicroseconds);
+
     internal void SetManualRegion(NormalizedRegion? region)
     {
         region?.Validate(nameof(region));
@@ -423,6 +562,7 @@ internal sealed class VisualObservationPipeline : IDisposable
             _photographPending = false;
             _forceNextSheet = false;
             _lastChangeScore = 0;
+            _lastRegionalSheetAt = null;
             _stateVersion = checked(_stateVersion + 1);
         }
     }
@@ -462,7 +602,11 @@ internal sealed class VisualObservationPipeline : IDisposable
                 _maximumSheetBytes,
                 _currentWorkingBytes,
                 _maximumWorkingBytes,
-                _lastChangeScore);
+                _lastChangeScore,
+                _sniffs,
+                _spacedSheets,
+                _lastSniffMicroseconds,
+                _maximumSniffMicroseconds);
         }
     }
 
@@ -582,4 +726,8 @@ internal readonly record struct VisualObservationMetrics(
     long MaximumSheetBytes,
     long CurrentWorkingBytes,
     long MaximumWorkingBytes,
-    double LastChangeScore);
+    double LastChangeScore,
+    long Sniffs = 0,
+    long SpacedSheets = 0,
+    long LastSniffMicroseconds = 0,
+    long MaximumSniffMicroseconds = 0);

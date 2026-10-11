@@ -6,8 +6,10 @@ namespace CompanionCore.Capture.Contracts;
 /// </summary>
 public sealed record CaptureWorkerMetrics
 {
-    public const long ScreenshotBudgetBytes = 64L * 1024 * 1024;
-    public const long VisualWorkingBudgetBytes = 64L * 1024 * 1024;
+    // Raised by Boss on 2026-10-11 ("I have a strong PC, so allocate as much RAM is
+    // needed"): 4K and larger frames fit, and nothing is retained beyond the frame cap.
+    public const long ScreenshotBudgetBytes = 512L * 1024 * 1024;
+    public const long VisualWorkingBudgetBytes = 256L * 1024 * 1024;
     public const int MaximumSourceFrames = 3;
 
     public int WorkerProcessId { get; init; }
@@ -78,6 +80,16 @@ public sealed record CaptureWorkerMetrics
 
     public long ResourceWatchdogTrips { get; init; }
 
+    public long Sniffs { get; init; }
+
+    public long LastSniffMicroseconds { get; init; }
+
+    public long MaximumSniffMicroseconds { get; init; }
+
+    public TimeSpan FrameSpacing { get; init; }
+
+    public TimeSpan SheetSpacing { get; init; }
+
     public static CaptureWorkerMetrics Empty { get; } = new();
 
     public bool IsProtocolSafe() =>
@@ -125,5 +137,13 @@ public sealed record CaptureWorkerMetrics
         && CurrentVisualWorkingBytes <= MaximumObservedVisualWorkingBytes
         && double.IsFinite(LastChangeScore)
         && LastChangeScore is >= 0 and <= 1
-        && ResourceWatchdogTrips >= 0;
+        && ResourceWatchdogTrips >= 0
+        && Sniffs >= 0
+        && LastSniffMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
+        && MaximumSniffMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
+        && LastSniffMicroseconds <= MaximumSniffMicroseconds
+        && FrameSpacing >= TimeSpan.Zero
+        && FrameSpacing <= CaptureCadence.MaximumFrameSpacing
+        && SheetSpacing >= TimeSpan.Zero
+        && SheetSpacing <= CaptureCadence.MaximumSheetSpacing;
 }

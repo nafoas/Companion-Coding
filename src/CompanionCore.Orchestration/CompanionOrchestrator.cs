@@ -38,7 +38,26 @@ public sealed record OrchestratorSnapshot(
     bool BridgeInFlight,
     IReadOnlyList<string> UnconsolidatedSessions,
     long Faults,
-    Guid ConversationLineage);
+    Guid ConversationLineage)
+{
+    /// <summary>The local Sniff reflex: counts and arrival latency (VIS-01).</summary>
+    public SniffDiagnostics Sniff { get; init; } = SniffDiagnostics.Empty;
+}
+
+/// <summary>
+/// The Sniff reflex at a glance. Latency is measured from the worker's frame timestamp to
+/// the moment the reflex applied the sniff (same machine, same wall clock).
+/// </summary>
+public sealed record SniffDiagnostics(
+    long Received,
+    long Forwarded,
+    long Suppressed,
+    TimeSpan LastLatency,
+    TimeSpan MaximumLatency,
+    TimeSpan Percentile95Latency)
+{
+    public static SniffDiagnostics Empty { get; } = new(0, 0, 0, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero);
+}
 
 /// <summary>
 /// The one composition of every accepted subsystem. A single-consumer mailbox serializes
@@ -80,6 +99,10 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private DateTimeOffset _lastPersist;
     private long _faults;
     private int _disposed;
+    private readonly object _publishGate = new();
+    private readonly LatencyWindow _sniffLatency = new(256);
+    private long _sniffsReceived;
+    private bool _sniffTriggerPending;
 
     public CompanionOrchestrator(CompanionComponents components, OrchestratorOptions? options = null)
     {
@@ -113,6 +136,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
         _c.Controller.SessionEvent += OnSessionEvent;
         _c.Controller.AttentionSheetAvailable += OnSheetAvailable;
+        _c.Controller.SniffAvailable += OnSniffAvailable;
         if (_c.Platform is { } platform)
         {
             platform.ForegroundChanged += OnForeground;
@@ -146,9 +170,28 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             _bridgeInFlight,
             [.. _watchbunSessions],
             Interlocked.Read(ref _faults),
-            _conversation.Checkpoint().CoordinatorId)));
+            _conversation.Checkpoint().CoordinatorId)
+        {
+            Sniff = SniffSnapshot(),
+        }));
+
+    private SniffDiagnostics SniffSnapshot()
+    {
+        var reflex = Volatile.Read(ref _session)?.Reflex;
+        var (last, maximum, p95) = _sniffLatency.Snapshot();
+        return new SniffDiagnostics(
+            Interlocked.Read(ref _sniffsReceived),
+            reflex?.Forwarded ?? 0,
+            reflex?.Suppressed ?? 0,
+            last,
+            maximum,
+            p95);
+    }
 
     public long Faults => Interlocked.Read(ref _faults);
+
+    /// <summary>Runs <paramref name="work"/> on the mailbox (tests: occupy it to prove the reflex never waits).</summary>
+    internal Task InvokeOnMailboxAsync(Func<Task> work) => InvokeAsync(work);
 
     /// <summary>
     /// Single-file Da Bun Vault export: a fresh Vault backup, then one verified file at
@@ -257,6 +300,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
         _c.Controller.SessionEvent -= OnSessionEvent;
         _c.Controller.AttentionSheetAvailable -= OnSheetAvailable;
+        _c.Controller.SniffAvailable -= OnSniffAvailable;
         if (_c.Platform is { } platform)
         {
             platform.ForegroundChanged -= OnForeground;
@@ -359,7 +403,11 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     {
         try
         {
-            Notice?.Invoke(this, notice);
+            // The reflex lane publishes from the sniff thread; one notice at a time.
+            lock (_publishGate)
+            {
+                Notice?.Invoke(this, notice);
+            }
         }
         catch (Exception exception)
         {
@@ -371,6 +419,137 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private DateTimeOffset Now() => _c.Time.GetUtcNow();
 
     // ---- event entry points (post only; nothing runs on the caller's thread) ---------
+
+    /// <summary>
+    /// The reflex lane (VIS-01). Runs on the capture client's sniff thread inside the
+    /// privacy admission lease: the thread-safe attention engine observes the sniff and its
+    /// Attention notices are published at once, never waiting behind the mailbox (which
+    /// may be busy with disk work). Conversation and cadence consequences are posted.
+    /// </summary>
+    private void OnSniffAvailable(object? sender, SniffSignal sniff)
+    {
+        Interlocked.Increment(ref _sniffsReceived);
+        var session = Volatile.Read(ref _session);
+        if (session is null || Volatile.Read(ref _disposed) != 0 || !sniff.Matches(session.Grant))
+        {
+            return;
+        }
+
+        var latency = DateTimeOffset.UtcNow - sniff.SourceTimestamp;
+        if (latency >= TimeSpan.Zero && latency < TimeSpan.FromMinutes(1))
+        {
+            _sniffLatency.Add(latency);
+        }
+
+        var trigger = sniff.IsTrigger;
+        try
+        {
+            if (session.Reflex.Evaluate(sniff) is { } interest)
+            {
+                // The engine works in Prince's clock; the sniff's own timestamp only paces the reflex.
+                var update = session.Attention.Observe(interest with { Timestamp = Max(Now(), session.Attention.Current.AsOf) });
+                foreach (var intent in update.Intents)
+                {
+                    Publish(new CompanionNotice(CompanionNoticeKind.Attention, Attention: intent));
+                }
+
+                if (update.Transitioned || update.Intents.Count > 0 || trigger)
+                {
+                    Post(() => ApplyReflexAsync(session, update, trigger));
+                }
+
+                return;
+            }
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            RecordFault(exception);
+            return;
+        }
+
+        if (trigger)
+        {
+            Post(() => ApplyReflexAsync(session, null, trigger));
+        }
+    }
+
+    private Task ApplyReflexAsync(ActiveSession session, AttentionUpdate? update, bool trigger)
+    {
+        if (!ReferenceEquals(session, _session))
+        {
+            return Task.CompletedTask;
+        }
+
+        if (trigger)
+        {
+            _sniffTriggerPending = true;
+        }
+
+        SyncAttentionState(session);
+        if (update is not null)
+        {
+            var now = Now();
+            foreach (var intent in update.Intents)
+            {
+                if (intent.Kind == AttentionIntentKind.AfterglowOpening && intent.TopicKey is { } topic)
+                {
+                    HandleConversation(_conversation.OnAfterglowOpening(topic, now));
+                }
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Applies the consequences of the attention engine's current state once per change:
+    /// the conversation observes it, and the capture worker looks faster or slower.
+    /// </summary>
+    private void SyncAttentionState(ActiveSession session)
+    {
+        var state = session.Attention.Current.State;
+        if (session.AppliedState != state)
+        {
+            var first = session.AppliedState is null;
+            session.AppliedState = state;
+            if (!first)
+            {
+                HandleConversation(_conversation.ObserveAttention(state, Now()));
+            }
+        }
+
+        var cadence = state switch
+        {
+            AttentionState.HighAttention => CaptureCadence.BnuyMode,
+            AttentionState.Engaged or AttentionState.Afterglow => CaptureCadence.Engaged,
+            _ => CaptureCadence.Noticing,
+        };
+        if (!_options.SetsCaptureCadence || ReferenceEquals(session.AppliedCadence, cadence))
+        {
+            return;
+        }
+
+        session.AppliedCadence = cadence;
+        _ = SetCadenceAsync(cadence);
+    }
+
+    private async Task SetCadenceAsync(CaptureCadence cadence)
+    {
+        try
+        {
+            await _c.Controller.SetCadenceAsync(cadence, _shutdown.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // A worker that cannot change pace keeps its last cadence; nothing else depends on it.
+            RecordFault(exception);
+        }
+    }
+
+    private static DateTimeOffset Max(DateTimeOffset left, DateTimeOffset right) => left > right ? left : right;
 
     private void OnSessionEvent(object? sender, TargetSessionEvent targetEvent)
     {
@@ -426,6 +605,13 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         public HashSet<string> Topics { get; } = new(StringComparer.Ordinal);
 
         public StructuredGameEventAdapter Adapter { get; } = new(grant.TargetSessionId);
+
+        public SniffReflex Reflex { get; } = new(attention.Configuration);
+
+        /// <summary>The attention state whose consequences (conversation, cadence) were last applied.</summary>
+        public AttentionState? AppliedState { get; set; }
+
+        public CaptureCadence? AppliedCadence { get; set; }
     }
 
     private async Task OnTargetEventAsync(TargetSessionEvent targetEvent)
@@ -508,6 +694,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             transcript,
             reference,
             GameReference(grant.Target.ExecutableFileName));
+        _sniffTriggerPending = false;
+        SyncAttentionState(_session);
 
         if (_watchbun is { } existing
             && existing.Current.Phase is WatchbunPhase.ExitPending or WatchbunPhase.AwaitingRelaunch
@@ -635,6 +823,12 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
         var now = Now();
         var interval = _options.SemanticCadence.For(session.Attention.Current.State, sheet.Metadata.ChangeScore);
+        if (_sniffTriggerPending && _options.SemanticCadence.EventFloor < interval)
+        {
+            // A sniff noticed something: look at the event floor rather than the state's pace.
+            interval = _options.SemanticCadence.EventFloor;
+        }
+
         if (_lastSemanticLook is { } last && now >= last && now - last < interval)
         {
             sheet.Dispose();
@@ -642,6 +836,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
 
         _lastSemanticLook = now;
+        _sniffTriggerPending = false;
 
         _bridgeInFlight = true;
         var metadata = sheet.Metadata;
@@ -820,7 +1015,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
         if (update.Transitioned)
         {
-            HandleConversation(_conversation.ObserveAttention(update.Snapshot.State, now));
+            SyncAttentionState(session);
         }
 
         foreach (var intent in update.Intents)

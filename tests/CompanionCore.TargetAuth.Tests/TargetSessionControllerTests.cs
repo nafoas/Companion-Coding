@@ -713,6 +713,67 @@ public sealed class TargetSessionControllerTests
         Assert.Single(admitted);
     }
 
+    [Fact]
+    public async Task ASniff_IsExposedOnlyThroughPrivacyAdmission_AndNeverAfterAPrivacyStop()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(harness, worker);
+        var available = new List<SniffSignal>();
+        controller.SniffAvailable += (_, sniff) => available.Add(sniff);
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+        var grant = worker.LastGrant!;
+
+        // Admitted on its own: no sheet work or frame message is awaited.
+        var sniff = worker.EmitSniff(grant);
+        Assert.Equal(sniff, Assert.Single(available));
+
+        // A sniff for any other grant or generation is never exposed.
+        worker.EmitSniff(CaptureAuthorizationGrant.Issue(Guid.NewGuid(), grant.Generation, grant.Target));
+        Assert.Single(available);
+
+        await controller.PrivacyStopAsync();
+        worker.EmitSniff(grant);
+        Assert.Single(available);
+    }
+
+    [Fact]
+    public async Task APrivacyRejectedFrame_NeverExposesItsSniff()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(
+            harness,
+            worker,
+            _ => PrivacyAssessment.ClearlySensitive(SensitiveContentKind.Credential));
+        var available = 0;
+        controller.SniffAvailable += (_, _) => available++;
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+
+        worker.EmitSniff(worker.LastGrant!);
+
+        Assert.Equal(0, available);
+    }
+
+    [Fact]
+    public async Task ACadence_ReachesTheWorkerOnlyForTheCurrentTarget()
+    {
+        await using var harness = await TargetAuthTestHarness.CreateAsync();
+        var worker = new RecordingCaptureWorker();
+        await using var controller = CreateController(harness, worker);
+
+        Assert.False(await controller.SetCadenceAsync(CaptureCadence.BnuyMode));
+        Assert.Empty(worker.Cadences);
+
+        await controller.AuthorizeAsync(TargetAuthTestHarness.Candidate(), explicitConsent: true);
+        Assert.True(await controller.SetCadenceAsync(CaptureCadence.BnuyMode));
+        Assert.Equal(CaptureCadence.BnuyMode, Assert.Single(worker.Cadences));
+
+        await controller.PrivacyStopAsync();
+        Assert.False(await controller.SetCadenceAsync(CaptureCadence.Noticing));
+        Assert.Single(worker.Cadences);
+    }
+
     private static TargetSessionController CreateController(
         TargetAuthTestHarness harness,
         RecordingCaptureWorker worker,

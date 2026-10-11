@@ -172,6 +172,52 @@ internal sealed class RecordingCaptureWorker : ICaptureWorker
 
     public event EventHandler<AttentionSheetMetadata>? AttentionSheetProduced;
 
+    public event EventHandler<SniffSignal>? SniffProduced;
+
+    internal List<CaptureCadence> Cadences { get; } = [];
+
+    public Task SetCadenceAsync(
+        CaptureAuthorizationGrant authorization,
+        CaptureCadence cadence,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(authorization);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (Status != CaptureWorkerStatus.Running || !ReferenceEquals(authorization, LastGrant))
+        {
+            throw new InvalidOperationException("Grant is not active.");
+        }
+
+        Cadences.Add(cadence);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Raises one sniff for <paramref name="grant"/> (the current grant by default).</summary>
+    internal SniffSignal EmitSniff(CaptureAuthorizationGrant? grant = null, double hotChange = 0.3)
+    {
+        var authorization = grant ?? LastGrant ?? throw new InvalidOperationException("No grant.");
+        var sniff = new SniffSignal
+        {
+            TargetSessionId = authorization.TargetSessionId,
+            Generation = authorization.Generation,
+            Target = authorization.Target,
+            SourceSequenceNumber = Interlocked.Increment(ref _sequence),
+            SourceTimestamp = DateTimeOffset.UtcNow,
+            SourceWidth = 640,
+            SourceHeight = 480,
+            SourceAccountedBytes = 640L * 480 * 4,
+            Change = hotChange / 2,
+            HotChange = hotChange,
+            Motion = 0.1,
+            HotRegion = new NormalizedRegion(0.5, 0.5, 0.125, 1d / 6),
+            HotRegionKind = AttentionRegionKind.CenterEnvironment,
+            HotCell = 28,
+        };
+        SniffProduced?.Invoke(this, sniff);
+        return sniff;
+    }
+
     internal Func<CaptureAuthorizationGrant, CancellationToken, Task>? StartHandler { get; set; }
 
     public async Task StartAsync(

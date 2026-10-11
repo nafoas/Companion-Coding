@@ -16,6 +16,12 @@ public interface ICaptureWorker : IDisposable
 
     event EventHandler<AttentionSheetMetadata>? AttentionSheetProduced;
 
+    /// <summary>
+    /// One local Sniff per changed frame, raised before that frame's sheet work (VIS-01).
+    /// Consumers must still pass it through privacy admission before using it.
+    /// </summary>
+    event EventHandler<SniffSignal>? SniffProduced;
+
     Task StartAsync(CaptureAuthorizationGrant authorization, CancellationToken cancellationToken);
 
     Task StopAsync(CancellationToken cancellationToken);
@@ -45,6 +51,15 @@ public interface ICaptureWorker : IDisposable
     /// </summary>
     Task RequestPhotographAsync(
         CaptureAuthorizationGrant authorization,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Sets how often the worker looks and composes sheets, from Prince's attention state.
+    /// It requires the active grant.
+    /// </summary>
+    Task SetCadenceAsync(
+        CaptureAuthorizationGrant authorization,
+        CaptureCadence cadence,
         CancellationToken cancellationToken);
 
     /// <summary>

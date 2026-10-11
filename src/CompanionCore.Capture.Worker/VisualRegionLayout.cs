@@ -45,6 +45,27 @@ internal static class VisualRegionLayout
         return new PixelRect(left, top, right - left, bottom - top);
     }
 
+    /// <summary>The default layout region overlapping <paramref name="region"/> the most (center when none does).</summary>
+    internal static AttentionRegionKind NearestKind(NormalizedRegion region)
+    {
+        var best = AttentionRegionKind.CenterEnvironment;
+        var bestOverlap = 0d;
+        foreach (var candidate in DefaultFocusRegions)
+        {
+            var bounds = candidate.Bounds;
+            var width = Math.Min(region.X + region.Width, bounds.X + bounds.Width) - Math.Max(region.X, bounds.X);
+            var height = Math.Min(region.Y + region.Height, bounds.Y + bounds.Height) - Math.Max(region.Y, bounds.Y);
+            var overlap = width > 0 && height > 0 ? width * height : 0;
+            if (overlap > bestOverlap)
+            {
+                bestOverlap = overlap;
+                best = candidate.Kind;
+            }
+        }
+
+        return best;
+    }
+
     internal static string GetVisibleLabel(AttentionRegionKind kind) => kind switch
     {
         AttentionRegionKind.FullContext => "FULL CONTEXT",
@@ -63,7 +84,7 @@ internal sealed class StaggeredRegionScheduler
 {
     private int _next;
 
-    internal IReadOnlyList<VisualRegion> TakeNext(NormalizedRegion? manualRegion)
+    internal IReadOnlyList<VisualRegion> TakeNext(NormalizedRegion? manualRegion, VisualRegion? focus = null)
     {
         var selected = new List<VisualRegion>(2);
         if (manualRegion is { } manual)
@@ -72,10 +93,21 @@ internal sealed class StaggeredRegionScheduler
             selected.Add(new VisualRegion(AttentionRegionKind.ManualFocus, manual));
         }
 
+        // A sniff trigger aims the sheet at what changed; the rotation fills the rest.
+        if (focus is { } aimed && selected.Count < 2)
+        {
+            aimed.Bounds.Validate(nameof(focus));
+            selected.Add(aimed);
+        }
+
         while (selected.Count < 2)
         {
-            selected.Add(VisualRegionLayout.DefaultFocusRegions[_next]);
+            var next = VisualRegionLayout.DefaultFocusRegions[_next];
             _next = (_next + 1) % VisualRegionLayout.DefaultFocusRegions.Count;
+            if (selected.All(region => region.Kind != next.Kind))
+            {
+                selected.Add(next);
+            }
         }
 
         return selected;

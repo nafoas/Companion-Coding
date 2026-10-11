@@ -120,6 +120,13 @@ public sealed record InterestEvent
 
     public IReadOnlyList<string> EvidenceReferences { get; init; } = Array.Empty<string>();
 
+    /// <summary>
+    /// The highest score this evidence may lift attention to (0–100). Local Sniff evidence
+    /// sets it below Bnuy Mode so only understanding — or decisive evidence — can enter
+    /// it (VIS-01). Null means no ceiling. A decisive event ignores it.
+    /// </summary>
+    public double? ScoreCeiling { get; init; }
+
     internal void Validate()
     {
         if (TargetSessionId == Guid.Empty || Timestamp == default || Signals is null)
@@ -131,6 +138,11 @@ public sealed record InterestEvent
         if (!Region.IsValid || !Enum.IsDefined(RegionKind) || !Enum.IsDefined(Kind) || !Enum.IsDefined(DecisiveReason))
         {
             throw new ArgumentException("An interest event has an invalid region or kind.");
+        }
+
+        if (ScoreCeiling is { } ceiling && (!double.IsFinite(ceiling) || ceiling is < 0 or > 100))
+        {
+            throw new ArgumentException("A score ceiling must be finite and within [0, 100].");
         }
 
         if ((Kind == AttentionEventKind.Decisive) != (DecisiveReason != DecisiveReason.None))

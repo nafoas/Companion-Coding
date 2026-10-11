@@ -173,10 +173,10 @@ public sealed class CaptureWorkerEngineTests
     }
 
     [Fact]
-    public async Task AgreedLocalSpacing_ReleasesFramesArrivingSooner_AndNeverDelaysTheFirstAfterAReset()
+    public async Task DefaultNoticingSpacing_ReleasesFramesArrivingSooner_AndNeverDelaysTheFirstAfterAReset()
     {
         await using var source = new ControllableCaptureSource();
-        await using var engine = new CaptureWorkerEngine(source, minimumFrameSpacing: CaptureWorkerEngine.AgreedLocalFrameSpacing);
+        await using var engine = new CaptureWorkerEngine(source, minimumFrameSpacing: CaptureWorkerEngine.DefaultCadence.FrameSpacing);
         var frames = new List<CaptureEngineFrame>();
         engine.FrameProduced += (_, frame) => frames.Add(frame);
         await engine.StartAsync(CaptureWorkerTestSupport.CreateAuthorization(), CancellationToken.None);
@@ -188,9 +188,9 @@ public sealed class CaptureWorkerEngineTests
         var onTime = new TrackingResource();
         source.Emit(CreateFrame(first, at: t0));
         await CaptureWorkerTestSupport.WaitUntilAsync(() => frames.Count == 1);
-        source.Emit(CreateFrame(tooSoon, at: t0.AddMilliseconds(200)));
-        source.Emit(CreateFrame(stillTooSoon, at: t0.AddMilliseconds(999)));
-        source.Emit(CreateFrame(onTime, at: t0.AddSeconds(1)));
+        source.Emit(CreateFrame(tooSoon, at: t0.AddMilliseconds(100)));
+        source.Emit(CreateFrame(stillTooSoon, at: t0.AddMilliseconds(249)));
+        source.Emit(CreateFrame(onTime, at: t0.AddMilliseconds(250)));
         await CaptureWorkerTestSupport.WaitUntilAsync(() => frames.Count == 2);
 
         Assert.Equal(1, tooSoon.DisposeCount);
@@ -203,9 +203,10 @@ public sealed class CaptureWorkerEngineTests
             CaptureWorkerStatusReason.None,
             ClearRetainedFrames: true,
             IsResize: true));
-        source.Emit(CreateFrame(new TrackingResource(), width: 48, height: 40, at: t0.AddSeconds(1.1)));
+        source.Emit(CreateFrame(new TrackingResource(), width: 48, height: 40, at: t0.AddMilliseconds(300)));
         await CaptureWorkerTestSupport.WaitUntilAsync(() => frames.Count == 3);
         Assert.Equal(2, engine.SpacedOutFrames);
+        Assert.Equal(TimeSpan.FromMilliseconds(250), CaptureWorkerEngine.DefaultCadence.FrameSpacing);
         await engine.StopAndClearAsync(CancellationToken.None);
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureWorkerEngine(source, minimumFrameSpacing: TimeSpan.FromSeconds(-1)));
     }

@@ -86,6 +86,9 @@ public sealed record OrchestratorOptions
     /// <summary>How often Braincase interpretation may run in each attention state.</summary>
     public SemanticCadence SemanticCadence { get; init; } = new();
 
+    /// <summary>Whether attention changes set the capture worker's looking cadence (VIS-01).</summary>
+    public bool SetsCaptureCadence { get; init; } = true;
+
     internal void Validate()
     {
         if (CheckpointInterval <= TimeSpan.Zero || CheckpointInterval > TimeSpan.FromHours(1))

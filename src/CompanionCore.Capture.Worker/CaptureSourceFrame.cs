@@ -46,6 +46,11 @@ internal sealed class CaptureSourceFrame : IDisposable
 
     internal long SequenceNumber => Volatile.Read(ref _sequenceNumber);
 
+    /// <summary>The <see cref="System.Diagnostics.Stopwatch"/> timestamp when the engine received the frame (0 if never).</summary>
+    internal long ArrivedAtTimestamp { get; private set; }
+
+    internal void MarkArrived() => ArrivedAtTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+
     internal bool HasPixels => Volatile.Read(ref _resource) is ICapturePixelSource;
 
     internal void AssignSequence(long sequenceNumber)
