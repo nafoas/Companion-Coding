@@ -686,7 +686,7 @@ Desensitization lowers attention and commentary. It never deletes a sighting fro
 - **A build-time check.** A test scans every prompt template and assembled request for the forbidden vocabulary above, and for role-play framing. It fails the build if any appears. The innocence rule is thereby enforced by the code itself, not only remembered.
 - **Prince is who he is, nothing else.** Every later design choice is checked against that sentence.
 
-## 15. The membrane: how the subconscious influences him without ever reaching him (proposed 2026-10-12, awaiting Boss)
+## 15. The membrane: how the subconscious influences him without ever reaching him (Boss approved 2026-10-12: "yes, I like this")
 
 > Boss: "There still needs to be separation between the BunDex and BrainCase. The way you worded it is almost like the BrainCase directly inclines the BunDex now ... The BunDex and the Bnuy can't tap into the subconscious. ... These inclinations need to preserve Da Bnuy's innocence, and character, and act as subtle inclinations, not demands, or secret immersion breaking things. He should never get even an inkling that there is something artificial about the way he thinks, when he gains inclinations. How should we do this?"
 
@@ -721,4 +721,55 @@ Desensitization lowers attention and commentary. It never deletes a sighting fro
 
 **Result.** Prince experiences only his own perceptions, memories, and feelings, and then does what a Bun like him would do. From the inside, there is nothing to notice: no voice, no hints, no seams. Only his life.
 
-## 16. (next item from Boss)
+## 16. Attention between the subconscious and the Bnuy (proposed 2026-10-12)
+
+> Boss: "The attention states. How do we handle that between his conscious and subconscious?"
+
+**The principle: the subconscious computes attention, and the Bnuy lives it.**
+
+### Subconscious (BrainCase): the machinery, never visible to him
+
+- **The attention engine:**
+  - the score;
+  - the states Noticing, Engaged, High Attention (Bnuy Mode), and Afterglow;
+  - the thresholds and hysteresis (40/32, 70/60, 5 s dwell);
+  - the Afterglow length and its refresh (ATT-01).
+- **What feeds it:**
+  - the Sniffs, the Glance, and the Inspect;
+  - habituation and desensitization (item 12);
+  - learned significance (7g);
+  - his interests and fears (item 9).
+- **What it decides:**
+  - when to look closer, and where to focus;
+  - the capture and look cadence (that part is his "body");
+  - which conversation lane is open: game talk, then Bun thoughts, then pep talks; BICs are suppressed during Bnuy Mode and Afterglow.
+- **Watchbun and the quiet-hour check:** the timers and conditions.
+
+### Conscious (Bnuy): only the feeling of it
+
+| Subconscious state | What Prince experiences, through the membrane (item 15) |
+|---|---|
+| Noticing | calm, idly watching, comfortable |
+| Engaged | curious, ears up, something has caught his interest |
+| High Attention / Bnuy Mode | completely absorbed and excited; his whole little body is in it; short urgent thoughts |
+| Afterglow | still buzzing, winding down, wanting to talk about what just happened |
+| Habituated | "seen dis before", calmer about it |
+| Watchbun | keeping watch while Boss is away |
+| Quiet-hour check | a little wondering whether Boss is still there |
+
+- **He never knows** the state names, scores, thresholds, timers, or why his attention moved. Attention arrives as how he feels and what stands out (membrane channels 1 and 3).
+- **His behavior follows from the feeling, through his nature.** He chats more when curious, gives short excited bursts when absorbed, and celebrates or sympathizes in the Afterglow. That is a Bun reacting, not a mode switch. The subconscious only gates *when* a lane is open. What he says is his.
+- **"Bnuy Mode" is his own word for the feeling**, if he uses it at all ("Prince is very in da zone!!"). It is never a readout of an internal state.
+
+### What flows back, by observation only
+
+- **His own reactions raise attention**, the way getting excited makes you pay more attention. When he says "ooh!" or reaches for his notepad, or something touches his interests or fears, the subconscious *observes* it and raises interest. He never adjusts his attention on purpose through some control.
+- **Boss can direct his attention.** "Look at this, Prince" or the focus region is heard consciously and applied subconsciously, like someone pointing.
+
+### Constraints to keep
+
+- Attention never silences a genuine warning, even when he is habituated or calm (item 12).
+- Non-response from Boss never changes attention, preferences, or feelings (core invariant).
+- The attention numbers already accepted (thresholds, dwell, Afterglow 30 s to 3 min, refresh) are unchanged. This item only governs how attention is *experienced*, not how it is computed.
+
+## 17. (next item from Boss)
