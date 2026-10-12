@@ -52,6 +52,12 @@ All done:
 
 The saved keepsake edge (1280) remains provisional photograph-storage tuning.
 
+## Pre-Stage 13 memory work (M1–M10)
+
+- The BunDex writer is a stand-in until Stage 13 gives Prince his voice; the orchestrator does not call the keeper yet (M5).
+- Boss's case-by-case page removal has no command yet; it will need its own ledger entry (M1 D1).
+- `Memory/`, `State/`, `Transcripts/`, and `Keepsakes/` stay where they are; moving them under `Braincase/` is an open option for Boss (M1 D2).
+
 ## Minor
 
 - Relaunch detection sees only windows that title-free discovery accepts (WIRE-02 D2).

@@ -93,6 +93,20 @@ Per the approved test plan, M1:
 - **J2 — Directory layout.** The BunDex is a new `BunDex/` directory. The subconscious ledger goes into the existing `Braincase/` directory, which already holds the Braincase's raw outputs (the bridge journal), so the two homes Boss named are exactly `BunDex/` and `Braincase/`. The other machine directories (`Memory/`, `State/`, `Transcripts/`, `Keepsakes/`) stay where they are in M1. Moving them under `Braincase/` would touch accepted recovery and Vault paths; it is offered to Boss as a later option.
 - **J3 — Names are made safe rather than refused**, except secret-like names, so his organic, messy names ("wat is dis?") survive in readable form.
 
+- **J4 — Secret detection is narrowed.** The first draft refused any run of 40+ token characters, which also refused ordinary long words and repeated letters ("oooooh nooo"). A long token now counts as secret-like only when it mixes upper case, lower case, and digits, alongside the `sk-` and "api key:" patterns. Tested both ways.
+
 ## Deferred findings
 
-_(none yet)_
+- **D1 — Boss's case-by-case page removal** needs its own ledger entry kind when it is first wanted, so a rebuild never brings a removed page back (J1).
+- **D2 — Directory layout option (J2):** moving `Memory/`, `State/`, `Transcripts/`, `Keepsakes/` under `Braincase/` is offered to Boss; not done.
+- **D3 — The keeper is not yet called by the orchestrator.** The host opens the BunDex; what gets kept and when is M5.
+
+## Paw Gate
+
+- **Candidate.** Head `5fdc8168b4d0dc6294e434dde2fd4ae2353f8cba` on `agent/m1-two-homes`, PR #85, against accepted `main` `1af6d3c0d79a8bd5c37961b936e2004ab96e4a31`.
+- **Local gate (Linux).** Locked restore; Release build with `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; 1185/1185 tests passed (BunDex 37 new; Vault 35, +3; Orchestration 118, +1; every other suite unchanged).
+- **Mutation pass.** 11 mutants across the ledger, names, keeper, repair, store, and Builder reset. The first run left 3 survivors (a forged line that re-hashes itself, a longer healthy ledger that does not hold the Vault's history, a same-length page alteration); a test was added for each. Final: 11/11 killed.
+- **Windows CI.** Push run `38317387395` and PR run `38317409457`, both green.
+- **Merge-ref check.** `refs/pull/85/merge` parents `1af6d3c` + `5fdc816`, tree `eb901c737250717d79133ff1f364040a770ec607`, equal to `git merge-tree --write-tree origin/main HEAD`.
+- **Merge.** Marked ready and squash-merged with an expected-head fence as `0202c7fd32390e73af69faf79a8410def91f2c24`.
+- **Result.** Passed and accepted.

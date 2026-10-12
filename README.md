@@ -154,7 +154,9 @@ Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 
 **ATT-01** (PR #74): Prince's Afterglow now stays while things keep happening. It keeps its adaptive 30 s to 3 min length, but each interesting event restarts the countdown, so a long quest or cutscene doesn't flip him back to "never mind". Merged as `4dcf04af2e6df9bff2d5556d2a86e1e060aa0480`.
 
-**Stage 12 is complete: Boss gave the Core Bun Approval Hop on 2026-10-12** after the ten milestone checks passed on his PC with live calls on. Next: Boss's memory-quality changes, then Stage 13, personality installation on Builder Prince.
+**Stage 12 is complete: Boss gave the Core Bun Approval Hop on 2026-10-12** after the ten milestone checks passed on his PC with live calls on. Next: Boss's memory-quality changes (M1–M10), then Stage 13, personality installation on Builder Prince.
+
+**M1** (PR #85) gives Prince two homes: his BunDex, an organic notebook of folders and pages he names himself, and the BrainCase's append-only ledger it is built from. Da Bun Vault backs up the ledger, and a Builder reset tool clears Builder Prince's development data on Boss's exact confirmation. Merged as `0202c7fd32390e73af69faf79a8410def91f2c24`.
 
 ## Important boundaries
 
