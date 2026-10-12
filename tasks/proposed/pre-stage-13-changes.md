@@ -509,6 +509,11 @@ Boss: "the BIC is basically where his personality lives. Read through all the st
     - the safety rails: safe names, append-only pages, local only, inside the Vault.
     - It is proven with a plain stand-in writer in tests.
   - **Stage 13, Prince's side:** his responses to the nudge, the folders he invents, their names and layout, and every page he writes, in his voice.
-- **A clean start for both Princes.** Builder Prince's BunDex begins empty when Stage 13 first gives him his voice. His existing machine memories stay in the BrainCase, unchanged and append-only. Companion Prince begins with a clean, empty BunDex at the one awakening, as already designed.
+- **A clean start for both Princes.**
+  - Builder Prince's BunDex begins empty when Stage 13 first gives him his voice.
+  - **Boss, 2026-10-12, on Builder Prince's existing development memories** (the 36 Baldi memories and two summaries): "They should be discarded, that's what Builder Prince is for."
+  - Builder Prince is the resettable construction identity (AGENTS.md), so this is a deliberate, Boss-directed reset of **development data only**. It is not an automatic deletion, and it never applies to Companion Prince.
+  - It runs once, as an explicit step when the new memory system is installed. The exact folder to be reset is shown to Boss first.
+  - Companion Prince begins with a clean, empty BunDex at the one awakening, as already designed.
 
 ## 11. (next item from Boss)
