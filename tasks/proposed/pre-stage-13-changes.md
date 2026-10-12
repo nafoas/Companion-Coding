@@ -178,8 +178,17 @@ The design conversation has **no exact durations**. It deliberately chose "gradu
   - Names are validated locally: safe characters, no paths, bounded length, no secrets.
   - Pages are append-only. He adds pages and notes and never erases or rewrites a committed page.
   - Everything stays local and in Da Bun Vault.
-- **To settle in the packet.**
-  1. Whether Prince may *reorganize* (move a page into a new folder he invents later), and how that stays append-only. For example, he adds a new folder that points to the page, or the move is recorded so the original location is never lost.
-  2. Whether Boss can edit or remove BunDex pages. The design conversation mentions "Forget This, Prince", a confirmed deletion by Boss only.
+- **Looking something up** (Boss, 2026-10-12). The two Princes stay separate even while searching.
+  1. **Prince da Bnuy wants to find something.** For example, Boss asks "remember when...?", or something reminds him.
+  2. **He says so in character:** "okay... now how find dis..." or a similar line, always recognizable as him rummaging through his notes. This is what the frontend shows.
+  3. **Prince da Program does the actual search** with the hidden index and brings the pages back to him.
+  4. **Prince da Bnuy only receives the pages he "found"**, in his own words, and reacts: "oh!! is remembers!!".
+  
+  He never sees a query, a score, or a file. If nothing is found, he admits it in character, as fuzzy or not written down, and never pretends certainty.
+- **Reorganizing** (Boss, 2026-10-12: "yes, he can reorganize, but he does it similarly organically"). Prince may move pages into new folders he invents, merge folders, and rename them his way, when it occurs to him, in his style. Underneath:
+  - every move is recorded in the BrainCase;
+  - no page's content is ever lost or rewritten;
+  - his old folder names stay recoverable.
+- **Removing pages** (Boss, 2026-10-12): "a case by case basis type of thing. It probably won't happen a lot, so I say we just let him write organically now." No removal feature is built in this round. Removal remains a rare, explicit decision by Boss, case by case. Prince and the program never remove pages on their own.
 
 ## 6. (next item from Boss)
