@@ -8,9 +8,9 @@ Builder: Claude.
 
 **Stage 12 is built and waits for Boss.**
 
-## ATT-01 (in review)
+## ATT-01 (accepted)
 
-Afterglow stays while things keep happening (Boss, 2026-10-12). Its adaptive length (30 s to 3 min) is unchanged; each interesting event during Afterglow restarts its countdown. Packet: `tasks/active/att-01-afterglow-refresh.md`.
+Afterglow stays while things keep happening (Boss, 2026-10-12), merged through PR #74 as `4dcf04a`, 1151/1151 on Windows CI. The packet is `tasks/archive/att-01-afterglow-refresh.md`. This closure also corrects stale lines in `docs/Known-Limitations.md`: the Stage 12 section, the placeholder controls, and the remote Resume Capsules, which the design rejects.
 
 ## VIS-04 (accepted) — the Vision upgrade is complete
 
