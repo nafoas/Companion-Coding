@@ -347,7 +347,7 @@ public sealed class AnthropicProviderTests
             }
         }
 
-        var schema = AnthropicSemanticProvider.ResponseSchema;
+        var schema = AnthropicSemanticProvider.ResponseSchemaFor(Enum.GetValues<AttentionRegionKind>());
         Walk(schema);
         var proposal = schema.GetProperty("properties").GetProperty("memoryProposals").GetProperty("items").GetProperty("properties");
         Assert.Equal(SemanticSchema.AppendOperationName, proposal.GetProperty("operation").GetProperty("const").GetString());
@@ -444,6 +444,36 @@ public sealed class AnthropicProviderTests
             // The envelope is assigned locally and passes the strict Glance parser.
             Assert.True(GlanceResponseParser.TryParse(reply.ResponseJson!, operation, [AttentionRegionKind.FullContext, AttentionRegionKind.CenterEnvironment], out var glance, out _));
             Assert.Equal((0.8, true, TimeSpan.FromSeconds(3), 500L, 30L), (glance!.Interest, glance.Escalate, glance.NextLook, glance.InputUnits, glance.OutputUnits));
+        }
+    }
+
+    [Theory]
+    [InlineData(AttentionSheetKind.Orientation, SemanticOperationKind.Glance)]
+    [InlineData(AttentionSheetKind.Regional, SemanticOperationKind.Glance)]
+    [InlineData(AttentionSheetKind.Orientation, SemanticOperationKind.InterpretAttentionSheet)]
+    [InlineData(AttentionSheetKind.Regional, SemanticOperationKind.InterpretAttentionSheet)]
+    public async Task TheAnswerSchema_OffersOnlyTheSheetsOwnRegions(AttentionSheetKind sheetKind, SemanticOperationKind kind)
+    {
+        // FIX-06: the strict parsers refuse a region the sheet does not list, so the schema
+        // must not offer one. Boss's first live check lost 4 of 5 Glances to exactly that.
+        using var sheet = Sheet(sheetKind);
+        var (provider, transport, store) = Create((_, _) => Json(HttpStatusCode.OK, Message("{}")));
+        using (provider)
+        using (store)
+        {
+            await provider.InterpretAsync(Request(sheet, kind: kind), CancellationToken.None);
+        }
+
+        var schema = JsonNode.Parse(Assert.Single(transport.Calls).Body)!["output_config"]!["format"]!["schema"]!;
+        var region = kind == SemanticOperationKind.Glance
+            ? schema["properties"]!["glance"]!["properties"]!["changedRegion"]!
+            : schema["properties"]!["interpretation"]!["properties"]!["observations"]!["items"]!["properties"]!["region"]!;
+        var offered = region["enum"]!.AsArray().Select(item => item!.GetValue<string>()).ToArray();
+        var expected = sheet.Metadata.Regions.Select(item => JsonNamingPolicy.CamelCase.ConvertName(item.Kind.ToString())).ToArray();
+        Assert.Equal(expected, offered);
+        if (sheetKind == AttentionSheetKind.Orientation)
+        {
+            Assert.Equal(["fullContext"], offered);
         }
     }
 

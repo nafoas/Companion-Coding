@@ -150,9 +150,16 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
 
     public string ProviderName => Name;
 
-    internal static JsonElement ResponseSchema { get; } = BuildResponseSchema();
+    /// <summary>
+    /// The answer schemas offer only the regions the request's sheet lists (FIX-06): the
+    /// strict parsers refuse any other region, so offering one would only waste the call.
+    /// </summary>
+    internal static JsonElement ResponseSchemaFor(IEnumerable<AttentionRegionKind> regions) => BuildResponseSchema(regions);
 
-    internal static JsonElement GlanceResponseSchema { get; } = BuildGlanceResponseSchema();
+    internal static JsonElement GlanceResponseSchemaFor(IEnumerable<AttentionRegionKind> regions) => BuildGlanceResponseSchema(regions);
+
+    private static string[] RegionNames(IEnumerable<AttentionRegionKind> regions) =>
+        regions.Distinct().Select(value => JsonNamingPolicy.CamelCase.ConvertName(value.ToString())).ToArray();
 
     public async Task<ProviderReply> InterpretAsync(SemanticRequest request, CancellationToken cancellationToken)
     {
@@ -252,7 +259,7 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
             Effort = AnthropicProviderOptions.ParseEffort(_options.Effort)!.Value,
             Format = new BetaJsonOutputFormat
             {
-                Schema = ResponseSchema.EnumerateObject().ToDictionary(property => property.Name, property => property.Value.Clone()),
+                Schema = ResponseSchemaFor(request.Sheet.RegionKinds).EnumerateObject().ToDictionary(property => property.Name, property => property.Value.Clone()),
             },
         },
         Messages =
@@ -292,7 +299,7 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
             Effort = Anthropic.Models.Beta.Messages.Effort.Low,
             Format = new BetaJsonOutputFormat
             {
-                Schema = GlanceResponseSchema.EnumerateObject().ToDictionary(property => property.Name, property => property.Value.Clone()),
+                Schema = GlanceResponseSchemaFor(request.Sheet.RegionKinds).EnumerateObject().ToDictionary(property => property.Name, property => property.Value.Clone()),
             },
         },
         Messages =
@@ -422,7 +429,7 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
         _ => null,
     };
 
-    private static JsonElement BuildResponseSchema()
+    private static JsonElement BuildResponseSchema(IEnumerable<AttentionRegionKind> regions)
     {
         static string[] Names<TEnum>(IEnumerable<TEnum> values) where TEnum : struct, Enum =>
             values.Select(value => JsonNamingPolicy.CamelCase.ConvertName(value.ToString())).ToArray();
@@ -439,7 +446,7 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
         var observation = Obj(
             new Dictionary<string, object>
             {
-                ["region"] = new { type = "string", @enum = Names(Enum.GetValues<AttentionRegionKind>()) },
+                ["region"] = new { type = "string", @enum = RegionNames(regions) },
                 ["label"] = new { type = "string" },
                 ["confidence"] = new { type = "number" },
             },
@@ -500,9 +507,9 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
         return JsonSerializer.SerializeToElement(root);
     }
 
-    private static JsonElement BuildGlanceResponseSchema()
+    private static JsonElement BuildGlanceResponseSchema(IEnumerable<AttentionRegionKind> sheetRegions)
     {
-        var regions = Enum.GetValues<AttentionRegionKind>().Select(value => JsonNamingPolicy.CamelCase.ConvertName(value.ToString())).ToArray();
+        var regions = RegionNames(sheetRegions);
         var glance = new Dictionary<string, object>
         {
             ["type"] = "object",
