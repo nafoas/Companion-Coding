@@ -152,6 +152,8 @@ Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 
 **VIS-04** (PR #72) completes the Vision upgrade with the Scene Sniff: a vision model built into the app (Google's SigLIP, Apache-2.0) that recognizes what kind of scene is on screen and notices when it becomes a different one. It runs on the GPU through DirectML, or on the CPU. Only how far the scene moved, and a word from a fixed neutral vocabulary, leave the capture worker. The model is fetched at build with a pinned digest, never committed. See `THIRD-PARTY-NOTICES.md`. Merged as `3567519c4d4cc827a7e7f25f0d0fa29c6e2e12f2`.
 
+**ATT-01** (PR #74): Prince's Afterglow now stays while things keep happening. It keeps its adaptive 30 s to 3 min length, but each interesting event restarts the countdown, so a long quest or cutscene doesn't flip him back to "never mind". Merged as `4dcf04af2e6df9bff2d5556d2a86e1e060aa0480`.
+
 Stage 12 is built and waits for Boss: first the live check, then the milestone hand-run and the Core Bun Approval Hop. Personality waits for Stage 13.
 
 ## Important boundaries
