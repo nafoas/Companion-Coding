@@ -86,9 +86,18 @@ public partial class MainWindow : Window
     public void RenderNotice(CompanionNotice notice)
     {
         _companionSink.Render(_adapter.Map(notice));
+        _replyTarget.Observe(notice);
+
+        // FIX-10: name which notice this is (an offer to talk, a saved topic, a state change).
+        var detail = notice.Attention?.Kind.ToString()
+            ?? notice.Conversation?.Kind.ToString()
+            ?? notice.Watchbun?.Kind.ToString()
+            ?? notice.Keepsake?.Kind.ToString()
+            ?? notice.Braincase?.ToString()
+            ?? notice.Key;
         NoticeLog.Items.Insert(0, string.Create(
             CultureInfo.InvariantCulture,
-            $"{DateTime.Now:HH:mm:ss}  {notice.Kind}{(notice.Key is { Length: > 0 } key ? $"  {key}" : string.Empty)}"));
+            $"{DateTime.Now:HH:mm:ss}  {notice.Kind}{(detail is { Length: > 0 } ? $"  {detail}" : string.Empty)}"));
         while (NoticeLog.Items.Count > MaximumNoticeLogEntries)
         {
             NoticeLog.Items.RemoveAt(NoticeLog.Items.Count - 1);
@@ -96,6 +105,9 @@ public partial class MainWindow : Window
     }
 
     private const int MaximumNoticeLogEntries = 200;
+
+    /// <summary>FIX-10: which of Prince's openings the Reply buttons answer.</summary>
+    private readonly ReplyTarget _replyTarget = new();
 
     /// <summary>True once the placeholder commands are attached to the companion host.</summary>
     internal bool CompanionCommandsEnabled => CompanionCommands.IsEnabled;
@@ -209,8 +221,12 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ShowResult(string command, object result) =>
-        CompanionStatusText.Text = string.Create(CultureInfo.InvariantCulture, $"{command}: {result}");
+    private void ShowResult(string command, object result)
+    {
+        var text = string.Create(CultureInfo.InvariantCulture, $"{command}: {(result is "None" ? "accepted" : result)}");
+        CommandResultText.Text = string.Create(CultureInfo.InvariantCulture, $"Last command ({DateTime.Now:HH:mm:ss}): {text}");
+        NoticeLog.Items.Insert(0, string.Create(CultureInfo.InvariantCulture, $"{DateTime.Now:HH:mm:ss}  > {text}"));
+    }
 
     private async Task RunCommandAsync(string command, Func<CompanionCore.Orchestration.CompanionOrchestrator, Task<string>> run)
     {
@@ -227,13 +243,18 @@ public partial class MainWindow : Window
         {
             ShowResult(command, "not available now");
         }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // A placeholder command never takes the window down; the failure type is shown.
+            ShowResult(command, $"failed ({exception.GetType().Name})");
+        }
     }
 
     private async void ReplyButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string tag } && Enum.TryParse<Conversation.UserTurnKind>(tag, out var kind))
         {
-            await RunCommandAsync("Reply", async orchestrator => (await orchestrator.SubmitUserTurnAsync(new Conversation.UserTurn(kind))).ToString());
+            await RunCommandAsync("Reply", async orchestrator => (await _replyTarget.ReplyAsync(orchestrator, kind)).ToString());
         }
     }
 
