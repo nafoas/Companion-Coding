@@ -8,6 +8,10 @@ Builder: Claude.
 
 **Stage 12 is built and waits for Boss.**
 
+## ATT-01 (in review)
+
+Afterglow stays while things keep happening (Boss, 2026-10-12). Its adaptive length (30 s to 3 min) is unchanged; each interesting event during Afterglow restarts its countdown. Packet: `tasks/active/att-01-afterglow-refresh.md`.
+
 ## VIS-04 (accepted) — the Vision upgrade is complete
 
 The Scene Sniff, a bundled local vision model, merged through PR #72 as `3567519`. It passed 1146/1146 on Windows CI with the real model (cosine 1.00000 to the reference). The packet is `tasks/archive/vis-04-scene-sniff.md`.

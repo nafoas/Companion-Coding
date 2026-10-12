@@ -28,6 +28,7 @@ public sealed class AttentionEngine
     private DateTimeOffset _stateSince;
     private DateTimeOffset _quietSince;
     private DateTimeOffset? _afterglowUntil;
+    private TimeSpan _afterglowLength;
     private DateTimeOffset _highEnteredAt;
     private double _episodePeak;
     private bool _urgentInEpisode;
@@ -191,6 +192,17 @@ public sealed class AttentionEngine
                     }
 
                     break;
+            }
+
+            // ATT-01: while things keep happening, Afterglow stays. Each interesting event
+            // (applied or corroborated, at or above the weak-evidence floor before any ceiling)
+            // restarts the countdown at the episode's Afterglow length.
+            if (_state == AttentionState.Afterglow
+                && _afterglowUntil is { } afterglowUntil
+                && disposition is AttentionEventDisposition.Applied or AttentionEventDisposition.Corroborated
+                && contribution >= _config.WeakContribution)
+            {
+                _afterglowUntil = Max(afterglowUntil, now + _afterglowLength);
             }
 
             if (interestEvent.Kind != AttentionEventKind.Decisive && interestEvent.ScoreCeiling is { } ceiling)
@@ -418,6 +430,7 @@ public sealed class AttentionEngine
         }
 
         SetState(AttentionState.Afterglow);
+        _afterglowLength = afterglow;
         _afterglowUntil = _now + afterglow;
         intents.Add(new AttentionIntent(AttentionIntentKind.HighAttentionEnded, _lastTopic));
         intents.Add(new AttentionIntent(AttentionIntentKind.AfterglowOpening, _lastTopic));
