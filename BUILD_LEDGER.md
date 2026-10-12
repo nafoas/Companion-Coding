@@ -173,6 +173,30 @@
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
 
+### FIX-10 — The Reply buttons answer Prince's opening
+
+- **Boss, 2026-10-12, milestone check 3:** a Conversation line appeared, but the Reply buttons "did nothing at all".
+- **Causes.**
+  - **The reply named nothing.** The buttons sent a reply with no reference. Answering an opening (an offer or an ambient comment) must name it; with no thread active, the coordinator correctly refused (`NoActiveThread`), so no thread could ever start from the window.
+  - **The result was hidden.** Each result was written to the status line that every notice rewrites, about once a second, so it was never readable.
+  - **The notice list said only "Conversation".** It never showed the kind, so a `SeedBanked` line (a topic saved for later) looked like something to answer.
+  - **The automated walkthrough missed it.** It accepted any reply outcome and never reached the Afterglow.
+- **Change.**
+  - `ReplyTarget` (Orchestration) tracks Prince's latest opening (`AmbientExpression`, `OfferOpening`, or `ResumeOffered`) and clears it once a thread starts or resumes. A reply answers that opening; if the opening expired, it falls back to the active thread.
+  - The window's Reply buttons go through `ReplyTarget`.
+  - Command results get their own **Last command** line and a `>` entry in the notice list. `None` reads as "accepted".
+  - Notice lines name their kind.
+  - A failing placeholder command shows its failure type instead of escaping the handler.
+  - The milestone guide's check 3 names the lines to look for.
+- **Evidence.**
+  - New test `AReplyToTheAfterglowOpening_StartsTheOneConversationThread` covers the whole path:
+    1. No opening yet: the reply is refused (`NoActiveThread`).
+    2. Bnuy Mode, then the Afterglow brings exactly one opening.
+    3. The reply is accepted (`None`), and exactly one `ThreadStarted` follows.
+    4. The next reply goes to that thread.
+  - A mutant that sends no reference fails it.
+  - Full local gate.
+
 ### FIX-09 — Real pixel readback uses the official interface ID
 
 - **Boss, 2026-10-12, pulse reading:** `Worker: accepted 84 ... sheets 0 (dropped 84); failures 84 (PixelCopy, 0x80004002)`.

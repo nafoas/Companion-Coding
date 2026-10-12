@@ -103,6 +103,8 @@
                   IsEnabled="False" Margin="0,0,0,8">
             <StackPanel Orientation="Vertical" Margin="6">
                 <TextBlock x:Name="BraincaseStatusText" Text="Braincase: not started." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <!-- FIX-10: each command's result stays here; notices never overwrite it. -->
+                <TextBlock x:Name="CommandResultText" Text="Last command: none yet." TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,6" />
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                     <TextBlock Text="Reply:" VerticalAlignment="Center" Width="96" />
                     <Button Content="Click" Padding="8,3" Margin="0,0,4,0" Tag="Click" Click="ReplyButton_Click" />

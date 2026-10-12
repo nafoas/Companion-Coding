@@ -17,7 +17,10 @@ The Roadmap's Stage 12 milestone: ten checks on the real App, with the plain pla
 
    Expect a `SessionStarted` notice.
 2. **Noticing through Bnuy Mode.** Play normally for a minute. Expect `Attention` notices as Prince notices change. A big moment, or a completed watch task (check 5), takes him to the highest attention state.
-3. **One ambient comment and one real Conversation Thread.** With live calls on, expect `Conversation` notices. Answer with the **Reply** buttons. The command line shows whether the thread accepted the reply.
+3. **One ambient comment and one real Conversation Thread.** After a big moment, Bnuy Mode ends and the Afterglow opens with an opening, shown as `Conversation  OfferOpening` or `Conversation  AmbientExpression`. (`Conversation  SeedBanked` only means he saved a topic for later; there is nothing to answer yet.)
+   1. Answer with a **Reply** button. It answers his latest opening.
+   2. The **Last command** line should say `Reply: accepted`.
+   3. Expect a `Conversation  ThreadStarted` notice. Further replies go to that one thread.
 4. **A substantive conversation becomes a memory.** With live calls on, a notable moment produces an appended memory. Prince never edits or deletes one.
 5. **A Watchbun background event.**
    1. In **Watch task**, enter a key and press **Add watch task**.
