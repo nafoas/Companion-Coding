@@ -21,7 +21,7 @@ The Roadmap's Stage 12 milestone: ten checks on the real App, with the plain pla
    1. Answer with a **Reply** button. It answers his latest opening.
    2. The **Last command** line should say `Reply: accepted`.
    3. Expect a `Conversation  ThreadStarted` notice. Further replies go to that one thread.
-4. **A substantive conversation becomes a memory.** With live calls on, a notable moment produces an appended memory. Prince never edits or deletes one.
+4. **A notable moment he sees, or a conversation, becomes a memory.** With live calls on, his detailed looks propose memories of what he sees, and each session ends with an Adventure Record. Conversation memories need real words (Stage 13). Prince never edits or deletes a memory.
 5. **A Watchbun background event.**
    1. In **Watch task**, enter a key and press **Add watch task**.
    2. Tab away from the game.

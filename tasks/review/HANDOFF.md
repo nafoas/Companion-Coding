@@ -2,58 +2,37 @@
 
 ## Task
 
-No task is active. The last accepted packet is CORE-12 (`tasks/archive/core-12-milestone.md`), merged through PR #61 as `18b5215e3bc5810d76937465314a55ed57ba323a`.
+No task is active. **Stage 12 is complete: Boss gave the Core Bun Approval Hop on 2026-10-12.**
 
 Builder: Claude.
 
-**Stage 12 is built and waits for Boss.**
+## The hand-run
 
-## ATT-01 (accepted)
+- All ten milestone checks (`docs/Core-Prince-Milestone.md`) passed on Boss's PC.
+- The game was Baldi's Basics Classic Remastered, with Builder Prince's live calls on.
+- The hand-run found and fixed FIX-05 to FIX-10, each merged with both Windows CI runs green and each confirmed on Boss's PC.
+- The most important was FIX-09: real screen capture had never produced a usable frame, because of a wrong COM interface ID.
 
-Afterglow stays while things keep happening (Boss, 2026-10-12), merged through PR #74 as `4dcf04a`, 1151/1151 on Windows CI. The packet is `tasks/archive/att-01-afterglow-refresh.md`. This closure also corrects stale lines in `docs/Known-Limitations.md`: the Stage 12 section, the placeholder controls, and the remote Resume Capsules, which the design rejects.
+## Evidence
 
-## VIS-04 (accepted) — the Vision upgrade is complete
-
-The Scene Sniff, a bundled local vision model, merged through PR #72 as `3567519`. It passed 1146/1146 on Windows CI with the real model (cosine 1.00000 to the reference). The packet is `tasks/archive/vis-04-scene-sniff.md`.
-
-**Next safe task:** none until Boss's live check and the Core Bun Approval Hop. On Boss's PC, the worker metrics now also report whether the scene model runs on the GPU, and its read times.
-
-## VIS-03 (accepted)
-
-The Text Sniff, part 3 of Boss's Vision upgrade, merged through PR #69 as `86deb5f`. It passed 1123/1123 on Windows CI, where the real OCR engine was available. The packet is `tasks/archive/vis-03-text-sniff.md`.
-
-**FIX-03** (test-only race in the platform exit test) was merged through PR #71 as `4959bf0`.
-
-## VIS-02 (accepted)
-
-Glance (Haiku, peripheral) and Inspect (focus), merged through PR #67 as `da7ea82`. It passed 1102/1102 on Windows CI. The packet is `tasks/archive/vis-02-glance-inspect.md`.
-
-## VIS-01 (accepted)
-
-The Sniff, part 1 of Boss's Vision upgrade, merged through PR #65 as `2defb17`. It passed 1076/1076 on Windows CI, including the real-process sniff latency test (p95 ≤ 100 ms). The packet is `tasks/archive/vis-01-sniff-foundation.md`.
-
-## FIX-02 (accepted)
-
-Main CI on `de2646a` failed one crash-loop test whose settle wait gave up by poll count on a slow runner. The test-only fix (PR #63, `288c81f`) waits by wall clock and reports bridge diagnostics on timeout. It passed 1044/1044 on both CI runs. Ledger entry: FIX-02.
-
-## Changed (CORE-12 closure)
-
-This docs-only reconciliation:
-
-- archives CORE-12;
-- updates `BUILD_LEDGER.md` and `README.md`;
-- resets this handoff.
-
-## Verification
-
-- CORE-12 head `0d8b65b`, tree `c989179`: push run `38142489617` and PR run `38142501429` passed 1044/1044 with verified artifacts.
-- The merge ref had exact parents and an equal tree.
-
-## Remaining (Boss)
-
-1. **The first live check.** Follow `docs/Builder-Braincase-Setup.md`: a Console account, then `setx ANTHROPIC_API_KEY` or `ant auth login`, then run `tools/CompanionCore.BraincaseCheck` with `--live` (and `--turn-on`).
-2. **The milestone hand-run** (`docs/Core-Prince-Milestone.md`), and the **Core Bun Approval Hop**.
+- Check 4 was confirmed from Boss's development memory file:
+  - 36 moment memories from sight;
+  - two Adventure Records linking all their sources;
+  - append-only corrections, with no edits or deletions.
+- The details are in the `BUILD_LEDGER.md` entry "Core Bun Approval Hop".
 
 ## Next safe task
 
-None until the Core Bun Approval Hop. Stage 13, personality installation on Builder Prince, follows it.
+**Boss's memory-system changes**, which he will describe ("tighten a few screws with the memories"). The ledger lists what the hand-run showed:
+- too many memories (about 5 per minute), mostly repeated status readouts;
+- only two subject keys;
+- near-duplicates;
+- no highlights marked;
+- placeholder Adventure Record text, as intended until Stage 13.
+
+After that comes Stage 13, personality installation on Builder Prince. Companion Prince is not awakened.
+
+## Pending decisions for Boss (from the hand-run)
+
+- Whether Prince should notice a newly opened unknown app and ask, which means watching program names before consent. Proposed for Stage 13.
+- How generous Prince is about what is worth remembering. Part of the memory task.

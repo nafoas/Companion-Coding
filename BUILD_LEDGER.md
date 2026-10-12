@@ -2,15 +2,15 @@
 
 | Field | Current value |
 |---|---|
-| Current stage | **Stage 12 built; Vision upgrade in progress (Boss, 2026-10-11).** **The Vision upgrade is complete:** VIS-01 (the Sniff), VIS-02 (Glance + Inspect), VIS-03 (the Text Sniff), and VIS-04 (the Scene Sniff, a bundled local vision model) are accepted, with FIX-03. ATT-01 (Afterglow stays while things keep happening) is accepted. **Stage 12 status:** LIVE-01, LIVE-02, and CORE-12 accepted: Claude Braincase, sign-in and Bun Budget, placeholder commands, and the guided milestone. The Core Bun Approval Hop needs Boss's first live check (`docs/Builder-Braincase-Setup.md`) and milestone hand-run (`docs/Core-Prince-Milestone.md`). Stage 13 waits for that hop |
-| Active task | None. Waiting on Boss: the first live check, then the milestone hand-run and Core Bun Approval Hop |
-| Working branch | Accepted product/evidence baseline on `main`: `4dcf04af2e6df9bff2d5556d2a86e1e060aa0480` (ATT-01) |
+| Current stage | **Stage 12 complete: Boss gave the Core Bun Approval Hop on 2026-10-12** after the ten-check milestone hand-run passed on his PC with live calls on (Baldi's Basics Classic Remastered). The hand-run found and fixed FIX-05 to FIX-10. Next: Boss's memory-quality changes, then Stage 13, personality installation on Builder Prince |
+| Active task | None. Waiting on Boss: his memory-system changes (the first task after the Hop) |
+| Working branch | Accepted product/evidence baseline on `main`: `7a61caf364e0570e3e585bd1e2ea5bab740691ad` (FIX-10) |
 | Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | Stage 12 authorized by Boss on 2026-10-11 ("Let's try Stage 12") |
 | Live API authorized | Stage 12 authorized. Live calls run only on Boss's PC, with his own key and budget, after LIVE-02. No live call has been made from the build environment, and no real credential exists in it |
 | Automated tests | ATT-01 head `763d033381a555dd6191856a0a1f43dcbe45900a` passed push run `38192662480` and PR run `38192674877` at 1151/1151 with verified artifacts; the local gate passed on Linux. Before it, VIS-04 head `353441a4396a51159cd4dd9cf3e9014168b077ea` passed push run `38174260185` and PR run `38174274555` at 1146/1146 with verified artifacts; the real SigLIP model loaded on CI (CPU) and matched the Python reference embedding at cosine 1.00000; the local gate passed on Linux. Before it, FIX-03 head `11c7d35` passed runs `38171459446` and `38171468673` at 1123/1123. Before it, VIS-03 head `aeacff6049daa079cbf1424139a8756f19322fc4` passed push run `38170316427` and PR run `38170329276` at 1123/1123 with verified artifacts; the real Windows OCR engine was available on CI and read a blank crop as no lines in about 300 ms (cold); the local gate passed on Linux. Before it, VIS-02 head `d6a20c51c418d8be0869bb044b1cbfd513b66195` passed push run `38167891536` and PR run `38167905535` at 1102/1102 with verified artifacts; the local gate passed 1084/1084 on Linux. Before it, VIS-01 head `2c5baecee576e86ecb9351cdb7bcc922d24043d9` passed push run `38161132869` and PR run `38161148925` at 1076/1076 with verified artifacts, including the Windows real-process sniff latency test (p95 ≤ 100 ms); the local gate passed 1058/1058 on Linux. Before it, FIX-02 head `012e006fbe3f55cb9a976e7d0093ca9ca9725e9b` passed push run `38144399481` and PR run `38144410265` at 1044/1044 with verified artifacts; the local gate passed 1026/1026 on Linux. Before it, CORE-12 head `0d8b65b21247cbda05ca1b5802b9a1409f782709`, tree `c98917910594f88c69159f570d8870dd11a09848`, passed push run `38142489617` and PR run `38142501429` at 1044/1044 with verified artifacts. The local gate passed 1026/1026 on Linux. |
-| Manual gate | CORE-12 glue review passed: each placeholder command calls one existing command, and repair is opt-in with confirmation. PR #61 squash-merged through the expected-head fence. The milestone hand-run is Boss's. |
-| Accepted `main` baseline | `4dcf04af2e6df9bff2d5556d2a86e1e060aa0480` — ATT-01 Afterglow refresh (PR #74), on top of VIS-04 the Scene Sniff (PR #72), on top of FIX-03 (PR #71), VIS-03 the Text Sniff (PR #69), on top of VIS-02 Glance and Inspect (PR #67), on top of VIS-01 the Sniff (PR #65), on top of FIX-02 (PR #63) and CORE-12 (PR #61) |
+| Manual gate | **Core Bun Approval Hop given (Boss, 2026-10-12).** All ten milestone checks passed on Boss's PC; see the entry "Core Bun Approval Hop" below. |
+| Accepted `main` baseline | `7a61caf364e0570e3e585bd1e2ea5bab740691ad` — FIX-10 Reply target (PR #82), on top of FIX-09 (PR #81), FIX-08 (PR #80), FIX-07 (PR #79), FIX-06 (PR #78), FIX-05 (PR #77), FIX-04 (PR #76), and ATT-01 (PR #74) |
 | Known limitations | Minimized and exclusive-fullscreen WGC remain unsupported absent actual target-PC evidence. The watchdog thresholds, orientation budgets, Task 7 bridge bounds, App startup bound, and every attention, conversation, and transcript number are the accepted agreed defaults (Boss, 2026-10-11), adjusted only on evidence. The synthetic capture source cannot emit `SourceResized`. The subsystems are composed by `CompanionOrchestrator` (WIRE-01) and run in the real App with Windows platform signals and neutral notice presentation (WIRE-02). CORE-12 added plain placeholder controls for the camera, quiet check, and Vault repair; final controls belong to the presentation phase (WIRE-02 D1). Real lock and suspend need target-PC verification (WIRE-02 D4). Photographs come from the native frame (DEF-02) and are saved under the provisional 1280 edge; long sessions are consolidated completely in parts (DEF-01). Recall scoring weights and budgets, and Watchbun quiet thresholds, task bounds, and alert rates, are accepted defaults, tuned from play; Consolidation idempotency is provided by the orchestrator's durable per-session intent queue (Task 10 J3, WIRE-01 J7). |
 | Deferred temptations | A public backup/repair command (KEEP-02 D1; the single-file export exists since DEF-01); personality work; live API and credentials (Task 12); durable images, production settings, final UI |
 | Approval | Boss transferred direct construction to Claude with full authority on 2026-10-10, directed reliable orientation delivery with a retake failsafe, directed the R4 cleanup, and directed autonomous progression from Task 7 under the Paw Gate model, halting only for serious issues or real credentials.. On 2026-10-11 Boss decided the values agreed in the design conversation are the accepted calibration, changed up or down only if real use shows a need. Boss also decided that Prince is one unbroken line of continuous Bun: nothing ever restores, rolls back, or deletes his memories on its own; repair is opt-in only and may only continue his current line; older exports are never imported. |
@@ -173,6 +173,35 @@
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
 
+### Core Bun Approval Hop — Stage 12 milestone (Boss, 2026-10-12)
+
+- **Boss:** "I give the Core Bun Approval Hop."
+- **Setup.**
+  - The hand-run used the real App on Boss's PC with Builder Prince's live calls on: Opus 5.5 Inspect, Haiku 5.5 Glance, $5/day Bun Budget.
+  - The game was Baldi's Basics Classic Remastered.
+  - The live check passed (Inspect 3.6 s); after FIX-06, all five Glances passed ("failed: 0").
+- **Checks.** All ten passed.
+  - Boss confirmed checks 1–3 and 5–10 directly.
+  - Check 4 (memories) was confirmed from his development memory file. It holds two sessions:
+    - **Memories.** 36 moment memories, all formed from what Prince saw, none from conversation.
+    - **Adventure Records.** Two session summaries, each linking every source memory ("14 entries consolidated" and "22 entries consolidated").
+    - **Append-only.** One append-only correction (a later reading linked to the earlier one), and no edits or deletions.
+- **Found and fixed during the hand-run.** Each fix was confirmed on Boss's PC.
+  - FIX-05: the live check shows the server's reason.
+  - FIX-06: Glance region schema.
+  - FIX-07: pulse line.
+  - FIX-08: visual failures are counted.
+  - FIX-09: the WGC pixel readback used a wrong `IMemoryBufferByteAccess` interface ID, so real capture never worked before this fix.
+  - FIX-10: the Reply buttons answer Prince's opening.
+- **Observed for the next task (memory quality, not defects).**
+  - **Volume.** The volume is too high: 36 memories in about 7 minutes, mostly repeated status readouts (notebook count, inventory).
+  - **Subject keys.** Only two were used (`notebook-progress`, `inventory`), even for detention and jump rope.
+  - **Duplicates.** There are near-duplicates seconds apart.
+  - **Highlights.** No highlights were marked, so standout lines ("I HEAR EVERY DOOR YOU OPEN", "WOW! YOU EXIST!") were not preserved as highlights.
+  - **Summary text.** Adventure Record text is still the neutral placeholder, as intended until Stage 13.
+  - **Misread.** One memory misread a count (4/7 for 6/7).
+- **Next.** Boss's memory-system changes come first ("tighten a few screws with the memories"). Then Stage 13, personality installation on Builder Prince. Companion Prince is not awakened.
+
 ### FIX-10 — The Reply buttons answer Prince's opening
 
 - **Boss, 2026-10-12, milestone check 3:** a Conversation line appeared, but the Reply buttons "did nothing at all".
@@ -210,7 +239,7 @@
 - **Evidence.**
   - New theory `EveryPixelReadback_UsesTheOfficialInterfaceId` pins both readback declarations to the official ID. It fails on the old ID.
   - Full local gate.
-  - Boss's pulse is the real-world confirmation.
+  - Boss's pulse is the real-world confirmation. **Confirmed on Boss's PC, 2026-10-12:** capture, sniffs, sheets, Glances, and Inspects all run.
 
 ### FIX-08 — A failed frame is counted, never silent
 
@@ -252,7 +281,7 @@
   - New theory `TheAnswerSchema_OffersOnlyTheSheetsOwnRegions` covers Orientation and Regional sheets, for both Glance and Inspect. A mutant that offers every region fails all 4 cases.
   - New test `TheLiveCheck_SaysWhyEachGlanceFailed`.
   - Full local gate.
-  - Boss's rerun of `--live` is the real-world confirmation.
+  - Boss's rerun of `--live` is the real-world confirmation. **Confirmed, 2026-10-12:** "failed: 0".
 
 ### FIX-05 — The live check says why a call failed
 
