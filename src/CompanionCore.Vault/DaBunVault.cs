@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using CompanionCore.BunDex;
 using CompanionCore.Keepsakes;
 using CompanionCore.Memory;
 using CompanionCore.Privacy;
@@ -25,8 +26,12 @@ public sealed record VaultRestoreReport(
     int StatesRestored,
     string DamagedSourceDirectory)
 {
-    /// <summary>True only when the companion was valid and every live photograph verifies.</summary>
-    public bool Complete => Companion == CompanionStatus.Valid && MissingPhotographs.Count == 0;
+    /// <summary>What happened to the BunDex ledger (M1).</summary>
+    public BunDexLedgerRestoreReport? BunDex { get; init; }
+
+    /// <summary>True only when the companion was valid, every live photograph verifies, and the BunDex ledger is usable.</summary>
+    public bool Complete => Companion == CompanionStatus.Valid && MissingPhotographs.Count == 0
+        && BunDex?.Outcome is not BunDexLedgerRestore.VaultUnusable;
 }
 
 /// <summary>
@@ -146,6 +151,16 @@ internal static class DaBunVault
                 statesRestored++;
             }
 
+            // The BunDex ledger: kept when it verifies and holds the Vault's copy, otherwise
+            // preserved and rebuilt from the Vault plus every valid newer entry.
+            var bunDexSegments = new List<(string, byte[])>();
+            foreach (var entry in companion?.Manifest.Entries.Where(entry => CompanionArchive.IsBunDexEntry(entry.Name)) ?? [])
+            {
+                bunDexSegments.Add((entry.Name[CompanionArchive.BunDexEntryPrefix.Length..], await File.ReadAllBytesAsync(companion!.PathFor(entry.Name)!, cancellationToken).ConfigureAwait(false)));
+            }
+
+            var bunDex = BunDexLedgerRepair.Restore(BunDexLocation.For(location), bunDexSegments);
+
             return new VaultRestoreReport(
                 repair.RepairId,
                 repair.BackupId,
@@ -157,7 +172,10 @@ internal static class DaBunVault
                 missing,
                 kept,
                 statesRestored,
-                repair.DamagedSourceDirectory);
+                repair.DamagedSourceDirectory)
+            {
+                BunDex = bunDex,
+            };
         }
     }
 

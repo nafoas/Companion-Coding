@@ -1,4 +1,5 @@
 using CompanionCore.Api;
+using CompanionCore.BunDex;
 using CompanionCore.Keepsakes;
 using CompanionCore.Memory;
 using CompanionCore.Privacy;
@@ -65,6 +66,15 @@ public sealed class CompanionHost : IAsyncDisposable
     public BraincaseStateLocation Braincase { get; }
 
     public MemoryStoreLocation Location => _options.Location;
+
+    /// <summary>
+    /// Prince's BunDex (M1), reconciled against the BrainCase ledger on every start, including
+    /// after repairs. A damaged ledger opens it read-only rather than stopping the host.
+    /// </summary>
+    public BunDexStore BunDex { get; private set; } = null!;
+
+    /// <summary>What the last open found and fixed in the BunDex.</summary>
+    public BunDexOpenReport BunDexReport { get; private set; } = null!;
 
     public static async Task<CompanionHost> OpenAsync(CompanionHostOptions options, CancellationToken cancellationToken = default)
     {
@@ -166,6 +176,8 @@ public sealed class CompanionHost : IAsyncDisposable
     private async Task StartCoreAsync(CancellationToken cancellationToken)
     {
         var time = _options.Time ?? TimeProvider.System;
+        BunDex = BunDexStore.Open(BunDexLocation.For(_options.Location), out var bunDexReport, time);
+        BunDexReport = bunDexReport;
         Repository = await MemoryRepository.OpenAsync(_options.Location, _options.Privacy, cancellationToken).ConfigureAwait(false);
         try
         {

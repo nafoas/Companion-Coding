@@ -159,6 +159,12 @@
           "CompanionCore.Capture.Contracts": "[1.0.0, )"
         }
       },
+      "companioncore.bundex": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Memory": "[1.0.0, )"
+        }
+      },
       "companioncore.capture.contracts": {
         "type": "Project"
       },
@@ -189,6 +195,7 @@
         "dependencies": {
           "CompanionCore.Api": "[1.0.0, )",
           "CompanionCore.Attention": "[1.0.0, )",
+          "CompanionCore.BunDex": "[1.0.0, )",
           "CompanionCore.Capture.Contracts": "[1.0.0, )",
           "CompanionCore.Conversation": "[1.0.0, )",
           "CompanionCore.Keepsakes": "[1.0.0, )",
@@ -232,6 +239,7 @@
       "companioncore.vault": {
         "type": "Project",
         "dependencies": {
+          "CompanionCore.BunDex": "[1.0.0, )",
           "CompanionCore.Keepsakes": "[1.0.0, )",
           "CompanionCore.Memory": "[1.0.0, )"
         }
