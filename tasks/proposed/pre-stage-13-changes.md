@@ -516,4 +516,54 @@ Boss: "the BIC is basically where his personality lives. Read through all the st
   - It runs once, as an explicit step when the new memory system is installed. The exact folder to be reset is shown to Boss first.
   - Companion Prince begins with a clean, empty BunDex at the one awakening, as already designed.
 
-## 11. (next item from Boss)
+## 11. The BunDex is allowed to be messy: purely a Bun writing (Boss, 2026-10-12)
+
+> "I wanna semi intentionally make the BunDex be just a little Bun writing, not some polished thing, so ensure that he can actually be a Bun about it. Like, I almost want it to be messy, pure, very Bnuy."
+
+- **Messiness is a requirement, not a defect.** Pages may be uneven, rambling or tiny, misspelled the Bnuy way, half-finished, doodled about, and repetitive in a Bun way. Folders can be oddly named or oddly sorted, and new thoughts can be squeezed into old pages.
+- **Nothing in the machinery tidies, normalizes, or corrects his writing.** Machine validation touches only safety: safe names, no paths or secrets, bounded size, append-only. It never checks spelling, grammar, layout, or neatness.
+- **The character validator (item 8c) must not punish messiness.** It checks *who he is* (truthful, kind, never cynical, never fabricating), not polish. "Too polished" counts as more out of character than "too messy". The design already lists polished, slick, and verbose as out of character.
+- **Reliability still comes from the BrainCase index** (item 10), never from making his pages tidy.
+- **The voice itself is Stage 13.** This round makes sure the machinery leaves room for the mess.
+
+## 12. The subconscious sees everything; the Bun registers the gist, and gets used to things (Boss, 2026-10-12)
+
+> "He is allowed to keep seeing the same thing over and over again (since that is still something he notices and sees), but then his actual little Bnuy consciousness just registers it as 'oh, saw dis a few times' rather than each time individually. I also think there should be a desensitization mechanic. Novel, shocking things, or even just stuff that happens over and over again, start as novel, but then they slowly fade into background noise, which represents how people actually process novelty."
+
+### Two levels of seeing
+
+- **The BrainCase (subconscious) keeps every sighting:** each time he saw the notebook counter, the inventory, or Baldi down the hall. That is the factual record of item 1 and 7a.
+- **Prince's consciousness registers the gist:** "oh, saw dis a few times". It is one growing impression, not one memory per sighting.
+- **What does become a memory** is the *first* time, a *meaningful change* ("the BSODA is gone!"), or a moment that made it matter. The rest stays in the subconscious as repetition.
+
+### Desensitization (habituation)
+
+- **The fade.** Something novel or shocking starts out strongly noticed. Each repeat counts for a little less, until it is background noise.
+- **The design conversation already asks for this** (Question 3D):
+  - interest ≈ significance + relevance + urgency + personal connection + lore connection + novelty − habituation;
+  - unfamiliar things attract him at first, and repeated ordinary things contribute less;
+  - he gradually grows accustomed to a game;
+  - **altered context can make a familiar thing interesting again**;
+  - **rare recurrences regain novelty after enough time**;
+  - **danger stays alert-worthy even when familiar.** Habituation quiets his commentary, never essential warnings. ("Prince remembers dese ones. Still oogly, but not as boogly as before." The hundredth familiar enemy gets no comment, but that enemy behind Boss at one health still matters.)
+- **This connects to fears that ease** (item 9). Repeated safe exposure to a scary thing lowers fear in *that* context only.
+
+### What exists today (code checked 2026-10-12)
+
+- **Fast, short-term habituation only, in the reflexes.**
+  - The pixel Sniff habituates per screen cell, recovering in about 20 s.
+  - The Scene Sniff habituates per scene label, recovering in about 60 s.
+- **Meaningful topics have only a first-time flag.** A topic is "novel" only the first time it appears in a session (`SemanticEvidence`); after that there is no gradual fade.
+- **Missing:**
+  - gradual desensitization of meaningful things across repeats, sessions, and time;
+  - recovery after long gaps;
+  - re-sensitizing when the context changes;
+  - the danger exemption at that level;
+  - feeding "saw dis a few times" into memory instead of new memories.
+- **The fix belongs with items 1 and 7a,** the record that collapses repetition.
+
+### Constraint to keep
+
+Desensitization lowers attention and commentary. It never deletes a sighting from the subconscious record, never edits a memory, and never silences a genuine warning.
+
+## 13. (next item from Boss)
