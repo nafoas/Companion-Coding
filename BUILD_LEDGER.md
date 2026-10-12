@@ -173,6 +173,21 @@
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
 
+### FIX-09 — Real pixel readback uses the official interface ID
+
+- **Boss, 2026-10-12, pulse reading:** `Worker: accepted 84 ... sheets 0 (dropped 84); failures 84 (PixelCopy, 0x80004002)`.
+  - 0x80004002 is E_NOINTERFACE.
+  - The real Windows Graphics Capture readback declared `IMemoryBufferByteAccess` with a wrong interface ID (`…-8654-1F0337B16D0B`). The official ID is `5b0d3235-4dba-4d44-865e-8f1d0e4fd04d`, which the Text Sniff already used.
+  - So every real frame failed its pixel copy: no sniff, no sheet, no look.
+  - Synthetic capture sources never exercise this path, so no earlier gate could see it.
+- **Change.**
+  - The interface ID is corrected.
+  - Every other COM interface ID in the worker was checked; `IGraphicsCaptureItemInterop` is correct.
+- **Evidence.**
+  - New theory `EveryPixelReadback_UsesTheOfficialInterfaceId` pins both readback declarations to the official ID. It fails on the old ID.
+  - Full local gate.
+  - Boss's pulse is the real-world confirmation.
+
 ### FIX-08 — A failed frame is counted, never silent
 
 - **Boss, 2026-10-12, pulse reading:** `frames 370, admitted 370; sniffs 0`, sheets 0. The worker captured and the privacy gate admitted every frame, yet no frame became a sniff or a sheet.
