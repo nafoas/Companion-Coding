@@ -3,7 +3,7 @@
 | Field | Current value |
 |---|---|
 | Current stage | **Stage 12 complete: Boss gave the Core Bun Approval Hop on 2026-10-12** after the ten-check milestone hand-run passed on his PC with live calls on (Baldi's Basics Classic Remastered). The hand-run found and fixed FIX-05 to FIX-10. Next: Boss's memory-quality changes, then Stage 13, personality installation on Builder Prince |
-| Active task | None. Waiting on Boss: his memory-system changes (the first task after the Hop) |
+| Active task | M1 (Two homes: BrainCase and BunDex), the first step of Boss's approved pre-Stage 13 plan (`tasks/proposed/pre-stage-13-changes.md`) |
 | Working branch | Accepted product/evidence baseline on `main`: `7a61caf364e0570e3e585bd1e2ea5bab740691ad` (FIX-10) |
 | Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | Stage 12 authorized by Boss on 2026-10-11 ("Let's try Stage 12") |
@@ -172,6 +172,17 @@
   - Mutation pass: 33 mutants, 31 killed, 2 defense-in-depth survivors.
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
+
+### Pre-Stage 13 plan approved (Boss, 2026-10-12)
+
+- After the Core Bun Approval Hop, Boss and Builder assembled a 19-item list of changes to make before Stage 13 (`tasks/proposed/pre-stage-13-changes.md`). They draw on the hand-run's evidence and on a full re-read of the design conversation.
+- **What the list covers.**
+  - **Memory:** novel memories, not a log; a readable, organic, messy BunDex in Prince's own hand; BrainCase vs. BunDex; notes vs. memories; four memory layers with approved values; the full PRINCE design.
+  - **Prince's mind:** where his personality lives; nature, subconscious, and consciousness, with the curtain and the one-way membrane; preserving his innocence; attention as felt.
+  - **Conversation and growth:** conversations that pause and resume; trust in Da Boss; how the relationship grows; Little Requests.
+- **Builder Prince's development memories** from the hand-run are to be discarded at installation (Boss: "that's what Builder Prince is for").
+- **Build order.** M1–M10, each step a full task with its own packet, tests, mutation pass, and Paw Gate. M10 is Boss's hand-run, the gate into Stage 13.
+- **Boss:** "Let us begin, then."
 
 ### Core Bun Approval Hop — Stage 12 milestone (Boss, 2026-10-12)
 
