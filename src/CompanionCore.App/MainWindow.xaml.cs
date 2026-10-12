@@ -123,14 +123,16 @@ public partial class MainWindow : Window
     private long _framesAdmitted;
     private long _sniffsProduced;
     private System.Windows.Threading.DispatcherTimer? _pulseTimer;
+    private Func<CancellationToken, Task<CaptureWorkerMetrics>>? _pulseMetrics;
 
     /// <summary>
     /// FIX-07: a live pulse line, refreshed every second, so Boss can see every step from
     /// the worker's frames to the Braincase's looks. Counts and state names only.
     /// </summary>
-    internal void AttachPulse(ICaptureWorker worker)
+    internal void AttachPulse(ICaptureWorker worker, Func<CancellationToken, Task<CaptureWorkerMetrics>>? workerMetrics = null)
     {
         _pulseWorker = worker;
+        _pulseMetrics = workerMetrics;
         worker.StatusChanged += PulseWorker_StatusChanged;
         worker.FrameProduced += PulseWorker_FrameProduced;
         worker.SniffProduced += PulseWorker_SniffProduced;
@@ -167,6 +169,23 @@ public partial class MainWindow : Window
         var capture = string.Create(
             CultureInfo.InvariantCulture,
             $"Capture: {worker.Status}{(status is { Reason: var reason } ? $" ({reason})" : string.Empty)}; frames {Interlocked.Read(ref _framesProduced)}, admitted {Interlocked.Read(ref _framesAdmitted)}; sniffs {Interlocked.Read(ref _sniffsProduced)}");
+        if (_pulseMetrics is { } read)
+        {
+            // FIX-08: the worker's own counts, so a frame that never becomes a sniff or sheet shows why.
+            try
+            {
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+                var m = await read(timeout.Token);
+                capture += string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"\nWorker: accepted {m.AcceptedFrames}, dropped {m.DroppedFrames}; changed {m.ChangedFrames}, same {m.DuplicateFrames}; sheets {m.ProducedAttentionSheets} (dropped {m.DroppedAttentionSheets}); failures {m.VisualFailures}{(m.VisualFailures > 0 ? $" ({m.LastVisualFailureStage}, 0x{m.LastVisualFailureCode:X8})" : string.Empty)}");
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                capture += "\nWorker: counts unavailable";
+            }
+        }
+
         if (_companion is not { } companion)
         {
             PulseText.Text = capture;
