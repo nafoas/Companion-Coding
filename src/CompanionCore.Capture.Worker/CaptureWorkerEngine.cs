@@ -253,6 +253,9 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             MaximumSceneReadMicroseconds = scene.MaximumMicroseconds,
             FrameSpacing = Clamp(FrameSpacing, CaptureCadence.MaximumFrameSpacing),
             SheetSpacing = Clamp(SheetSpacing, CaptureCadence.MaximumSheetSpacing),
+            VisualFailures = visual.VisualFailures,
+            LastVisualFailureStage = visual.LastFailureStage,
+            LastVisualFailureCode = visual.LastFailureCode,
         };
         EvaluateWatchdog(metrics);
         return metrics with
@@ -698,6 +701,9 @@ internal sealed class CaptureWorkerEngine : IAsyncDisposable
             MaximumSceneReadMicroseconds = scene.MaximumMicroseconds,
             FrameSpacing = Clamp(FrameSpacing, CaptureCadence.MaximumFrameSpacing),
             SheetSpacing = Clamp(SheetSpacing, CaptureCadence.MaximumSheetSpacing),
+            VisualFailures = visual.VisualFailures,
+            LastVisualFailureStage = visual.LastFailureStage,
+            LastVisualFailureCode = visual.LastFailureCode,
         };
     }
 

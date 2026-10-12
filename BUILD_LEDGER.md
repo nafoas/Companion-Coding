@@ -173,6 +173,20 @@
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
 
+### FIX-08 — A failed frame is counted, never silent
+
+- **Boss, 2026-10-12, pulse reading:** `frames 370, admitted 370; sniffs 0`, sheets 0. The worker captured and the privacy gate admitted every frame, yet no frame became a sniff or a sheet.
+  - The step between is the worker's visual processing: pixel copy, sniff, compose, encode, contract.
+  - It swallowed every exception without counting it, so the failure was invisible.
+- **Change.**
+  - Visual processing records each non-cancellation failure. It counts it, notes the stage (`CaptureVisualFailureStage`), and keeps the numeric error code (`HResult`). It never records exception text.
+  - These counts reach the App through the existing metrics IPC.
+  - The pulse gains a `Worker:` line: pipeline accepted/dropped, changed/same frames, sheets produced/dropped, and failures with stage and code.
+- **Evidence.**
+  - New test `AFailedPixelCopy_IsCounted_WithItsStageAndCode_AndTheNextFrameStillOrients`.
+  - Full local gate.
+  - The root cause is still open: Boss's `Worker:` reading will name the stage and code.
+
 ### FIX-07 — A live pulse line in the window
 
 - **Boss, 2026-10-12, milestone hand-run check 2:** after SessionStarted, a minute of play produced nothing at all. There were no Attention notices, no Braincase notice (the first Glance outcome always posts one), and no Fault. So no picture reached the looking stage. The placeholder window gave no way to see where the chain stopped.

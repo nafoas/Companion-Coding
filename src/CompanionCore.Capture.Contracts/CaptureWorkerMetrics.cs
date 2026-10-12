@@ -114,6 +114,16 @@ public sealed record CaptureWorkerMetrics
 
     public TimeSpan SheetSpacing { get; init; }
 
+    /// <summary>
+    /// FIX-08: frames whose visual processing failed (no sniff, no sheet), the stage that failed
+    /// last, and that failure's numeric error code. Numbers only; never exception text.
+    /// </summary>
+    public long VisualFailures { get; init; }
+
+    public CaptureVisualFailureStage LastVisualFailureStage { get; init; }
+
+    public int LastVisualFailureCode { get; init; }
+
     public static CaptureWorkerMetrics Empty { get; } = new();
 
     public bool IsProtocolSafe() =>
@@ -180,5 +190,8 @@ public sealed record CaptureWorkerMetrics
         && LastSceneReadMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
         && MaximumSceneReadMicroseconds is >= 0 and <= SniffSignal.MaximumComputeMicroseconds
         && LastSceneReadMicroseconds <= MaximumSceneReadMicroseconds
-        && (SceneModelAvailable || !SceneModelAccelerated);
+        && (SceneModelAvailable || !SceneModelAccelerated)
+        && VisualFailures >= 0
+        && Enum.IsDefined(LastVisualFailureStage)
+        && (VisualFailures > 0 || LastVisualFailureStage == CaptureVisualFailureStage.None);
 }

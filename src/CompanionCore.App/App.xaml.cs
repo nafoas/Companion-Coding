@@ -114,7 +114,7 @@ public partial class App : Application
             Dispatcher);
         _companion.StartCalibration(e.Args, captureWorker);
         window.AttachCompanion(_companion);
-        window.AttachPulse(captureWorker);
+        window.AttachPulse(captureWorker, captureWorker.GetMetricsAsync);
 
         if (testMode is not null)
         {

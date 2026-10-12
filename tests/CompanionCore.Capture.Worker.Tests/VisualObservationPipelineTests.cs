@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using CompanionCore.Capture.Contracts;
 using CompanionCore.Capture.Worker;
 
@@ -222,6 +223,39 @@ public sealed class VisualObservationPipelineTests
         var metrics = pipeline.Snapshot();
         Assert.Equal(0, metrics.CurrentWorkingBytes);
         Assert.Equal(1, metrics.DroppedSheets);
+    }
+
+    [Fact]
+    public async Task AFailedPixelCopy_IsCounted_WithItsStageAndCode_AndTheNextFrameStillOrients()
+    {
+        // FIX-08: on Boss's PC every frame failed before its sniff, silently. A failure now
+        // shows in the worker's metrics: how many, which stage, and the numeric error code.
+        using var pipeline = new VisualObservationPipeline();
+        var authorization = CaptureWorkerTestSupport.CreateAuthorization();
+        using (var broken = new CaptureSourceFrame(CaptureWorkerTestSupport.FixedTime, 320, 180, 320L * 180 * 4, new FailingPixelResource()))
+        {
+            broken.AssignSequence(1);
+            await Assert.ThrowsAsync<COMException>(async () => await pipeline.ProcessAsync(broken, authorization, CancellationToken.None));
+        }
+
+        var failed = pipeline.Snapshot();
+        Assert.Equal((1L, CaptureVisualFailureStage.PixelCopy, unchecked((int)0x887A0005)), (failed.VisualFailures, failed.LastFailureStage, failed.LastFailureCode));
+        Assert.Equal(0, failed.Sniffs);
+
+        using var good = CreateFrame(2, pattern: 10);
+        using var orientation = await pipeline.ProcessAsync(good, authorization, CancellationToken.None);
+        Assert.Equal(AttentionSheetKind.Orientation, orientation!.Metadata.Kind);
+        Assert.Equal(1L, pipeline.Snapshot().VisualFailures);
+    }
+
+    private sealed class FailingPixelResource : ICapturePixelSource
+    {
+        public ValueTask<OwnedBgra32Buffer> CopyPixelsAsync(CancellationToken cancellationToken) =>
+            throw new COMException("synthetic device removed", unchecked((int)0x887A0005));
+
+        public void Dispose()
+        {
+        }
     }
 
     private static CaptureSourceFrame CreateFrame(

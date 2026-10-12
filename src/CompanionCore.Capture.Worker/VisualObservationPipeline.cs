@@ -33,6 +33,9 @@ internal sealed class VisualObservationPipeline : IDisposable
     private long _maximumWorkingBytes;
     private double _lastChangeScore;
     private long _sniffs;
+    private long _visualFailures;
+    private CaptureVisualFailureStage _lastFailureStage;
+    private int _lastFailureCode;
     private long _spacedSheets;
     private long _lastSniffMicroseconds;
     private long _maximumSniffMicroseconds;
@@ -114,6 +117,7 @@ internal sealed class VisualObservationPipeline : IDisposable
         var orientation = false;
         var photograph = false;
         var stateCaptured = false;
+        var stage = CaptureVisualFailureStage.PixelCopy;
         try
         {
             // WGC readback briefly owns a SoftwareBitmap plus the tightly packed copy.
@@ -129,6 +133,7 @@ internal sealed class VisualObservationPipeline : IDisposable
             }
 
             SetWorkingBytes(pixels.ByteLength);
+            stage = CaptureVisualFailureStage.Sniff;
             IReadOnlyList<VisualRegion> regions = [];
             FrameChangeResult change = default;
             SniffSignal? sniff = null;
@@ -244,6 +249,7 @@ internal sealed class VisualObservationPipeline : IDisposable
                 return ProducePhotograph(frame, authorization, pixels, stateVersion);
             }
 
+            stage = CaptureVisualFailureStage.Compose;
             composed = AttentionSheetComposer.Compose(
                 pixels,
                 orientation ? AttentionSheetKind.Orientation : AttentionSheetKind.Regional,
@@ -256,7 +262,9 @@ internal sealed class VisualObservationPipeline : IDisposable
             }
 
             SetWorkingBytes(conservativePeak);
+            stage = CaptureVisualFailureStage.Encode;
             var encoded = PngEncoder.Encode(composed.Canvas);
+            stage = CaptureVisualFailureStage.Contract;
             var target = new CaptureTargetIdentity(
                 authorization.WindowId,
                 authorization.ProcessId,
@@ -307,10 +315,17 @@ internal sealed class VisualObservationPipeline : IDisposable
 
             return new OwnedWorkerAttentionSheet(metadata, encoded, ReleaseSheet);
         }
-        catch
+        catch (Exception exception)
         {
             lock (_gate)
             {
+                if (exception is not OperationCanceledException)
+                {
+                    _visualFailures++;
+                    _lastFailureStage = stage;
+                    _lastFailureCode = exception.HResult;
+                }
+
                 if (!_disposed && stateCaptured && stateVersion == _stateVersion)
                 {
                     _orientationPending |= orientation;
@@ -711,7 +726,10 @@ internal sealed class VisualObservationPipeline : IDisposable
                 _sniffs,
                 _spacedSheets,
                 _lastSniffMicroseconds,
-                _maximumSniffMicroseconds);
+                _maximumSniffMicroseconds,
+                _visualFailures,
+                _lastFailureStage,
+                _lastFailureCode);
         }
     }
 
@@ -839,4 +857,7 @@ internal readonly record struct VisualObservationMetrics(
     long Sniffs = 0,
     long SpacedSheets = 0,
     long LastSniffMicroseconds = 0,
-    long MaximumSniffMicroseconds = 0);
+    long MaximumSniffMicroseconds = 0,
+    long VisualFailures = 0,
+    CaptureVisualFailureStage LastFailureStage = CaptureVisualFailureStage.None,
+    int LastFailureCode = 0);
