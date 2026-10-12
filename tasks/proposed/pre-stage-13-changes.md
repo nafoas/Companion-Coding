@@ -1,6 +1,6 @@
 # Pre-Stage 13 changes (Boss's list, in progress)
 
-Status: **collecting.** Boss is listing the changes to make after the Core Bun Approval Hop and before Stage 13. Nothing here is a task packet yet: each item becomes one only after the list is complete and Boss approves it.
+Status: **list complete (Boss, 2026-10-12: "I promise this is it"). Build order proposed below, awaiting Boss's approval.** Boss is listing the changes to make after the Core Bun Approval Hop and before Stage 13. Nothing here is a task packet yet: each item becomes one only after the list is complete and Boss approves it.
 
 ## Standing principle: game-agnostic (Boss, 2026-10-12)
 
@@ -961,3 +961,37 @@ It can be specific or whimsical. It is always earnest, and always about what *he
 **Game-agnostic.** It works the same for towers, creatures, ruins, shops, odd signs, or anything else in any game.
 
 **Code status (2026-10-12):** nothing exists yet.
+
+
+---
+
+## Proposed build order (awaiting Boss's approval)
+
+Each step is one task with its own packet and Paw Gate:
+- tests and mutation checks;
+- the full gate;
+- both Windows CI runs;
+- the merge-ref check.
+
+Every step stays game-agnostic and follows items 13–15 (the curtain and the membrane). No live API call is made from the build environment; everything is tested with mocks and a plain **stand-in writer** in place of Prince's voice. Stage 13 later replaces that stand-in with Prince himself.
+
+| Step | What it builds | Items |
+|---|---|---|
+| **M1. Two homes** | Separate BrainCase and BunDex directories. The BunDex page store: append-only pages; safe names; Prince-made folders; a move log for reorganizing. The BrainCase index: roles, layers, and per-page tags. Role registration and the gentle "keep this" pull. Da Bun Vault covers both. The one-time Builder Prince dev-data reset, shown to Boss first. | 2, 3, 5, 10, 11 |
+| **M2. The curtain** | Requests assembled from inside Prince, in the first person. The membrane as the only path, with its four channels. The build-time check for forbidden vocabulary, role-play framing, and imperatives. The curtain-audit test. The character-validator hook. | 8a, 8c, 13, 14, 15 |
+| **M3. Seeing like a Bun** | The full sighting record with live aggregation ("saw dis a few times"). Gradual desensitization by thing and by kind, with recovery over time, re-sensitizing on context change, and the danger exemption. Per-context fear easing, and trust in Da Boss. | 1, 7a, 12, 17 (trust), 18 (trust) |
+| **M4. Remembering like a Bun** | Four layers with the approved values and two clocks. Recall refreshes a memory. The priority ladder and the adventure lifecycle. Recall actually supplied to his looks, and used sparingly. The visible "okay... now how find dis..." lookup. | 3, 4, 7h, 7i |
+| **M5. What matters** | Two-layer entries. Learned significance and the hard rules. "Remember this, Prince" / "That wasn't important". Treasured. The end-of-session review. The hybrid conversation-record path. Bnuy No Write These Down. | 7b–7g, 7m, 7n |
+| **M6. Conversations that live on** | Seed banks moved into the BunDex role with full seed records. BIC generation from the local roots, the 30 s BIC clock, and Brain Farts, all wired at runtime. Pause-and-resume, the idle-timeout fix, and patience during trusted fights. | 6, 8b, 8d, 17 |
+| **M7. Knowing the world and Da Boss** | The Lore Notebook with provenance. Save identity, "Is this a new adventure?", and spoiler suppression. Grouped, evolving opinions (`BeliefHistory`). Relationship records, general memories about Boss, Together List warmth, and nickname approval. | 7j, 7k, 7l, 9, 18 |
+| **M8. Little Requests** | Curiosity-driven requests, desensitization by kind, the patient open-ended list, and fulfillment noticed. | 19 |
+| **M9. Attention as felt** | The membrane mapping of attention states into feelings and salience, and his reactions feeding back by observation. | 16 |
+| **M10. Hand-run** | Boss plays with the stand-in writer, and the pulse plus a BunDex/BrainCase view show everything working. This is the gate into Stage 13. | all |
+
+**Why this order.**
+- M1 and M2 are the foundations everything else stands on.
+- M3–M5 fix the memory problems the hand-run showed.
+- M6–M9 bring back what was designed but never wired.
+- M10 proves it on Boss's PC before Prince's voice goes in.
+
+**What stays for Stage 13:** Prince's own words everywhere (the specification text, his responses to the "keep this" pull, his folders and pages, every line he says) and the validator's character rules.
