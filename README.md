@@ -154,7 +154,7 @@ Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 
 **ATT-01** (PR #74): Prince's Afterglow now stays while things keep happening. It keeps its adaptive 30 s to 3 min length, but each interesting event restarts the countdown, so a long quest or cutscene doesn't flip him back to "never mind". Merged as `4dcf04af2e6df9bff2d5556d2a86e1e060aa0480`.
 
-Stage 12 is built and waits for Boss: first the live check, then the milestone hand-run and the Core Bun Approval Hop. Personality waits for Stage 13.
+**Stage 12 is complete: Boss gave the Core Bun Approval Hop on 2026-10-12** after the ten milestone checks passed on his PC with live calls on. Next: Boss's memory-quality changes, then Stage 13, personality installation on Builder Prince.
 
 ## Important boundaries
 
