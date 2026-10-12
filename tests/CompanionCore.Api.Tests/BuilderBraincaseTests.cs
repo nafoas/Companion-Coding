@@ -335,4 +335,35 @@ public sealed class BuilderBraincaseTests : IDisposable
         Assert.Equal(LiveCheckVerdict.InvalidResponse, invalid.Verdict);
         Assert.Equal(SemanticResponseInvalidReason.UnknownRegion, invalid.InvalidReason);
     }
+
+    [Fact]
+    public async Task TheLiveCheck_SaysWhyEachGlanceFailed()
+    {
+        using var store = new InMemoryCredentialStore();
+        store.Set(RealSemanticProviderShell.PrimaryCredentialName, ProtectedCredential.FromCharacters("sk-ant-synthetic-test-only"));
+        var glances = 0;
+        var transport = new FakeTransport(request =>
+        {
+            if (!IsGlance(request))
+            {
+                return Answer();
+            }
+
+            return ++glances switch
+            {
+                1 => Answer(GlanceText.Replace("\"fullContext\"", "\"centerEnvironment\"", StringComparison.Ordinal)),
+                2 => new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent("{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"x\"}}", Encoding.UTF8, "application/json") },
+                _ => Answer(GlanceText),
+            };
+        });
+        var provider = new AnthropicSemanticProvider(store, new AnthropicProviderOptions { LiveCallsEnabled = true }, new HttpClient(transport), ownsHttp: true, baseUrl: new Uri("https://fake.invalid"));
+
+        var result = await BraincaseLiveCheck.RunWithAsync(provider, BuilderBraincaseSettings.Off, CancellationToken.None);
+
+        Assert.Equal(LiveCheckVerdict.Passed, result.Verdict);
+        Assert.Equal(2, result.GlanceFailures);
+        Assert.Equal(
+            ["refused by the strict parser: UnknownRegion", "Unavailable RequestRejected"],
+            result.GlanceFailureReasons);
+    }
 }

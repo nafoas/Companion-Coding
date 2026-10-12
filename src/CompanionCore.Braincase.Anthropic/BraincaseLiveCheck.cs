@@ -34,6 +34,9 @@ public sealed record LiveCheckResult(
     /// <summary>Glances that failed or were refused by the strict Glance parser.</summary>
     public int GlanceFailures { get; init; }
 
+    /// <summary>Why each failed Glance failed (FIX-06): a provider failure or the parser's reason.</summary>
+    public IReadOnlyList<string> GlanceFailureReasons { get; init; } = [];
+
     public decimal GlanceCost { get; init; }
 
     /// <summary>What the API said when the call failed, redacted, for Boss's console only.</summary>
@@ -118,9 +121,9 @@ public static class BraincaseLiveCheck
             var input = parsed!.InputUnits ?? 0;
             var output = parsed.OutputUnits ?? 0;
             var cost = AnthropicPricing.BudgetFor(settings.Model, 1m)?.CostOf(input, output) ?? 0m;
-            var (glanceLatencies, glanceFailures, glanceCost) = settings.GlanceEnabled
+            var (glanceLatencies, glanceFailureReasons, glanceCost) = settings.GlanceEnabled
                 ? await MeasureGlancesAsync(provider, settings, image, cancellationToken).ConfigureAwait(false)
-                : ([], 0, 0m);
+                : ([], [], 0m);
             return new LiveCheckResult(
                 LiveCheckVerdict.Passed,
                 parsed.Summary,
@@ -134,21 +137,22 @@ public static class BraincaseLiveCheck
                 SemanticResponseInvalidReason.None)
             {
                 GlanceLatencies = glanceLatencies,
-                GlanceFailures = glanceFailures,
+                GlanceFailures = glanceFailureReasons.Count,
+                GlanceFailureReasons = glanceFailureReasons,
                 GlanceCost = glanceCost,
             };
         }
     }
 
     /// <summary>Boss's real Glance timing: a few quick looks at the same synthetic picture.</summary>
-    private static async Task<(IReadOnlyList<TimeSpan> Latencies, int Failures, decimal Cost)> MeasureGlancesAsync(
+    private static async Task<(IReadOnlyList<TimeSpan> Latencies, IReadOnlyList<string> FailureReasons, decimal Cost)> MeasureGlancesAsync(
         AnthropicSemanticProvider provider,
         BuilderBraincaseSettings settings,
         byte[] image,
         CancellationToken cancellationToken)
     {
         var latencies = new List<TimeSpan>(GlanceSamples);
-        var failures = 0;
+        var failures = new List<string>();
         long input = 0;
         long output = 0;
         for (var sample = 0; sample < GlanceSamples; sample++)
@@ -173,10 +177,15 @@ public static class BraincaseLiveCheck
             var clock = Stopwatch.StartNew();
             var reply = await provider.InterpretAsync(request, cancellationToken).ConfigureAwait(false);
             latencies.Add(clock.Elapsed);
-            if (!reply.IsSuccess
-                || !GlanceResponseParser.TryParse(reply.ResponseJson!, operation, [AttentionRegionKind.FullContext], out var glance, out _))
+            if (!reply.IsSuccess)
             {
-                failures++;
+                failures.Add($"{reply.FailureKind} {reply.UnavailableReason}");
+                continue;
+            }
+
+            if (!GlanceResponseParser.TryParse(reply.ResponseJson!, operation, [AttentionRegionKind.FullContext], out var glance, out var reason))
+            {
+                failures.Add($"refused by the strict parser: {reason}");
                 continue;
             }
 

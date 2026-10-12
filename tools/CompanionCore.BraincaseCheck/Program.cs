@@ -68,6 +68,10 @@ switch (result.Verdict)
             var each = string.Join(", ", result.GlanceLatencies.Select(latency => $"{latency.TotalMilliseconds:0} ms"));
             Console.WriteLine($"  Glances ({settings.GlanceModel}): {each}");
             Console.WriteLine($"  Glance median: {sorted[sorted.Length / 2].TotalMilliseconds:0} ms; failed: {result.GlanceFailures}; cost about ${result.GlanceCost.ToString("0.0000", CultureInfo.InvariantCulture)}");
+            foreach (var group in result.GlanceFailureReasons.GroupBy(reason => reason))
+            {
+                Console.WriteLine($"  Glance failed {group.Count()}x: {group.Key}");
+            }
         }
 
         break;

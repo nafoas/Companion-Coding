@@ -173,6 +173,22 @@
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
 
+### FIX-06 — Glances may only name regions that are in the picture
+
+- **Boss, 2026-10-12:** the first passing live check showed "failed: 4" out of 5 Glances.
+- **Cause.**
+  - The Glance answer schema offered all eight region names. The live check's picture, like every real Orientation sheet, lists only `fullContext`.
+  - The strict Glance parser correctly refuses a region the sheet doesn't list (`UnknownRegion`). An answer naming, say, `centerEnvironment` for the red square in the middle was therefore thrown away.
+  - The Inspect schema had the same latent gap.
+- **Change.**
+  - Both answer schemas are now built per request and offer only the sheet's own regions. The parsers are unchanged and still strict.
+  - The live check records why each failed Glance failed, and the tool prints the reasons.
+- **Evidence.**
+  - New theory `TheAnswerSchema_OffersOnlyTheSheetsOwnRegions` covers Orientation and Regional sheets, for both Glance and Inspect. A mutant that offers every region fails all 4 cases.
+  - New test `TheLiveCheck_SaysWhyEachGlanceFailed`.
+  - Full local gate.
+  - Boss's rerun of `--live` is the real-world confirmation.
+
 ### FIX-05 — The live check says why a call failed
 
 - **Boss, 2026-10-12:** the first `--live` check printed only "Unavailable RequestRejected", which does not say what the server objected to.
