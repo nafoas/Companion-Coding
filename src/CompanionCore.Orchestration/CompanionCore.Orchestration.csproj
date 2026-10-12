@@ -16,6 +16,7 @@
     <ProjectReference Include="..\CompanionCore.Watchbun\CompanionCore.Watchbun.csproj" />
     <ProjectReference Include="..\CompanionCore.Keepsakes\CompanionCore.Keepsakes.csproj" />
     <ProjectReference Include="..\CompanionCore.Vault\CompanionCore.Vault.csproj" />
+    <ProjectReference Include="..\CompanionCore.BunDex\CompanionCore.BunDex.csproj" />
     <ProjectReference Include="..\CompanionCore.TargetAuth\CompanionCore.TargetAuth.csproj" />
     <ProjectReference Include="..\CompanionCore.Memory\CompanionCore.Memory.csproj" />
     <ProjectReference Include="..\CompanionCore.Privacy\CompanionCore.Privacy.csproj" />

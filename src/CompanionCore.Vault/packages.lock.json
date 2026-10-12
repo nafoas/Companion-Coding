@@ -47,6 +47,12 @@
           "SQLitePCLRaw.core": "2.1.12"
         }
       },
+      "companioncore.bundex": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Memory": "[1.0.0, )"
+        }
+      },
       "companioncore.capture.contracts": {
         "type": "Project"
       },
