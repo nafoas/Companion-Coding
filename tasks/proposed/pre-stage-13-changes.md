@@ -126,4 +126,60 @@ They will likely become a short series of packets rather than one.
     - forgetting (priority decay) by layer.
 - **Constraint to keep.** The layers decide what comes to mind, never what exists. Committed records stay append-only. The cherished layer is immutable once committed, and changes of heart are appended beside it.
 
-## 5. (next item from Boss)
+### What the design conversation already says (`Prince - Pet Creation Request.PDF`, checked 2026-10-12)
+
+The design conversation has **no exact durations**. It deliberately chose "gradually based on time and use, not on a rigid deletion date", and "mildly interesting events survive several sessions before reconsideration". It does define:
+
+- **A recall-priority ladder.** Nothing on it is deleted.
+  1. Treasured: protected and readily recalled. Only Boss, or exceptionally strong evidence, can assign it, and it never decays.
+  2. Significant.
+  3. Adventure context.
+  4. Session detail.
+  5. Routine aggregate.
+- **The adventure lifecycle.** Active → Freshly Finished → Remembered → Adventure Record, with Treasured Episodes kept forever beside the record.
+- **During a session**, he remembers everything meaningfully describable except repetitive noise, which collapses into aggregates such as "defeated several ordinary bandits".
+- **End-of-session review.**
+  - It is mostly silent.
+  - It occasionally asks about two or three borderline items: "Should Prince put this in his BunDex?"
+  - If Boss ignores the question, the item is retained.
+- **Gentle forgetting.** Specifics merge into an impression. Uncertainty decays before substance ("was it behind the waterfall?"). Lore, Prince's own questions, shared reactions, and recurring people, places, and things all add retention.
+- **Asymmetry.** "Accidentally retaining a mundane note costs very little. Accidentally deleting the moment that made the companion feel real cannot be repaired."
+
+### Values (Boss approved, 2026-10-12: "I like that")
+
+| Layer | Stays clear for | Then |
+|---|---|---|
+| Short-term (specific details) | the current session, and through the next one or 2 days, whichever is longer | merges into the session's summary |
+| Medium-term (a session, in good detail) | about 5 play sessions or 3 weeks, whichever is longer | becomes part of the adventure's summary |
+| Long-term (how an adventure went) | indefinitely; slowly lower priority, but always surfaces when relevant | — |
+| Cherished | forever; never fades | — |
+
+- **Two clocks.** Every window counts both play sessions and calendar time, and uses whichever is longer. Time away from the game does not cause forgetting.
+- **Recalling refreshes.** Bringing a memory up again restarts its clock.
+- **Accepted defaults.** These follow the 2026-10-11 rule for agreed values: changed up or down only if real use shows a need.
+
+## 5. Prince da Bnuy and Prince the Program are separate; the BunDex is organically his (Boss, 2026-10-12)
+
+> "The intentional separation of Prince Da Bnuy and Prince the Program. He shouldn't be able to see inside the BrainCase folder. Those are the little inner computer workings, and they should be separate. The BunDex is how he remembers, the BrainCase is just what generates his memories."
+>
+> "The BunDex I also envisioned as having a very organic structure. It is basically entirely Bnuy made, according to his personality, and how he wants to organize and name things. Apart from actually being able to store memories somehow, I want the BunDex to actually come off as a Bnuy writing autobiographically about himself, without a fixed, orderly structure. He makes da folders, and writes in them. Of course, he has a style he does this in, but other than that, it is him."
+
+- **Separation.**
+  - Prince da Bnuy only ever sees his BunDex. Everything sent to his brain for a look, a comment, or a "remember when" comes from his BunDex pages, in his words.
+  - Raw BrainCase records never reach his prompts: JSON, IDs, scores, subject keys, checksums, operation logs.
+  - He never refers to files, IDs, or the program.
+  - The BrainCase is Prince the Program: it generates his memories and keeps the machinery.
+- **Organic BunDex.**
+  - Prince creates the folders and names them his way.
+  - He decides what goes where and writes the pages autobiographically, in his own consistent style.
+  - There is no fixed template beyond what is needed to store and find things.
+- **How finding still works.** Prince the Program can keep an *invisible* index of his BunDex inside the BrainCase. That index covers which page mentions what, when it was written, and its memory layer, and it serves item 3's recall and item 4's layers. Prince never sees it; he just "finds it in his notes".
+- **Safety rails** (invisible to him, never shaping his voice):
+  - Names are validated locally: safe characters, no paths, bounded length, no secrets.
+  - Pages are append-only. He adds pages and notes and never erases or rewrites a committed page.
+  - Everything stays local and in Da Bun Vault.
+- **To settle in the packet.**
+  1. Whether Prince may *reorganize* (move a page into a new folder he invents later), and how that stays append-only. For example, he adds a new folder that points to the page, or the move is recorded so the original location is never lost.
+  2. Whether Boss can edit or remove BunDex pages. The design conversation mentions "Forget This, Prince", a confirmed deletion by Boss only.
+
+## 6. (next item from Boss)
