@@ -37,6 +37,25 @@ public sealed class OrchestrationGlanceTests
     }
 
     [Fact]
+    public async Task ThePulse_CountsSheetsAndLooks_AndNamesTheLastOutcome()
+    {
+        // FIX-07: Boss's window shows these counts every second.
+        await using var harness = await CreateAsync(Glancing);
+        var before = await harness.Orchestrator.GetSnapshotAsync();
+        Assert.Equal((0L, 0L, 0L, (BridgeOutcomeKind?)null), (before.SheetsReceived, before.GlancesSent, before.InspectsSent, before.LastLookOutcome));
+        await harness.AuthorizeAsync();
+
+        harness.Provider.EnqueueGlance(Glance(interest: 0.4, escalate: true, nextLookSeconds: 20));
+        await harness.SheetAsync(changeScore: 0.05);
+        await harness.SheetAsync(changeScore: 0.05);
+        await harness.SheetAsync(changeScore: 0.05);
+
+        var after = await harness.Orchestrator.GetSnapshotAsync();
+        Assert.Equal((3L, 1L, 1L), (after.SheetsReceived, after.GlancesSent, after.InspectsSent));
+        Assert.Equal(BridgeOutcomeKind.Interpreted, after.LastLookOutcome);
+    }
+
+    [Fact]
     public async Task TheNextGlance_FollowsItsClampedRecommendation_AndASniffTriggerLooksAtOnce()
     {
         await using var harness = await CreateAsync(Glancing);
