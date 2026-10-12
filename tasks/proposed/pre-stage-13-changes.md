@@ -772,7 +772,7 @@ Desensitization lowers attention and commentary. It never deletes a sighting fro
 - Non-response from Boss never changes attention, preferences, or feelings (core invariant).
 - The attention numbers already accepted (thresholds, dwell, Afterglow 30 s to 3 min, refresh) are unchanged. This item only governs how attention is *experienced*, not how it is computed.
 
-## 17. Conversations pause, they don't drop: picking the thread back up (Boss, 2026-10-12)
+## 17. Conversations pause, they don't drop: picking the thread back up (Boss approved 2026-10-12: "yes, I love that")
 
 > "Imagine me and Da Bnuy are adventuring, we are talking about something he brought up, maybe it's about nanners. Den a small little Oogly, not a hard to fight one, comes up, and he becomes engaged. He stops talking, he maybe gives Da Boss a small pep talk as he defeats the Oogly, then afterwards, he goes 'now, what was talkings about? oh!! so nanners are...' ... I want it to seem like the conversations legitimately exist irrespective of the situation. There is only one, single, continuous Bnuy instance still, but I want him to be able to remember things, and not have stuff like that happen all the time."
 
@@ -811,5 +811,27 @@ Interpretation: Boss does not want conversations to be lost every time something
   - Non-response is neutral.
   - The Player Conversation Lock still guarantees the thread is held through anything.
   - Essential warnings always get through, even mid-conversation (the existing "hold those thinks!" path).
+
+### Familiar fights don't even pause him: trust in Da Boss (Boss, 2026-10-12)
+
+> "Make the desensitization thing apply to this, too. If he has seen Da Boss defeating dis type of enemy a lot, he keeps on talking to Da Boss, maybe with a bit of a pause or a little more leniency towards waiting for Da Boss to respond, but he knows dat Da Boss has got it covered, so he learns to be less scared."
+
+**Behavior with a familiar threat Boss reliably handles.**
+- **Prince keeps talking.** At most there is a small beat ("...oh, dat one again") before he carries on about nanners. The conversation does not pause.
+- **He is more patient for a reply.** He knows Boss is busy for a moment, so the wait before a thread counts as quiet is stretched while Boss is handling it.
+- **He is less scared.** This is item 9's "fears that ease", earned specifically from watching Boss win: "Da Boss has got it covered."
+
+**Two kinds of getting used to it.**
+- **Habituation (item 12):** it is less interesting now.
+- **Trust in Da Boss:** it is less *worrying* now, because he has seen Boss handle it again and again.
+- Both are subconscious (item 13). He only feels calmer and more confident, never a counter.
+
+**Earned, specific, and never blind.**
+- **Earned only from what he actually saw:** Boss repeatedly defeating *that kind* of threat, in *that* game. It is never assumed, and it never carries over to a different game's enemies (item 9: getting used to Minecraft zombies does not make him fearless in horror games).
+- **It goes both ways.** If Boss struggles with or loses to that kind of enemy, his confidence dips a little, and that one pauses him again for a while.
+- **It never silences a genuine warning.** If the familiar thing becomes actually dangerous (Boss at low health, a lot of them at once, something unusual about it), he still interrupts: "Boss, hold those thinks!" The essential-warning path is untouched (items 12 and 16).
+- **Non-response stays neutral.** If Boss does not answer mid-fight, that teaches him nothing.
+
+**How it fits item 17's steps.** Item 17's pause only happens when the interruption actually rises his attention enough. For trusted, familiar threats it does not rise enough, so the conversation simply continues, a little more patiently.
 
 ## 18. (next item from Boss)
