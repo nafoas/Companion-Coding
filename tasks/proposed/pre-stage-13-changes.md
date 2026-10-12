@@ -297,4 +297,97 @@ Boss asked for a full search of the design conversation for memories, identity, 
 | Player Conversation Lock. | **Built** |
 | Afterglow guarantees an opening. | **Built** (confirmed in the hand-run) |
 
-## 7. (next item from Boss)
+## 7. The rest of PRINCE as designed (Boss, 2026-10-12: "add all this stuff to the list, apart from the stuff that got superseded")
+
+Every memory point from the design-recovery sweep (appendix) that is **missing** or **partial** is listed here. Each sub-item cites its design source. Superseded items are deliberately left out: BunDex rollback (Restorative Bnuy Rest) and the API-side Resume Capsule.
+
+- **7a. The session record collapses repetition.**
+  - During a session, Prince retains everything meaningfully describable.
+  - Truly repetitive activity collapses as it happens into aggregates: "Defeated several ordinary bandits", "Reorganized inventory for a while", "Made multiple unsuccessful jumps".
+  - This is the "record" layer of item 1, and its first job.
+- **7b. Two-layer memory entries.**
+  - Every permanent entry has (1) structured facts for accurate retrieval: game, save, people, places, event type, source, confidence, significance; and (2) Prince's recollection in his own voice. The structured layer lives in the BrainCase; the recollection is the BunDex page (items 2 and 5).
+  - Design example: structured "Defeated the Ash King; third attempt"; Prince remembers "We finally beat da Ash King after three tries!!"
+- **7c. Hybrid conversation memory, with close wording.**
+  - Immediately after a substantive conversation: a crash-safe record holding the summary, the most meaningful exchanges, exact or near-exact wording, unresolved thoughts, links, and why it may matter.
+  - Its permanence is decided at consolidation. The temporary record is kept until that commits.
+  - Kept verbatim or faithfully semi-verbatim:
+    - jokes that landed and funny exchanges;
+    - Boss's stories that fascinated Prince;
+    - personal things Boss deliberately shared;
+    - conclusions reached together;
+    - statements that define a recurring interest;
+    - promises, boundaries, and preferences;
+    - notable lore lines and inscriptions.
+  - Never flattened. "I usually like exploring, but only when the game makes places feel genuinely inhabited" must not become "Boss likes exploration".
+  - The words arrive with Stage 13's real conversation. The capture, storage, and consolidation path is built here.
+- **7d. End-of-session BunDex review.**
+  - Mostly silent: clearly meaningful is preserved, clearly routine is compressed, related details are combined, and uncertain-but-valuable items are nominated.
+  - Occasionally one compact question about two or three borderline items: "Should Prince put this in his BunDex?" / "Do ya think this'll come up again?"
+  - The options are: Put it in the BunDex / Keep it with this adventure / Probably not important / Prince can decide.
+  - Ignoring the question keeps the items.
+- **7e. "Remember this, Prince" and "That wasn't important".**
+  - Explicit commands: the first strongly promotes the surrounding context, the second demotes it.
+  - Local hard rules that always count as significant: an explicit "Remember this", Treasured status, boss defeat, credits, Watchbun task completion, and Boss's corrections.
+- **7f. Treasured memories.**
+  - Assigned by Boss, or by exceptionally strong evidence.
+  - They never decay and are always readily recalled.
+  - This is item 4's Cherished layer: "hugging the notepad — a memory has become treasured".
+- **7g. Learned significance.**
+  - Prince slowly learns what matters to the two of them, from:
+    - memories Boss responds to warmly when recalled;
+    - explicit "remember this";
+    - subjects Boss keeps investigating or discussing;
+    - comments that led to real conversation;
+    - memories Boss corrects, promotes, or pins.
+  - It is never learned from silence. Visual spectacle does not automatically equal importance. Shared reactions strongly raise significance.
+- **7h. The recall-priority ladder and the adventure lifecycle** (item 4).
+  - The ladder: Treasured → Significant → Adventure context → Session detail → Routine aggregate.
+  - The lifecycle: Active → Freshly Finished → Remembered → Adventure Record, plus Treasured Episodes.
+  - Returning to a retired save reactivates its record and brings relevant detail forward.
+- **7i. Remembering feels like remembering.**
+  - Memories are actually supplied to his looks and conversations (item 3).
+  - It is sparing: a relevance threshold, a cooldown, and rarity, so he does not recite history at every match.
+  - Partial recollection is charming and honest: "We found something important here... was it behind the waterfall?"
+- **7j. The Lore Notebook.**
+  - Game knowledge is built gradually. Each note has a source: Observed, Read, Told by Boss, Prince suspects, or Confirmed.
+  - Captured text is marked as exact, near-verbatim, or Prince's recollection.
+  - Prince can say "Prince thinks the inscription said...", and one dishonest NPC never becomes canon.
+- **7k. Save identity and new adventures.**
+  - Memories are tagged with game, save or run, date, characters, importance, confidence, and whether he witnessed something or was told it.
+  - When unsure: "Is this a new adventure, or are we continuing our old one?"
+  - At an ending (credits, finale back to the title screen, and similar): "Did our adventure finish?" then "Wanna begin a new adventure?"
+  - It is never inferred from Boss "seeming bored".
+  - Old-save spoilers stay tucked away until the current save reaches them.
+- **7l. Opinions and beliefs that grow.**
+  - Opinions and theories are grouped by subject and evolve.
+  - Corrections and changes of heart are appended beside the earlier belief, never rewritten.
+  - Later, validated understanding takes precedence in recall, while earlier theories are kept. `BeliefHistory` exists in Recall and is unused.
+- **7m. Bnuy No Write These Down.**
+  - Companionship continues with no durable memories.
+  - Only the minimum conversation context is held in RAM, and it is discarded when the conversation or session ends.
+  - The UI says so clearly.
+- **7n. Never a dossier.**
+  - BIC and conversation memories are records of what Prince wondered about and what the two of them explored together, never a profile of Boss.
+  - Personal memories stay visible to Boss, and Boss removes them case by case (item 5).
+
+## 8. The living Bnuy around the memory (Boss, 2026-10-12: same request)
+
+These touch Stage 13's personality. **Here** means the plumbing and contracts are built in this round. Prince's actual personality text, voice, and validator rules are written and tuned in Stage 13 unless Boss pulls them forward.
+
+- **8a. Every request carries who Prince is.** Every API request carries the relevant parts of:
+  - the immutable Prince specification;
+  - the current attention and conversation state;
+  - applicable memories and opinions (item 3);
+  - the game and save context;
+  - source and uncertainty rules.
+  
+  A model change then changes only the thinking engine, never Prince. **Here:** the slot and its assembly. **Stage 13:** the specification text ("IMMUTABLE — THE BUN REMAINS THE BUN").
+- **8b. A reserved inherent-interest pool.**
+  - The fixed local roots: round things, small things in large worlds, unfamiliar places, what objects are for, treats, naps, comfy places, courage when little, friendly-or-not creatures, mysteries, maps, doors, ruins, peculiar human things, paws, Bun powers.
+  - Seed generation always reserves room for inherent thoughts, learned interests, current-game interests, and a little novelty, so optimization never sands his personality down.
+  - `InterestRoots` exists and is unused (item 6).
+- **8c. The character validator.** A local check rejects or regenerates an out-of-character response before anything is shown or committed. **Here:** the hook. **Stage 13:** the rules.
+- **8d. BIC thoughts, the BIC clock, and Brain Farts** are wired at runtime (item 6).
+
+## 9. (next item from Boss)
