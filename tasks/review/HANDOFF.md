@@ -2,18 +2,30 @@
 
 ## Task
 
-No task is active. **Stage 12 is complete: Boss gave the Core Bun Approval Hop on 2026-10-12.**
+No task is active. **M1 (Two homes) passed its Paw Gate** and merged as `0202c7fd32390e73af69faf79a8410def91f2c24` (PR #85). The packet is archived at `tasks/archive/m1-two-homes.md`.
 
 Builder: Claude.
 
-## The hand-run
+## Next safe task
+
+**M2** of the approved pre-Stage 13 plan (`tasks/proposed/pre-stage-13-changes.md`): its own packet in `tasks/active/`, tests, mutation pass, and Paw Gate. M10 (Boss's hand-run) gates Stage 13. Companion Prince is not awakened.
+
+## Open options for Boss
+
+- M1 D2: whether to move `Memory/`, `State/`, `Transcripts/`, `Keepsakes/` under `Braincase/`.
+
+## Background: Stage 12
+
+Stage 12 is complete: Boss gave the Core Bun Approval Hop on 2026-10-12.
+
+### The hand-run
 
 - All ten milestone checks (`docs/Core-Prince-Milestone.md`) passed on Boss's PC.
 - The game was Baldi's Basics Classic Remastered, with Builder Prince's live calls on.
 - The hand-run found and fixed FIX-05 to FIX-10, each merged with both Windows CI runs green and each confirmed on Boss's PC.
 - The most important was FIX-09: real screen capture had never produced a usable frame, because of a wrong COM interface ID.
 
-## Evidence
+### Evidence
 
 - Check 4 was confirmed from Boss's development memory file:
   - 36 moment memories from sight;
@@ -21,7 +33,7 @@ Builder: Claude.
   - append-only corrections, with no edits or deletions.
 - The details are in the `BUILD_LEDGER.md` entry "Core Bun Approval Hop".
 
-## Next safe task
+### Next safe task (at the time)
 
 **Boss's memory-system changes**, which he will describe ("tighten a few screws with the memories"). The ledger lists what the hand-run showed:
 - too many memories (about 5 per minute), mostly repeated status readouts;
@@ -32,7 +44,7 @@ Builder: Claude.
 
 After that comes Stage 13, personality installation on Builder Prince. Companion Prince is not awakened.
 
-## Pending decisions for Boss (from the hand-run)
+### Pending decisions for Boss (from the hand-run)
 
 - Whether Prince should notice a newly opened unknown app and ask, which means watching program names before consent. Proposed for Stage 13.
 - How generous Prince is about what is worth remembering. Part of the memory task.
