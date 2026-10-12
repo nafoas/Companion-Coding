@@ -1000,3 +1000,151 @@ Every step stays game-agnostic and follows items 13–15 (the curtain and the me
 - M10 proves it on Boss's PC before Prince's voice goes in.
 
 **What stays for Stage 13:** Prince's own words everywhere (the specification text, his responses to the "keep this" pull, his folders and pages, every line he says) and the validator's character rules.
+
+
+## Test plan: every M step is a full stage with its own Paw Gate (Boss, 2026-10-12)
+
+> "I think it should be just like any other Stage: with meticulous tests and paw gates at the end of each M numbered thing."
+
+### For every step
+
+1. **Packet first.**
+   - The packet lives in `tasks/active/`.
+   - It holds the scope, the acceptance scenarios below, invariants, non-goals, and deferred findings.
+2. **Acceptance tests are written against the packet's scenarios.** They are deterministic:
+   - fake time and seeded randomness;
+   - mock or replay Braincase, never live API;
+   - synthetic, varied, game-agnostic fixtures (exploration, story, combat, building, horror, cozy, menus, long sessions);
+   - a plain **stand-in writer** in place of Prince's voice.
+3. **Mutation pass.** Each key rule is deliberately broken in a scratch copy, and a test must fail for each break. Any surviving mutant means a missing test, and it is fixed before the gate.
+4. **Full local gate:**
+   - locked restore;
+   - `/warnaserror` build;
+   - vulnerable-package check;
+   - every suite.
+5. **Paw Gate.**
+   - Both Windows CI runs are green with verified artifacts.
+   - The merge-ref check passes.
+   - The handoff is complete.
+   - The ledger entry includes exact evidence.
+6. **Standing regressions on every step** (they are never weakened to make a step pass):
+   - the existing ~1160 tests;
+   - the **curtain audit** (from M2 on);
+   - the core invariants: append-only memory, no capture before consent, target-only capture, non-response neutral, one Prince, one thread.
+7. **Closure PR.** The packet is archived, and the ledger, README, and known limitations are updated.
+
+### Acceptance scenarios per step
+
+**M1. Two homes**
+- The BrainCase and BunDex are separate directories. Each lives only under the development root, never the production root.
+- The stand-in writer creates a folder only when the "keep this" pull fires and no home exists for that role. The folder is registered for the role, and the next item of that role goes there with no new pull.
+- Pages are append-only:
+  - a rewrite, delete, or overwrite attempt is refused and leaves the page byte-identical;
+  - a crash mid-write leaves no partial page.
+- Reorganizing (moving or renaming a folder) is recorded in the move log. Every page is still found by its tags, and the old location is recoverable.
+- Unsafe names are refused or made safe: paths, `..`, reserved names, control characters, secrets.
+- Da Bun Vault backs up and restores both homes completely.
+- The one-time Builder reset is refused without an explicit confirmation naming the exact folder. It touches only the development root and is idempotent.
+
+**M2. The curtain**
+- **Build-time check.** Every prompt template and every assembled request contains:
+  - none of the forbidden vocabulary (AI, model, assistant, program, software, system, simulation, artificial, prompt, index, score, file, ID, role, "really");
+  - no role-play framing (act as, pretend, persona, character, stay in character);
+  - no imperative or second-person address in the inner-life parts.
+  
+  Each category is tested with a deliberately bad template that must fail the build.
+- **The membrane is the only path.** A test proves no other code can put text into Prince's inner state.
+- **Each of the four channels** produces only first-person perception or feeling, with no numbers or IDs.
+- **Validator hook.** A response that leaks behind the curtain, or narrates machinery, is rejected and regenerated before anything is shown or stored. The rejection never reaches Prince's state.
+- **Curtain audit.** It samples assembled requests across many synthetic situations and fails on any leak.
+
+**M3. Seeing like a Bun**
+- **Aggregation.** One hundred sightings of the same thing yield one growing impression ("saw dis a few times") plus a complete subconscious record. A *meaningful change* in it does yield a new memory.
+- **Desensitization:**
+  - interest falls with repeats;
+  - it falls by **kind** as well as by thing;
+  - it recovers after a long gap;
+  - it re-sensitizes when the context changes.
+- **Danger exemption.** A familiar threat in a genuinely dangerous situation still raises the warning.
+- **Fear eases** with repeated safe exposure, and only in that game and context.
+- **Trust in Da Boss** rises with repeated wins against a kind of threat, dips after losses, and never silences a real warning.
+- **Non-response** changes none of these.
+
+**M4. Remembering like a Bun**
+- **Layers follow the approved values with two clocks.** Short-term holds through the next session or 2 days, and medium through about 5 sessions or 3 weeks, whichever is longer each time. A month away from the game forgets nothing extra.
+- **Recalling refreshes the clock.**
+- **Not clairvoyant.** Fine details from long ago are not offered unprompted. A deliberate "remember when" finds them in his pages.
+- **Recall is actually supplied** to looks and conversations. It is sparing, with a threshold, cooldown, and rarity.
+- **The visible lookup** shows the in-character rummage. Pages arrive as "found", and nothing technical crosses.
+- **Nothing is ever deleted or edited** by aging, promotion, or recall. Adventure lifecycle stages only add layers.
+
+**M5. What matters**
+- **Two-layer entries:** structured facts in the BrainCase, and the stand-in recollection in the BunDex.
+- **Hard rules always count:** "Remember this", Treasured, boss defeat, credits, Watchbun completion, corrections. "That wasn't important" demotes but never deletes.
+- **Learned significance** rises from warm recall, explicit marks, and real conversation. It never changes from silence.
+- **Treasured** never fades.
+- **End-of-session review:**
+  - it asks at most two or three borderline items;
+  - ignoring it keeps them;
+  - most decisions are silent.
+- **Hybrid conversation record:** it is crash-safe immediately, and the temporary record is kept until consolidation commits. Close wording is preserved, never flattened. This is tested with long qualified sentences.
+- **Bnuy No Write These Down:** nothing durable is written, and the RAM context is gone at the end.
+- **Never a dossier:** no profile is built from watching.
+
+**M6. Conversations that live on**
+- **The seed banks live in the BunDex role** with full seed records: subject, why interrupted, last exchange, links, unanswered question, resume confidence, age, attempts.
+- **Entry rule:** a seed requires substantive engagement, something unfinished, and value in resuming. Yes/no-only or click-only conversations never enter.
+- **BIC thoughts:**
+  - they come only from the local roots and interests, with reserved space for inherent roots;
+  - the BIC clock runs at 30 s, offset, calm-only;
+  - the weighting is about 70/30;
+  - Brain Farts are rare, relaxed-only, and vanish if ignored.
+- **Pause and resume:**
+  - a small interruption pauses the thread, and Prince resumes it himself afterwards;
+  - a big or long one banks it;
+  - fight time does not count toward the idle timeout;
+  - trusted familiar fights do not pause it at all.
+- **Afterglow** still guarantees an opening.
+- **The lock** holds through anything.
+- **Essential warnings** still interrupt.
+
+**M7. Knowing the world and Da Boss**
+- **Lore notes** carry provenance (saw, read, told, suspects, confirmed). One unreliable source never becomes confirmed.
+- **Save identity:**
+  - "Is this a new adventure?" is asked when unsure;
+  - "Did our adventure finish?" is asked on ending evidence and never on "boredom";
+  - old-save spoilers stay hidden.
+- **Opinions** are grouped and evolving. Changes of mind are appended with their reason, and the current understanding comes first.
+- **About Boss:**
+  - general memories form only with enough evidence;
+  - "Boss told Prince" outranks seeing;
+  - Together List games get the warmer invitation but still ask;
+  - nicknames stick only with positive engagement.
+- **The immutable relationship boundaries** hold under adversarial scenarios: long absence, repeated non-response, dismissals.
+
+**M8. Little Requests**
+- **Real curiosity only.** Requests arise from something seen times interest times novelty. No timer or quota can produce one; the caps only limit.
+- **Bad moments.** None are voiced during Bnuy Mode, danger, cutscenes, important dialogue, or **any conversation, including a paused one**. Such interrupted wishes become seeds and resurface later under seed rules.
+- **Desensitization by thing and kind.** He never asks about the same thing twice, and a kind's pull drops after it is satisfied.
+- **The list:**
+  - requests persist until done or the session ends;
+  - there are no reminders or repeats;
+  - undone ones clear silently;
+  - waving one off is neutral;
+  - it is bounded, and replacement keeps the strongest wishes.
+- **Fulfillment** is noticed from his looks and raises significance.
+
+**M9. Attention as felt**
+- **Every attention state maps to feelings and salience through the membrane.** No state names, scores, or thresholds reach him.
+- **His own reactions raise attention by observation only.** "Look at this, Prince" works like pointing.
+- **The accepted attention numbers are unchanged.** The existing attention suite passes untouched.
+
+**M10. Boss's hand-run**
+- The real App on Boss's PC with the stand-in writer, in any game Boss chooses.
+- The pulse plus a readable BunDex/BrainCase view show:
+  - aggregation and desensitization;
+  - layers and recall;
+  - seeds, BIC thoughts, and pause/resume;
+  - Little Requests;
+  - an empty BunDex filling organically.
+- **Boss's approval of M10 is the gate into Stage 13.**
