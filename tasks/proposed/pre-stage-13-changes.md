@@ -42,4 +42,58 @@ Status: **collecting.** Boss is listing the changes to make after the Core Bun A
   2. What "open the BunDex" looks like for now: a plain readable page or file generated from the BunDex, or a window inside the App. The design defers a *decorative* browser, not a functional one.
 - **Constraints to keep.** The BunDex stays local and append-only. Reworking how it is organized or shown never edits or deletes a committed memory. Existing Builder memories stay as they are, and new structure is added beside them.
 
-## 3. (next item from Boss)
+## 3. BrainCase and BunDex: raw workings vs. his autobiography; notes vs. memories (Boss, 2026-10-12)
+
+> "We rework it so the BunDex and BrainCase are two separate directories. The BrainCase is da Bnuy's Brain inner workings, or, the raw outputs. That is what we have right now: a garbled, computery raw output. The BunDex is da Bnuy's little autobiography. The folders are named by him, individually, the way he would, for each discreet little adventure, and that's where the memories and autobiography are stored. There is also a difference between Da Bnuy's memories, and da stuffs he writes down abouts da adventures. He doesn't remember everything he writes down, but he can access everything he writes down, so that way he isn't constantly bringing up stuff that happened a long time ago as if it was recent, but also you can prompt him with 'hey, remember when...?' and he consults his little BunDex, and is like 'oh!! is remembers!!'. He was also supposed to naturalistically forget, sort, and categorize things in his memory, I don't know where that went."
+
+### Two directories
+
+- **BrainCase.** Da Bnuy's inner workings: the raw outputs. This is what exists today: the database, the raw interpretations, and the machine records.
+- **BunDex.** Da Bnuy's autobiography: readable, and in his own words.
+  - It has **one folder per adventure**, which Prince names himself, the way he would.
+  - The adventure's memories and autobiography live inside that folder.
+- **Naming note.** Today "Braincase" in the code means the borrowed brain, the Claude API that does his thinking. Boss's BrainCase folder holds that brain's raw output, so the two fit together, but the packet should settle the names so they never get confused.
+
+### Notes vs. memories
+
+- **He writes down everything** about an adventure in the BunDex.
+- **He only *remembers* some of it.** His active memory is smaller, recent, and important.
+- **He can always look things up.** "Hey, remember when...?" makes him consult the BunDex and find it: "oh!! is remembers!!".
+- **Old things stay old.** Something from long ago is not brought up as if it just happened. Unprompted, he talks about what he actually remembers. Older things come back when something brings them up.
+- **Recurrence.** This matches the design's own rule: "Duplicate memories become linked recurrence entries: Prince thought of it again". Remembering something from the notes can append a "remembered again" link, never an edit.
+
+### Naturalistic forgetting, sorting, categorizing: where it went (code checked 2026-10-12)
+
+The design asks for it: "Memory 'decay' affects retrieval priority, not existence." Here is what actually happened:
+
+- **Remembering is not connected.**
+  - The recall selector (Task 10, `RecallSelector`) exists and is tested, but nothing in the running App calls it.
+  - Every look Prince sends today gets an **empty** memory context (`new ResumeContext([], session.Game)`). While playing, Prince never uses anything he has remembered.
+  - Memories are saved, but never brought back.
+- **No forgetting curve.**
+  - Recall ranks by current understanding, source authority, and focus. Time is only a tie-breaker.
+  - Nothing makes older, unrevisited memories fade in priority, and nothing makes revisited ones stay fresh.
+- **No sorting into categories.**
+  - The subject of each memory is whatever the model writes, so two buckets came out (`notebook-progress`, `inventory`).
+  - The design's BunDex sections (Lore Notebook, Scary or Cool Stuffs, and the rest) were never built.
+- **No duplicate handling.**
+  - The "duplicates become linked recurrence entries" rule is not enforced, so near-duplicates are saved as new memories (see item 1).
+
+### Overlap with items 1 and 2
+
+Items 1, 2, and 3 describe one memory rework seen from three sides:
+- novelty (item 1);
+- the readable catalogue (item 2);
+- record and notes vs. active memory, recall, and forgetting (item 3).
+
+They will likely become a short series of packets rather than one.
+
+### Constraints to keep
+
+- **Forgetting is never deletion.** It changes how readily something comes to mind, never whether it exists. Committed memories and notes are never edited or deleted.
+- **The BunDex folder is append-only too.** Folder and file names come from Prince but are validated locally: safe names, no paths, no secrets.
+- **Da Bun Vault backs up both** directories.
+- **The API is still never sent the whole BunDex.** Only what recall selects.
+- **Builder Prince's folders stay separate** from Companion Prince's future clean BunDex.
+
+## 4. (next item from Boss)
