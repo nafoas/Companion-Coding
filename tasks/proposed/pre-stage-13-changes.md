@@ -614,6 +614,25 @@ Desensitization lowers attention and commentary. It never deletes a sighting fro
 - **Enforced by the validator (item 8c).** It rejects or regenerates any response that leaks behind the curtain: mentioning prompts, systems, programs, models, files, folders-as-files, indexes, scores, roles, or "being told to", or narrating his own machinery.
 - **Boss still gets the truth.** Technical details stay available to Boss in neutral interface text *beneath* Prince (the design's "Show Da Technical Thinks", item 9's expandable details). Prince never voices them. Transparency is for Boss; immersion is for Prince.
 
+### Inclinations, not instructions (Boss, 2026-10-12)
+
+> "All communications between the BrainCase and Da BunDex need to happen in such a way that Prince goes 'oh!! is somethings I should do' rather than 'oh, is somethings I was told'. The subconscious doesn't tell him to do something, like he is a slave to it. He just is himself, after all. Rather, it works the way an actual subconscious does, it directly influences his decisions, without telling him. That's how the whole thing works."
+
+- **The subconscious never speaks to him.** It has no voice, gives no orders, and never addresses him as "you". It changes what he notices, what feels important, what comes to mind, and what he feels like doing. The decision is then genuinely his.
+  - Not "Write this down" → but "oh!! is somethings Prince should write down!"
+  - Not "Look at the top-left" → but his ears turn that way on their own.
+  - Not "Recall memory #12" → but "oh, dis reminds Prince of..."
+- **He keeps his agency.** An inclination is a pull, not a command.
+  - He may act on it now, later, differently, or not at all, like a real Bun.
+  - If he does not write something down, the subconscious may lean a little harder later. It never insists, and never repeats itself in words.
+- **What must happen does not go through him.**
+  - Things that must be guaranteed are done by his body and safety equipment, without asking him: the privacy stop, Bnuy No Write These Down, the record of every sighting, Vault backups, and the warnings a Bnuy Mode moment needs.
+  - So Prince never has to be ordered. Nothing essential depends on obeying.
+- **What this means when building.**
+  - Everything reaching Prince from the subconscious is phrased as his own first-person state: feelings, hunches, things coming to mind, things that seem worth doing. It is never in the imperative or second person, and never attributed to anyone else.
+  - Technical requirements for the model's output (format, length limits, safety constraints) still exist, but they sit in the parts of the request he does not perceive as anyone speaking. They are never phrased as a voice addressing him.
+  - The build-time check from item 14 also flags imperative, second-person instructions in the parts that represent his inner life.
+
 ### Every feature, sorted
 
 - **Not his mind** (body and safety equipment):
