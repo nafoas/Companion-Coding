@@ -173,6 +173,18 @@
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
 
+### FIX-07 — A live pulse line in the window
+
+- **Boss, 2026-10-12, milestone hand-run check 2:** after SessionStarted, a minute of play produced nothing at all. There were no Attention notices, no Braincase notice (the first Glance outcome always posts one), and no Fault. So no picture reached the looking stage. The placeholder window gave no way to see where the chain stopped.
+- **Change.** A pulse line under the status, refreshed every second, with counts and state names only:
+  - from the worker: capture status and reason, frames produced, frames admitted by the privacy gate, sniffs produced;
+  - from the orchestrator: sniffs used, sheets received, attention state and score, Glances and Inspects sent, the last look's outcome kind, and the fault count.
+  - The orchestrator snapshot gains `SheetsReceived`, `GlancesSent`, `InspectsSent`, and `LastLookOutcome`.
+- **Evidence.**
+  - New test `ThePulse_CountsSheetsAndLooks_AndNamesTheLastOutcome`.
+  - Full local gate.
+  - The root cause of check 2 is still open: Boss's pulse readings will locate it.
+
 ### FIX-06 — Glances may only name regions that are in the picture
 
 - **Boss, 2026-10-12:** the first passing live check showed "failed: 4" out of 5 Glances.

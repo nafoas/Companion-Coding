@@ -117,6 +117,79 @@ public partial class MainWindow : Window
         CompanionCommands.IsEnabled = true;
     }
 
+    private ICaptureWorker? _pulseWorker;
+    private CaptureWorkerStatusChanged? _workerStatus;
+    private long _framesProduced;
+    private long _framesAdmitted;
+    private long _sniffsProduced;
+    private System.Windows.Threading.DispatcherTimer? _pulseTimer;
+
+    /// <summary>
+    /// FIX-07: a live pulse line, refreshed every second, so Boss can see every step from
+    /// the worker's frames to the Braincase's looks. Counts and state names only.
+    /// </summary>
+    internal void AttachPulse(ICaptureWorker worker)
+    {
+        _pulseWorker = worker;
+        worker.StatusChanged += PulseWorker_StatusChanged;
+        worker.FrameProduced += PulseWorker_FrameProduced;
+        worker.SniffProduced += PulseWorker_SniffProduced;
+        _targetController.FrameAdmitted += PulseController_FrameAdmitted;
+        _pulseTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _pulseTimer.Tick += async (_, _) => await RefreshPulseAsync();
+        _pulseTimer.Start();
+        Closed += (_, _) =>
+        {
+            _pulseTimer.Stop();
+            worker.StatusChanged -= PulseWorker_StatusChanged;
+            worker.FrameProduced -= PulseWorker_FrameProduced;
+            worker.SniffProduced -= PulseWorker_SniffProduced;
+            _targetController.FrameAdmitted -= PulseController_FrameAdmitted;
+        };
+    }
+
+    private void PulseWorker_StatusChanged(object? sender, CaptureWorkerStatusChanged change) => Volatile.Write(ref _workerStatus, change);
+
+    private void PulseWorker_FrameProduced(object? sender, CaptureFrameMetadata frame) => Interlocked.Increment(ref _framesProduced);
+
+    private void PulseWorker_SniffProduced(object? sender, SniffSignal sniff) => Interlocked.Increment(ref _sniffsProduced);
+
+    private void PulseController_FrameAdmitted(object? sender, CaptureFrameMetadata frame) => Interlocked.Increment(ref _framesAdmitted);
+
+    private async Task RefreshPulseAsync()
+    {
+        if (_pulseWorker is not { } worker)
+        {
+            return;
+        }
+
+        var status = Volatile.Read(ref _workerStatus);
+        var capture = string.Create(
+            CultureInfo.InvariantCulture,
+            $"Capture: {worker.Status}{(status is { Reason: var reason } ? $" ({reason})" : string.Empty)}; frames {Interlocked.Read(ref _framesProduced)}, admitted {Interlocked.Read(ref _framesAdmitted)}; sniffs {Interlocked.Read(ref _sniffsProduced)}");
+        if (_companion is not { } companion)
+        {
+            PulseText.Text = capture;
+            return;
+        }
+
+        try
+        {
+            var snapshot = await companion.Host.Orchestrator.GetSnapshotAsync();
+            var attention = snapshot.Attention is { } current
+                ? string.Create(CultureInfo.InvariantCulture, $"{current.State} {current.Score:0}")
+                : "no session";
+            PulseText.Text = string.Create(
+                CultureInfo.InvariantCulture,
+                $"{capture}\nPrince: sniffs used {snapshot.Sniff.Forwarded}/{snapshot.Sniff.Received}; sheets {snapshot.SheetsReceived}; attention {attention}\n"
+                + $"Looks: Glances {snapshot.GlancesSent}, Inspects {snapshot.InspectsSent}; last {(snapshot.LastLookOutcome?.ToString() ?? "none")}; faults {snapshot.Faults}");
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or ObjectDisposedException)
+        {
+            PulseText.Text = capture;
+        }
+    }
+
     private void ShowResult(string command, object result) =>
         CompanionStatusText.Text = string.Create(CultureInfo.InvariantCulture, $"{command}: {result}");
 

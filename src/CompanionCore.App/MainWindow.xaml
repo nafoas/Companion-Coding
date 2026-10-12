@@ -28,8 +28,12 @@
                   HorizontalAlignment="Left" Margin="0,0,0,8"
                   ToolTip="placeholder icon" />
 
-        <TextBlock x:Name="StatusText" Grid.Row="1" Text="Status unavailable."
-                   Margin="0,0,0,8" />
+        <StackPanel Grid.Row="1" Margin="0,0,0,8">
+            <TextBlock x:Name="StatusText" Text="Status unavailable." />
+            <!-- FIX-07: a live pulse, counts and state names only, so a silent pipeline is visible. -->
+            <TextBlock x:Name="PulseText" Text="Pulse: waiting for the companion host."
+                       TextWrapping="Wrap" FontFamily="Consolas" Margin="0,4,0,0" />
+        </StackPanel>
 
         <TextBlock x:Name="TargetStatusText" Grid.Row="2" Text="No target is authorized."
                    TextWrapping="Wrap" Margin="0,0,0,4" />

@@ -48,6 +48,17 @@ public sealed record OrchestratorSnapshot(
 
     /// <summary>One closer look is waiting (VIS-02).</summary>
     public bool InspectQueued { get; init; }
+
+    /// <summary>Attention sheets that reached the orchestrator for the current target (FIX-07).</summary>
+    public long SheetsReceived { get; init; }
+
+    /// <summary>Glances and Inspects sent to the Braincase (FIX-07).</summary>
+    public long GlancesSent { get; init; }
+
+    public long InspectsSent { get; init; }
+
+    /// <summary>The kind of the most recent Glance or Inspect outcome, if any (FIX-07).</summary>
+    public BridgeOutcomeKind? LastLookOutcome { get; init; }
 }
 
 /// <summary>
@@ -122,6 +133,10 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private long _sceneSniffsReceived;
     private bool _sniffTriggerPending;
     private bool _glanceInFlight;
+    private long _sheetsReceived;
+    private long _glancesSent;
+    private long _inspectsSent;
+    private BridgeOutcomeKind? _lastLookOutcome;
     private bool _inspectWanted;
     private DateTimeOffset? _nextGlanceAt;
     private DateTimeOffset? _lastGlanceAt;
@@ -209,6 +224,10 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             Sniff = SniffSnapshot(),
             GlanceInFlight = _glanceInFlight,
             InspectQueued = _inspectWanted,
+            SheetsReceived = _sheetsReceived,
+            GlancesSent = _glancesSent,
+            InspectsSent = _inspectsSent,
+            LastLookOutcome = _lastLookOutcome,
         }));
 
     private SniffDiagnostics SniffSnapshot()
@@ -945,6 +964,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             return;
         }
 
+        _sheetsReceived++;
         var isPhotograph = sheet.Metadata.Kind == AttentionSheetKind.Photograph;
         if (_pendingPhoto is { } action && (isPhotograph || !_photographRequested))
         {
@@ -1031,6 +1051,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         _lastGlanceAt = now;
         _nextGlanceAt = now + _options.SemanticCadence.For(state, sheet.Metadata.ChangeScore);
         _glanceInFlight = true;
+        _glancesSent++;
         var metadata = sheet.Metadata;
         var grant = session.Grant;
         var token = _shutdown.Token;
@@ -1057,6 +1078,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         {
             return Task.CompletedTask;
         }
+
+        _lastLookOutcome = outcome.Kind;
 
         var braincase = outcome.Kind == BridgeOutcomeKind.Glanced ? BridgeOutcomeKind.Interpreted : outcome.Kind;
         if (braincase is BridgeOutcomeKind.Interpreted or BridgeOutcomeKind.Napping or BridgeOutcomeKind.Unavailable
@@ -1139,6 +1162,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
     private void DispatchInspect(ActiveSession session, AttentionSheet sheet)
     {
         _bridgeInFlight = true;
+        _inspectsSent++;
         var metadata = sheet.Metadata;
         var grant = session.Grant;
         var context = new ResumeContext([], session.Game);
@@ -1166,6 +1190,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         {
             return;
         }
+
+        _lastLookOutcome = outcome.Kind;
 
         if (outcome.Kind is BridgeOutcomeKind.Interpreted or BridgeOutcomeKind.Napping or BridgeOutcomeKind.Unavailable
             && outcome.Kind != _lastBraincase)
