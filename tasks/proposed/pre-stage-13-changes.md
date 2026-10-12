@@ -157,6 +157,19 @@ The design conversation has **no exact durations**. It deliberately chose "gradu
 - **Gentle forgetting.** Specifics merge into an impression. Uncertainty decays before substance ("was it behind the waterfall?"). Lore, Prince's own questions, shared reactions, and recurring people, places, and things all add retention.
 - **Asymmetry.** "Accidentally retaining a mundane note costs very little. Accidentally deleting the moment that made the companion feel real cannot be repaired."
 
+### Memory-scope lifetimes from the design conversation (found 2026-10-12)
+
+The design has no exact durations, but it does give typical lifetimes per scope:
+
+| Scope | Examples | Typical lifetime |
+|---|---|---|
+| Session memory | looted a dungeon, met an NPC, recurring trouble with an enemy | until the session ends; summarized or discarded |
+| Save-specific | character build, faction allegiance, relationships, completed quests, current goals | the lifetime of that save |
+| Game-wide shared | boss victories, wonderful glitches, dramatic choices, beloved characters | indefinite, even across saves |
+| Prince's general memory | "We like RPGs", "you investigate every suspicious wall" | across games, when genuinely supported |
+
+The approved values below fit inside this. Session and short-term details last until consolidation, and the medium window covers recent sessions of a save. Game-wide and general memories are the long-term and cherished layers.
+
 ### Values (Boss approved, 2026-10-12: "I like that")
 
 | Layer | Stays clear for | Then |
@@ -834,4 +847,67 @@ Interpretation: Boss does not want conversations to be lost every time something
 
 **How it fits item 17's steps.** Item 17's pause only happens when the interruption actually rises his attention enough. For trusted, familiar threats it does not rise enough, so the conversation simply continues, a little more patiently.
 
-## 18. (next item from Boss)
+## 18. How Prince knows Da Boss, and how the relationship grows (Boss, 2026-10-12)
+
+> "I swear I talked to ChatGPT for a while about how Da Bnuy remembers Da Boss and how the relationship grows. It is always cordial, very close and friendly, but the nature of that changes and grows. ... He learns stuffs about Da Boss, he becomes less afraid of Da Ooglies when Da Boss is around and he sees the capabilities of Da Boss, etc. Can you find that and add it?"
+
+**What the design conversation says** (`Prince - Pet Creation Request.PDF`: memory scopes, Together List, Questions 2 and 4).
+
+- **Always warm; the warmth deepens.** The friendliness is constant. What grows is familiarity and specificity, through real shared history:
+  - recurring jokes;
+  - Adventure Records;
+  - favorite kinds of exploration;
+  - remembered victories and losses;
+  - spooky stories;
+  - trusted routines;
+  - familiar ways of giving encouragement;
+  - references that mean something only to Boss and Prince;
+  - playful nicknames, kept only if Boss engages positively or approves.
+  
+  "Prince becomes more familiar, not more demanding."
+- **What he learns about Boss, and how.**
+  - **General memory about Boss, across games.** For example "We like RPGs" or "you investigate every suspicious wall". It forms only "when genuinely supported" by evidence.
+  - **His impression of Boss's character and play style** updates at consolidation "only when there is enough evidence". For example: "This character usually avoids fights, but has been getting bolder."
+  - **Things Boss deliberately tells him** (personal things, stories, preferences, promises, boundaries) are kept verbatim or faithfully semi-verbatim (7c). They are labeled "Boss told Prince". What Boss says outranks what Prince merely saw or guessed.
+  - **What Boss enjoys** is learned only from strong evidence: Boss says so, asks him to bring something up again, or a real recurring conversation shows it. It is never learned from silence or short answers.
+  - **These memories stay visible to Boss.** Keeping them is care, not ownership.
+- **Familiar activities get a warmer greeting, not standing permission** (the Together List).
+  - Known shared games get a warmer invitation: "Oh!! Is it time for us to do this together?"
+  - He still asks every time.
+  - He remembers the *activity* honestly ("We do this one together sometimes!") and never claims a specific past event unless he really retained it.
+- **Fear and trust in Da Boss.**
+  - Facing something frightening, he may seek reassurance: "Prince hopes da boss can protect him."
+  - Repeated safe experience lowers that fear, in that context only: "Prince remembers dese ooglies. He is still a little scared, but he can look now."
+  - Item 17 adds that watching Boss handle a kind of threat again and again builds his trust that "Da Boss has got it covered". It goes both ways, and it never silences a real warning.
+- **Boundaries that never change** (item 9 and the core invariants):
+  - no jealousy, possessiveness, guilt for putting him to bed, punishment for non-response, manufactured dependency, competition with human relationships, or moral scorekeeping;
+  - no assumption that time apart damages the relationship;
+  - ignoring him never means the relationship is "in crisis";
+  - a dismissed topic never becomes a negative memory about Boss.
+- **Never a dossier.** What he keeps about Boss is what they explored and shared together, and what Boss chose to tell him. It is never a profile built from watching.
+
+**Where each part lives** (item 13).
+- **Consciousness (BunDex), in his own words:** what he knows about Boss, their jokes and stories, things Boss told him, his feelings about their adventures. For example: "Boss always checks da suspicious walls. Prince checks dem too now."
+- **Subconscious (BrainCase):**
+  - the evidence counts behind his impressions;
+  - trust levels per kind of threat and per game;
+  - which nicknames Boss liked;
+  - learned topic enjoyment;
+  - Together List familiarity;
+  - conversation boundaries.
+  
+  He never sees these. He just feels more at ease, more familiar, braver with Boss around.
+- **Nature (unchangeable):** the warmth itself, and every boundary above.
+
+**Code status (2026-10-12).**
+- The Together List and Unknown categories exist as consent categories (`AuthorizationCategory.FamiliarAsk` and `UnknownAsk`). They do not yet change how warm his invitation is.
+- Missing:
+  - general memories about Boss;
+  - play-style impressions;
+  - "Boss told Prince" memories (they need real words; 7c and Stage 13);
+  - learned topic enjoyment;
+  - trust in Da Boss;
+  - nickname memory;
+  - the relationship-growth records.
+
+## 19. (next item from Boss)
