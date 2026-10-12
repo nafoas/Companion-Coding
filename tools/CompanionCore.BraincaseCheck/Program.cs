@@ -73,6 +73,15 @@ switch (result.Verdict)
         break;
     case LiveCheckVerdict.ProviderFailed:
         Console.WriteLine($"  The call failed: {result.FailureKind} {result.UnavailableReason}");
+        if (result.FailureDetail is { } detail)
+        {
+            Console.WriteLine($"  The server said: {detail}");
+            if (detail.Contains("credit balance", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("  Add prepaid credits at console.anthropic.com > Billing, then run this again.");
+            }
+        }
+
         break;
     case LiveCheckVerdict.InvalidResponse:
         Console.WriteLine($"  The answer was refused by the strict parser: {result.InvalidReason}");

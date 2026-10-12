@@ -35,6 +35,9 @@ public sealed record LiveCheckResult(
     public int GlanceFailures { get; init; }
 
     public decimal GlanceCost { get; init; }
+
+    /// <summary>What the API said when the call failed, redacted, for Boss's console only.</summary>
+    public string? FailureDetail { get; init; }
 }
 
 /// <summary>
@@ -60,8 +63,12 @@ public static class BraincaseLiveCheck
 
         // An empty local store: the SDK's own sign-in (ant auth login or ANTHROPIC_API_KEY) is used.
         using var credentials = new InMemoryCredentialStore();
-        var provider = new AnthropicSemanticProvider(credentials, settings.ToProviderOptions() with { LiveCallsEnabled = true });
-        return await RunWithAsync(provider, settings, cancellationToken).ConfigureAwait(false);
+        string? detail = null;
+        var provider = new AnthropicSemanticProvider(
+            credentials,
+            settings.ToProviderOptions() with { LiveCallsEnabled = true, FailureDiagnostic = text => detail ??= text });
+        var result = await RunWithAsync(provider, settings, cancellationToken).ConfigureAwait(false);
+        return result with { FailureDetail = detail };
     }
 
     internal static async Task<LiveCheckResult> RunWithAsync(

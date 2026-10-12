@@ -173,6 +173,17 @@
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
 
+### FIX-05 — The live check says why a call failed
+
+- **Boss, 2026-10-12:** the first `--live` check printed only "Unavailable RequestRejected", which does not say what the server objected to.
+- **Change.**
+  - The Anthropic provider takes an optional `FailureDiagnostic`. Only the BraincaseCheck tool sets it; the running companion does not, so it still never records remote error text.
+  - The tool prints the server's reason as "The server said: ...". The text is redacted (anything shaped like `sk-ant-...` is hidden), flattened to one line, and capped at 400 characters.
+  - When the reason mentions the credit balance, the tool also points Boss to Console > Billing.
+- **Evidence.**
+  - New test `OnlyTheLiveCheck_HearsWhyACallFailed_AndNeverAKey`: a synthetic 400 response yields the server's reason with both keys hidden. A provider with no diagnostic set hears nothing and returns the same reply.
+  - Full local gate: 0 warnings, every suite passing.
+
 ### FIX-04 — Build with the current .NET 10 SDK (10.0.401)
 
 - **Boss, 2026-10-12:** "I have 10.0.401, can you just change it to that?" `global.json` pinned 10.0.302 with roll-forward disabled. Microsoft's download page now offers only 10.0.401, so Boss could not build Prince for his first live check.

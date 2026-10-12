@@ -43,6 +43,13 @@ public sealed record AnthropicProviderOptions
 
     public TimeSpan RequestTimeout { get; init; } = TimeSpan.FromSeconds(60);
 
+    /// <summary>
+    /// Boss's live check only: receives a short, key-redacted description of why the API
+    /// refused or failed a call, so it can be printed to his own console. Never set by the
+    /// running companion, which records no remote error text.
+    /// </summary>
+    public Action<string>? FailureDiagnostic { get; init; }
+
     internal void Validate()
     {
         if (string.IsNullOrWhiteSpace(Model)
@@ -193,13 +200,16 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
         {
             throw;
         }
-        catch (AnthropicRateLimitException)
+        catch (AnthropicRateLimitException exception)
         {
+            _options.FailureDiagnostic?.Invoke(DescribeFailure(exception));
             return ProviderReply.RateLimited();
         }
         catch (Exception exception) when (MapFailure(exception) is { } failure)
         {
             // Remote error text is never recorded: it may echo request or secret content.
+            // Only Boss's live check asks for a redacted description, for his own console.
+            _options.FailureDiagnostic?.Invoke(DescribeFailure(exception));
             return failure;
         }
 
@@ -383,6 +393,19 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
             ["usage"] = new JsonObject { ["inputUnits"] = input, ["outputUnits"] = usage.OutputTokens },
         };
         return ProviderReply.Success(envelope.ToJsonString());
+    }
+
+    /// <summary>A one-line, bounded description of a failure, with anything key-like hidden.</summary>
+    internal static string DescribeFailure(Exception exception)
+    {
+        var text = exception switch
+        {
+            AnthropicApiException api => $"HTTP {(int)api.StatusCode}: {api.Message}",
+            _ => $"{exception.GetType().Name}: {exception.Message}",
+        };
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"sk-ant-[A-Za-z0-9_\-]+", "sk-ant-[hidden]");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
+        return text.Length <= 400 ? text : text[..400] + "…";
     }
 
     internal static ProviderReply? MapFailure(Exception exception) => exception switch

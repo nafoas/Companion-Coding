@@ -244,6 +244,46 @@ public sealed class AnthropicProviderTests
     }
 
     [Fact]
+    public async Task OnlyTheLiveCheck_HearsWhyACallFailed_AndNeverAKey()
+    {
+        using var sheet = Sheet();
+        var body = new JsonObject
+        {
+            ["type"] = "error",
+            ["error"] = new JsonObject
+            {
+                ["type"] = "invalid_request_error",
+                ["message"] = $"Your credit balance is too low to access the Anthropic API. (key {SyntheticKey}, sk-ant-api03-ABCdef_123-xyz)",
+            },
+        }.ToJsonString();
+        var heard = new List<string>();
+        var (provider, _, store) = Create(
+            (_, _) => Json(HttpStatusCode.BadRequest, body),
+            new AnthropicProviderOptions { LiveCallsEnabled = true, FailureDiagnostic = heard.Add });
+        using (provider)
+        using (store)
+        {
+            var reply = await provider.InterpretAsync(Request(sheet), CancellationToken.None);
+            Assert.Equal(ProviderUnavailableReason.RequestRejected, reply.UnavailableReason);
+        }
+
+        var detail = Assert.Single(heard);
+        Assert.StartsWith("HTTP 400", detail);
+        Assert.Contains("credit balance is too low", detail);
+        Assert.DoesNotContain("ABCdef", detail);
+        Assert.DoesNotContain(SyntheticKey, detail);
+        Assert.True(detail.Length <= 401);
+
+        // The running companion sets no diagnostic: nothing is heard, and the reply is the same.
+        var (quiet, _, quietStore) = Create((_, _) => Json(HttpStatusCode.BadRequest, body));
+        using (quiet)
+        using (quietStore)
+        {
+            Assert.Equal(ProviderUnavailableReason.RequestRejected, (await quiet.InterpretAsync(Request(sheet), CancellationToken.None)).UnavailableReason);
+        }
+    }
+
+    [Fact]
     public async Task ANetworkFailure_IsAnOutage()
     {
         using var sheet = Sheet();
