@@ -173,6 +173,14 @@
 - **Merge.** PR #65 squash-merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 - **Result.** Passed and accepted.
 
+### FIX-04 — Build with the current .NET 10 SDK (10.0.401)
+
+- **Boss, 2026-10-12:** "I have 10.0.401, can you just change it to that?" `global.json` pinned 10.0.302 with roll-forward disabled. Microsoft's download page now offers only 10.0.401, so Boss could not build Prince for his first live check.
+- **Change:** `global.json` pins 10.0.401, still with roll-forward disabled, so every build uses one exact SDK. The setup guide names the version.
+- **Evidence.**
+  - A clean local gate on 10.0.401 passed: locked restore with the lock files unchanged, `/warnaserror` build with 0 warnings, no vulnerable packages, every suite passing.
+  - Windows CI installs the version from `global.json`.
+
 ### ATT-01 — Afterglow stays while things keep happening
 
 - **Boss, 2026-10-12:** "I think the 30 seconds to at most 3 minutes still works, with the cooldown resetting. The harmony works." It restores Boss's design-conversation rule that the cooldown "should run from the most recent interesting event … Every new development resets it." Task 8 had built the hysteresis but set the Afterglow timer only once.

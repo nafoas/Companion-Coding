@@ -36,7 +36,7 @@ The sign-in is saved under `%APPDATA%\Anthropic`, and Prince's SDK reads it auto
 
 ## 3. First live test (about a cent)
 
-This needs the .NET 10 SDK, the same one that builds Prince. Run these from the repository folder:
+This needs the .NET SDK **10.0.401**, the exact version Prince builds with (`global.json`). It is the current .NET 10 SDK on dotnet.microsoft.com; check with `dotnet --list-sdks`. Run these from the repository folder:
 
 ```
 dotnet run --project tools/CompanionCore.BraincaseCheck
