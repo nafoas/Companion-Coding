@@ -2,6 +2,18 @@
 
 Status: **collecting.** Boss is listing the changes to make after the Core Bun Approval Hop and before Stage 13. Nothing here is a task packet yet: each item becomes one only after the list is complete and Boss approves it.
 
+## Standing principle: game-agnostic (Boss, 2026-10-12)
+
+> "I used Baldi's Basics for the game, solely because it is a simple game, it has a clear objective, the graphics are simple, and it seems like a good way to test the systems on something. I don't want you using that as, like THE game to model his intelligence off of. It was simply an example."
+
+- Every item in this list is designed for **any** game, and for quiet non-game moments.
+- Baldi's Basics is the hand-run's test case and its evidence (such as the repetition counts in item 1), not a model to tune toward.
+- **What this rules out:**
+  - no Baldi-specific rules, roles, labels, or thresholds;
+  - no examples or tests that only make sense for Baldi;
+  - no assumption that games have a single counter, a short loop, or simple graphics.
+- **Tests and examples** stay synthetic and varied: exploration, story, combat, building, horror, cozy, menus, and long sessions.
+
 ## 1. Memories are novel, not a log (Boss, 2026-10-12)
 
 > "They are all the same memory. Dis is a Living Bun, or it should feel like one, and living beings don't constantly say the same thing twice. Memories need to be novel. He should have a record of everything he sees, but not everything he sees should become a *memory*, per se. The near duplicates perform this. He needs to remember like a person does, not like a log."
