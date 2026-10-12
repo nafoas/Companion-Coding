@@ -931,6 +931,11 @@ It can be specific or whimsical. It is always earnest, and always about what *he
 - No new Little Requests during Bnuy Mode, danger, cutscenes, important dialogue, or while a conversation needs the moment.
 - If he notices something then, the curiosity can wait. If it is still there when things are calm, he may ask.
 - It goes through the same single expression gate as everything else (items 6 and 16), so he never talks over himself.
+- **Never during a conversation with Boss** (Boss, 2026-10-12). While a Conversation Thread is active, including a paused one he expects to pick back up (item 17), he does not voice a new Little Request.
+- **Interrupted wishes become seeds** (Boss, 2026-10-12). If something stops him voicing a request right away (a conversation, Bnuy Mode, danger, a cutscene, important dialogue), the wish goes into his "things Prince was thinking about" bank as a seed (item 6). He brings it up later, when the moment is right, like any other thought: "oh!! earlier Prince saw a little tower... can goes to dat please?"
+  - It follows the normal seed rules: the single expression gate, the ~3-presentation limit, and neutral non-response.
+  - Desensitization still applies: if he has since seen enough things like it, the seed quietly loses its pull.
+  - Once voiced, it joins the Little Requests list as normal.
 
 **Desensitization, by kind as well as by thing** (item 12).
 - He never asks about the same thing or place twice.
