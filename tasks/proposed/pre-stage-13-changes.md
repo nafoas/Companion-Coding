@@ -1,6 +1,6 @@
 # Pre-Stage 13 changes (Boss's list, in progress)
 
-Status: **list complete (Boss, 2026-10-12: "I promise this is it"). Build order proposed below, awaiting Boss's approval.** Boss is listing the changes to make after the Core Bun Approval Hop and before Stage 13. Nothing here is a task packet yet: each item becomes one only after the list is complete and Boss approves it.
+Status: **approved (Boss, 2026-10-12: "Let us begin, then.").** The list, the build order M1–M10, and the test plan below are the plan of record. Each M step becomes its own packet in `tasks/active/` and passes its own Paw Gate before the next begins. Boss is listing the changes to make after the Core Bun Approval Hop and before Stage 13. Nothing here is a task packet yet: each item becomes one only after the list is complete and Boss approves it.
 
 ## Standing principle: game-agnostic (Boss, 2026-10-12)
 
@@ -970,7 +970,7 @@ It can be specific or whimsical. It is always earnest, and always about what *he
 
 ---
 
-## Proposed build order (awaiting Boss's approval)
+## Build order (Boss approved 2026-10-12)
 
 Each step is one task with its own packet and Paw Gate:
 - tests and mutation checks;
