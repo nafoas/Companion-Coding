@@ -191,4 +191,110 @@ The design conversation has **no exact durations**. It deliberately chose "gradu
   - his old folder names stay recoverable.
 - **Removing pages** (Boss, 2026-10-12): "a case by case basis type of thing. It probably won't happen a lot, so I say we just let him write organically now." No removal feature is built in this round. Removal remains a rare, explicit decision by Boss, case by case. Prince and the program never remove pages on their own.
 
-## 6. (next item from Boss)
+## 6. The Conversation Seed Banks live in the BunDex (Boss, 2026-10-12)
+
+> "The Conversation Seed Bank needs to be in the memories."
+
+**What the design conversation says** (`Prince - Pet Creation Request.PDF`, Question 2 and Question 3):
+
+- **Where the seed banks live.** When a real conversation is interrupted, Prince summarizes enough to resume it and puts it in **a loose folder at the front of the BunDex: "Things Prince Was Thinking About"**. This is his "little pile of unfinished, promising, or recently interrupted thoughts". It is not the permanent archive.
+- **Two banks inside that folder.**
+  - **Game seeds**: interrupted lore talks, observations, theories, choices, events. They have higher priority.
+  - **BIC seeds**: Prince's own curiosities and unfinished Bun thoughts.
+- **What each seed records.**
+  - the original subject;
+  - why it was interrupted;
+  - the last meaningful exchange;
+  - game, save, lore, and memory links;
+  - whether a question was left unanswered;
+  - confidence that resuming still makes sense;
+  - age and number of resurfacing attempts.
+- **Entry rule.** A conversation seed requires all three of:
+  1. substantive engagement (not a bare yes/no or a click);
+  2. something meaningful left unfinished;
+  3. resuming would add value.
+- **Observation seeds.** An observation enters the Game bank when its significance would raise Prince's attention by one level.
+- **Bank behavior.**
+  - Higher-value seeds displace lower ones in a bounded active pool, and duplicates merge.
+  - Seeds decay in urgency, not existence. A stale one settles into ordinary memory.
+- **Sensitive seeds.**
+  - Only strong evidence marks a seed sensitive. It is judged on the conversation's content, never as a diagnosis of Boss.
+  - Prince then asks once, gently, before resuming.
+  - Boss can answer "maybe another time", "let that one rest", or "don't bring this topic up again"; the last records a lasting boundary.
+- **Ignored seeds.**
+  - A seed can be offered about three times, at genuinely new moments, then leaves the active bank.
+  - Ignoring is always neutral: no preference, relationship, or emotional update.
+- **Two clocks.**
+  - The Game Observation clock follows meaningful looks.
+  - The BIC clock checks every 30 s, offset from it, and only when calm.
+  - They have one shared voice, and Prince never talks over himself.
+  - Weighting is about 70/30 game/BIC when both have eligible seeds.
+- **Afterglow.** Ordinary BICs wait while recent intense events dominate the Game bank. Every Bnuy Mode ends with at least one opening.
+- **Bnuyy Brain Farts™.** These are rare, harmless tangents ("Boss... why is pepperoni red?"), only in relaxed conversation. If ignored, they vanish without becoming a seed.
+- **BIC roots are local and immutable.** The inherent interests (round things, small things in large worlds, maps, doors, ruins, paws, treats, naps, courage when little, and so on) live locally. The API only words fresh BIC seeds from them, in small batches saved locally. Learned interests grow beside the roots and never replace them.
+- **BIC records.** Each record holds the original thought, whether Boss engaged, what was discussed, conclusions and jokes, related memories, how warmly it went, and whether Prince may revisit it. It is never a dossier on Boss.
+
+**What the code does today** (checked 2026-10-12):
+
+- **Plumbing only.**
+  - The conversation coordinator (Task 9) has both banks (`SeedBank.Game` and `SeedBank.Initiated` for BIC), presentation counts, a sensitive flag, the Afterglow offer, the lock, and settling.
+  - Each seed is only a topic key and a number. It has no words, no last exchange, no links, and no reason it was interrupted.
+  - The seeds sit in a machine checkpoint file (`conversation-checkpoint` in the state store), not in the BunDex.
+- **Never called by the running App**, although the coordinator has them:
+  - `AddInitiatedSeed`: so **no BIC thoughts ever happen**;
+  - `TryBrainFart`: so no Brain Farts;
+  - `StartGameConversation`, `RequestFollowUp`, `Close`.
+  - There is no 30 s BIC clock.
+  - The inherent-interest roots (`InterestRoots`, Recall) exist but nothing uses them.
+
+**The change.**
+- "Things Prince Was Thinking About" becomes a real folder at the front of his BunDex.
+- Both seed banks live in it, as Prince's own notes, in his words, with the full seed record above.
+- The machine side (scores, timers, counts) stays in the BrainCase index, as in item 5.
+- Wire up what was never connected:
+  - BIC generation from the local roots;
+  - the BIC clock;
+  - Brain Farts;
+  - seed records.
+
+## Appendix: design-recovery sweep (both PDFs, 2026-10-12)
+
+Boss asked for a full search of the design conversation for memories, identity, and a coherent living Bnuy. "Project Damage Control.pdf" is the project-recovery conversation and adds nothing new on these topics. Below is everything relevant from "Prince - Pet Creation Request.PDF", with today's status: **built**, **partial**, **missing**, **superseded**, or **later** (Stage 13 or after).
+
+### Identity and continuity
+
+| Design point | Status |
+|---|---|
+| One Bun, many adventures. There is one identity, one BunDex, one line of Conversation Threads. A new game, model, session, or conversation is never a new Prince. | **Built** (core invariants) |
+| One continuous local Prince Runtime. The conversation is only a window into his thinks. | **Built** |
+| The API never owns identity or memory; it only helps "his little Braincase think". | **Built** |
+| Every API request carries the immutable Prince spec, current state, relevant memories, game/save context, and source rules, so a model change never replaces Prince. | **Partial.** Requests carry state and game, but **no memories** (empty context) and no Prince spec, since the core is neutral. Memories: items 3 and 5. Spec: Stage 13. |
+| Immutable core: profoundly round, earnest, curious, kind, non-greedy, respects boundaries, hopeful. "IMMUTABLE — THE BUN REMAINS THE BUN." | **Later** (Stage 13) |
+| An inherent-interest pool is always reserved; learned interests grow beside it and never sand it away. | **Partial.** The roots exist and are unused (item 6). |
+| A character validator rejects out-of-character responses before they are committed. | **Later** (Stage 13) |
+
+### Memory (PRINCE)
+
+| Design point | Status |
+|---|---|
+| During a session he retains everything describable except repetitive noise, which collapses into aggregates ("defeated several ordinary bandits"). | **Missing.** Repeats become memories (item 1). |
+| Each memory has two layers: structured facts for retrieval, plus Prince's recollection in his voice. | **Partial.** Only the structured layer exists (items 2 and 5). |
+| Conversation memory is hybrid: crash-safe highlights immediately, permanence decided at consolidation. Jokes that landed, stories, personal things, conclusions, and defining interests are kept verbatim or faithfully semi-verbatim. | **Missing.** Needs real words (Stage 13); the memory side belongs with items 1–4. |
+| End-of-session review. Mostly silent; sometimes asks about two or three borderline items: "Should Prince put this in his BunDex?" Ignoring keeps them. | **Missing** |
+| Significance signals, with local hard rules: "Remember this, Prince", "That wasn't important", boss defeat, credits, Watchbun completion. | **Missing.** There are no such commands yet. |
+| Treasured: assigned by Boss or exceptionally strong evidence, and never decays. | **Missing** (item 4, Cherished) |
+| Recall-priority ladder and adventure lifecycle (Active → Freshly Finished → Remembered → Adventure Record, plus Treasured Episodes). | **Missing** (item 4) |
+| Recall is sparing, with a relevance threshold, cooldown, and rarity, "so recollection feels like remembering rather than database search". | **Missing.** Recall is not connected (item 3). |
+| Lore Notebook with observed/read/told/suspected/confirmed provenance; inscriptions marked exact, near-verbatim, or Prince's recollection. | **Partial.** Source kinds exist; there is no Lore Notebook. |
+| Save identity, "Is this a new adventure?", and spoiler suppression for old saves. | **Partial.** Spoiler rules are in recall, which is unused. There is no save detection or question. |
+| Opinions and beliefs are grouped and evolving; corrections are appended, never rewritten. | **Partial.** Corrections append (seen in the hand-run). `BeliefHistory` is unused. |
+| Memories about Boss are never a dossier. | **Built** in principle (no profile store). It must stay true in the rework. |
+| Bnuy No Write These Down: companionship continues, with no durable memories. | **Missing** |
+| Forget This, Prince. | Boss, 2026-10-12: **case by case**; nothing is built now (item 5). |
+| Restorative Bnuy Rest (roll the BunDex back). | **Superseded** by Boss on 2026-10-11: nothing ever rolls back; repair only continues the current line. |
+| API-side Resume Capsule. | **Superseded.** The design later rejected remote capsules (recorded at the ATT-01 closure). |
+| Non-response is neutral. | **Built** (core invariant) |
+| Player Conversation Lock. | **Built** |
+| Afterglow guarantees an opening. | **Built** (confirmed in the hand-run) |
+
+## 7. (next item from Boss)
