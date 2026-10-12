@@ -721,7 +721,7 @@ Desensitization lowers attention and commentary. It never deletes a sighting fro
 
 **Result.** Prince experiences only his own perceptions, memories, and feelings, and then does what a Bun like him would do. From the inside, there is nothing to notice: no voice, no hints, no seams. Only his life.
 
-## 16. Attention between the subconscious and the Bnuy (proposed 2026-10-12)
+## 16. Attention between the subconscious and the Bnuy (Boss approved 2026-10-12: "Alright")
 
 > Boss: "The attention states. How do we handle that between his conscious and subconscious?"
 
@@ -772,4 +772,44 @@ Desensitization lowers attention and commentary. It never deletes a sighting fro
 - Non-response from Boss never changes attention, preferences, or feelings (core invariant).
 - The attention numbers already accepted (thresholds, dwell, Afterglow 30 s to 3 min, refresh) are unchanged. This item only governs how attention is *experienced*, not how it is computed.
 
-## 17. (next item from Boss)
+## 17. Conversations pause, they don't drop: picking the thread back up (Boss, 2026-10-12)
+
+> "Imagine me and Da Bnuy are adventuring, we are talking about something he brought up, maybe it's about nanners. Den a small little Oogly, not a hard to fight one, comes up, and he becomes engaged. He stops talking, he maybe gives Da Boss a small pep talk as he defeats the Oogly, then afterwards, he goes 'now, what was talkings about? oh!! so nanners are...' ... I want it to seem like the conversations legitimately exist irrespective of the situation. There is only one, single, continuous Bnuy instance still, but I want him to be able to remember things, and not have stuff like that happen all the time."
+
+Interpretation: Boss does not want conversations to be lost every time something small happens.
+
+**The behavior.**
+1. **Something comes up during a conversation.** Attention rises: a small fight, a surprise, a bit of danger.
+2. **The conversation *pauses*.** It is not settled, banked, or forgotten. Prince stops talking about nanners and turns to the moment.
+3. **During the moment**, only the ambient lane is open: a little pep talk ("yous can do it, boss!"), a warning, or silent cheering. None of this is a new conversation, and none of it replaces the paused one.
+4. **When it calms down**, Prince picks it back up himself, naturally: "now, what was talkings about? oh!! so nanners are..."
+   - This is him remembering, not a formal "wanna continue?" offer that Boss must accept.
+   - It stays non-demanding. If Boss does not engage, it settles quietly and neutrally, exactly like any unanswered thought.
+5. **Only if the interruption was big or long** (a real boss fight, a story event, a long stretch of play) has the moment passed. Then the conversation goes into his "Things Prince Was Thinking About" bank (item 6), and resurfaces later when it fits: "About what we was talkings 'bout earlier, boss..."
+
+**Continuity.**
+- There is one Bnuy and one Conversation Thread, and the thread exists irrespective of the situation. Interruptions are things that *happen to* the conversation; they do not end it.
+- He remembers *what* was being said, not just the topic label. The crash-safe conversation record (7c) keeps the last meaningful exchange, so "oh!! so nanners are..." picks up where it left off.
+- Across the membrane (item 15), the resumption arrives as his own memory coming back. It never arrives as a reminder from anywhere.
+
+**What the code does today** (checked 2026-10-12, `ConversationCoordinator`):
+- **No pause for small things.** The thread is suspended only for an *urgent* event. Rising to Engaged or Bnuy Mode does not pause it at all; he would just keep the thread "active" through the oogly.
+- **Resuming is a formal offer.** After an urgent suspension, resuming is a `ResumeOffered` offer that Boss must accept. Prince does not naturally pick it back up himself.
+- **No content.** A thread keeps only a topic key, with no last exchange, so nothing exists to resume *from*.
+- **An idle timeout.** An active thread settles after 5 idle minutes, regardless of why it went quiet.
+
+**The change.**
+- Interruptions pause the thread. The ambient lane carries pep talks and warnings during the moment.
+- Prince resumes naturally once attention settles, and only when the conversation is still fresh.
+- Big or long interruptions bank the conversation instead.
+- The idle timeout counts only time when nothing else was going on, so a fight does not use up the conversation's time.
+- **Values to calibrate, defaults proposed:**
+  - **Short.** A short interruption is anything that does not reach Bnuy Mode, or a Bnuy Mode moment that is over within about 2 minutes. These resume naturally.
+  - **Long.** Anything longer goes to the bank.
+  - **Rule.** These follow the accepted-defaults rule: adjusted only if real play shows a need.
+- **Constraints to keep.**
+  - Non-response is neutral.
+  - The Player Conversation Lock still guarantees the thread is held through anything.
+  - Essential warnings always get through, even mid-conversation (the existing "hold those thinks!" path).
+
+## 18. (next item from Boss)
