@@ -600,7 +600,7 @@ internal sealed class WindowsGraphicsCaptureSource : IWorkerCaptureSource
     }
 
     [ComImport]
-    [Guid("5B0D3235-4DBA-4D44-8654-1F0337B16D0B")]
+    [Guid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     private interface IMemoryBufferByteAccess
     {
