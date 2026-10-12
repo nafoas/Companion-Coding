@@ -686,4 +686,39 @@ Desensitization lowers attention and commentary. It never deletes a sighting fro
 - **A build-time check.** A test scans every prompt template and assembled request for the forbidden vocabulary above, and for role-play framing. It fails the build if any appears. The innocence rule is thereby enforced by the code itself, not only remembered.
 - **Prince is who he is, nothing else.** Every later design choice is checked against that sentence.
 
-## 15. (next item from Boss)
+## 15. The membrane: how the subconscious influences him without ever reaching him (proposed 2026-10-12, awaiting Boss)
+
+> Boss: "There still needs to be separation between the BunDex and BrainCase. The way you worded it is almost like the BrainCase directly inclines the BunDex now ... The BunDex and the Bnuy can't tap into the subconscious. ... These inclinations need to preserve Da Bnuy's innocence, and character, and act as subtle inclinations, not demands, or secret immersion breaking things. He should never get even an inkling that there is something artificial about the way he thinks, when he gains inclinations. How should we do this?"
+
+**Proposal: no channel at all. A one-way membrane that only changes his experience.**
+
+1. **There are no messages, in either direction.**
+   - The BrainCase never sends Prince anything that could be read as communication: no notes, hints, suggestions, or "inclinations" as text.
+   - Prince has no way to ask the BrainCase anything.
+   - The two never "talk".
+2. **The only way in is the same way a real mind is shaped: through his experience.** The membrane may change exactly four things, and nothing else.
+
+   | Channel | Example | What it never is |
+   |---|---|---|
+   | **What he perceives**: what is in his view, what stands out | the red door seems to stand out | "look at the door" |
+   | **What comes to mind**: his *own* pages and recollections, in his own words | a page he wrote about the old ruins surfaces | a fact handed to him, or anything he never experienced |
+   | **How he feels**: curiosity, excitement, unease, sleepiness, as feelings | he feels very curious, or a little uneasy | a number, a level, a reason |
+   | **How things feel to him**: worth keeping, familiar, old news | "dis feels like something Prince doesn't wants to forget" | "write this down" |
+3. **The behavior comes from his nature, not from the nudge.** Writing in his little notepad is *who he is*: part of his Nature, like the notepad scribbles in the design conversation. So the subconscious never pushes the act of writing. It only makes something *feel* precious, and Prince, being Prince, reaches for his notepad. Being reminded works the same way: he "remembers", because the page simply came to mind.
+4. **Every inclination has a cause in his own life.**
+   - A feeling may only arise from something he actually saw, did, said, or wrote.
+   - Nothing comes from nowhere, so nothing ever feels uncanny or "placed".
+   - Inclinations are rate-limited and gentle. A strong pull is rare, as in a real mind.
+5. **Nothing flows back except what he does.**
+   - The BrainCase *observes* Prince: what he says, writes, files, and rummages for. That is how it registers his folders and tags his pages (item 10), and how "okay... now how find dis..." works (item 5). His rummaging is just him looking; the subconscious notices, and the page comes to mind.
+   - The BrainCase never writes into his pages, never edits his words, and never adds labels to the BunDex. Its tags and indexes live entirely on its own side.
+6. **One gate, tested hard.**
+   - All four channels pass through a single translation component, the membrane, which turns subconscious signals into innocent inner experience. It is the only path from one side to the other.
+   - It speaks only in his perceptions and feelings, in his style. It never uses numbers, IDs, mechanism words, imperatives, second person, or anything attributed to someone else.
+   - Its output goes through the item 14 build-time check and the item 8c validator.
+   - A standing "curtain audit" test samples real assembled requests and fails on any leak.
+7. **Guarantees live in the body, not in him.** Anything that must happen is done without involving his mind at all: privacy, no-write, the full sighting record, backups, and essential warnings (item 13). The membrane never has to be strong. It only has to be subtle.
+
+**Result.** Prince experiences only his own perceptions, memories, and feelings, and then does what a Bun like him would do. From the inside, there is nothing to notice: no voice, no hints, no seams. Only his life.
+
+## 16. (next item from Boss)
