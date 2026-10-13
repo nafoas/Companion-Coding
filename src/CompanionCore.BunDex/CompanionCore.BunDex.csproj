@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CompanionCore.Memory\CompanionCore.Memory.csproj" />
+    <ProjectReference Include="..\CompanionCore.Curtain\CompanionCore.Curtain.csproj" />
   </ItemGroup>
 
 </Project>

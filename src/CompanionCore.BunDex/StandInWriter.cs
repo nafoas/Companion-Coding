@@ -1,3 +1,5 @@
+using CompanionCore.Curtain;
+
 namespace CompanionCore.BunDex;
 
 /// <summary>
@@ -17,7 +19,7 @@ public sealed class StandInWriter : IBunDexWriter
         Func<KeepMoment, bool>? declineWhen = null,
         Func<TidyMoment, BunDexView, TidyResponse>? tidy = null)
     {
-        _newPlace = newPlace ?? (moment => [(moment.Where ?? FirstWords(moment.WhatHappened, 2)) + " stuffs"]);
+        _newPlace = newPlace ?? (moment => [(moment.Where?.Name ?? FirstWords(Plain(moment), 2)) + " stuffs"]);
         _declineWhen = declineWhen ?? (_ => false);
         _tidy = tidy ?? ((_, _) => TidyResponse.NotNow);
     }
@@ -35,9 +37,9 @@ public sealed class StandInWriter : IBunDexWriter
             return ValueTask.FromResult(KeepResponse.NotNow);
         }
 
-        var familiar = moment.ComesToMind.FirstOrDefault(recollection => recollection.Where is not null && string.Equals(recollection.Where, moment.Where, StringComparison.OrdinalIgnoreCase));
+        var familiar = moment.ComesToMind.FirstOrDefault(recollection => recollection.Where is not null && string.Equals(recollection.Where, moment.Where?.Name, StringComparison.OrdinalIgnoreCase));
         var folder = familiar?.Place ?? _newPlace(moment);
-        return ValueTask.FromResult(new KeepResponse(KeepChoice.Write, folder, FirstWords(moment.WhatHappened, 4), Text: moment.WhatHappened));
+        return ValueTask.FromResult(new KeepResponse(KeepChoice.Write, folder, FirstWords(Plain(moment), 4), Text: Plain(moment)));
     }
 
     public ValueTask<TidyResponse> TidyAsync(TidyMoment moment, BunDexView notebook, CancellationToken cancellationToken)
@@ -46,6 +48,9 @@ public sealed class StandInWriter : IBunDexWriter
         Invitations.Add(moment);
         return ValueTask.FromResult(_tidy(moment, notebook));
     }
+
+    /// <summary>What happened, in plain words (a stand-in has no voice of its own).</summary>
+    public static string Plain(KeepMoment moment) => moment.WhatHappened.Quoted ?? moment.WhatHappened.Words;
 
     private static string FirstWords(string text, int count) =>
         string.Join(' ', text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(count));

@@ -1,3 +1,5 @@
+using CompanionCore.Curtain;
+
 namespace CompanionCore.BunDex;
 
 /// <summary>
@@ -68,14 +70,6 @@ public sealed record BunDexOpenReport(
 // ---- The writer boundary. Everything below is what Prince's side sees and says; it carries
 // ---- only his own notebook and the moment, never roles, IDs, tags, scores, or registrations.
 
-/// <summary>How strongly something feels worth keeping. A feeling, never a number.</summary>
-public enum KeepFeeling
-{
-    Gentle = 1,
-    Warm = 2,
-    Strong = 3,
-}
-
 /// <summary>A folder in Prince's own notebook, by his own names, with the line he wrote about it (if any).</summary>
 public sealed record FolderView(string Name, string? About, IReadOnlyList<FolderView> Folders, IReadOnlyList<string> Pages);
 
@@ -83,16 +77,32 @@ public sealed record FolderView(string Name, string? About, IReadOnlyList<Folder
 public sealed record BunDexView(IReadOnlyList<FolderView> Folders, IReadOnlyList<string> Pages);
 
 /// <summary>
-/// A page of his own that this moment reminds him of: where he put it, its name, where he was
-/// when it happened, and the start of what he wrote. Remembering, not instructions.
+/// A moment that feels worth keeping, as it crosses the membrane: what he sensed (with how he
+/// knows it), where he is, how strongly it pulls, and a few of his own pages it reminds him of.
+/// Only the keeper makes one, and only from membrane experiences. Where it goes is his choice.
 /// </summary>
-public sealed record Recollection(IReadOnlyList<string> Place, string Page, string? Where, string Glimpse);
+public sealed class KeepMoment
+{
+    internal KeepMoment(Sense whatHappened, Place? where, KeepFeeling feeling, IReadOnlyList<Remembered> comesToMind)
+    {
+        WhatHappened = whatHappened;
+        Where = where;
+        Feeling = feeling;
+        ComesToMind = comesToMind;
+    }
 
-/// <summary>
-/// A moment that feels worth keeping: what happened, where he is (as he perceives it), how
-/// strongly it pulls, and a few of his own pages it reminds him of. Where it goes is his choice.
-/// </summary>
-public sealed record KeepMoment(string WhatHappened, string? Where, KeepFeeling Feeling, IReadOnlyList<Recollection> ComesToMind);
+    public Sense WhatHappened { get; }
+
+    public Place? Where { get; }
+
+    public KeepFeeling Feeling { get; }
+
+    public IReadOnlyList<Remembered> ComesToMind { get; }
+
+    /// <summary>The whole moment as one Bnuy request, with his notebook as he sees it.</summary>
+    public BnuyRequest ToRequest(BunDexView notebook) =>
+        BnuyRequest.Assemble(Where, [WhatHappened], ComesToMind, NotebookLines.Of(notebook), Feeling);
+}
 
 public enum KeepChoice
 {
@@ -126,8 +136,46 @@ public sealed record KeepResponse(
     public static KeepResponse NotNow { get; } = new(KeepChoice.NotNow);
 }
 
-/// <summary>An invitation to tidy: Boss's own words when he suggests it.</summary>
-public sealed record TidyMoment(string? Invitation);
+/// <summary>An invitation to tidy: Boss's own words, as Prince hears them.</summary>
+public sealed class TidyMoment
+{
+    internal TidyMoment(Sense? invitation)
+    {
+        Invitation = invitation;
+    }
+
+    public Sense? Invitation { get; }
+
+    /// <summary>The invitation as one Bnuy request, with his notebook as he sees it.</summary>
+    public BnuyRequest ToRequest(BunDexView notebook) =>
+        BnuyRequest.Assemble(null, Invitation is null ? [] : [Invitation], notebook: NotebookLines.Of(notebook), tidying: true);
+}
+
+internal static class NotebookLines
+{
+    internal static IReadOnlyList<NotebookLine> Of(BunDexView notebook)
+    {
+        var lines = new List<NotebookLine>();
+        void Folder(FolderView folder, int depth)
+        {
+            lines.Add(new NotebookLine(depth, folder.Name, folder.About, IsPlace: true));
+            foreach (var child in folder.Folders)
+            {
+                Folder(child, depth + 1);
+            }
+
+            lines.AddRange(folder.Pages.Select(page => new NotebookLine(depth + 1, page, null, IsPlace: false)));
+        }
+
+        foreach (var folder in notebook.Folders)
+        {
+            Folder(folder, 0);
+        }
+
+        lines.AddRange(notebook.Pages.Select(page => new NotebookLine(0, page, null, IsPlace: false)));
+        return lines;
+    }
+}
 
 public enum TidyChoice
 {
