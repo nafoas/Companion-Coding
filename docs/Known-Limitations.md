@@ -61,6 +61,7 @@ The saved keepsake edge (1280) remains provisional photograph-storage tuning.
 - Familiarity is rebuilt by replaying the whole sighting record on open (M3a D1); impressions reach Prince from M4/M9 (M3a D2); session aggregate wording is M4/M5 (M3a D3); the eyes' kind and danger fields await live confirmation (M3a D4).
 - Courage and trust are used by the conversation from M6 and felt from M9 (M3b D1); the eyes' encounter reporting awaits live confirmation (M3b D2); variant labels for one enemy count separately (M3b D3).
 - Only the keeper uses what comes to mind until his voice is wired (M4a D1); the come-to-mind cooldown resets on restart (M4a D2).
+- Deliberate lookups ("remember when...?") are asked for from M6 and Stage 13 (M4b D1); place pull is recomputed per lookup (M4b D2); fit is by shared words until his voice judges closeness (M4b D3).
 
 ## Minor
 

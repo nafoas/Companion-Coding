@@ -196,6 +196,14 @@ Merged as `f8447e428c2b64520777a044560c2bb85a879c00`.
 
 Merged as `a8519ebc437de09fb956f937da7f8a5d5b1b5dfd`.
 
+**M4b** (PR #102) adds the Bnuy lookup:
+- **Hunches in his own places.** When Prince looks something up, places come to mind from his own cues, one of his own folders at a time ("maybe it is in Scawy Stuffs... maybe look there?"), and he finds the page himself.
+- **Honest imperfection.** A tidy notebook and a fresh memory are found fast; an unexpected filing or a faded memory takes more rummaging. Nothing is random, and he is never wrong on purpose.
+- **Truthful.** He only finds a page that fits, says when he is not sure, notices a different one, and gives up gently after a few places.
+- **"Dat rings a bell."** A familiar feeling leads to a little lookup to remember more.
+
+Merged as `7af8283514dc070b0c723a4d2ffc8fc0f0717b94`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.

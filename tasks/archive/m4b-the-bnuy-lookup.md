@@ -1,6 +1,6 @@
 # M4b — The Bnuy lookup: "okay... now how find dis...?"
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-13 by Boss ("begin m4b"; the lookup design was approved and pinned in the plan, "M4 also: looking things up like a little Bnuy").
 Accepted remote base: `f1e4a66082d8f95ef93e9c095e9a8f160edb0360`
 Working branch: `agent/m4b-the-bnuy-lookup`
@@ -78,3 +78,16 @@ Plan items: 4 (lookup), 5, 13–15.
 - **D1.** Nothing asks him to look something up deliberately yet ("remember when...?"). Conversation does so from M6, and his voice from Stage 13, through `LookFor`.
 - **D2.** The pull of each place is recomputed per lookup over the whole notebook. That is fine for a Bnuy-sized notebook; measure it in the M10 hand-run.
 - **D3.** "Thinks it was" and "found" are by shared words only. Stage 13 can let his voice judge closeness, still answering only from a page he found.
+
+## Paw Gate
+
+- **Candidate.** Head `36c03fbf1d3e26e551d1ec29206749e5f96cc055`, PR #102, against accepted `main` `f1e4a66082d8f95ef93e9c095e9a8f160edb0360`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; 21 runnable suites, 1421 tests passed.
+- **Mutation pass.** 31 mutants, all killed.
+  - The first round left 14 survivors, and each got a test: the five-place bound; the fallback order; place-name, bell, and where weights; the recency tie-break; backing out of a path; the best-fitting page in a place; an unrelated page is not "a different one"; zero-pull places; inner places that don't feel right; where he is as a cue; the bell's own page; the rummage in the request.
+  - The full set was rerun on the final tests: 31/31.
+- **Curtain.** Every rummage line is a template (audited by reflection). The 600-situation curtain audit includes rummages with hostile place names. `LookStep` has no public constructor and only the membrane returns one.
+- **Windows CI.** Push run `38456764265` and PR run `38456788329`, both green.
+- **Merge-ref check.** Parents `f1e4a66` + `36c03fb`, tree `07c5d5de0cd1e3741e8b34a1ae31f4b3d94c4a6f`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `7af8283514dc070b0c723a4d2ffc8fc0f0717b94`.
+- **Result.** Passed and accepted.
