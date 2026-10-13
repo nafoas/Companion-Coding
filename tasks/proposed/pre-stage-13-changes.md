@@ -987,7 +987,7 @@ Every step stays game-agnostic and follows items 13–15 (the curtain and the me
 | **M3. Seeing like a Bun** | The full sighting record with live aggregation ("saw dis a few times"). Gradual desensitization by thing and by kind, with recovery over time, re-sensitizing on context change, and the danger exemption. Per-context fear easing, and trust in Da Boss. | 1, 7a, 12, 17 (trust), 18 (trust) |
 | **M4. Remembering like a Bun** | Four layers with the approved values and two clocks. Recall refreshes a memory. The priority ladder and the adventure lifecycle. Recall actually supplied to his looks, and used sparingly. The visible "okay... now how find dis..." lookup. | 3, 4, 7h, 7i |
 | **M5. What matters** | Two-layer entries. Learned significance and the hard rules. "Remember this, Prince" / "That wasn't important". Treasured. The end-of-session review. The hybrid conversation-record path. Bnuy No Write These Down. Keeping during play wired to the Living Bun keeper, with every page linked to its source memories in the BrainCase index only (Boss, 2026-10-13). | 7b–7g, 7m, 7n, 10, 13–15 |
-| **M6. Conversations that live on** | Seed banks moved into the BunDex role with full seed records. BIC generation from the local roots, the 30 s BIC clock, and Brain Farts, all wired at runtime. Pause-and-resume, the idle-timeout fix, and patience during trusted fights. | 6, 8b, 8d, 17 |
+| **M6. Conversations that live on** | Seed banks moved into the BunDex role with full seed records. BIC generation from the local roots, the 30 s BIC clock, and Brain Farts, all wired at runtime. Pause-and-resume, the idle-timeout fix, and patience during trusted fights. Real conversation through the curtain: Boss's words heard verbatim and answered like a Bun. "Someone said": hearing others, including overheard game dialogue, and remembering what was said, separately from his own recall of events (Boss, 2026-10-13). | 6, 8b, 8d, 13–15, 17 |
 | **M7. Knowing the world and Da Boss** | The Lore Notebook with provenance. Save identity, "Is this a new adventure?", and spoiler suppression. Grouped, evolving opinions (`BeliefHistory`). Relationship records, general memories about Boss, Together List warmth, and nickname approval. | 7j, 7k, 7l, 9, 18 |
 | **M8. Little Requests** | Curiosity-driven requests, desensitization by kind, the patient open-ended list, and fulfillment noticed. | 19 |
 | **M9. Attention as felt** | The membrane mapping of attention states into feelings and salience, and his reactions feeding back by observation. | 16 |
@@ -1137,6 +1137,49 @@ Boss: "I still want there to be an internal, BrainCase, Subconscious layer index
 - **Afterglow** still guarantees an opening.
 - **The lock** holds through anything.
 - **Essential warnings** still interrupt.
+
+**M6 also: hearing and answering through the curtain (Boss, 2026-10-13)**
+
+Boss: "I do want him to be able to hear people talking to him, and respond like a Bun — he should be able to interpret that naturally like a lil Bnuy talking would. As long as this system doesn't prevent him from being able to listen to and respond in conversations, it is approved."
+
+- **Real conversation is wired through the curtain.** The placeholder reply buttons from the hand-run are replaced. Everything Boss says to him arrives through the membrane's "Boss said «…»" channel, and every reply goes through `BnuyVoice`.
+- **Boss's words arrive verbatim.** They are never filtered, trimmed, censored, or reworded. "You", questions, jokes, and even "Prince, are you an AI?" reach him exactly as said, and he takes them in like a lil Bnuy listening. Boss's words are never woven into his own inner voice; they always stay "Boss said".
+- **He can always hear and always answer.**
+  - His replies may talk *to* Boss ("Yous alright, boss?", "you did great too!!").
+  - A reply is only ever redone for a curtain leak: a claim about his own nature or workings, being "told to", or a wink. Ordinary words are always his.
+  - If every attempt leaks, he says nothing that one time. The conversation itself never breaks or locks up because of the curtain.
+
+**M6 also: "someone said": hearing others, and remembering what was said (Boss, 2026-10-13)**
+
+Boss: "The 'someone else said' could be useful, even for dialogue not directed at him — he could write down what game characters say, in a 'oh!! should probablies remember dis' kind of way — he should be able to naturalistically infer from context what dialogue is important to write down, and distinguish it from stuff Da Boss talks to him about, and it should come off like Da Lil' Bnuy trying to remember important stuff that was said during the adventure, separately from his autobiographical recall of events, since someone directly said it, and it is still governed by the memory system."
+
+- **A new membrane channel.** "Someone said «…»" names the speaker as he perceives them: a game character's name, "da guard", "a voice", or "someone".
+  - Like every channel, the words are verbatim and quoted, and can never step outside their quotes.
+  - It covers dialogue not directed at him: overheard game characters, cutscenes, and anyone else in the scene.
+- **Who is talking to whom.** He always knows the difference between Boss talking *to him* ("Boss said «…»") and other people talking ("da guard said «…»"). The two never blur.
+  - Overheard dialogue never claims the conversation thread or asks him to answer.
+  - He may react to it as a Bun would, never as if it were addressed to him.
+- **He decides what is worth remembering, from context.** He infers naturally what matters: a quest clue, a warning, a name, a promise, a secret, something funny or touching. Throwaway chatter he lets go.
+  - The BrainCase may only make a line *feel* worth remembering, through the membrane: "oh!! should probablies remember dis". It never chooses for him.
+  - "Not now" is respected, and the pull relaxes once he keeps one, exactly like M1c's keep pull.
+- **Remembered sayings are their own kind of memory**, separate from his autobiographical recall of events, because someone directly said it.
+  - Each one keeps who said it (as he perceived them), where and when, and the words.
+  - Quoted words are verbatim. A paraphrase is labelled as Prince's own retelling, and he never puts words in anyone's mouth (truthfulness is immutable).
+  - It reads like Da Lil' Bnuy trying to remember important stuff that was said during the adventure.
+  - He files them in his BunDex his own Bnuy way (M1c): a place for sayings, under an adventure, or wherever he likes. The BrainCase indexes them as remembered sayings and links them to their source moments (M5).
+- **Still governed by the memory system.** The same rules apply as for every other memory:
+  - layers and fading (M4);
+  - significance and "Remember this, Prince" / "That wasn't important" (M5);
+  - append-only, never edited or deleted automatically;
+  - Bnuy No Write These Down;
+  - privacy.
+- **Tests (in addition to the per-step gate):**
+  - Boss's words reach him byte-identical across a large sample, including second person, questions about what he is, and odd punctuation. Replies that address Boss pass, and a reply is only ever redone for a curtain leak.
+  - In mixed scenes, Boss's lines and other speakers' lines never swap channels, and overheard lines never claim the thread or ask him to answer.
+  - Speaker names and quoted words cannot break out of their quotes, including hostile dialogue.
+  - Kept sayings preserve the exact words and the speaker, are indexed separately from his recall of events, and follow every memory-system rule above.
+  - With the stand-in writer, a clue-like line is kept and throwaway chatter is let go. In Stage 13 the real judgment is his.
+  - The curtain audit gains the "someone said" channel and mixed conversation scenes.
 
 **M7. Knowing the world and Da Boss**
 - **Lore notes** carry provenance (saw, read, told, suspects, confirmed). One unreliable source never becomes confirmed.
