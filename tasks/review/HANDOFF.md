@@ -2,7 +2,7 @@
 
 ## Task
 
-No task is active. **M1 (Two homes)** merged as `0202c7f` (PR #85) and **M1b (BrainCase separation)** merged as `96250752290e340f0d6ed60e4017e0cee28cd5aa` (PR #87); both passed their Paw Gates. Packets are archived in `tasks/archive/`.
+No task is active. **M1 (Two homes)** merged as `0202c7f` (PR #85) **M1b (BrainCase separation)** merged as `9625075` (PR #87), and **M1c (a Living Bun)** merged as `c6013390299aaf12d360f20d28e78dd5a1dccf62` (PR #89); each passed its Paw Gate. Packets are archived in `tasks/archive/`.
 
 Builder: Claude.
 
@@ -12,8 +12,7 @@ Builder: Claude.
 
 ## Open decisions for Boss
 
-- M1b D1: remember BunDex homes per kind *and* game (proposed).
-- M1b D2: let the keep pull relax once Prince keeps one (proposed for M2).
+None from M1. M1b D1–D3 were resolved by M1c at Boss's direction.
 
 ## Background: Stage 12
 

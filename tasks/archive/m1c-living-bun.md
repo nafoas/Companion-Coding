@@ -1,6 +1,6 @@
 # M1c — A Living Bun: his BunDex is entirely Bnuy-built
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-13 by Boss. This revises M1's keeper after the emulation (M1b D1–D3).
 Accepted remote base: `b704a35c1139561ba458c0199eaddc8ea5e9d3db`
 Working branch: `agent/m1c-living-bun`
@@ -54,6 +54,29 @@ Builder: Claude
 - **J1 — Association is plain and local.** "Where he is now" plus shared words, scored simply, until Stage 13 gives him his voice. It only reminds him; his choice is final.
 - **J2 — Tidying invitations come in as Boss's own words.** Wiring them from conversation is later (M3).
 
+## Emulation rerun (temporary, scratch only)
+
+Builder played Prince again over a fresh temporary BunDex, the same day of play as M1b. Each choice was made only from what he was given.
+- Farm lore brought nothing scary to mind, and he made "Farm Fings" himself ("Sunny Acres!! cozy. nofing scawy here").
+- Scary-house lore brought his own clock-man page to mind, so there was no flip.
+- Twice he chose differently from what came to mind:
+  - a shortcut went to "lil notes 4 later" (his own line: "useful fings so Prince can help Boss");
+  - a farm contest win went to "Big Adventures!!" ("da biggest best fings dat happen to me n Boss").
+- The pull went Gentle, Warm, Strong, then Gentle again after he kept one.
+- When Boss invited spring cleaning, he moved the rusty key next to the moon keyhole and renamed it "rusty key (4 da moon door)".
+- 10 pages in 6 top-level places, all rebuilt byte-identically from the ledger.
+
 ## Deferred findings
 
-_(none yet)_
+- **D1:** association is word overlap plus place until Stage 13. A richer sense of "this feels like that" belongs with his real voice.
+- **D2:** Boss's tidying invitation is reachable only through the keeper API until conversation wiring (M3).
+
+## Paw Gate
+
+- **Candidate.** Head `5d4fffa5c4f82bfd58ccf5084ead5a243818af36`, PR #89, against accepted `main` `b704a35c1139561ba458c0199eaddc8ea5e9d3db`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; all 19 runnable suites passed (BunDex 44, with the keeper tests rewritten for the Living Bun contract).
+- **Mutation pass.** 15 mutants (pull relaxing, recall threshold, place, bound, and order, about lines, pre-validation, tidying). The first round left 2 survivors (relaxing on an add; a secret line on a nested new place), and a test was added for each. Final: 15/15 killed.
+- **Windows CI.** Push run `38333524867` and PR run `38333539992`, both green.
+- **Merge-ref check.** Parents `b704a35` + `5d4fffa`, tree `85ec186f9c531a40fb6c2830a00dc4d9a14aa978`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `c6013390299aaf12d360f20d28e78dd5a1dccf62`.
+- **Result.** Passed and accepted.
