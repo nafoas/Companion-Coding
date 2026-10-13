@@ -160,6 +160,13 @@ Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 
 **M1b** (PR #87) finishes the separation: every machine store (memories, keepsakes, state, transcripts, journals, the ledger) lives in the BrainCase, and the data root holds only the BunDex and the BrainCase beside Boss's consent and calibration folders. Older data moves in automatically, never copied or deleted. Merged as `96250752290e340f0d6ed60e4017e0cee28cd5aa`.
 
+**M1c** (PR #89) makes the BunDex entirely Bnuy-built:
+- Prince decides where everything goes from what he knows: where he is, his own notebook (including the lines he wrote about each place), and a few of his own pages the moment reminds him of.
+- The BrainCase never assigns, counts, or orders his folders.
+- Tidying happens only when he wants to, or when Boss invites it.
+
+Merged as `c6013390299aaf12d360f20d28e78dd5a1dccf62`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.
