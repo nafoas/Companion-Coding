@@ -73,7 +73,7 @@ public sealed class RecallScenarioTests
     }
 
     [Fact]
-    public async Task Scenario2_ResumingSave_RetrievesCurrentStatusAndSummaryFirst()
+    public async Task Scenario2_ResumingSave_RetrievesCurrentStatus_ThenTheTreasuredEpisode_ThenSummary()
     {
         await using var harness = await RecallTestHarness.CreateAsync();
         var adventure = await SeedAdventureAsync(harness);
@@ -82,10 +82,11 @@ public sealed class RecallScenarioTests
             harness.Repository,
             new RecallContext(Game, SaveOne, "session.two", [RecallSubjects.Adventure(Game, SaveOne)]));
 
+        // What is being asked about comes first; then the ladder (M4c, plan item 7h): Treasured Episodes, then adventure context.
         Assert.Equal(AdventureStatus.Finished, RecallMetadata.Parse(selection.Items[0].Record.RetrievalMetadataJson).Adventure);
-        Assert.Equal(adventure.Plan.SummaryRecordIds[0], selection.Items[1].Record.RecordId);
-        Assert.Equal(adventure.Plan.HighlightRecordIds[0], selection.Items[2].Record.RecordId);
-        Assert.Equal(Joke, selection.Items[2].Record.VisibleRecollection);
+        Assert.Equal(adventure.Plan.HighlightRecordIds[0], selection.Items[1].Record.RecordId);
+        Assert.Equal(Joke, selection.Items[1].Record.VisibleRecollection);
+        Assert.Equal(adventure.Plan.SummaryRecordIds[0], selection.Items[2].Record.RecordId);
 
         // The superseded status stays reachable but ranks after current understanding.
         var active = selection.Items.Single(item => RecallMetadata.Parse(item.Record.RetrievalMetadataJson).Adventure == AdventureStatus.Active);

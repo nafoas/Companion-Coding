@@ -41,6 +41,13 @@ Plan items: 4, 7h (the lifecycle and the BrainCase ladder).
    - Privacy holds: the write follows the authorization that began the session.
 5. **Prince's own pages are untouched.** His BunDex pages already follow the M4a layers. The lifecycle governs only the BrainCase memory system's recall about an adventure.
 
+## Judgments made while building (Personal Round Judgment)
+
+- **J1. The windows reuse M4a's medium and long layers.** Freshly Finished lasts 5 sessions or 3 weeks, and Remembered 10 sessions or 60 days. The session clock is the BrainCase's durable `SessionBegan` count.
+- **J2. Treasured Episodes are the preserved highlight records.** A highlighted original is session detail, and it rests with the rest.
+- **J3. What is asked about still comes first.** The focus bonus outranks the ladder, so Scenario 2 now expects the asked-about status, then the Treasured Episode, then the summary. Before, the summary came before the highlight, the opposite of the ladder.
+- **J4. A session start reactivates only when the adventure is not already Active,** so a second session adds nothing.
+
 ## Acceptance
 
 - Each stage follows the windows on both clocks, and time away alone never moves an adventure along.
@@ -54,4 +61,7 @@ Plan items: 4, 7h (the lifecycle and the BrainCase ladder).
 
 ## Deferred findings
 
-_(none yet)_
+- **D1.** Finishing an adventure is recorded when Boss confirms "Did our adventure finish?" (M7, 7k). Today only the planner can record Finished.
+- **D2.** Nothing asks for an adventure's selection at runtime yet. Talking about past adventures (M6/M7) and his voice (Stage 13) will use `SelectAdventure` with the stage.
+- **D3.** Save identity is still the single default save per game until M7 (7k).
+- **D4.** "Significant" on the ladder arrives with learned significance (M5).
