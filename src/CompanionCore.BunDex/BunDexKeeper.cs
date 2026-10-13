@@ -1,11 +1,14 @@
 namespace CompanionCore.BunDex;
 
 /// <summary>
-/// The subconscious side of keeping things. When something is worth keeping, the moment
-/// reaches Prince only as a feeling, plus the place in his own notebook where things like it go
-/// (when he has one). He decides what to do. A place he makes for a kind of thing is quietly
-/// registered as its home; a "not now" is quietly remembered, so the next such moment feels a
-/// little stronger. Nothing is ever said to him, repeated, or insisted on.
+/// The subconscious side of keeping things (M1c: a Living Bun). When something is worth
+/// keeping, it reaches Prince only as what happened, where he is, a feeling, and a few of his
+/// own pages it reminds him of. He sees his whole notebook, with the lines he wrote about his
+/// places, and decides everything himself: whether to keep it, which place it belongs in, or
+/// that it is something else and needs a new place. Nothing here assigns a kind of thing a home,
+/// or counts, names, or orders his folders. A "not now" is quietly remembered, so the next such
+/// moment pulls a little more, until he keeps one and the pull is gentle again. His notebook is
+/// only ever reorganized by him: while he writes, or when Boss invites it.
 /// </summary>
 public sealed class BunDexKeeper
 {
@@ -29,11 +32,9 @@ public sealed class BunDexKeeper
             throw new ArgumentException("The page tags must carry the same role.", nameof(tags));
         }
 
-        var home = _store.HomeFor(role);
         var declines = _store.Declines(role);
         var feeling = declines >= StrongAfterDeclines ? KeepFeeling.Strong : declines == 1 ? KeepFeeling.Warm : KeepFeeling.Gentle;
-        var comesToMind = home is { } homeId ? FolderNames(homeId) : null;
-        var moment = new KeepMoment(whatHappened, feeling, comesToMind);
+        var moment = new KeepMoment(whatHappened, tags.Where, feeling, _store.Recall(whatHappened, tags.Where));
 
         var response = await _writer.RespondAsync(moment, _store.View(), cancellationToken).ConfigureAwait(false);
         if (response is null || response.Choice == KeepChoice.NotNow)
@@ -47,10 +48,20 @@ public sealed class BunDexKeeper
             return new KeepOutcome(KeepOutcomeKind.Refused, null, false, "Nothing was written.");
         }
 
+        Guid pageId;
+        bool newPlace;
         try
         {
-            var (folderId, newPlace) = EnsureFolder(response.Folder ?? []);
-            Guid pageId;
+            // Check what he wrote before making any place for it, so a refusal leaves no empty place.
+            BunDexStore.ValidateText(response.Text);
+            _ = BunDexNames.MakeSafe(response.Page) ?? throw new BunDexException("That name cannot be used.");
+            if (response.AboutNewPlace is not null)
+            {
+                BunDexStore.ValidateAbout(response.AboutNewPlace);
+            }
+
+            Guid? folderId;
+            (folderId, newPlace) = EnsureFolder(response.Folder ?? [], response.AboutNewPlace);
             var existing = _store.FindPage(folderId, response.Page);
             if (response.AddToExistingPage && existing is { } existingId)
             {
@@ -61,22 +72,71 @@ public sealed class BunDexKeeper
             {
                 pageId = _store.CreatePage(folderId, response.Page, response.Text, tags);
             }
-
-            // A place made (or first chosen) for a kind of thing becomes its home.
-            if (folderId is { } chosen && chosen != home && (home is null || newPlace))
-            {
-                _store.RegisterHome(role, chosen);
-            }
-
-            return new KeepOutcome(KeepOutcomeKind.Written, pageId, newPlace, null);
         }
         catch (BunDexException exception)
         {
             return new KeepOutcome(KeepOutcomeKind.Refused, null, false, exception.Message);
         }
+
+        var (tidied, refused) = ApplyTidy(response.Tidy);
+        return new KeepOutcome(KeepOutcomeKind.Written, pageId, newPlace, null, tidied, refused);
     }
 
-    private (Guid? FolderId, bool NewPlace) EnsureFolder(IReadOnlyList<string> names)
+    /// <summary>
+    /// Boss suggests some tidying ("maybe we should do some spring cleaning?"). Prince looks over
+    /// his notebook and moves or renames what he wants, or says not now.
+    /// </summary>
+    public async Task<TidyOutcome> InviteTidyingAsync(string? invitation, CancellationToken cancellationToken = default)
+    {
+        var response = await _writer.TidyAsync(new TidyMoment(invitation), _store.View(), cancellationToken).ConfigureAwait(false);
+        if (response is null || response.Choice == TidyChoice.NotNow)
+        {
+            return new TidyOutcome(TidyChoice.NotNow, 0, 0);
+        }
+
+        var (applied, refused) = ApplyTidy(response.Steps);
+        return new TidyOutcome(TidyChoice.Tidy, applied, refused);
+    }
+
+    /// <summary>Applies his own steps one by one; a step that cannot be done is skipped, never forced.</summary>
+    private (int Applied, int Refused) ApplyTidy(IReadOnlyList<TidyStep>? steps)
+    {
+        int applied = 0, refused = 0;
+        foreach (var step in steps ?? [])
+        {
+            try
+            {
+                if (step.MoveInto is null && step.Rename is null)
+                {
+                    throw new BunDexException("Nothing to change.");
+                }
+
+                Guid? folderId = step.Folder.Count == 0 ? null : _store.FindFolder(step.Folder) ?? throw new BunDexException("That folder does not exist.");
+                if (step.Page is { } page)
+                {
+                    var pageId = _store.FindPage(folderId, page) ?? throw new BunDexException("That page does not exist.");
+                    var into = step.MoveInto is null ? _store.FolderOf(pageId) : EnsureFolder(step.MoveInto, null).FolderId;
+                    _store.MovePage(pageId, into, step.Rename);
+                }
+                else
+                {
+                    var folder = folderId ?? throw new BunDexException("The top of the notebook cannot move.");
+                    var into = step.MoveInto is null ? _store.ParentOf(folder) : EnsureFolder(step.MoveInto, null).FolderId;
+                    _store.MoveFolder(folder, into, step.Rename);
+                }
+
+                applied++;
+            }
+            catch (BunDexException)
+            {
+                refused++;
+            }
+        }
+
+        return (applied, refused);
+    }
+
+    private (Guid? FolderId, bool NewPlace) EnsureFolder(IReadOnlyList<string> names, string? aboutNewPlace)
     {
         Guid? current = null;
         var created = false;
@@ -89,16 +149,11 @@ public sealed class BunDexKeeper
                 continue;
             }
 
-            current = _store.CreateFolder(names[index], current);
+            // His line about the place belongs to the place he is making for it: the last one.
+            current = _store.CreateFolder(names[index], current, index == names.Count - 1 ? aboutNewPlace : null);
             created = true;
         }
 
         return (current, created);
-    }
-
-    private IReadOnlyList<string> FolderNames(Guid folderId)
-    {
-        var relative = Path.GetRelativePath(_store.Location.BunDexRoot, _store.FolderPath(folderId));
-        return relative.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
     }
 }

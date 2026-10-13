@@ -1,8 +1,9 @@
 namespace CompanionCore.BunDex;
 
 /// <summary>
-/// The kinds of things a Bun needs somewhere to keep. These are subconscious labels: they
-/// live only in the BrainCase and never name a folder or reach Prince.
+/// The kinds of things a Bun keeps, as the BrainCase privately notes them after the fact. They
+/// are a reference for remembering, never a blueprint: they never name, choose, count, or order
+/// his folders, never decide where anything goes, and never reach Prince (M1c).
 /// </summary>
 public enum BunDexRole
 {
@@ -29,14 +30,18 @@ public enum MemoryLayer
     Cherished = 4,
 }
 
-/// <summary>Invisible tags the BrainCase keeps for every page, whatever folder it sits in.</summary>
+/// <summary>
+/// Invisible tags the BrainCase keeps for every page, whatever folder it sits in.
+/// <see cref="Where"/> is where Prince was when it happened, as he perceived it.
+/// </summary>
 public sealed record PageTags(
     BunDexRole Role,
     MemoryLayer Layer,
     string? Game,
     string? Save,
     IReadOnlyList<string> Subjects,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    string? Where = null);
 
 /// <summary>A page as the BrainCase indexes it. Never shown to Prince.</summary>
 public sealed record IndexedPage(Guid PageId, string RelativePath, PageTags Tags);
@@ -71,17 +76,23 @@ public enum KeepFeeling
     Strong = 3,
 }
 
-/// <summary>A folder in Prince's own notebook, by his own names.</summary>
-public sealed record FolderView(string Name, IReadOnlyList<FolderView> Folders, IReadOnlyList<string> Pages);
+/// <summary>A folder in Prince's own notebook, by his own names, with the line he wrote about it (if any).</summary>
+public sealed record FolderView(string Name, string? About, IReadOnlyList<FolderView> Folders, IReadOnlyList<string> Pages);
 
-/// <summary>Prince's own view of his notebook: just his folders and page names.</summary>
+/// <summary>Prince's own view of his notebook: his folders, what he said they are for, and his page names.</summary>
 public sealed record BunDexView(IReadOnlyList<FolderView> Folders, IReadOnlyList<string> Pages);
 
 /// <summary>
-/// A moment that feels worth keeping. <see cref="ComesToMind"/> is the place in his own
-/// notebook where things like this go, when he has one; otherwise it is null.
+/// A page of his own that this moment reminds him of: where he put it, its name, where he was
+/// when it happened, and the start of what he wrote. Remembering, not instructions.
 /// </summary>
-public sealed record KeepMoment(string WhatHappened, KeepFeeling Feeling, IReadOnlyList<string>? ComesToMind);
+public sealed record Recollection(IReadOnlyList<string> Place, string Page, string? Where, string Glimpse);
+
+/// <summary>
+/// A moment that feels worth keeping: what happened, where he is (as he perceives it), how
+/// strongly it pulls, and a few of his own pages it reminds him of. Where it goes is his choice.
+/// </summary>
+public sealed record KeepMoment(string WhatHappened, string? Where, KeepFeeling Feeling, IReadOnlyList<Recollection> ComesToMind);
 
 public enum KeepChoice
 {
@@ -91,23 +102,51 @@ public enum KeepChoice
 }
 
 /// <summary>
-/// What Prince does with the moment: where to write (a folder path in his own names,
-/// created if new), the page name, whether to add to that page if it exists, and the text.
+/// One change Prince makes to his own notebook. <see cref="Folder"/> names a folder by its path
+/// of his names; with <see cref="Page"/>, the page in it. <see cref="MoveInto"/> is where it goes
+/// (a path of names, created if new; empty for the top; null to stay), and <see cref="Rename"/>
+/// its new name. Pages and folders are moved and renamed, never removed.
+/// </summary>
+public sealed record TidyStep(IReadOnlyList<string> Folder, string? Page = null, IReadOnlyList<string>? MoveInto = null, string? Rename = null);
+
+/// <summary>
+/// What Prince does with the moment: where to write (a folder path in his own names, created if
+/// new), a line about a new place if he wants one, the page name, whether to add to that page if
+/// it exists, the text, and any tidying he feels like doing while he is there.
 /// </summary>
 public sealed record KeepResponse(
     KeepChoice Choice,
     IReadOnlyList<string>? Folder = null,
     string? Page = null,
     bool AddToExistingPage = false,
-    string? Text = null)
+    string? Text = null,
+    string? AboutNewPlace = null,
+    IReadOnlyList<TidyStep>? Tidy = null)
 {
     public static KeepResponse NotNow { get; } = new(KeepChoice.NotNow);
 }
 
-/// <summary>Prince's side of keeping something. The stand-in writer until Stage 13.</summary>
+/// <summary>An invitation to tidy: Boss's own words when he suggests it.</summary>
+public sealed record TidyMoment(string? Invitation);
+
+public enum TidyChoice
+{
+    NotNow = 1,
+    Tidy = 2,
+}
+
+public sealed record TidyResponse(TidyChoice Choice, IReadOnlyList<TidyStep>? Steps = null)
+{
+    public static TidyResponse NotNow { get; } = new(TidyChoice.NotNow);
+}
+
+/// <summary>Prince's side of his BunDex. The stand-in writer until Stage 13.</summary>
 public interface IBunDexWriter
 {
     ValueTask<KeepResponse> RespondAsync(KeepMoment moment, BunDexView notebook, CancellationToken cancellationToken);
+
+    /// <summary>Only ever asked when Boss invites it. Prince may say not now.</summary>
+    ValueTask<TidyResponse> TidyAsync(TidyMoment moment, BunDexView notebook, CancellationToken cancellationToken);
 }
 
 public enum KeepOutcomeKind
@@ -118,6 +157,9 @@ public enum KeepOutcomeKind
 }
 
 /// <summary>The subconscious's record of what happened when something felt worth keeping.</summary>
-public sealed record KeepOutcome(KeepOutcomeKind Kind, Guid? PageId, bool NewPlace, string? RefusedReason);
+public sealed record KeepOutcome(KeepOutcomeKind Kind, Guid? PageId, bool NewPlace, string? RefusedReason, int Tidied = 0, int TidyRefused = 0);
+
+/// <summary>What happened when Prince was invited to tidy.</summary>
+public sealed record TidyOutcome(TidyChoice Choice, int Applied, int Refused);
 
 public sealed class BunDexException(string message) : Exception(message);

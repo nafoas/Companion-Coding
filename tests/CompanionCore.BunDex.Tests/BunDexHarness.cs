@@ -24,8 +24,8 @@ internal sealed class BunDexHarness : IDisposable
 
     internal BunDexStore Open(out BunDexOpenReport report) => BunDexStore.Open(Location, out report);
 
-    internal static PageTags Tags(BunDexRole role, string? game = "synthetic.exploration", params string[] subjects) =>
-        new(role, MemoryLayer.Unspecified, game, Save: null, subjects, T0);
+    internal static PageTags Tags(BunDexRole role, string? game = "synthetic.exploration", string? where = null, params string[] subjects) =>
+        new(role, MemoryLayer.Unspecified, game, Save: null, subjects, T0, where);
 
     internal static byte[] Bytes(string path) => File.ReadAllBytes(path);
 

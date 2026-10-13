@@ -19,7 +19,6 @@ public sealed class BunDexStore
     private readonly object _gate = new();
     private readonly Dictionary<Guid, FolderState> _folders = [];
     private readonly Dictionary<Guid, PageState> _pages = [];
-    private readonly Dictionary<BunDexRole, Guid> _homes = [];
     private readonly Dictionary<BunDexRole, int> _declines = [];
     private readonly HashSet<Guid> _altered = [];
 
@@ -55,10 +54,16 @@ public sealed class BunDexStore
 
     // ---- writes: ledger first, then the files ------------------------------------------
 
-    public Guid CreateFolder(string name, Guid? parentId = null)
+    /// <param name="about">Prince's own line about what the place is for, if he wrote one.</param>
+    public Guid CreateFolder(string name, Guid? parentId = null, string? about = null)
     {
         lock (_gate)
         {
+            if (about is not null)
+            {
+                ValidateAbout(about);
+            }
+
             if (parentId is { } parent && !_folders.ContainsKey(parent))
             {
                 throw new BunDexException("That folder does not exist.");
@@ -72,7 +77,7 @@ public sealed class BunDexStore
             var safe = BunDexNames.MakeSafe(name) ?? throw new BunDexException("That name cannot be used.");
             var unique = UniqueFolderName(parentId, safe);
             var id = Guid.NewGuid();
-            Commit(new LedgerEntry(0, Now(), LedgerKind.FolderCreated, FolderId: id, ParentId: parentId, Name: unique));
+            Commit(new LedgerEntry(0, Now(), LedgerKind.FolderCreated, FolderId: id, ParentId: parentId, Name: unique, Text: about));
             Directory.CreateDirectory(FolderPath(id));
             return id;
         }
@@ -166,19 +171,6 @@ public sealed class BunDexStore
         }
     }
 
-    internal void RegisterHome(BunDexRole role, Guid folderId)
-    {
-        lock (_gate)
-        {
-            if (!_folders.ContainsKey(folderId))
-            {
-                throw new BunDexException("That folder does not exist.");
-            }
-
-            Commit(new LedgerEntry(0, Now(), LedgerKind.RoleRegistered, FolderId: folderId, Role: role));
-        }
-    }
-
     internal void RecordDecline(BunDexRole role)
     {
         lock (_gate)
@@ -189,15 +181,7 @@ public sealed class BunDexStore
 
     // ---- reads ---------------------------------------------------------------------------
 
-    /// <summary>The folder registered as the home for a role, if it still exists.</summary>
-    internal Guid? HomeFor(BunDexRole role)
-    {
-        lock (_gate)
-        {
-            return _homes.TryGetValue(role, out var id) && _folders.ContainsKey(id) ? id : null;
-        }
-    }
-
+    /// <summary>"Not now"s for this kind of thing since he last kept one.</summary>
     internal int Declines(BunDexRole role)
     {
         lock (_gate)
@@ -252,6 +236,103 @@ public sealed class BunDexStore
         }
     }
 
+    internal const int MaximumRecollections = 3;
+    internal const int GlimpseLength = 120;
+
+    /// <summary>
+    /// Association, the way remembering works: his own pages that feel like this moment
+    /// (written where he is now, or sharing its words), most alike first, then most recent.
+    /// It only reminds him of his own writing; it never says where anything should go.
+    /// </summary>
+    internal IReadOnlyList<Recollection> Recall(string whatHappened, string? where)
+    {
+        var words = Words(whatHappened);
+        lock (_gate)
+        {
+            return [.. _pages.Values
+                .Select(page => (Page: page, Score: Likeness(page, words, where)))
+                .Where(candidate => candidate.Score >= 2)
+                .OrderByDescending(candidate => candidate.Score)
+                .ThenByDescending(candidate => candidate.Page.LastWrittenAt)
+                .Take(MaximumRecollections)
+                .Select(candidate => new Recollection(
+                    FolderNames(candidate.Page.FolderId),
+                    candidate.Page.Name,
+                    candidate.Page.Tags.Where,
+                    Glimpse(candidate.Page.Text.ToString())))];
+        }
+    }
+
+    private static int Likeness(PageState page, HashSet<string> words, string? where)
+    {
+        var shared = Words(page.Text.ToString()).Count(words.Contains);
+        var sameWhere = where is not null && string.Equals(page.Tags.Where, where, StringComparison.OrdinalIgnoreCase);
+        return shared + (sameWhere ? 2 : 0);
+    }
+
+    private static readonly HashSet<string> CommonWords = new(StringComparer.Ordinal)
+    {
+        "that", "this", "with", "from", "they", "them", "then", "there", "their", "what", "when", "were", "have", "been", "into", "only",
+        "very", "just", "about", "after", "before", "said", "says", "boss", "prince", "da", "dat", "dis", "dem", "dere", "wif", "even",
+    };
+
+    private static HashSet<string> Words(string text)
+    {
+        var words = new HashSet<string>(StringComparer.Ordinal);
+        var current = new StringBuilder();
+        foreach (var character in text.Append(' '))
+        {
+            if (char.IsLetter(character))
+            {
+                current.Append(char.ToLowerInvariant(character));
+                continue;
+            }
+
+            if (current.Length >= 4 && !CommonWords.Contains(current.ToString()))
+            {
+                words.Add(current.ToString());
+            }
+
+            current.Clear();
+        }
+
+        return words;
+    }
+
+    private static string Glimpse(string text)
+    {
+        var flat = string.Join(' ', text.Split((char[])['\r', '\n', '\t'], StringSplitOptions.RemoveEmptyEntries)).Trim();
+        return flat.Length <= GlimpseLength ? flat : flat[..GlimpseLength].TrimEnd() + "...";
+    }
+
+    private IReadOnlyList<string> FolderNames(Guid? folderId)
+    {
+        var names = new List<string>();
+        for (var current = folderId; current is { } id; current = _folders[id].ParentId)
+        {
+            names.Add(_folders[id].Name);
+        }
+
+        names.Reverse();
+        return names;
+    }
+
+    internal Guid? ParentOf(Guid folderId)
+    {
+        lock (_gate)
+        {
+            return (_folders.GetValueOrDefault(folderId) ?? throw new BunDexException("That folder does not exist.")).ParentId;
+        }
+    }
+
+    internal Guid? FolderOf(Guid pageId)
+    {
+        lock (_gate)
+        {
+            return (_pages.GetValueOrDefault(pageId) ?? throw new BunDexException("That page does not exist.")).FolderId;
+        }
+    }
+
     /// <summary>Finds a folder by a path of his own folder names (case-insensitive), or null.</summary>
     internal Guid? FindFolder(IReadOnlyList<string> names)
     {
@@ -290,13 +371,18 @@ public sealed class BunDexStore
         switch (entry.Kind)
         {
             case LedgerKind.FolderCreated:
-                _folders[entry.FolderId!.Value] = new FolderState(entry.FolderId.Value, entry.ParentId, entry.Name!);
+                _folders[entry.FolderId!.Value] = new FolderState(entry.FolderId.Value, entry.ParentId, entry.Name!) { About = entry.Text };
                 break;
             case LedgerKind.PageCreated:
-                _pages[entry.PageId!.Value] = new PageState(entry.PageId.Value, entry.FolderId, entry.Name!, entry.Tags!.ToTags(), new StringBuilder(entry.Text));
+                var created = new PageState(entry.PageId!.Value, entry.FolderId, entry.Name!, entry.Tags!.ToTags(), new StringBuilder(entry.Text)) { LastWrittenAt = entry.At };
+                _pages[created.Id] = created;
+                _declines.Remove(created.Tags.Role);
                 break;
             case LedgerKind.PageAdded:
-                _pages[entry.PageId!.Value].Text.Append(entry.Text);
+                var added = _pages[entry.PageId!.Value];
+                added.Text.Append(entry.Text);
+                added.LastWrittenAt = entry.At;
+                _declines.Remove(added.Tags.Role);
                 break;
             case LedgerKind.FolderMoved:
                 var folder = _folders[entry.FolderId!.Value];
@@ -311,7 +397,7 @@ public sealed class BunDexStore
                 page.Name = entry.Name!;
                 break;
             case LedgerKind.RoleRegistered:
-                _homes[entry.Role!.Value] = entry.FolderId!.Value;
+                // Retired (M1c): a kind of thing never has a home Prince did not choose each time.
                 break;
             case LedgerKind.KeepDeclined:
                 _declines[entry.Role!.Value] = _declines.GetValueOrDefault(entry.Role.Value) + 1;
@@ -401,7 +487,7 @@ public sealed class BunDexStore
 
     private DateTimeOffset Now() => _time.GetUtcNow();
 
-    private static void ValidateText(string text)
+    internal static void ValidateText(string text)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -414,6 +500,21 @@ public sealed class BunDexStore
         }
 
         if (BunDexNames.LooksSecret(text))
+        {
+            throw new BunDexException("Secrets never go in the BunDex.");
+        }
+    }
+
+    internal const int MaximumAboutLength = 200;
+
+    internal static void ValidateAbout(string about)
+    {
+        if (string.IsNullOrWhiteSpace(about) || about.Length > MaximumAboutLength)
+        {
+            throw new BunDexException("A line about a place is short.");
+        }
+
+        if (BunDexNames.LooksSecret(about))
         {
             throw new BunDexException("Secrets never go in the BunDex.");
         }
@@ -508,7 +609,7 @@ public sealed class BunDexStore
         [.. _folders.Values
             .Where(folder => folder.ParentId == parentId)
             .OrderBy(folder => folder.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(folder => new FolderView(folder.Name, FoldersUnder(folder.Id), PagesIn(folder.Id)))];
+            .Select(folder => new FolderView(folder.Name, folder.About, FoldersUnder(folder.Id), PagesIn(folder.Id)))];
 
     private IReadOnlyList<string> PagesIn(Guid? folderId) =>
         [.. _pages.Values.Where(page => page.FolderId == folderId).Select(page => page.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase)];
@@ -585,6 +686,8 @@ public sealed class BunDexStore
 
         public string Name { get; set; } = name;
 
+        public string? About { get; init; }
+
         public List<string> PreviousPaths { get; } = [];
     }
 
@@ -597,6 +700,8 @@ public sealed class BunDexStore
         public string Name { get; set; } = name;
 
         public PageTags Tags { get; } = tags;
+
+        public DateTimeOffset LastWrittenAt { get; set; }
 
         public StringBuilder Text { get; } = text;
 
