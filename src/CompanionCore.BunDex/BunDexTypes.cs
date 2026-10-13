@@ -83,8 +83,9 @@ public sealed record BunDexView(IReadOnlyList<FolderView> Folders, IReadOnlyList
 /// </summary>
 public sealed class KeepMoment
 {
-    internal KeepMoment(Sense whatHappened, Place? where, KeepFeeling feeling, IReadOnlyList<Remembered> comesToMind, IReadOnlyList<Feeling>? feelings = null)
+    internal KeepMoment(Sense whatHappened, Place? where, KeepFeeling feeling, IReadOnlyList<Remembered> comesToMind, IReadOnlyList<Feeling>? feelings = null, IReadOnlyList<LookStep>? rummage = null)
     {
+        Rummage = rummage ?? [];
         WhatHappened = whatHappened;
         Where = where;
         Feeling = feeling;
@@ -103,9 +104,12 @@ public sealed class KeepMoment
     /// <summary>Other feelings in the moment, such as "something about this rings a bell" (M4a).</summary>
     public IReadOnlyList<Feeling> Feelings { get; }
 
+    /// <summary>When something rang a bell: his little lookup to remember more (M4b).</summary>
+    public IReadOnlyList<LookStep> Rummage { get; }
+
     /// <summary>The whole moment as one Bnuy request, with his notebook as he sees it.</summary>
     public BnuyRequest ToRequest(BunDexView notebook) =>
-        BnuyRequest.Assemble(Where, [WhatHappened], ComesToMind, NotebookLines.Of(notebook), Feeling, feelings: Feelings);
+        BnuyRequest.Assemble(Where, [WhatHappened], ComesToMind, NotebookLines.Of(notebook), Feeling, feelings: Feelings, rummage: Rummage);
 }
 
 public enum KeepChoice

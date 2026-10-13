@@ -46,6 +46,14 @@ Plan items: 4 (lookup), 5, 13–15.
 - **J2.** At most five places are checked per lookup.
 - **J3.** Cue weights: place name ×2, his line about the place ×1, a page's name and where it happened ×1 times its clarity (clear 1, bell ½, faded ¼). A place's pull is its own plus the strongest pull inside it.
 
+## Judgments made while building (Personal Round Judgment)
+
+- **J4. "Where he wrote lately" is the very place he wrote in,** not the big place around it, so that hunch names the inner place directly.
+- **J5. A hunch walks only into inner places that feel right.** An inner place with no pull is reached only as where he wrote lately.
+- **J6. A place name with machinery in it crosses with the machinery removed,** as every other name does; a name that claims his workings never crosses.
+- **J7. The bell's lookup is for the page that rang the bell.** The subconscious locates it; his cues, including where he is, decide the path. Finding it is sure.
+- **J8. Words shorter than four letters are not cues** (the M1c likeness rule), so "key" alone does not pull.
+
 ## Acceptance
 
 - **His own places only.** The hunch is always one of his own folder names, crossing as his own thought. No index, tag, fit, layer, count, or ID crosses.
@@ -67,4 +75,6 @@ Plan items: 4 (lookup), 5, 13–15.
 
 ## Deferred findings
 
-_(none yet)_
+- **D1.** Nothing asks him to look something up deliberately yet ("remember when...?"). Conversation does so from M6, and his voice from Stage 13, through `LookFor`.
+- **D2.** The pull of each place is recomputed per lookup over the whole notebook. That is fine for a Bnuy-sized notebook; measure it in the M10 hand-run.
+- **D3.** "Thinks it was" and "found" are by shared words only. Stage 13 can let his voice judge closeness, still answering only from a page he found.

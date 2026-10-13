@@ -97,3 +97,65 @@ public enum KeepFeeling
     Warm = 2,
     Strong = 3,
 }
+
+/// <summary>One step of looking something up in his BunDex (M4b), as he lives it.</summary>
+public enum LookStepKind
+{
+    /// <summary>"Okay... now how find dis...?"</summary>
+    StartsLooking = 1,
+
+    /// <summary>Something rang a bell, and he wants to remember more.</summary>
+    WantsToRememberMore = 2,
+
+    /// <summary>A place of his comes to mind as where it might be.</summary>
+    Hunch = 3,
+
+    /// <summary>He looked in a place, and it was not there.</summary>
+    NotThere = 4,
+
+    /// <summary>He found a page like it, but it is a different one.</summary>
+    ADifferentOne = 5,
+
+    /// <summary>He found it.</summary>
+    Found = 6,
+
+    /// <summary>He found a page he thinks is it, but he is not sure.</summary>
+    ThinksItWas = 7,
+
+    /// <summary>He gives up gently for now.</summary>
+    CantFind = 8,
+
+    /// <summary>Nothing came to mind at all: he doesn't think he wrote it down.</summary>
+    NotWrittenDown = 9,
+}
+
+/// <summary>
+/// One step of his rummage. A place is always one of his own folder names (null is the front of
+/// his BunDex); a page is only ever one he actually found. Only the membrane makes these.
+/// </summary>
+public sealed class LookStep
+{
+    internal LookStep(LookStepKind kind, string? place = null, string? otherPage = null, Remembered? page = null)
+    {
+        Kind = kind;
+        Place = place;
+        OtherPage = otherPage;
+        Page = page;
+    }
+
+    public LookStepKind Kind { get; }
+
+    /// <summary>For a hunch or a place he looked in: his own name for it; null for the front of his BunDex.</summary>
+    public string? Place { get; }
+
+    /// <summary>For a different one: the name of the page he found instead.</summary>
+    public string? OtherPage { get; }
+
+    /// <summary>For found or thinks it was: the page, as remembering it.</summary>
+    public Remembered? Page { get; }
+
+    /// <summary>The step as he experiences it.</summary>
+    public string Line => string.Join('\n', BnuyRequest.LinesOf(this).Select(line => string.Join(' ', line.Select(part => part.Text))));
+
+    public override string ToString() => Line;
+}

@@ -135,7 +135,7 @@ public sealed class MembraneTests
         var curtain = typeof(Membrane).Assembly;
 
         // Nothing he experiences can be made except by the membrane's translation.
-        foreach (var type in new[] { typeof(Sense), typeof(Remembered), typeof(Place), typeof(Feeling), typeof(BnuyRequest) })
+        foreach (var type in new[] { typeof(Sense), typeof(Remembered), typeof(Place), typeof(Feeling), typeof(LookStep), typeof(BnuyRequest) })
         {
             Assert.Empty(type.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
         }
@@ -147,7 +147,40 @@ public sealed class MembraneTests
         // Every public way in is a translation that returns an experience or nothing.
         foreach (var method in typeof(Membrane).GetMethods(BindingFlags.Public | BindingFlags.Static))
         {
-            Assert.Contains(Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType, new[] { typeof(Sense), typeof(Remembered), typeof(Place), typeof(Feeling), typeof(IReadOnlyList<Feeling>) });
+            Assert.Contains(Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType, new[] { typeof(Sense), typeof(Remembered), typeof(Place), typeof(Feeling), typeof(IReadOnlyList<Feeling>), typeof(LookStep) });
         }
+    }
+
+    [Fact]
+    public void TheHunch_IsHisOwnPlace_AsHisOwnThought()
+    {
+        var hunch = Membrane.Hunch("Scawy Stuffs")!;
+        var front = Membrane.Hunch(null)!;
+
+        Assert.Equal("Prince thinks: maybe it is in Scawy Stuffs... maybe look there?", hunch.Line);
+        Assert.Equal("Prince thinks: maybe it is at the front of his BunDex... maybe look there?", front.Line);
+        Assert.Equal("Prince looks in Scawy Stuffs, but it is not there.", Membrane.NotThere("Scawy Stuffs")!.Line);
+        Assert.Equal("Prince looks at the front of his BunDex, but it is not there.", Membrane.NotThere(null)!.Line);
+        Assert.Equal("Prince finds red castle, but that is a different one.", Membrane.ADifferentOne("red castle")!.Line);
+        Assert.Equal([BnuyPartKind.Framing, BnuyPartKind.HisOwn], BnuyRequest.LinesOf(hunch)[0].Select(part => part.Kind));
+    }
+
+    [Fact]
+    public void AFoundPage_CrossesAsHisOwnWords_WithHowSureHeIs()
+    {
+        var page = Membrane.Remember(["Scawy Stuffs"], "clock man", "Hollow House", "A clock man built da house.")!;
+
+        Assert.Equal("Prince finds it!\n\"clock man\" in Scawy Stuffs, from Hollow House: A clock man built da house.", Membrane.Found(page, sure: true).Line);
+        Assert.StartsWith("Prince thinks it was this one, but he is not sure:\n", Membrane.Found(page, sure: false).Line, StringComparison.Ordinal);
+        Assert.Equal(LookStepKind.ThinksItWas, Membrane.Found(page, sure: false).Kind);
+    }
+
+    [Fact]
+    public void ANameThatClaimsHisWorkings_NeverCrosses_AsAHunch()
+    {
+        Assert.Null(Membrane.Hunch("I'm an AI program"));
+        Assert.Null(Membrane.NotThere("I'm an AI program"));
+        Assert.Null(Membrane.ADifferentOne("I'm an AI program"));
+        Assert.Empty(CurtainRules.FindMachineTokens(Membrane.Hunch("folder 4f9c2b1a-0d3e-4c5f-9a8b-7c6d5e4f3a2b")!.Line));
     }
 }

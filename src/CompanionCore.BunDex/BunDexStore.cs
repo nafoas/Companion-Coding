@@ -10,7 +10,7 @@ namespace CompanionCore.BunDex;
 /// folder and page is reconciled against the ledger, so a crash never leaves a partial page;
 /// a page that differs in any other way is reported as altered and left untouched.
 /// </summary>
-public sealed class BunDexStore
+public sealed partial class BunDexStore
 {
     internal const int MaximumTextBytes = 64 * 1024;
 
@@ -193,7 +193,7 @@ public sealed class BunDexStore
     /// mind unprompted. A page that just came to mind won't again for a while. Everything that comes
     /// to mind is remembered, which restarts its clock (append-only).
     /// </summary>
-    internal (IReadOnlyList<Remembered> Clear, Feeling? Bell) ComeToMind(string cue, string? where)
+    internal (IReadOnlyList<Remembered> Clear, Feeling? Bell, Guid? BellPage) ComeToMind(string cue, string? where)
     {
         var words = Words(cue);
         lock (_gate)
@@ -226,13 +226,15 @@ public sealed class BunDexStore
             }
 
             Feeling? bell = null;
+            Guid? bellPage = null;
             if (candidates.FirstOrDefault(candidate => candidate.Clarity == Clarity.RingsABell) is { Page: not null } faint)
             {
                 bell = Membrane.RingsABell();
+                bellPage = faint.Page.Id;
                 Remembering(faint.Page.Id, now);
             }
 
-            return (clear, bell);
+            return (clear, bell, bellPage);
         }
     }
 

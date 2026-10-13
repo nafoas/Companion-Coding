@@ -48,6 +48,19 @@ internal static class BnuyTemplates
     internal const string BossHasGotIt = "Prince feels Boss has got this covered.";
     internal const string RingsABell = "Something about this rings a bell.";
 
+    // The lookup (M4b): neutral placeholders until Stage 13 writes his voice.
+    internal const string StartsLooking = "Prince starts looking through his BunDex: now how to find this?";
+    internal const string WantsToRememberMore = "Prince wants to remember more, so he starts looking it up.";
+    internal const string Hunch = "Prince thinks: maybe it is in {0}... maybe look there?";
+    internal const string HunchFront = "Prince thinks: maybe it is at the front of his BunDex... maybe look there?";
+    internal const string NotThere = "Prince looks in {0}, but it is not there.";
+    internal const string NotAtFront = "Prince looks at the front of his BunDex, but it is not there.";
+    internal const string ADifferentOne = "Prince finds {0}, but that is a different one.";
+    internal const string FoundIt = "Prince finds it!";
+    internal const string ThinksItWas = "Prince thinks it was this one, but he is not sure:";
+    internal const string CantFind = "Prince can't find it right now.";
+    internal const string NotWrittenDown = "Prince doesn't think he wrote this down.";
+
     internal static IEnumerable<string> All() =>
         typeof(BnuyTemplates).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             .Where(field => field.IsLiteral && field.FieldType == typeof(string))

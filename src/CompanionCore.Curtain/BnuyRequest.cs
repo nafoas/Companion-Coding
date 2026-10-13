@@ -60,7 +60,8 @@ public sealed class BnuyRequest
         KeepFeeling? keepFeeling = null,
         bool tidying = false,
         string? answerShape = null,
-        IEnumerable<Feeling>? feelings = null)
+        IEnumerable<Feeling>? feelings = null,
+        IEnumerable<LookStep>? rummage = null)
     {
         var lines = new List<IReadOnlyList<BnuyPart>>();
         lines.Add([new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.Nature)]);
@@ -80,9 +81,7 @@ public sealed class BnuyRequest
             lines.Add([new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.ComesToMind)]);
             foreach (var page in remembered)
             {
-                var place = page.Place.Count == 0 ? BnuyTemplates.TopOfNotebook : string.Join(BnuyTemplates.PlaceSeparator, page.Place);
-                var from = page.Where is null ? string.Empty : string.Format(CultureInfo.InvariantCulture, BnuyTemplates.PageFrom, page.Where);
-                lines.Add([new BnuyPart(BnuyPartKind.HisOwn, string.Format(CultureInfo.InvariantCulture, BnuyTemplates.Page, page.Page, place, from, page.Glimpse))]);
+                lines.Add(PageLine(page));
             }
         }
 
@@ -113,6 +112,11 @@ public sealed class BnuyRequest
         foreach (var felt in feelings ?? [])
         {
             lines.Add([new BnuyPart(BnuyPartKind.Framing, felt.Line)]);
+        }
+
+        foreach (var step in rummage ?? [])
+        {
+            lines.AddRange(LinesOf(step));
         }
 
         if (tidying)
@@ -158,6 +162,29 @@ public sealed class BnuyRequest
         SenseKind.SawLotsOfTimes => Slotted(BnuyTemplates.SawLotsOfTimes, (sense.Words, BnuyPartKind.Perceived)),
         _ => Slotted(BnuyTemplates.Remembers, (sense.Words, BnuyPartKind.Perceived)),
     };
+
+    /// <summary>One rummage step as its lines: our fixed words as framing, his own names in their slots, a found page as his own words.</summary>
+    internal static IReadOnlyList<IReadOnlyList<BnuyPart>> LinesOf(LookStep step) => step.Kind switch
+    {
+        LookStepKind.StartsLooking => [[new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.StartsLooking)]],
+        LookStepKind.WantsToRememberMore => [[new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.WantsToRememberMore)]],
+        LookStepKind.Hunch when step.Place is null => [[new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.HunchFront)]],
+        LookStepKind.Hunch => [Slotted(BnuyTemplates.Hunch, (step.Place, BnuyPartKind.HisOwn))],
+        LookStepKind.NotThere when step.Place is null => [[new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.NotAtFront)]],
+        LookStepKind.NotThere => [Slotted(BnuyTemplates.NotThere, (step.Place, BnuyPartKind.HisOwn))],
+        LookStepKind.ADifferentOne => [Slotted(BnuyTemplates.ADifferentOne, (step.OtherPage!, BnuyPartKind.HisOwn))],
+        LookStepKind.Found => [[new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.FoundIt)], PageLine(step.Page!)],
+        LookStepKind.ThinksItWas => [[new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.ThinksItWas)], PageLine(step.Page!)],
+        LookStepKind.CantFind => [[new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.CantFind)]],
+        _ => [[new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.NotWrittenDown)]],
+    };
+
+    private static IReadOnlyList<BnuyPart> PageLine(Remembered page)
+    {
+        var place = page.Place.Count == 0 ? BnuyTemplates.TopOfNotebook : string.Join(BnuyTemplates.PlaceSeparator, page.Place);
+        var from = page.Where is null ? string.Empty : string.Format(CultureInfo.InvariantCulture, BnuyTemplates.PageFrom, page.Where);
+        return [new BnuyPart(BnuyPartKind.HisOwn, string.Format(CultureInfo.InvariantCulture, BnuyTemplates.Page, page.Page, place, from, page.Glimpse))];
+    }
 
     private static BnuyPart Quoted(Sense sense) => new(BnuyPartKind.Quoted, Membrane.InQuotes(sense.Quoted!));
 

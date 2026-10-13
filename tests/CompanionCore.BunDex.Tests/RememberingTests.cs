@@ -169,7 +169,7 @@ public sealed class RememberingTests
         var ledgerBytes = File.ReadAllBytes(harness.LastSegment());
 
         var damaged = harness.Open(out _);
-        var (clear, _) = damaged.ComeToMind("the clock house clock man", "Hollow House");
+        var (clear, _, _) = damaged.ComeToMind("the clock house clock man", "Hollow House");
 
         Assert.Equal(BunDexHealth.Damaged, damaged.Health);
         Assert.Equal("clock man", Assert.Single(clear).Page);
