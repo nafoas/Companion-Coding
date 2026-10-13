@@ -167,6 +167,14 @@ Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 
 Merged as `c6013390299aaf12d360f20d28e78dd5a1dccf62`.
 
+**M2** (PR #92) builds the curtain: an intermediate layer between Prince's subconscious and Da Bnuy.
+- **Raw data stays below.** IDs, scores, and the eyes' machinery never reach him.
+- **What reaches him.** He is given only "Prince saw", "Prince read «…»", "Boss said «…»", and "Prince remembers", his own pages, and where he is.
+- **World text stays quoted.** Game text is quoted, never woven into his inner voice.
+- **His words are checked.** Everything he says or writes passes a validator first.
+
+Merged as `e272da26332351f9b3af7b2cc0268dd253ba01fc`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.

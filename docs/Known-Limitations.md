@@ -57,6 +57,7 @@ The saved keepsake edge (1280) remains provisional photograph-storage tuning.
 - The BunDex writer is a stand-in until Stage 13 gives Prince his voice; the orchestrator does not call the keeper yet (M5).
 - Boss's case-by-case page removal has no command yet; it will need its own ledger entry (M1 D1).
 - What comes to mind is matched by place and shared words until Stage 13 (M1c D1); Boss's tidying invitation is not yet wired from conversation (M1c D2, M3).
+- The eyes' answers reach Prince only once M5/M9 route them through the membrane (M2 D2); the validator holds the curtain rules until Stage 13 adds the character rules (M2 D3).
 
 ## Minor
 
