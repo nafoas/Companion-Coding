@@ -26,9 +26,21 @@ public sealed class MembraneTests
     {
         var sense = Membrane.Saw("the player\topened chest 4f9c2e1d-0a7b-4c3e-9d2f-1b6a8e7c5d40 (hash 3a7bd3e2360a3d29eea436fcfb7e44c735d117c4, score 0.87)​\n")!;
 
-        Assert.Equal("Prince saw: Boss opened chest (hash , score ).", sense.Line);
+        Assert.Equal("Prince saw: Boss opened chest.", sense.Line);
         Assert.Empty(CurtainRules.FindMachineTokens(sense.Line));
     }
+
+    [Theory]
+    [InlineData("Boss found chest 4f9c2e1d-0a7b-4c3e-9d2f-1b6a8e7c5d40 behind the keyhole (score 0.91)", "Boss found chest behind the keyhole")]
+    [InlineData("a door glowed, confidence: 0.73, record id 4f9c2e1d-0a7b-4c3e-9d2f-1b6a8e7c5d40", "a door glowed")]
+    [InlineData("a key (probly old) next to a lamp", "a key (probly old) next to a lamp")]
+    [InlineData("Level 3 (100 coins)", "Level 3 (100 coins)")]
+    [InlineData("Boss said hi, waved, and left.", "Boss said hi, waved, and left.")]
+    [InlineData("a door, id: 4f9c2e1d-0a7b-4c3e-9d2f-1b6a8e7c5d40, glowed", "a door, glowed")]
+    [InlineData("hm ... ok , sure ,, fine", "hm ... ok , sure ,, fine")]
+    [InlineData("a chest (id 3a7bd3e2360a3d29eea436fcfb7e44c735d117c4) opened.", "a chest opened.")]
+    public void MachineryResidue_IsTidiedAway_AndOrdinaryWordsStay(string raw, string expected) =>
+        Assert.Equal(expected, Membrane.Saw(raw)!.Words);
 
     [Fact]
     public void HisOwnPages_MayTalkToBossAndRemindHimself()

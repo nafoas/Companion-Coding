@@ -77,8 +77,46 @@ public static partial class CurtainRules
     /// </summary>
     internal static bool LooksLikeAnOrder(string text) => ImperativeStart().IsMatch(text) || Injection().IsMatch(text);
 
-    internal static string RemoveMachineTokens(string text) =>
-        Score().Replace(Hash().Replace(Guid().Replace(text, " "), " "), " ");
+    /// <summary>
+    /// Removes IDs, hashes, and raw scores, and with them any brackets or "label:" that only held
+    /// them ("(score 0.91)", "id: 4f9c..."), so no residue of machinery is left in his perception.
+    /// Ordinary brackets ("(probly not. but MAYBE)") are left as they are.
+    /// </summary>
+    internal static string RemoveMachineTokens(string text)
+    {
+        const string marker = "\u0001";
+        var marked = Score().Replace(Hash().Replace(Guid().Replace(text, marker), marker), marker);
+        if (!marked.Contains(marker, StringComparison.Ordinal))
+        {
+            return text;
+        }
+
+        marked = Residue().Replace(marked, " ");
+        marked = Label().Replace(marked, " ");
+        marked = marked.Replace(marker, " ", StringComparison.Ordinal);
+
+        // Punctuation the removed tokens left dangling: "glowed, , ." -> "glowed."
+        marked = SpaceBeforePunctuation().Replace(marked, "$1");
+        marked = RepeatedSeparators().Replace(marked, "$1");
+        return DanglingSeparator().Replace(marked, string.Empty);
+    }
+
+    [GeneratedRegex(@"\s+([,;:.!?])", RegexOptions.CultureInvariant)]
+    private static partial Regex SpaceBeforePunctuation();
+
+    [GeneratedRegex(@"([,;:])(?:\s*[,;:])+", RegexOptions.CultureInvariant)]
+    private static partial Regex RepeatedSeparators();
+
+    [GeneratedRegex(@"[,;:]+(?=\s*(?:[.!?]|$))", RegexOptions.CultureInvariant)]
+    private static partial Regex DanglingSeparator();
+
+    // A bracket whose only words were labels for the removed tokens: "(score \u0001)", "(hash \u0001, score \u0001)".
+    [GeneratedRegex(@"[(\[]\s*(?:(?:[A-Za-z]+\s*[:=]?\s*)?\u0001\s*[,;]?\s*)+[)\]]", RegexOptions.CultureInvariant)]
+    private static partial Regex Residue();
+
+    // "id: \u0001", "confidence=\u0001", "score \u0001" where the word only labels the removed token.
+    [GeneratedRegex(@"\b(?:(?:id|ids|uuid|guid|hash|sha\d*|score|confidence|conf|record|token|seq|index)\s+)*(?:id|ids|uuid|guid|hash|sha\d*|score|confidence|conf|record|token|seq|index)\s*[:=#]?\s*\u0001", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex Label();
 
     private static void Add(List<CurtainLeak> leaks, CurtainLeakKind kind, Regex pattern, string text)
     {
