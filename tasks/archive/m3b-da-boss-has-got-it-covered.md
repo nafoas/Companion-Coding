@@ -1,6 +1,6 @@
 # M3b — "Da Boss has got it covered": fear that eases, trust that only grows
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-13 by Boss ("Start M3"); this is the second half of M3.
 Accepted remote base: `4ae1c30586fa6822bfec6e8332c532012d5a62e7`
 Working branch: `agent/m3b-da-boss-has-got-it-covered`
@@ -64,4 +64,21 @@ This supersedes the plan's "it goes both ways" (items 17 and 18). The plan is up
 
 ## Deferred findings
 
-_(none yet)_
+- **D1 — Courage and trust are not yet used by the conversation or attention states.** M6 keeps the conversation going during trusted fights, and M9 lets him feel it. The model, the feelings, and the calmer interest are in place.
+- **D2 — The eyes' encounter field needs a look with live calls on Boss's PC (M10).** The question is how reliably "Boss won / got hurt / lost" is reported.
+- **D3 — "Kind of threat" is the eyes' label for it**, normalized ("Zombie" → "zombie"). Variant labels for the same enemy count separately until a richer identity arrives.
+
+## Paw Gate
+
+- **Candidate.** Head `a842f61e1db93bf0a3578a6cf7a98739cf732d40`, PR #97, against accepted `main` `4ae1c30586fa6822bfec6e8332c532012d5a62e7`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; 21 runnable suites, 1349 tests passed.
+- **Property test.** 200 random histories, 60 steps each: wins, losses, hurts, dangers, silences, and gaps of up to 90 days.
+  - At every step, trust never decreased and fear never increased.
+  - Both held after a reopen.
+- **Mutation pass.** 16 mutants, all killed.
+  - Every "lower trust", "raise fear", or "reset courage" mutant was caught by the property test.
+  - The first-round survivors each got a test: wins ease fear; fights are not impressions; the orchestrator's privacy fence for fights.
+- **Windows CI.** Push run `38443387741` and PR run `38443416630`, both green.
+- **Merge-ref check.** Parents `4ae1c30` + `a842f61`, tree `c2d6f86108e40e84a086b321ad07816cd2734890`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `f8447e428c2b64520777a044560c2bb85a879c00`.
+- **Result.** Passed and accepted. M3 is complete.
