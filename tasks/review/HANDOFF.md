@@ -2,7 +2,7 @@
 
 ## Task
 
-No task is active. **M1 (Two homes) passed its Paw Gate** and merged as `0202c7fd32390e73af69faf79a8410def91f2c24` (PR #85). The packet is archived at `tasks/archive/m1-two-homes.md`.
+No task is active. **M1 (Two homes)** merged as `0202c7f` (PR #85) and **M1b (BrainCase separation)** merged as `96250752290e340f0d6ed60e4017e0cee28cd5aa` (PR #87); both passed their Paw Gates. Packets are archived in `tasks/archive/`.
 
 Builder: Claude.
 
@@ -10,9 +10,10 @@ Builder: Claude.
 
 **M2** of the approved pre-Stage 13 plan (`tasks/proposed/pre-stage-13-changes.md`): its own packet in `tasks/active/`, tests, mutation pass, and Paw Gate. M10 (Boss's hand-run) gates Stage 13. Companion Prince is not awakened.
 
-## Open options for Boss
+## Open decisions for Boss
 
-- M1 D2: whether to move `Memory/`, `State/`, `Transcripts/`, `Keepsakes/` under `Braincase/`.
+- M1b D1: remember BunDex homes per kind *and* game (proposed).
+- M1b D2: let the keep pull relax once Prince keeps one (proposed for M2).
 
 ## Background: Stage 12
 
