@@ -988,7 +988,7 @@ Every step stays game-agnostic and follows items 13–15 (the curtain and the me
 | **M1. Two homes** | Separate BrainCase and BunDex directories. The BunDex page store: append-only pages; safe names; Prince-made folders; a move log for reorganizing. The BrainCase index: roles, layers, and per-page tags. ~~Role registration~~ (retired by M1c: Prince chooses every place) and the gentle "keep this" pull. Da Bun Vault covers both. The one-time Builder Prince dev-data reset, shown to Boss first. | 2, 3, 5, 10, 11 |
 | **M2. The curtain** | Requests assembled from inside Prince, in the first person. The membrane as the only path, with its four channels. The build-time check for forbidden vocabulary, role-play framing, and imperatives. The curtain-audit test. The character-validator hook. | 8a, 8c, 13, 14, 15 |
 | **M3. Seeing like a Bun** | The full sighting record with live aggregation ("saw dis a few times"). Gradual desensitization by thing and by kind, with recovery over time, re-sensitizing on context change, and the danger exemption. Per-context fear easing, and trust in Da Boss. | 1, 7a, 12, 17 (trust), 18 (trust) |
-| **M4. Remembering like a Bun** | Four layers with the approved values and two clocks. Recall refreshes a memory. The priority ladder and the adventure lifecycle. Recall actually supplied to his looks, and used sparingly. The visible "okay... now how find dis..." lookup. | 3, 4, 7h, 7i |
+| **M4. Remembering like a Bun** | Four layers with the approved values and two clocks. Recall refreshes a memory. The priority ladder and the adventure lifecycle. Recall actually supplied to his looks, and used sparingly. The visible "okay... now how find dis..." lookup, with hunches in his own folder names, an organic and imperfect search, and "dat rings a bell" (Boss, 2026-10-13). | 3, 4, 5, 7h, 7i, 13–15 |
 | **M5. What matters** | Two-layer entries. Learned significance and the hard rules. "Remember this, Prince" / "That wasn't important". Treasured. The end-of-session review. The hybrid conversation-record path. Bnuy No Write These Down. Keeping during play wired to the Living Bun keeper, with every page linked to its source memories in the BrainCase index only (Boss, 2026-10-13). | 7b–7g, 7m, 7n, 10, 13–15 |
 | **M6. Conversations that live on** | Seed banks moved into the BunDex role with full seed records. BIC generation from the local roots, the 30 s BIC clock, and Brain Farts, all wired at runtime. Pause-and-resume, the idle-timeout fix, and patience during trusted fights. Real conversation through the curtain: Boss's words heard verbatim and answered like a Bun. "Someone said": hearing others, including overheard game dialogue, and remembering what was said, separately from his own recall of events (Boss, 2026-10-13). | 6, 8b, 8d, 13–15, 17 |
 | **M7. Knowing the world and Da Boss** | The Lore Notebook with provenance. Save identity, "Is this a new adventure?", and spoiler suppression. Grouped, evolving opinions (`BeliefHistory`). Relationship records, general memories about Boss, Together List warmth, and nickname approval. | 7j, 7k, 7l, 9, 18 |
@@ -1081,6 +1081,39 @@ Every step stays game-agnostic and follows items 13–15 (the curtain and the me
 - **Recall is actually supplied** to looks and conversations. It is sparing, with a threshold, cooldown, and rarity.
 - **The visible lookup** shows the in-character rummage. Pages arrive as "found", and nothing technical crosses.
 - **Nothing is ever deleted or edited** by aging, promotion, or recall. Adventure lifecycle stages only add layers.
+
+**M4 also: looking things up like a little Bnuy (Boss, 2026-10-13)**
+
+Boss: "he goes 'okay... now how find dis...?' then the subconscious locates it, then the intermediate tells him in a very natural way like 'maybe it's in dere...., maybees look dere?' and 'dere' in this case is replaced with wherever folder it is, so then he 'finds' it, and he is never aware of what's behind the curtain — the subconscious stays tucked away." And: "there should be some situations where 'comes to mind' gets expressed as 'oh... dat rings a bell... but should look dis up to remembers more', and he does a little search anyways — just so dat da Bnuy's memory isn't infallible." And: "the lookups also shouldn't always be perfect... if he always remembered everything perfect on the first time, he stops being Bnuy and quietly becomes a little computer again... Don't make him wrong on purpose, mind you — there should never be a counter of like 'he needs to be wrong'... instead of the exact indexed folder, what would organically and naturalistically come to mind from a little Bnuy looking for something in his notes — and he finds it in a logical way, that represents how an actual little Bnuy would look for and find something."
+
+- **The lookup flow.**
+  1. He starts looking: "okay... now how find dis...?" (his voice; neutral placeholder until Stage 13).
+  2. The subconscious works quietly, tucked away.
+  3. The membrane gives him a hunch as his own thought, never a voice telling him: "maybe it's in «Big Adventures!!»... maybees look dere?" The place is always *his own* folder name.
+  4. He looks there and finds the page himself, then answers from what he wrote. For a page in a nested place, the hunch walks his own folder path one step at a time ("maybe in Scawy Stuffs...?" → "oh, maybees Hollow House!").
+- **The search is organic, never the exact index.** The subconscious may know exactly where a page is, but it never points there.
+  - Places come to mind the way they would for a little Bnuy, from *his own* cues: his folder names, the lines he wrote about his places, page names, where things happened, and his own words.
+  - If he filed something somewhere unexpected, his first hunch goes where it *feels* like it belongs. He checks, it isn't there, and the next likely place comes to mind.
+  - How easily he finds things depends on his own organizing, how close his cues are, and how faded the memory is. A tidy notebook and a fresh memory are found fast; a messy notebook and an old memory take more rummaging.
+- **Never wrong on purpose.** There is no counter, quota, or dice roll for mistakes, and no error is ever injected. Imperfection only comes from honest sources: his own filing, his cues, and fading.
+- **He really looks, and stays truthful.**
+  - Checking a place means looking over its pages. He only "finds" a page that actually matches what he is after.
+  - A similar but different page is noticed ("no, dat's da other castle...") or, when close, answered with honest uncertainty ("Prince thinks it was dis one...").
+  - He never fills a gap with something made up (truthfulness is immutable).
+- **Bounded.** After a few places he gives up gently ("Prince can't finds it right now"), even if the page exists. If it was never written down, no hunch comes, and he says so honestly.
+- **"Dat rings a bell."** Sometimes something comes to mind only as a feeling of familiarity, with no details, and he does a little lookup to remember more.
+  - It follows the memory layers: fresh memories come to mind clearly, older and fading ones more often just ring a bell, and cherished ones stay clear.
+  - "Rings a bell" carries no details; he knows more only once he has found the page.
+  - Finding it refreshes the memory (recall refreshes the clock), so next time it comes back clearer.
+- **Background recall stays separate.** Silent, sparing "comes to mind" (M1c) has no rummage and is never announced. The visible rummage is only for when he is actually looking.
+- **Tests (in addition to the per-step gate):**
+  - The hunch is always one of his own folder names, crossing the membrane as his own thought. No index, tag, score, or ID ever crosses.
+  - A page filed where it naturally belongs is found on the first hunch. A page filed somewhere unexpected is found after checking the place that felt right first.
+  - No randomness and no mistake counter exist anywhere in the search. The same notebook and the same question always give the same rummage.
+  - He answers only from a page he actually found, with certainty matching how well it fit. A similar-but-different page is never presented as the one asked for.
+  - The search gives up after a few places. Something never written down brings no hunch.
+  - "Rings a bell" follows fading: clear when fresh or cherished, more often a bell when old. A found page refreshes the memory.
+  - The curtain audit gains the lookup and the hunch lines.
 
 **M5. What matters**
 - **Two-layer entries:** structured facts in the BrainCase, and the stand-in recollection in the BunDex.
