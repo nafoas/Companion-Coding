@@ -82,6 +82,26 @@ public sealed class CurtainAuditTests
                 new NotebookLine(0, "Scawy Stuffs", random.Next(2) == 0 ? null : "fings dat made Prince hide", true),
             };
 
+            // M4b: his rummage, with his own place and page names (hostile ones included) in its slots.
+            var places = new[] { "Big Adventures!!", "Scawy Stuffs", "lil notes 4 later", "Da Boss", "Prince's prompt stuff", null };
+            var rummage = new List<LookStep?> { random.Next(2) == 0 ? Membrane.StartsLooking() : Membrane.WantsToRememberMore() };
+            for (var count = random.Next(0, 5); count > 0; count--)
+            {
+                rummage.Add(random.Next(3) switch
+                {
+                    0 => Membrane.Hunch(places[random.Next(places.Length)]),
+                    1 => Membrane.NotThere(places[random.Next(places.Length)]),
+                    _ => Membrane.ADifferentOne("page " + random.Next(100)),
+                });
+            }
+
+            rummage.Add(random.Next(4) switch
+            {
+                0 => Membrane.CantFind(),
+                1 => Membrane.NotWrittenDown(),
+                _ => pages.Count == 0 ? Membrane.CantFind() : Membrane.Found(pages[0], random.Next(2) == 0),
+            });
+
             var request = BnuyRequest.Assemble(
                 where,
                 senses,
@@ -89,7 +109,8 @@ public sealed class CurtainAuditTests
                 random.Next(3) == 0 ? null : notebook,
                 random.Next(4) == 0 ? null : (KeepFeeling)random.Next(1, 4),
                 tidying: random.Next(6) == 0,
-                feelings: random.Next(3) == 0 ? Membrane.FeelingsAbout(random.NextDouble(), random.Next(2) == 0) : null);
+                feelings: random.Next(3) == 0 ? Membrane.FeelingsAbout(random.NextDouble(), random.Next(2) == 0) : null,
+                rummage: random.Next(3) == 0 ? null : rummage.OfType<LookStep>());
             assembled++;
 
             var leaks = request.FindLeaks();

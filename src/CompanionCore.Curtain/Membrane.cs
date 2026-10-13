@@ -98,6 +98,47 @@ public static partial class Membrane
     /// </summary>
     public static Feeling RingsABell() => new(BnuyTemplates.RingsABell);
 
+    /// <summary>He starts looking something up: "okay... now how find dis...?" (M4b).</summary>
+    public static LookStep StartsLooking() => new(LookStepKind.StartsLooking);
+
+    /// <summary>Something rang a bell, and he wants to remember more (M4b).</summary>
+    public static LookStep WantsToRememberMore() => new(LookStepKind.WantsToRememberMore);
+
+    /// <summary>
+    /// One of his own places comes to mind, as his own thought: "maybe it's in dere... maybees look
+    /// dere?" Null <paramref name="place"/> is the front of his BunDex. Nothing about why crosses.
+    /// </summary>
+    public static LookStep? Hunch(string? place) => HisPlace(place, out var name) ? new LookStep(LookStepKind.Hunch, name) : null;
+
+    /// <summary>He looked in one of his places, and it was not there.</summary>
+    public static LookStep? NotThere(string? place) => HisPlace(place, out var name) ? new LookStep(LookStepKind.NotThere, name) : null;
+
+    /// <summary>He found a page like it, by his own name for it, but it is a different one.</summary>
+    public static LookStep? ADifferentOne(string page)
+    {
+        var name = Plain(page, MaximumName, hisOwnWords: true);
+        return name is null ? null : new LookStep(LookStepKind.ADifferentOne, otherPage: name);
+    }
+
+    /// <summary>He found it, sure or not sure: how sure is a feeling, never a number.</summary>
+    public static LookStep Found(Remembered page, bool sure)
+    {
+        ArgumentNullException.ThrowIfNull(page);
+        return new LookStep(sure ? LookStepKind.Found : LookStepKind.ThinksItWas, page: page);
+    }
+
+    /// <summary>He gives up gently for now.</summary>
+    public static LookStep CantFind() => new(LookStepKind.CantFind);
+
+    /// <summary>Nothing came to mind: he doesn't think he wrote it down.</summary>
+    public static LookStep NotWrittenDown() => new(LookStepKind.NotWrittenDown);
+
+    private static bool HisPlace(string? place, out string? name)
+    {
+        name = place is null ? null : Plain(place, MaximumName, hisOwnWords: true);
+        return place is null || name is not null;
+    }
+
     /// <summary>Text he read in his world, verbatim and quoted; <paramref name="on"/> is what it was on ("a sign"), if known.</summary>
     public static Sense? Read(string text, string? on = null)
     {
