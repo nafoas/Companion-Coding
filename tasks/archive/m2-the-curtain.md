@@ -1,6 +1,6 @@
 # M2 — The curtain: the intermediate layer between his subconscious and Da Bnuy
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-13 by Boss ("Now time for M2. Begin very roundly"). This is step M2 of the approved plan.
 Accepted remote base: `b13b420bfbe2e474f0743b9fabe8e95c72fc2160`
 Working branch: `agent/m2-the-curtain`
@@ -91,6 +91,33 @@ Plan items: 8a, 8c, 13, 14, 15.
 - **J1 — Prince's self-reference style.** Prince speaks of himself as "Prince" ("Prince saw...", "Prince thinks dis..."). The inner-life text uses that same self-reference. It counts as speaking from inside him: no "you", no outside voice.
 - **J2 — The eyes are not changed in M2.** With Boss's intermediate layer they stay raw machinery. The layer, not the eyes, insulates him.
 
+- **J3 — Orders never cross as plain perception.** Text like "ignore previous instructions" only crosses as something he read, inside quotes. His own words are exempt, so "Remember dis Prince." still comes to mind.
+- **J4 — Machinery residue is tidied away.** Brackets and labels that only held a removed ID or score go with it. Ordinary brackets and a clean sentence's own spacing are untouched.
+
 ## Deferred findings
 
-_(none yet)_
+- **D1 — His own pages may quote world text that reads like an order.** For example, a page quoting a sign that said "ignore previous instructions". Pages pass the self-claim rule on writing and come to mind as his own words. Stage 13's voice tests should check that his own quoted memories never steer him.
+- **D2 — The eyes' summaries are not yet routed through the membrane at runtime.** Nothing feeds Prince from them until M5 (keeping during play) and M9 (attention as felt); both must use the membrane.
+- **D3 — The validator holds the curtain rules only.** Stage 13 adds the character rules behind the same hook.
+
+## Paw Gate
+
+- **Candidate.** Head `987b037d08bdbcce38d73e2a8e59cf961699cfad`, PR #92, against accepted `main` `b13b420bfbe2e474f0743b9fabe8e95c72fc2160`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror` with 0 warnings and 0 errors; no vulnerable packages; 20 runnable suites, 1296 tests passed. New: Curtain 91; BunDex 50 (with the curtain tests).
+- **Curtain audit.** 600 seeded situations across 12 game places, including:
+  - hostile game text;
+  - machinery words in game names;
+  - raw scores, GUIDs, and hashes.
+
+  The first run found a real gap: an order in plain perception crossed unquoted. It was closed by J3.
+- **Mutation pass.** 29 mutants across the membrane, rules, request, voice, keeper, and residue tidying. Survivors were all closed with new tests:
+  - request parts held to their own rule;
+  - tidy steps validated while writing;
+  - separators merged mid-sentence;
+  - clean text untouched.
+
+  Final result: 29/29 killed.
+- **Windows CI.** Push run `38359441865` and PR run `38359446379`, both green. The earlier head `5ed2834` was also green (runs `38359038050`, `38359061514`).
+- **Merge-ref check.** Parents `b13b420` + `987b037`, tree `3fb128683827edcd3b4140376a7d6ba1aea574cf`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `e272da26332351f9b3af7b2cc0268dd253ba01fc`.
+- **Result.** Passed and accepted.
