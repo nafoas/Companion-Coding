@@ -175,6 +175,13 @@ Merged as `c6013390299aaf12d360f20d28e78dd5a1dccf62`.
 
 Merged as `e272da26332351f9b3af7b2cc0268dd253ba01fc`.
 
+**M3a** (PR #95) makes Prince remember like a living Bun, not a log:
+- The BrainCase keeps a complete record of everything his eyes see.
+- Only the first time, or a meaningful change, becomes a memory. Repeats grow one impression ("Prince saw this a few times").
+- He gradually gets used to things, by thing and by kind. Familiar things feel new again after a long gap or in a new situation, and danger never fades.
+
+Merged as `816bfeece03724f1dcc1940d4ed0c90696e45c00`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.
