@@ -162,6 +162,7 @@
       "companioncore.bundex": {
         "type": "Project",
         "dependencies": {
+          "CompanionCore.Curtain": "[1.0.0, )",
           "CompanionCore.Memory": "[1.0.0, )"
         }
       },
@@ -173,6 +174,9 @@
         "dependencies": {
           "CompanionCore.Attention": "[1.0.0, )"
         }
+      },
+      "companioncore.curtain": {
+        "type": "Project"
       },
       "companioncore.keepsakes": {
         "type": "Project",

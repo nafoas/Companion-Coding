@@ -47,6 +47,9 @@
           "SQLitePCLRaw.core": "2.1.12"
         }
       },
+      "companioncore.curtain": {
+        "type": "Project"
+      },
       "companioncore.memory": {
         "type": "Project",
         "dependencies": {

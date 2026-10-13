@@ -1,3 +1,5 @@
+using CompanionCore.Curtain;
+
 namespace CompanionCore.BunDex;
 
 /// <summary>
@@ -8,7 +10,9 @@ namespace CompanionCore.BunDex;
 /// that it is something else and needs a new place. Nothing here assigns a kind of thing a home,
 /// or counts, names, or orders his folders. A "not now" is quietly remembered, so the next such
 /// moment pulls a little more, until he keeps one and the pull is gentle again. His notebook is
-/// only ever reorganized by him: while he writes, or when Boss invites it.
+/// only ever reorganized by him: while he writes, or when Boss invites it. Everything he is
+/// given crosses the membrane (M2), and everything he writes passes the character validator
+/// first: a leak is asked for again a few times, then nothing is written.
 /// </summary>
 public sealed class BunDexKeeper
 {
@@ -16,17 +20,22 @@ public sealed class BunDexKeeper
 
     private readonly BunDexStore _store;
     private readonly IBunDexWriter _writer;
+    private readonly ICharacterValidator _validator;
+    private readonly Action<CurtainLeakKind>? _diagnostics;
 
-    public BunDexKeeper(BunDexStore store, IBunDexWriter writer)
+    public BunDexKeeper(BunDexStore store, IBunDexWriter writer, ICharacterValidator? validator = null, Action<CurtainLeakKind>? diagnostics = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _writer = writer ?? throw new ArgumentNullException(nameof(writer));
+        _validator = validator ?? CurtainValidator.Instance;
+        _diagnostics = diagnostics;
     }
 
-    public async Task<KeepOutcome> KeepAsync(BunDexRole role, PageTags tags, string whatHappened, CancellationToken cancellationToken = default)
+    /// <summary>Something felt worth keeping. <paramref name="whatHappened"/> has already crossed the membrane.</summary>
+    public async Task<KeepOutcome> KeepAsync(BunDexRole role, PageTags tags, Sense whatHappened, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(tags);
-        ArgumentException.ThrowIfNullOrWhiteSpace(whatHappened);
+        ArgumentNullException.ThrowIfNull(whatHappened);
         if (tags.Role != role)
         {
             throw new ArgumentException("The page tags must carry the same role.", nameof(tags));
@@ -34,9 +43,24 @@ public sealed class BunDexKeeper
 
         var declines = _store.Declines(role);
         var feeling = declines >= StrongAfterDeclines ? KeepFeeling.Strong : declines == 1 ? KeepFeeling.Warm : KeepFeeling.Gentle;
-        var moment = new KeepMoment(whatHappened, tags.Where, feeling, _store.Recall(whatHappened, tags.Where));
+        var moment = new KeepMoment(whatHappened, Membrane.At(tags.Where), feeling, _store.Recall(whatHappened.Quoted ?? whatHappened.Words, tags.Where));
 
-        var response = await _writer.RespondAsync(moment, _store.View(), cancellationToken).ConfigureAwait(false);
+        KeepResponse? response = null;
+        for (var attempt = 0; attempt < BnuyVoice.MaximumAttempts; attempt++)
+        {
+            response = await _writer.RespondAsync(moment, _store.View(), cancellationToken).ConfigureAwait(false);
+            if (response is null || response.Choice == KeepChoice.NotNow || Accepted(WordsOf(response)))
+            {
+                break;
+            }
+
+            response = null;
+            if (attempt == BnuyVoice.MaximumAttempts - 1)
+            {
+                return new KeepOutcome(KeepOutcomeKind.Refused, null, false, "Nothing was written.");
+            }
+        }
+
         if (response is null || response.Choice == KeepChoice.NotNow)
         {
             _store.RecordDecline(role);
@@ -88,7 +112,19 @@ public sealed class BunDexKeeper
     /// </summary>
     public async Task<TidyOutcome> InviteTidyingAsync(string? invitation, CancellationToken cancellationToken = default)
     {
-        var response = await _writer.TidyAsync(new TidyMoment(invitation), _store.View(), cancellationToken).ConfigureAwait(false);
+        var moment = new TidyMoment(invitation is null ? null : Membrane.BossSaid(invitation));
+        TidyResponse? response = null;
+        for (var attempt = 0; attempt < BnuyVoice.MaximumAttempts; attempt++)
+        {
+            response = await _writer.TidyAsync(moment, _store.View(), cancellationToken).ConfigureAwait(false);
+            if (response is null || response.Choice == TidyChoice.NotNow || Accepted(WordsOf(response.Steps)))
+            {
+                break;
+            }
+
+            response = null;
+        }
+
         if (response is null || response.Choice == TidyChoice.NotNow)
         {
             return new TidyOutcome(TidyChoice.NotNow, 0, 0);
@@ -135,6 +171,35 @@ public sealed class BunDexKeeper
 
         return (applied, refused);
     }
+
+    /// <summary>His words pass the validator, or nothing is written. Only Boss's diagnostics learn why, by kind.</summary>
+    private bool Accepted(IEnumerable<string> words)
+    {
+        var accepted = true;
+        foreach (var text in words)
+        {
+            var verdict = _validator.Check(text);
+            if (!verdict.Accepted)
+            {
+                accepted = false;
+                foreach (var leak in verdict.Leaks)
+                {
+                    _diagnostics?.Invoke(leak.Kind);
+                }
+            }
+        }
+
+        return accepted;
+    }
+
+    private static IEnumerable<string> WordsOf(KeepResponse response) =>
+        new[] { response.Page, response.Text, response.AboutNewPlace }
+            .Concat(response.Folder ?? [])
+            .Concat(WordsOf(response.Tidy))
+            .OfType<string>();
+
+    private static IEnumerable<string> WordsOf(IReadOnlyList<TidyStep>? steps) =>
+        (steps ?? []).SelectMany(step => new[] { step.Rename }.Concat(step.MoveInto ?? [])).OfType<string>();
 
     private (Guid? FolderId, bool NewPlace) EnsureFolder(IReadOnlyList<string> names, string? aboutNewPlace)
     {

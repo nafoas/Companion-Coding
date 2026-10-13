@@ -29,6 +29,9 @@ internal sealed class BunDexHarness : IDisposable
 
     internal static byte[] Bytes(string path) => File.ReadAllBytes(path);
 
+    /// <summary>Something that happened, as it crosses the membrane: "Prince saw...".</summary>
+    internal static CompanionCore.Curtain.Sense Saw(string description) => CompanionCore.Curtain.Membrane.Saw(description)!;
+
     internal string LastSegment() => BunDexLedger.Segments(Location.LedgerRoot)[^1].Path;
 
     public void Dispose()

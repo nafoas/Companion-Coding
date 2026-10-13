@@ -1,4 +1,5 @@
 using System.Text;
+using CompanionCore.Curtain;
 
 namespace CompanionCore.BunDex;
 
@@ -237,14 +238,13 @@ public sealed class BunDexStore
     }
 
     internal const int MaximumRecollections = 3;
-    internal const int GlimpseLength = 120;
 
     /// <summary>
     /// Association, the way remembering works: his own pages that feel like this moment
     /// (written where he is now, or sharing its words), most alike first, then most recent.
     /// It only reminds him of his own writing; it never says where anything should go.
     /// </summary>
-    internal IReadOnlyList<Recollection> Recall(string whatHappened, string? where)
+    internal IReadOnlyList<Remembered> Recall(string whatHappened, string? where)
     {
         var words = Words(whatHappened);
         lock (_gate)
@@ -254,12 +254,13 @@ public sealed class BunDexStore
                 .Where(candidate => candidate.Score >= 2)
                 .OrderByDescending(candidate => candidate.Score)
                 .ThenByDescending(candidate => candidate.Page.LastWrittenAt)
-                .Take(MaximumRecollections)
-                .Select(candidate => new Recollection(
+                .Select(candidate => Membrane.Remember(
                     FolderNames(candidate.Page.FolderId),
                     candidate.Page.Name,
                     candidate.Page.Tags.Where,
-                    Glimpse(candidate.Page.Text.ToString())))];
+                    candidate.Page.Text.ToString()))
+                .OfType<Remembered>()
+                .Take(MaximumRecollections)];
         }
     }
 
@@ -297,12 +298,6 @@ public sealed class BunDexStore
         }
 
         return words;
-    }
-
-    private static string Glimpse(string text)
-    {
-        var flat = string.Join(' ', text.Split((char[])['\r', '\n', '\t'], StringSplitOptions.RemoveEmptyEntries)).Trim();
-        return flat.Length <= GlimpseLength ? flat : flat[..GlimpseLength].TrimEnd() + "...";
     }
 
     private IReadOnlyList<string> FolderNames(Guid? folderId)
