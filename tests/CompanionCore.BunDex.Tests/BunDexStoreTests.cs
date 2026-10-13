@@ -164,7 +164,7 @@ public sealed class BunDexStoreTests
         var store = harness.Open();
         var scary = store.CreateFolder("scary");
         var stuffs = store.CreateFolder("Stuffs");
-        var page = store.CreatePage(scary, "zombies", "Zombies is oogly.", Tags(BunDexRole.ScaryOrCool, "synthetic.horror", "zombie"));
+        var page = store.CreatePage(scary, "zombies", "Zombies is oogly.", Tags(BunDexRole.ScaryOrCool, "synthetic.horror", null, "zombie"));
 
         store.MoveFolder(scary, stuffs, "Scary or Cool Stuffs");
         var found = Assert.Single(store.FindPages(tags => tags.Subjects.Contains("zombie")));

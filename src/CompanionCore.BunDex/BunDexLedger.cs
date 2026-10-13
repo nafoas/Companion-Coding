@@ -13,16 +13,17 @@ internal enum LedgerKind
     PageAdded = 3,
     FolderMoved = 4,
     PageMoved = 5,
+    /// <summary>Retired in M1c (no folder is ever a role's home); old entries are read and ignored.</summary>
     RoleRegistered = 6,
     KeepDeclined = 7,
 }
 
-internal sealed record PageTagsWire(BunDexRole Role, MemoryLayer Layer, string? Game, string? Save, string[] Subjects, DateTimeOffset CreatedAtUtc)
+internal sealed record PageTagsWire(BunDexRole Role, MemoryLayer Layer, string? Game, string? Save, string[] Subjects, DateTimeOffset CreatedAtUtc, string? Where = null)
 {
     internal static PageTagsWire From(PageTags tags) =>
-        new(tags.Role, tags.Layer, tags.Game, tags.Save, [.. tags.Subjects], tags.CreatedAtUtc);
+        new(tags.Role, tags.Layer, tags.Game, tags.Save, [.. tags.Subjects], tags.CreatedAtUtc, tags.Where);
 
-    internal PageTags ToTags() => new(Role, Layer, Game, Save, Subjects, CreatedAtUtc);
+    internal PageTags ToTags() => new(Role, Layer, Game, Save, Subjects, CreatedAtUtc, Where);
 }
 
 /// <summary>One committed ledger line. <see cref="Hash"/> chains to the previous line.</summary>
