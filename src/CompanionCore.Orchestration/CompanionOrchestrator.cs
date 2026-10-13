@@ -874,6 +874,9 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         {
             bunDex.BeginSession();
         }
+
+        // M4c: returning to an adventure (new, paused, or finished) makes it active again.
+        await ReactivateAdventureAsync(_session.Game).ConfigureAwait(false);
         SyncAttentionState(_session);
 
         if (_watchbun is { } existing
@@ -1537,6 +1540,31 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
     }
 
+    private async Task ReactivateAdventureAsync(string? game)
+    {
+        if (game is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var current = await AdventureLifecycle.CurrentStatusAsync(_c.Repository, game, DefaultSave, _shutdown.Token).ConfigureAwait(false);
+            if (current is not null && RecallMetadata.Parse(current.Record.RetrievalMetadataJson).Adventure == AdventureStatus.Active)
+            {
+                return;
+            }
+
+            var proposal = ConsolidationPlanner.PlanAdventureStatus(Guid.NewGuid(), Now(), game, DefaultSave, AdventureStatus.Active, current);
+            await _c.Repository.WriteGate.SubmitAsync(proposal, _shutdown.Token).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not (OutOfMemoryException or OperationCanceledException))
+        {
+            // The session always starts; the adventure stays as it was until the next start.
+            RecordFault(exception);
+        }
+    }
+
     private async Task RecordAdventureAsync(AdventureStatus status)
     {
         if (_watchbun is not { } engine)
@@ -1545,9 +1573,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
 
         var game = GameReference(engine.Current.BoundTarget.ExecutableFileName);
-        var subject = RecallSubjects.Adventure(game, DefaultSave);
-        var previous = (await _c.Repository.RetrieveBySubjectAsync(subject, _shutdown.Token).ConfigureAwait(false))
-            .FirstOrDefault(memory => memory.IsCurrent);
+        var previous = await AdventureLifecycle.CurrentStatusAsync(_c.Repository, game, DefaultSave, _shutdown.Token).ConfigureAwait(false);
         var proposal = ConsolidationPlanner.PlanAdventureStatus(Guid.NewGuid(), Now(), game, DefaultSave, status, previous);
         await _c.Repository.WriteGate.SubmitAsync(proposal, _shutdown.Token).ConfigureAwait(false);
     }

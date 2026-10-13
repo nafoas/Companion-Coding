@@ -87,8 +87,13 @@ public sealed class OrchestrationMechanicsTests
 
         await harness.Orchestrator.DecideAfterExitAsync(ExitDecision.PreservePaused);
 
-        var adventure = Assert.Single(await harness.Host.Repository.RetrieveBySubjectAsync(RecallSubjects.Adventure("synthetic-game", CompanionOrchestrator.DefaultSave)));
-        Assert.Equal(AdventureStatus.Paused, RecallMetadata.Parse(adventure.Record.RetrievalMetadataJson).Adventure);
+        // M4c: the session made the adventure active; pausing supersedes that, and both remain.
+        var chain = (await harness.Host.Repository.RetrieveBySubjectAsync(RecallSubjects.Adventure("synthetic-game", CompanionOrchestrator.DefaultSave)))
+            .OrderBy(memory => memory.JournalSequence)
+            .ToList();
+        Assert.Equal([AdventureStatus.Active, AdventureStatus.Paused], chain.Select(memory => RecallMetadata.Parse(memory.Record.RetrievalMetadataJson).Adventure));
+        Assert.Equal([false, true], chain.Select(memory => memory.IsCurrent));
+        Assert.Contains(chain[1].Record.Links, link => link.Kind == MemoryLinkKind.Supersedes && link.TargetRecordId == chain[0].Record.RecordId);
         Assert.Equal(0, harness.Orchestrator.Faults);
     }
 

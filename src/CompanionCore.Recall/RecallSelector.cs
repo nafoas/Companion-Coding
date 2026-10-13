@@ -15,7 +15,8 @@ public sealed record RecallSelection(
     IReadOnlyList<RetrievedMemory> Items,
     int SpoilersSuppressed,
     int OutOfScope,
-    bool Truncated);
+    bool Truncated,
+    int Resting = 0);
 
 /// <summary>
 /// Local relevant-context selection with spoiler suppression. Session memories need the
@@ -66,26 +67,84 @@ public static class RecallSelector
             eligible.Add((memory, Score(memory, metadata, focus)));
         }
 
+        var (selected, truncated) = Bounded(eligible, context.MaximumRecords, context.MaximumRecollectionBytes);
+        return new RecallSelection(selected, spoilers, outOfScope, truncated);
+    }
+
+    /// <summary>
+    /// What can still come up about one adventure at its stage (M4c, plan item 7h). Treasured
+    /// Episodes (highlights) always; adventure context (its status and session summaries) until
+    /// it is only its record; session detail only while active or freshly finished. The rest
+    /// is resting, counted, and still in the store.
+    /// </summary>
+    public static RecallSelection SelectAdventure(
+        IEnumerable<RetrievedMemory> candidates,
+        string game,
+        string save,
+        AdventureStage stage,
+        int maximumRecords = 32,
+        int maximumRecollectionBytes = 24 * 1024)
+    {
+        ArgumentNullException.ThrowIfNull(candidates);
+        ArgumentException.ThrowIfNullOrWhiteSpace(game);
+        ArgumentException.ThrowIfNullOrWhiteSpace(save);
+        if (maximumRecords < 1 || maximumRecollectionBytes < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumRecords));
+        }
+
+        var resting = 0;
+        var outOfScope = 0;
+        var eligible = new List<(RetrievedMemory Memory, double Score)>();
+        foreach (var memory in candidates.DistinctBy(memory => memory.Record.RecordId))
+        {
+            var record = memory.Record;
+            var metadata = RecallMetadata.Parse(record.RetrievalMetadataJson);
+            if (!string.Equals(record.GameReference, game, StringComparison.Ordinal) || !string.Equals(record.SaveReference, save, StringComparison.Ordinal)
+                || metadata.Kind is RecallRecordKind.AdventureHypothesis)
+            {
+                outOfScope++;
+                continue;
+            }
+
+            // Treasured Episodes are the preserved highlights; a highlighted original is session detail.
+            var offered = metadata.Kind == RecallRecordKind.Highlight
+                || stage is AdventureStage.Active or AdventureStage.FreshlyFinished
+                || metadata.Kind == RecallRecordKind.Adventure
+                || (stage == AdventureStage.Remembered && metadata.Kind == RecallRecordKind.Summary);
+            if (!offered)
+            {
+                resting++;
+                continue;
+            }
+
+            eligible.Add((memory, Score(memory, metadata, [])));
+        }
+
+        var (selected, truncated) = Bounded(eligible, maximumRecords, maximumRecollectionBytes);
+        return new RecallSelection(selected, 0, outOfScope, truncated, resting);
+    }
+
+    private static (List<RetrievedMemory> Selected, bool Truncated) Bounded(List<(RetrievedMemory Memory, double Score)> eligible, int maximumRecords, int maximumBytes)
+    {
         var selected = new List<RetrievedMemory>();
         var bytes = 0;
-        var truncated = false;
         foreach (var (memory, _) in eligible
                      .OrderByDescending(item => item.Score)
                      .ThenByDescending(item => item.Memory.Record.CreatedAtUtc)
                      .ThenBy(item => item.Memory.Record.RecordId))
         {
             var size = Encoding.UTF8.GetByteCount(memory.Record.VisibleRecollection);
-            if (selected.Count == context.MaximumRecords || bytes + size > context.MaximumRecollectionBytes)
+            if (selected.Count == maximumRecords || bytes + size > maximumBytes)
             {
-                truncated = true;
-                break;
+                return (selected, true);
             }
 
             bytes += size;
             selected.Add(memory);
         }
 
-        return new RecallSelection(selected, spoilers, outOfScope, truncated);
+        return (selected, false);
     }
 
     /// <summary>Below the smallest authority gap (5 points), so confidence never reorders sources.</summary>
@@ -122,14 +181,15 @@ public static class RecallSelector
             score += 200;
         }
 
+        // The ladder (plan item 7h): Treasured Episodes, then adventure context, then session detail.
+        if (metadata.Highlight)
+        {
+            score += 300;
+        }
+
         if (metadata.Kind is RecallRecordKind.Summary or RecallRecordKind.Adventure && memory.IsCurrent)
         {
             score += 150;
-        }
-
-        if (metadata.Highlight)
-        {
-            score += 100;
         }
 
         return score + (SourceRank(memory.Record.SourceKind) / 10.0) + (memory.Record.Confidence * ConfidenceWeight);
