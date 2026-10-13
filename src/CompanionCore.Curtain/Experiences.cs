@@ -9,6 +9,9 @@ public enum SenseKind
     Read = 4,
     BossSaid = 5,
     Remembers = 6,
+    SawAgain = 7,
+    SawAFewTimes = 8,
+    SawLotsOfTimes = 9,
 }
 
 /// <summary>

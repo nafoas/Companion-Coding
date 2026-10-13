@@ -98,7 +98,7 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
         + "You receive one image of a single application window the user explicitly authorized, "
         + "plus a JSON request describing it and a resume packet of the application's own local memories. "
         + "Describe what is visible: a short neutral summary, and observations tied to the listed sheet regions, "
-        + "each with a confidence between 0 and 1. "
+        + "each with a confidence between 0 and 1, what kind of thing it is, and whether it looks dangerous to the person playing right now. "
         + "Propose a memory only for a durable, notable fact worth remembering later; most images need none. "
         + "A memory proposal may only append; it can never edit or delete anything. "
         + "Link a proposal only to record IDs present in the resume packet. "
@@ -449,10 +449,14 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
                 ["region"] = new { type = "string", @enum = RegionNames(regions) },
                 ["label"] = new { type = "string" },
                 ["confidence"] = new { type = "number" },
+                ["kind"] = new { type = "string", @enum = Names(Enum.GetValues<ObservationKind>()) },
+                ["danger"] = new { type = "boolean" },
             },
             "region",
             "label",
-            "confidence");
+            "confidence",
+            "kind",
+            "danger");
 
         var link = Obj(
             new Dictionary<string, object>

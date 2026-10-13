@@ -147,6 +147,9 @@ public sealed class BnuyRequest
         SenseKind.Saw => Slotted(BnuyTemplates.Saw, (sense.Words, BnuyPartKind.Perceived)),
         SenseKind.ThinksHeSaw => Slotted(BnuyTemplates.ThinksHeSaw, (sense.Words, BnuyPartKind.Perceived)),
         SenseKind.GuessesHeSaw => Slotted(BnuyTemplates.GuessesHeSaw, (sense.Words, BnuyPartKind.Perceived)),
+        SenseKind.SawAgain => Slotted(BnuyTemplates.SawAgain, (sense.Words, BnuyPartKind.Perceived)),
+        SenseKind.SawAFewTimes => Slotted(BnuyTemplates.SawAFewTimes, (sense.Words, BnuyPartKind.Perceived)),
+        SenseKind.SawLotsOfTimes => Slotted(BnuyTemplates.SawLotsOfTimes, (sense.Words, BnuyPartKind.Perceived)),
         _ => Slotted(BnuyTemplates.Remembers, (sense.Words, BnuyPartKind.Perceived)),
     };
 

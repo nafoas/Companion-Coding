@@ -10,6 +10,7 @@ using CompanionCore.Keepsakes;
 using CompanionCore.Memory;
 using CompanionCore.Privacy;
 using CompanionCore.Recall;
+using CompanionCore.Sightings;
 using CompanionCore.TargetAuth;
 using CompanionCore.Transcript;
 using CompanionCore.Vault;
@@ -27,7 +28,11 @@ public sealed record CompanionComponents(
     TranscriptLocation Transcripts,
     VaultStateStore State,
     IPlatformSignals? Platform,
-    TimeProvider Time);
+    TimeProvider Time)
+{
+    /// <summary>The subconscious sighting record (M3a); without it, novelty is the old first-time flag.</summary>
+    public SightingStore? Sightings { get; init; }
+}
 
 public sealed record OrchestratorSnapshot(
     Guid? TargetSessionId,
@@ -1206,7 +1211,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
 
         var now = Now();
-        var evidence = SemanticEvidenceMapper.Map(interpretation, metadata, now, session.Topics);
+        var evidence = SemanticEvidenceMapper.Map(interpretation, metadata, now, NoveltyFor(session, now));
         foreach (var interest in evidence.Events)
         {
             HandleAttention(session, session.Attention.Observe(interest));
@@ -1221,6 +1226,25 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         {
             await ApplyWatchbunAsync(engine => engine.OnGameEvent(gameEvent, now)).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Getting used to things (M3a): every observation is recorded as a sighting, and its interest
+    /// is how new it feels by thing and kind in this game. Nothing is recorded once a privacy stop
+    /// has landed.
+    /// </summary>
+    private Func<SemanticObservation, string, double> NoveltyFor(ActiveSession session, DateTimeOffset now)
+    {
+        if (_c.Sightings is not { } sightings)
+        {
+            return SemanticEvidenceMapper.FirstTime(session.Topics);
+        }
+
+        return (observation, topic) =>
+        {
+            var sighting = new Sighting(now, session.Game, session.Scene.Label, topic, observation.Kind, observation.Danger, observation.Label, SightingSource.Observation);
+            return _c.Privacy.IsCurrent(session.Grant.Generation) ? sightings.See(sighting) : sightings.NoveltyOf(sighting);
+        };
     }
 
     private async Task PhotographAsync(ActiveSession session, CameraAction action, AttentionSheet sheet)

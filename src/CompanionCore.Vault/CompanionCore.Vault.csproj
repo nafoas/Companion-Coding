@@ -11,6 +11,7 @@
     <ProjectReference Include="..\CompanionCore.Memory\CompanionCore.Memory.csproj" />
     <ProjectReference Include="..\CompanionCore.Keepsakes\CompanionCore.Keepsakes.csproj" />
     <ProjectReference Include="..\CompanionCore.BunDex\CompanionCore.BunDex.csproj" />
+    <ProjectReference Include="..\CompanionCore.Sightings\CompanionCore.Sightings.csproj" />
   </ItemGroup>
 
 </Project>
