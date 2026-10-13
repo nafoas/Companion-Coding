@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CompanionCore.Api;
 
 namespace CompanionCore.Sightings;
 
@@ -30,6 +31,7 @@ public sealed class SightingStore
     private readonly SightingLocation _location;
     private readonly object _gate = new();
     private readonly Familiarity _familiarity = new();
+    private readonly Bravery _bravery = new();
     private readonly Dictionary<(string Game, string Thing), List<Impression>> _impressions = [];
     private int _segment;
     private long _segmentBytes;
@@ -81,7 +83,44 @@ public sealed class SightingStore
         ArgumentNullException.ThrowIfNull(sighting);
         lock (_gate)
         {
-            return _familiarity.NoveltyOf(sighting);
+            return _bravery.Calm(Bound(sighting), _familiarity.NoveltyOf(Bound(sighting)));
+        }
+    }
+
+    /// <summary>A threat being fought and how it went (M3b). It can only make Prince braver and surer of Boss.</summary>
+    public void Encounter(string game, string? situation, string threat, EncounterOutcome outcome, DateTimeOffset at)
+    {
+        lock (_gate)
+        {
+            Record(new Sighting(at, game, situation, threat, ObservationKind.Creature, Danger: false, threat, SightingSource.Encounter, Outcome: outcome));
+        }
+    }
+
+    /// <summary>How Prince feels about a threat in this game, as feelings only (M3b).</summary>
+    public IReadOnlyList<Curtain.Feeling> FeelingsAbout(string game, string threat)
+    {
+        lock (_gate)
+        {
+            var normalized = Normalize(game);
+            return _bravery.IsThreat(normalized, threat)
+                ? Curtain.Membrane.FeelingsAbout(_bravery.Fear(normalized, threat), _bravery.Trust(normalized, threat) >= Bravery.BossHasGotItAt)
+                : [];
+        }
+    }
+
+    internal double Trust(string game, string threat)
+    {
+        lock (_gate)
+        {
+            return _bravery.Trust(Normalize(game), threat);
+        }
+    }
+
+    internal double Fear(string game, string threat)
+    {
+        lock (_gate)
+        {
+            return _bravery.Fear(Normalize(game), threat);
         }
     }
 
@@ -195,7 +234,14 @@ public sealed class SightingStore
     private double Apply(Sighting sighting)
     {
         Count++;
-        var novelty = sighting.Source == SightingSource.Observation ? _familiarity.Observe(sighting) : 0;
+        var novelty = sighting.Source == SightingSource.Observation ? _bravery.Calm(sighting, _familiarity.Observe(sighting)) : 0;
+        _bravery.Observe(sighting);
+        if (sighting.Source == SightingSource.Encounter)
+        {
+            // A fight is part of the record and of his courage, not another "saw this again".
+            return novelty;
+        }
+
         var key = Key(sighting.Game, sighting.Thing);
         if (!_impressions.TryGetValue(key, out var list))
         {

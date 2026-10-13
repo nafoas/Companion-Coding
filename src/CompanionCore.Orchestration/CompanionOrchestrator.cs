@@ -1212,6 +1212,15 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
 
         var now = Now();
         var evidence = SemanticEvidenceMapper.Map(interpretation, metadata, now, NoveltyFor(session, now));
+
+        // M3b: fights and how they went feed his courage and trust in Da Boss, which only ever grow.
+        if (_c.Sightings is { } sightings && _c.Privacy.IsCurrent(session.Grant.Generation))
+        {
+            foreach (var encounter in interpretation.Encounters)
+            {
+                sightings.Encounter(session.Game, session.Scene.Label, SemanticEvidenceMapper.Topic(encounter.Threat), encounter.Outcome, now);
+            }
+        }
         foreach (var interest in evidence.Events)
         {
             HandleAttention(session, session.Attention.Observe(interest));

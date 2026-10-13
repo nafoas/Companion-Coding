@@ -29,6 +29,18 @@ internal sealed class InterpretationWire
     public string Summary { get; set; } = null!;
 
     public List<ObservationWire>? Observations { get; set; }
+
+    /// <summary>Optional (M3b): older answers carry no encounters.</summary>
+    public List<EncounterWire>? Encounters { get; set; }
+}
+
+internal sealed class EncounterWire
+{
+    [JsonRequired]
+    public string Threat { get; set; } = null!;
+
+    [JsonRequired]
+    public EncounterOutcome Outcome { get; set; }
 }
 
 internal sealed class ObservationWire

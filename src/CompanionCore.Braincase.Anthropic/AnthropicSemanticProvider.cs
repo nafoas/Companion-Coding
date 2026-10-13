@@ -99,6 +99,7 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
         + "plus a JSON request describing it and a resume packet of the application's own local memories. "
         + "Describe what is visible: a short neutral summary, and observations tied to the listed sheet regions, "
         + "each with a confidence between 0 and 1, what kind of thing it is, and whether it looks dangerous to the person playing right now. "
+        + "List any threats the person playing is fighting in this image and how it is going: ongoing, bossWon (they beat it), bossHurt (they took damage), or bossLost (they were defeated); most images have none. "
         + "Propose a memory only for a durable, notable fact worth remembering later; most images need none. "
         + "A memory proposal may only append; it can never edit or delete anything. "
         + "Link a proposal only to record IDs present in the resume packet. "
@@ -500,9 +501,18 @@ public sealed class AnthropicSemanticProvider : ISemanticProvider, IDisposable
                     {
                         ["summary"] = new { type = "string" },
                         ["observations"] = new { type = "array", items = observation },
+                        ["encounters"] = new { type = "array", items = Obj(
+                            new Dictionary<string, object>
+                            {
+                                ["threat"] = new { type = "string" },
+                                ["outcome"] = new { type = "string", @enum = Names(Enum.GetValues<EncounterOutcome>()) },
+                            },
+                            "threat",
+                            "outcome") },
                     },
                     "summary",
-                    "observations"),
+                    "observations",
+                    "encounters"),
                 ["memoryProposals"] = new { type = "array", items = proposal },
             },
             "interpretation",

@@ -88,7 +88,8 @@ public sealed class CurtainAuditTests
                 pages,
                 random.Next(3) == 0 ? null : notebook,
                 random.Next(4) == 0 ? null : (KeepFeeling)random.Next(1, 4),
-                tidying: random.Next(6) == 0);
+                tidying: random.Next(6) == 0,
+                feelings: random.Next(3) == 0 ? Membrane.FeelingsAbout(random.NextDouble(), random.Next(2) == 0) : null);
             assembled++;
 
             var leaks = request.FindLeaks();

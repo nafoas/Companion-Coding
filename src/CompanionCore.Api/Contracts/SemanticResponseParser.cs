@@ -21,7 +21,10 @@ internal sealed record ParsedSemanticResponse(
     IReadOnlyList<SemanticObservation> Observations,
     IReadOnlyList<MemoryProposalWire> Proposals,
     long? InputUnits,
-    long? OutputUnits);
+    long? OutputUnits)
+{
+    public IReadOnlyList<SemanticEncounter> Encounters { get; init; } = [];
+}
 
 /// <summary>
 /// The one strict parser every provider's success reply passes through. Any violation
@@ -120,6 +123,14 @@ internal static class SemanticResponseParser
             return false;
         }
 
+        var encounterWires = wire.Interpretation.Encounters ?? [];
+        if (encounterWires.Count > SemanticSchema.MaximumObservations
+            || encounterWires.Any(encounter => encounter is null || !IsBoundedText(encounter.Threat, SemanticSchema.MaximumLabelCharacters)))
+        {
+            reason = SemanticResponseInvalidReason.OutOfBounds;
+            return false;
+        }
+
         if (wire.Usage is { } usage
             && (usage.InputUnits is < 0 or > SemanticSchema.MaximumUsageUnits
                 || usage.OutputUnits is < 0 or > SemanticSchema.MaximumUsageUnits))
@@ -133,7 +144,10 @@ internal static class SemanticResponseParser
             observations.AsReadOnly(),
             proposals.AsReadOnly(),
             wire.Usage?.InputUnits,
-            wire.Usage?.OutputUnits);
+            wire.Usage?.OutputUnits)
+        {
+            Encounters = [.. encounterWires.Select(encounter => new SemanticEncounter(encounter.Threat, encounter.Outcome))],
+        };
         reason = SemanticResponseInvalidReason.None;
         return true;
     }

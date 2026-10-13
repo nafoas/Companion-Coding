@@ -59,7 +59,8 @@ public sealed class BnuyRequest
         IEnumerable<NotebookLine>? notebook = null,
         KeepFeeling? keepFeeling = null,
         bool tidying = false,
-        string? answerShape = null)
+        string? answerShape = null,
+        IEnumerable<Feeling>? feelings = null)
     {
         var lines = new List<IReadOnlyList<BnuyPart>>();
         lines.Add([new BnuyPart(BnuyPartKind.Framing, BnuyTemplates.Nature)]);
@@ -107,6 +108,11 @@ public sealed class BnuyRequest
                 KeepFeeling.Warm => BnuyTemplates.KeepWarm,
                 _ => BnuyTemplates.KeepGentle,
             })]);
+        }
+
+        foreach (var felt in feelings ?? [])
+        {
+            lines.Add([new BnuyPart(BnuyPartKind.Framing, felt.Line)]);
         }
 
         if (tidying)

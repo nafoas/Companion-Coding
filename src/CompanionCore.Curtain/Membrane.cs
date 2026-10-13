@@ -64,6 +64,34 @@ public static partial class Membrane
         return new Sense(kind, words, null);
     }
 
+    /// <summary>Fear at or above these levels feels scared / a little scared / can look; below, brave (M3b J1).</summary>
+    internal const double ScaredAt = 0.75;
+
+    internal const double ALittleScaredAt = 0.45;
+
+    internal const double CanLookAt = 0.3;
+
+    /// <summary>
+    /// How he feels about a threat in front of him: his courage, and, when he has seen Boss
+    /// handle it enough, that Boss has got it covered. Levels stay below; only feelings cross.
+    /// </summary>
+    public static IReadOnlyList<Feeling> FeelingsAbout(double fear, bool bossHasGotIt)
+    {
+        var feelings = new List<Feeling>
+        {
+            new(fear >= ScaredAt ? BnuyTemplates.Scared
+                : fear >= ALittleScaredAt ? BnuyTemplates.ALittleScared
+                : fear >= CanLookAt ? BnuyTemplates.CanLook
+                : BnuyTemplates.Brave),
+        };
+        if (bossHasGotIt)
+        {
+            feelings.Add(new Feeling(BnuyTemplates.BossHasGotIt));
+        }
+
+        return feelings;
+    }
+
     /// <summary>Text he read in his world, verbatim and quoted; <paramref name="on"/> is what it was on ("a sign"), if known.</summary>
     public static Sense? Read(string text, string? on = null)
     {
