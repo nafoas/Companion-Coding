@@ -204,6 +204,13 @@ Merged as `a8519ebc437de09fb956f937da7f8a5d5b1b5dfd`.
 
 Merged as `7af8283514dc070b0c723a4d2ffc8fc0f0717b94`.
 
+**M4c** (PR #104) adds the adventure lifecycle and completes M4:
+- **An adventure moves from Active, to Freshly Finished, to Remembered, to its Adventure Record.** This follows play sessions and days, whichever is longer, so time away never moves it along.
+- **Treasured Episodes always stay.** Session detail rests as an adventure ages, and nothing is deleted.
+- **Returning to a game makes its adventure active again.**
+
+Merged as `5a2bacf26abafed5267ac257603ba450b35116e7`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.

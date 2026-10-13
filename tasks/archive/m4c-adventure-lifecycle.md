@@ -1,6 +1,6 @@
 # M4c — The adventure lifecycle: Active → Freshly Finished → Remembered → Adventure Record
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-13 by Boss ("Finish M4, then let's roundtable").
 Accepted remote base: `d96109078a30a85f8a1cad3e56af94d56b01b517`
 Working branch: `agent/m4c-adventure-lifecycle`
@@ -65,3 +65,18 @@ Plan items: 4, 7h (the lifecycle and the BrainCase ladder).
 - **D2.** Nothing asks for an adventure's selection at runtime yet. Talking about past adventures (M6/M7) and his voice (Stage 13) will use `SelectAdventure` with the stage.
 - **D3.** Save identity is still the single default save per game until M7 (7k).
 - **D4.** "Significant" on the ladder arrives with learned significance (M5).
+
+## Paw Gate
+
+- **Candidate.** Head `62baa9bcc73deee89b57f3f6a38d48ba0b150006`, PR #104, against accepted `main` `d96109078a30a85f8a1cad3e56af94d56b01b517`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; 21 runnable suites, 1444 tests passed.
+- **Mutation pass.** 28 mutants: 27 killed, 1 equivalent.
+  - The first round's survivors got tests (another game with the same save name), or the code was simplified (the current status is the one not superseded).
+  - The equivalent mutant drops the `IsCurrent` filter. In an append-only supersede chain, retrieval's newest record is always the current one.
+- **Changed expectations (approved behavior, not weakened).**
+  - The paused-adventure test now asserts the whole chain: Active superseded by Paused, both kept.
+  - Scenario 2 now asserts the ladder: the asked-about status, then the Treasured Episode, then the summary.
+- **Windows CI.** Push run `38470500199` and PR run `38470522039`, both green.
+- **Merge-ref check.** Parents `d961090` + `62baa9b`, tree `3a3b9c33eaf3e6eec8ba0c4efd165a189c168bd3`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `5a2bacf26abafed5267ac257603ba450b35116e7`.
+- **Result.** Passed and accepted. M4 is complete.
