@@ -182,6 +182,13 @@ Merged as `e272da26332351f9b3af7b2cc0268dd253ba01fc`.
 
 Merged as `816bfeece03724f1dcc1940d4ed0c90696e45c00`.
 
+**M3b** (PR #97) adds "Da Boss has got it covered":
+- **Trust only grows, unconditionally.** Watching Boss win against a kind of threat builds Prince's trust, and nothing ever takes it away. Losses, getting hurt, and silence change nothing about how he feels about Boss.
+- **Fear only eases.** It lowers with safe exposure.
+- **Trusted fights feel calmer,** but real danger is always still noticed.
+
+Merged as `f8447e428c2b64520777a044560c2bb85a879c00`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.
