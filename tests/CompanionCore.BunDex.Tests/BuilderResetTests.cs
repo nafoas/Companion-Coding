@@ -12,39 +12,44 @@ public sealed class BuilderResetTests : IDisposable
     public void TheReset_ShowsItsPlan_RefusesWithoutTheExactPath_ThenRemovesOnlyBuilderData_AndIsIdempotent()
     {
         var dev = Path.Combine(_base, DevelopmentDataRootPolicy.DevelopmentApplicationNamespace);
-        var memory = Path.Combine(dev, "Memory");
+        var braincase = Path.Combine(dev, "Braincase");
+        var memory = Path.Combine(braincase, "Memory");
         Write(Path.Combine(memory, DevelopmentDataRootPolicy.DevelopmentDatabaseFileName), "memories");
         Write(Path.Combine(memory, "backups-v1", "memory-vault-v1.zip"), "vault");
         Write(Path.Combine(memory, BuilderResetPlan.SettingsFileName), "{\"liveCalls\": true}");
-        foreach (var name in BuilderResetPlan.RemovedSiblings)
+        foreach (var name in new[] { "Keepsakes", "State", "Transcripts", "bundex-ledger-v1" })
         {
-            Write(Path.Combine(dev, name, "data.bin"), name);
+            Write(Path.Combine(braincase, name, "data.bin"), name);
         }
 
+        Write(Path.Combine(braincase, "braincase-journal-v1.jsonl"), "journal");
+        Write(Path.Combine(dev, "BunDex", "Big Adventures!!", "castle.md"), "we beat da castle boss");
         Write(Path.Combine(dev, "TargetAuthorization", "policy.json"), "allowed");
         Write(Path.Combine(dev, "Calibration", "sample.json"), "numbers");
-        var production = Path.Combine(_base, DevelopmentDataRootPolicy.ProductionApplicationNamespace, "Memory", DevelopmentDataRootPolicy.ProductionDatabaseFileName);
+        var production = Path.Combine(_base, DevelopmentDataRootPolicy.ProductionApplicationNamespace, "Braincase", "Memory", DevelopmentDataRootPolicy.ProductionDatabaseFileName);
         Write(production, "Companion Prince");
 
         var plan = BuilderResetPlan.For(_base);
 
         Assert.Equal(memory, plan.MemoryRoot);
-        Assert.Equal(2 + BuilderResetPlan.RemovedSiblings.Length, plan.Remove.Count);
+        Assert.Equal(2 + 4 + 1 + 1, plan.Remove.Count);
         Assert.Contains(Path.Combine(memory, BuilderResetPlan.SettingsFileName), plan.Keep);
+        Assert.DoesNotContain(memory, plan.Remove);
         Assert.All(plan.Remove, path => Assert.StartsWith(dev + Path.DirectorySeparatorChar, path, StringComparison.Ordinal));
 
         // Nothing happens without the exact path.
         Assert.False(plan.Confirms(null));
         Assert.False(plan.Confirms(dev));
+        Assert.False(plan.Confirms(braincase));
         Assert.False(plan.Confirms(Path.Combine(memory, "sub")));
         Assert.Throws<InvalidOperationException>(() => plan.Execute("yes"));
         Assert.True(File.Exists(Path.Combine(memory, DevelopmentDataRootPolicy.DevelopmentDatabaseFileName)));
 
         Assert.Equal(plan.Remove.Count, plan.Execute($"\"{memory}{Path.DirectorySeparatorChar}\""));
 
-        Assert.False(File.Exists(Path.Combine(memory, DevelopmentDataRootPolicy.DevelopmentDatabaseFileName)));
-        Assert.False(Directory.Exists(Path.Combine(memory, "backups-v1")));
-        Assert.All(BuilderResetPlan.RemovedSiblings, name => Assert.False(Directory.Exists(Path.Combine(dev, name))));
+        Assert.Equal([memory], Directory.GetFileSystemEntries(braincase));
+        Assert.Equal([Path.Combine(memory, BuilderResetPlan.SettingsFileName)], Directory.GetFileSystemEntries(memory));
+        Assert.False(Directory.Exists(Path.Combine(dev, "BunDex")));
         Assert.Equal("{\"liveCalls\": true}", File.ReadAllText(Path.Combine(memory, BuilderResetPlan.SettingsFileName)));
         Assert.Equal("allowed", File.ReadAllText(Path.Combine(dev, "TargetAuthorization", "policy.json")));
         Assert.Equal("numbers", File.ReadAllText(Path.Combine(dev, "Calibration", "sample.json")));
@@ -55,6 +60,16 @@ public sealed class BuilderResetTests : IDisposable
         Assert.Empty(again.Remove);
         Assert.Equal(0, again.Execute(memory));
         Assert.Equal("Companion Prince", File.ReadAllText(production));
+    }
+
+    [Fact]
+    public void TheReset_NeverPlansOverTheOldLayout()
+    {
+        var dev = Path.Combine(_base, DevelopmentDataRootPolicy.DevelopmentApplicationNamespace);
+        Write(Path.Combine(dev, "Memory", DevelopmentDataRootPolicy.DevelopmentDatabaseFileName), "memories");
+
+        Assert.Throws<InvalidOperationException>(() => BuilderResetPlan.For(_base));
+        Assert.Equal("memories", File.ReadAllText(Path.Combine(dev, "Memory", DevelopmentDataRootPolicy.DevelopmentDatabaseFileName)));
     }
 
     private static void Write(string path, string text)

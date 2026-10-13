@@ -4,14 +4,12 @@ namespace CompanionCore.BunDex;
 
 /// <summary>
 /// Prince's two homes for a validated development or test memory location: the
-/// <c>BunDex</c> directory (his own notebook) and the BunDex ledger inside the existing
+/// <c>BunDex</c> directory (his own notebook) in the data root, and the BunDex ledger inside the
 /// <c>Braincase</c> directory (his subconscious). There is no raw-path constructor, so
 /// neither can ever resolve the production root.
 /// </summary>
 public sealed class BunDexLocation
 {
-    internal const string BunDexDirectoryName = "BunDex";
-    internal const string BraincaseDirectoryName = "Braincase";
     internal const string LedgerDirectoryName = "bundex-ledger-v1";
 
     private BunDexLocation(DataRootKind kind, string bunDexRoot, string ledgerRoot)
@@ -47,11 +45,9 @@ public sealed class BunDexLocation
             throw new DataRootViolationException("The BunDex requires a validated development or test memory location.");
         }
 
-        var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(memoryLocation.RootPath))
-            ?? throw new DataRootViolationException("The memory location has no parent directory.");
         return new BunDexLocation(
             memoryLocation.Kind,
-            Path.Combine(parent, BunDexDirectoryName),
-            Path.Combine(parent, BraincaseDirectoryName, LedgerDirectoryName));
+            Path.Combine(memoryLocation.DataRootPath, DataLayout.BunDexDirectoryName),
+            Path.Combine(memoryLocation.BraincaseRootPath, LedgerDirectoryName));
     }
 }

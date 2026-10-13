@@ -15,7 +15,22 @@ var live = args.Contains("--live", StringComparer.OrdinalIgnoreCase);
 var turnOn = args.Contains("--turn-on", StringComparer.OrdinalIgnoreCase);
 var dollarsArgument = args.FirstOrDefault(argument => argument.StartsWith("--dollars-per-day=", StringComparison.OrdinalIgnoreCase));
 
-var root = new DevelopmentDataRootPolicy(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create)).Resolve().RootPath;
+var location = new DevelopmentDataRootPolicy(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create)).Resolve();
+if (DataLayoutMigration.HasLegacyStores(location))
+{
+    // M1b: Builder Prince's data moves into the BrainCase, only while Prince is closed.
+    if (OperatingSystem.IsWindows() && Mutex.TryOpenExisting("Local\\CompanionCore.Dev.SingleInstance", out var running))
+    {
+        running.Dispose();
+        Console.WriteLine("Prince is running with his data in the old place. Close him first, then run the check again.");
+        return 2;
+    }
+
+    var moved = DataLayoutMigration.Apply(location);
+    Console.WriteLine($"Moved into the BrainCase: {string.Join(", ", moved.Moved)}");
+}
+
+var root = location.RootPath;
 var (settings, issue) = BuilderBraincaseSettings.LoadOrCreate(root);
 Console.WriteLine($"Builder Prince's settings: {Path.Combine(root, BuilderBraincaseSettings.FileName)}");
 if (issue != BuilderBraincaseIssue.None)

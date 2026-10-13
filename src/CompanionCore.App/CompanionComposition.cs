@@ -97,6 +97,9 @@ internal sealed class CompanionComposition : IAsyncDisposable
         Action<CompanionNotice> onNotice,
         Dispatcher dispatcher)
     {
+        // M1b: old-layout stores move into the BrainCase before the settings or anything else is read.
+        // The App holds its single-instance guard here, so nothing else has the data open.
+        DataLayoutMigration.Apply(location);
         var credentials = new InMemoryCredentialStore();
         var braincase = BuilderBraincase.Compose(location.RootPath, credentials);
         var platform = new WindowsPlatformSignals(new WindowsPlatformNative(), new WindowsTargetDiscovery());

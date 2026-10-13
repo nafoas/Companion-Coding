@@ -35,6 +35,12 @@ public sealed class MemoryStoreLocation
 
     public string RootPath { get; }
 
+    /// <summary>The BrainCase: the memory directory's parent, holding every machine store.</summary>
+    public string BraincaseRootPath => Path.GetDirectoryName(RootPath)!;
+
+    /// <summary>The data root holding the BunDex and the BrainCase.</summary>
+    public string DataRootPath => Path.GetDirectoryName(BraincaseRootPath)!;
+
     internal string DatabasePath { get; }
 
     internal string JournalPath => Path.Combine(RootPath, "session-journal-v1.bin");
