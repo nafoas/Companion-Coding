@@ -58,6 +58,7 @@ The saved keepsake edge (1280) remains provisional photograph-storage tuning.
 - Boss's case-by-case page removal has no command yet; it will need its own ledger entry (M1 D1).
 - What comes to mind is matched by place and shared words until Stage 13 (M1c D1); Boss's tidying invitation is not yet wired from conversation (M1c D2, M3).
 - The eyes' answers reach Prince only once M5/M9 route them through the membrane (M2 D2); the validator holds the curtain rules until Stage 13 adds the character rules (M2 D3).
+- Familiarity is rebuilt by replaying the whole sighting record on open (M3a D1); impressions reach Prince from M4/M9 (M3a D2); session aggregate wording is M4/M5 (M3a D3); the eyes' kind and danger fields await live confirmation (M3a D4).
 
 ## Minor
 

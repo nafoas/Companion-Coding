@@ -2,13 +2,13 @@
 
 ## Task
 
-No task is active. **M1 (Two homes)** merged as `0202c7f` (PR #85) **M1b (BrainCase separation)** merged as `9625075` (PR #87), **M1c (a Living Bun)** merged as `c601339` (PR #89), and **M2 (the curtain)** merged as `e272da26332351f9b3af7b2cc0268dd253ba01fc` (PR #92); each passed its Paw Gate. Packets are archived in `tasks/archive/`.
+No task is active. **M1 (Two homes)** merged as `0202c7f` (PR #85) **M1b (BrainCase separation)** merged as `9625075` (PR #87), **M1c (a Living Bun)** merged as `c601339` (PR #89), **M2 (the curtain)** merged as `e272da2` (PR #92), and **M3a ("saw dis a few times")** merged as `816bfeece03724f1dcc1940d4ed0c90696e45c00` (PR #95); each passed its Paw Gate. Packets are archived in `tasks/archive/`.
 
 Builder: Claude.
 
 ## Next safe task
 
-**M3 (Seeing like a Bun)** of the approved pre-Stage 13 plan (`tasks/proposed/pre-stage-13-changes.md`): its own packet in `tasks/active/`, tests, mutation pass, and Paw Gate. M10 (Boss's hand-run) gates Stage 13. Companion Prince is not awakened.
+**M3b ("Da Boss has got it covered")**, the second half of M3 in the approved pre-Stage 13 plan (`tasks/proposed/pre-stage-13-changes.md`): its own packet in `tasks/active/`, tests, mutation pass, and Paw Gate. M10 (Boss's hand-run) gates Stage 13. Companion Prince is not awakened.
 
 ## Open decisions for Boss
 

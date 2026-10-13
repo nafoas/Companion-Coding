@@ -1,6 +1,6 @@
 # M3a — "Saw dis a few times": a complete record, novel memories, getting used to things
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-13 by Boss ("Start M3"). This is the first half of step M3 of the approved plan.
 Accepted remote base: `bb762c0ddcd063acb45f8b8570a10571fbeadc01`
 Working branch: `agent/m3a-saw-dis-a-few-times`
@@ -73,4 +73,28 @@ M3 covers the record and novelty (items 1, 7a, 12), plus fear and trust (the tru
 
 ## Deferred findings
 
-_(none yet)_
+- **D1 — Familiarity is rebuilt by replaying the whole record on open.** Old exposure has long faded, so a checkpoint or a replay window can bound start-up time once the record grows large.
+- **D2 — Impressions reach Prince only once M4/M9 route them through the membrane.** The "saw this a few times" sense exists and is tested, but nothing hands it to him yet.
+- **D3 — The 7a session aggregates ("Defeated several ordinary bandits") are not yet written.** Impressions hold the counts; the Adventure Record wording is M4/M5.
+- **D4 — The eyes' new kind and danger fields** need a look on Boss's PC with live calls (M10). Older answers default to "other" and "not dangerous".
+
+## Paw Gate
+
+- **Candidate.** Head `5be865e47e9c76c20ce679c5e33bf83b0a131883`, PR #95, against accepted `main` `bb762c0ddcd063acb45f8b8570a10571fbeadc01`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; 21 runnable suites, 1333 tests passed.
+  - Sightings: 27 tests (new).
+  - Api: 5 new tests, covering the bridge gate and the eyes' fields.
+  - Orchestration: 5 new end-to-end tests:
+    - six repeated looks become one memory;
+    - a privacy stop after a look records nothing;
+    - the situation is recorded;
+    - the Vault round trip works;
+    - novelty falls.
+- **Mutation pass.** 22 mutants, all killed in the end.
+  - The first round left three real gaps, each closed by a test: near-duplicates, the orchestrator privacy fence, and situation wiring.
+  - Two earlier kills came only from an order-flaky test. That test was fixed and is stable over three runs, and a sharper numbers-only test was added.
+  - One unreachable parser check was removed.
+- **Windows CI.** Push run `38416238772` and PR run `38416276596`, both green.
+- **Merge-ref check.** Parents `bb762c0` + `5be865e`, tree `edb0775d1f654f2d355d74e702ea06c068006c99`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `816bfeece03724f1dcc1940d4ed0c90696e45c00`.
+- **Result.** Passed and accepted.
