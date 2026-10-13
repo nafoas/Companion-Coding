@@ -876,7 +876,10 @@ public sealed class ApiBridge : IAsyncDisposable
                     operationId,
                     grant.TargetSessionId,
                     parsed.Summary,
-                    parsed.Observations);
+                    parsed.Observations)
+                {
+                    Encounters = parsed.Encounters,
+                };
                 Publish(interpretation);
             }
         }
@@ -1125,6 +1128,11 @@ public sealed class ApiBridge : IAsyncDisposable
         foreach (var observation in parsed.Observations)
         {
             yield return observation.Label;
+        }
+
+        foreach (var encounter in parsed.Encounters)
+        {
+            yield return encounter.Threat;
         }
 
         foreach (var proposal in parsed.Proposals)

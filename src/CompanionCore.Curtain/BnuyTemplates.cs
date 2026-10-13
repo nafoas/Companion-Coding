@@ -41,6 +41,12 @@ internal static class BnuyTemplates
     internal const string KeepStrong = "Prince feels this is very much worth keeping.";
     internal const string TidyFeeling = "Prince looks over his BunDex.";
 
+    internal const string Scared = "Prince feels scared of this.";
+    internal const string ALittleScared = "Prince feels a little scared of this.";
+    internal const string CanLook = "Prince is still a little scared, but he can look now.";
+    internal const string Brave = "Prince feels brave around this.";
+    internal const string BossHasGotIt = "Prince feels Boss has got this covered.";
+
     internal static IEnumerable<string> All() =>
         typeof(BnuyTemplates).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             .Where(field => field.IsLiteral && field.FieldType == typeof(string))

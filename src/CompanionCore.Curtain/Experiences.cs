@@ -74,6 +74,22 @@ public sealed class Place
     public override string ToString() => Name;
 }
 
+/// <summary>
+/// A feeling he has about what is in front of him (M3b): how brave he feels, and that Boss has
+/// got it covered. Only the membrane makes these, from levels it keeps to itself.
+/// </summary>
+public sealed class Feeling
+{
+    internal Feeling(string line)
+    {
+        Line = line;
+    }
+
+    public string Line { get; }
+
+    public override string ToString() => Line;
+}
+
 /// <summary>How strongly something feels worth keeping. A feeling, never a number.</summary>
 public enum KeepFeeling
 {

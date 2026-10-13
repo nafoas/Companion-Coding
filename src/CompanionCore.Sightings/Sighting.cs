@@ -9,6 +9,9 @@ public enum SightingSource
 
     /// <summary>Something the eyes proposed remembering.</summary>
     Proposal = 2,
+
+    /// <summary>A threat being fought, and how it went (M3b).</summary>
+    Encounter = 3,
 }
 
 /// <summary>
@@ -25,7 +28,8 @@ public sealed record Sighting(
     bool Danger,
     string Words,
     SightingSource Source,
-    bool BecameMemory = false);
+    bool BecameMemory = false,
+    EncounterOutcome? Outcome = null);
 
 /// <summary>"Saw dis a few times": one growing impression of the same thing, never one memory per sighting.</summary>
 public sealed record Impression(string Game, string Thing, int Count, DateTimeOffset First, DateTimeOffset Last, string LatestWords);

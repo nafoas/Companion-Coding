@@ -96,6 +96,63 @@ public sealed class OrchestrationSightingTests
     }
 
     [Fact]
+    public async Task WatchingBossWinFights_BuildsTrust_AndLosingNeverTakesItAway()
+    {
+        await using var harness = await CreateAsync();
+        await harness.AuthorizeAsync();
+        var game = CompanionOrchestrator.GameReference("synthetic-game.exe");
+        foreach (var outcome in new[] { "bossWon", "bossWon", "bossWon", "bossLost", "bossHurt", "bossLost" })
+        {
+            harness.Provider.Enqueue(MockSemanticProvider.Respond(request => Fight(request.OperationId, outcome)));
+            await harness.SheetAsync(changeScore: 0.6);
+        }
+
+        Assert.Contains("Prince feels Boss has got this covered.", harness.Host.Sightings.FeelingsAbout(game, "zombie").Select(feeling => feeling.Line));
+        Assert.Equal(0, harness.Orchestrator.Faults);
+    }
+
+    [Fact]
+    public async Task AFightLandingAfterAPrivacyStop_IsNotRecorded()
+    {
+        await using var harness = await CreateAsync();
+        await harness.AuthorizeAsync();
+        harness.Orchestrator.Notice += (_, notice) =>
+        {
+            if (notice.Kind == CompanionNoticeKind.Braincase && notice.Braincase == BridgeOutcomeKind.Interpreted)
+            {
+                harness.Privacy.PauseAndRevoke();
+            }
+        };
+        harness.Provider.Enqueue(MockSemanticProvider.Respond(request => Fight(request.OperationId, "bossWon")));
+
+        await harness.SheetAsync(changeScore: 0.6);
+
+        Assert.Equal(0, harness.Host.Sightings.Count);
+        Assert.Empty(harness.Host.Sightings.FeelingsAbout(CompanionOrchestrator.GameReference("synthetic-game.exe"), "zombie"));
+    }
+
+    private static string Fight(Guid operationId, string outcome) =>
+        new System.Text.Json.Nodes.JsonObject
+        {
+            ["schemaVersion"] = SemanticSchema.Version,
+            ["operationId"] = operationId.ToString("D"),
+            ["interpretation"] = new System.Text.Json.Nodes.JsonObject
+            {
+                ["summary"] = "Synthetic fight.",
+                ["observations"] = new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject
+                {
+                    ["region"] = "fullContext",
+                    ["label"] = "Zombie",
+                    ["confidence"] = 0.9,
+                    ["kind"] = "creature",
+                    ["danger"] = false,
+                }),
+                ["encounters"] = new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["threat"] = "Zombie", ["outcome"] = outcome }),
+            },
+            ["memoryProposals"] = new System.Text.Json.Nodes.JsonArray(),
+        }.ToJsonString();
+
+    [Fact]
     public async Task TheRecord_IsInDaBunVault_AndComesBackWhenLost()
     {
         await using var harness = await CreateAsync();

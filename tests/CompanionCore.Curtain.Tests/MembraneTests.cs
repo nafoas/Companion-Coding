@@ -116,13 +116,26 @@ public sealed class MembraneTests
         Assert.Equal("A clock man built da house and NEVER STOPPED.", page.Glimpse);
     }
 
+    [Theory]
+    [InlineData(1.0, false, new[] { "Prince feels scared of this." })]
+    [InlineData(0.6, false, new[] { "Prince feels a little scared of this." })]
+    [InlineData(0.35, true, new[] { "Prince is still a little scared, but he can look now.", "Prince feels Boss has got this covered." })]
+    [InlineData(0.2, true, new[] { "Prince feels brave around this.", "Prince feels Boss has got this covered." })]
+    public void CourageAndTrust_CrossOnlyAsFeelings(double fear, bool bossHasGotIt, string[] lines)
+    {
+        var feelings = Membrane.FeelingsAbout(fear, bossHasGotIt);
+
+        Assert.Equal(lines, feelings.Select(feeling => feeling.Line));
+        Assert.All(feelings, feeling => Assert.Empty(CurtainRules.FindFramingLeaks(feeling.Line)));
+    }
+
     [Fact]
     public void TheMembrane_IsTheOnlyPath()
     {
         var curtain = typeof(Membrane).Assembly;
 
         // Nothing he experiences can be made except by the membrane's translation.
-        foreach (var type in new[] { typeof(Sense), typeof(Remembered), typeof(Place), typeof(BnuyRequest) })
+        foreach (var type in new[] { typeof(Sense), typeof(Remembered), typeof(Place), typeof(Feeling), typeof(BnuyRequest) })
         {
             Assert.Empty(type.GetConstructors(BindingFlags.Public | BindingFlags.Instance));
         }
@@ -134,7 +147,7 @@ public sealed class MembraneTests
         // Every public way in is a translation that returns an experience or nothing.
         foreach (var method in typeof(Membrane).GetMethods(BindingFlags.Public | BindingFlags.Static))
         {
-            Assert.Contains(Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType, new[] { typeof(Sense), typeof(Remembered), typeof(Place) });
+            Assert.Contains(Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType, new[] { typeof(Sense), typeof(Remembered), typeof(Place), typeof(IReadOnlyList<Feeling>) });
         }
     }
 }
