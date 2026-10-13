@@ -982,11 +982,11 @@ Every step stays game-agnostic and follows items 13–15 (the curtain and the me
 
 | Step | What it builds | Items |
 |---|---|---|
-| **M1. Two homes** | Separate BrainCase and BunDex directories. The BunDex page store: append-only pages; safe names; Prince-made folders; a move log for reorganizing. The BrainCase index: roles, layers, and per-page tags. Role registration and the gentle "keep this" pull. Da Bun Vault covers both. The one-time Builder Prince dev-data reset, shown to Boss first. | 2, 3, 5, 10, 11 |
+| **M1. Two homes** | Separate BrainCase and BunDex directories. The BunDex page store: append-only pages; safe names; Prince-made folders; a move log for reorganizing. The BrainCase index: roles, layers, and per-page tags. ~~Role registration~~ (retired by M1c: Prince chooses every place) and the gentle "keep this" pull. Da Bun Vault covers both. The one-time Builder Prince dev-data reset, shown to Boss first. | 2, 3, 5, 10, 11 |
 | **M2. The curtain** | Requests assembled from inside Prince, in the first person. The membrane as the only path, with its four channels. The build-time check for forbidden vocabulary, role-play framing, and imperatives. The curtain-audit test. The character-validator hook. | 8a, 8c, 13, 14, 15 |
 | **M3. Seeing like a Bun** | The full sighting record with live aggregation ("saw dis a few times"). Gradual desensitization by thing and by kind, with recovery over time, re-sensitizing on context change, and the danger exemption. Per-context fear easing, and trust in Da Boss. | 1, 7a, 12, 17 (trust), 18 (trust) |
 | **M4. Remembering like a Bun** | Four layers with the approved values and two clocks. Recall refreshes a memory. The priority ladder and the adventure lifecycle. Recall actually supplied to his looks, and used sparingly. The visible "okay... now how find dis..." lookup. | 3, 4, 7h, 7i |
-| **M5. What matters** | Two-layer entries. Learned significance and the hard rules. "Remember this, Prince" / "That wasn't important". Treasured. The end-of-session review. The hybrid conversation-record path. Bnuy No Write These Down. | 7b–7g, 7m, 7n |
+| **M5. What matters** | Two-layer entries. Learned significance and the hard rules. "Remember this, Prince" / "That wasn't important". Treasured. The end-of-session review. The hybrid conversation-record path. Bnuy No Write These Down. Keeping during play wired to the Living Bun keeper, with every page linked to its source memories in the BrainCase index only (Boss, 2026-10-13). | 7b–7g, 7m, 7n, 10, 13–15 |
 | **M6. Conversations that live on** | Seed banks moved into the BunDex role with full seed records. BIC generation from the local roots, the 30 s BIC clock, and Brain Farts, all wired at runtime. Pause-and-resume, the idle-timeout fix, and patience during trusted fights. | 6, 8b, 8d, 17 |
 | **M7. Knowing the world and Da Boss** | The Lore Notebook with provenance. Save identity, "Is this a new adventure?", and spoiler suppression. Grouped, evolving opinions (`BeliefHistory`). Relationship records, general memories about Boss, Together List warmth, and nickname approval. | 7j, 7k, 7l, 9, 18 |
 | **M8. Little Requests** | Curiosity-driven requests, desensitization by kind, the patient open-ended list, and fulfillment noticed. | 19 |
@@ -1090,6 +1090,36 @@ Every step stays game-agnostic and follows items 13–15 (the curtain and the me
 - **Hybrid conversation record:** it is crash-safe immediately, and the temporary record is kept until consolidation commits. Close wording is preserved, never flattened. This is tested with long qualified sentences.
 - **Bnuy No Write These Down:** nothing durable is written, and the RAM context is gone at the end.
 - **Never a dossier:** no profile is built from watching.
+
+**M5 also: keeping during play, the BrainCase does the hard work and Da Bnuy organizes (Boss, 2026-10-13)**
+
+Boss: "I still want there to be an internal, BrainCase, Subconscious layer index of where he is writing which memories… but da Bnuy still decides how to organize it as if a Bnuy was really organizing it — the hard work is done by the BrainCase, we let the little guy organize it in whatever Bnuy way he wants." And: "Da Bnuy doesn't ever have his world shattered by figuring out what is behind da memories."
+
+- **Da Memory System is untouched.** The memory store, recall, and consolidation keep working exactly as they do. The BunDex sits beside them as his own autobiography; it never replaces or rewrites them.
+- **The BrainCase does the hard work, invisibly:**
+  - it decides when something is worth keeping (the significance rules above);
+  - it tags every page (kind of memory, layer, game, save, subjects, when, where);
+  - it indexes where every memory is filed, and finds any page by its tags wherever he put it;
+  - it follows every move and rename and remembers old locations;
+  - it rebuilds his BunDex from its ledger if it is ever lost;
+  - it does the remembering behind "what comes to mind".
+- **Every page is linked to its source memories, in the BrainCase index only.** Each page records which memory records it came from, so the BrainCase can trace memory → page and page → memory both ways. The link lives in the page's hidden tags and the ledger, nowhere else.
+- **Da Bnuy organizes, entirely his own way (M1c stands):**
+  - he picks every place, names it, may write a line about it, and writes the page in his own words;
+  - the kinds of memory are only the BrainCase's private reference: never a blueprint for how many folders, which ones, or in what order;
+  - what comes to mind is his own similar pages, a reminder and never an instruction;
+  - he may say "not now"; the pull grows gently and relaxes once he keeps one;
+  - reorganizing is only ever his, while he writes or when Boss invites it ("hey, little guy, maybe we should do some spring cleaning?"), and he may decline.
+- **His world is never shattered.** Nothing he is given or can ask for reveals what is behind his memories:
+  - he receives only what happened in plain words, where he is, a feeling, his own pages by his own names with glimpses of his own writing, and Boss's words;
+  - nothing he says back can request the index, the tags, or the source links;
+  - to him, a page is something he remembered and wrote down, and that is all it ever is.
+- **Tests (in addition to the per-step gate):**
+  - the writer-boundary wall test is extended to name the source links explicitly, and fails if any link, record ID, tag, kind, or time can reach anything Prince is given;
+  - the index traces every kept page to its source memories and back, across moves, renames, a reopen, and a Vault rebuild;
+  - keeping during play leaves the memory store's records byte-identical (append-only, never edited);
+  - no code path assigns a place, counts or orders folders, or reorganizes without his step;
+  - M2's membrane checks cover the keep moment and the tidying invitation like every other channel.
 
 **M6. Conversations that live on**
 - **The seed banks live in the BunDex role** with full seed records: subject, why interrupted, last exchange, links, unanswered question, resume confidence, age, attempts.
