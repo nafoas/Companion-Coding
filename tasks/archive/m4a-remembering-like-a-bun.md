@@ -1,6 +1,6 @@
 # M4a — Remembering like a Bun: four layers, two clocks, recall that refreshes
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-13 by Boss ("yes, M4"; lookup design approved and pinned in the plan).
 Accepted remote base: `a43b4ade12401be91f397c4206f91346d53e3e50`
 Working branch: `agent/m4a-remembering-like-a-bun`
@@ -74,3 +74,16 @@ Plan items: 3, 4, 7h (ladder), 7i.
 
 - **D1.** A Bnuy request is assembled only by the keeper today. His looks and conversations will use `ComeToMind` when his voice is wired (Stage 13, M6, M9).
 - **D2.** The cooldown is held in memory. A restart within 15 minutes may let a page come to mind again. This is harmless and stays sparing.
+
+## Paw Gate
+
+- **Candidate.** Head `f0bae76ac52f1a4d49a614bdcbae8b6a05462b80`, PR #100, against accepted `main` `a43b4ade12401be91f397c4206f91346d53e3e50`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; 21 runnable suites, 1394 tests passed.
+- **Mutation pass.** 32 mutants, all killed.
+  - The first round left 9 survivors, and each got a test: the long time window; the default layer for adventures; a tagged layer kept; the likeness threshold; recency as the last tie-break; a damaged ledger still remembers without writing; adding refreshes; a session in the same instant as a write; no session counted on a damaged BunDex.
+  - One mutant (removing the faded filter) was equivalent: the filter was dead code and was removed.
+- **Curtain.** The bell is a fixed template; the template audit covers it by reflection, and the membrane-only-path test admits a single `Feeling`.
+- **Windows CI.** Push run `38452021615` and PR run `38452051331`, both green.
+- **Merge-ref check.** Parents `a43b4ad` + `f0bae76`, tree `89f70cc33d5ad41bbcf3318c288240df41189731`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `a8519ebc437de09fb956f937da7f8a5d5b1b5dfd`.
+- **Result.** Passed and accepted.

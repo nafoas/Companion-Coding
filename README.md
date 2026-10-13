@@ -189,6 +189,13 @@ Merged as `816bfeece03724f1dcc1940d4ed0c90696e45c00`.
 
 Merged as `f8447e428c2b64520777a044560c2bb85a879c00`.
 
+**M4a** (PR #100) adds remembering like a Bun:
+- **Four layers, two clocks.** Pages stay clear for their layer's window, counted in play sessions and days, whichever is longer. Time away from the game never causes forgetting, and cherished pages stay clear forever.
+- **Remembering refreshes.** When a page comes to mind, its clock restarts.
+- **"Rings a bell."** A fading page crosses only as a feeling, with no details. Faded pages are never offered unprompted, and nothing is ever edited or deleted.
+
+Merged as `a8519ebc437de09fb956f937da7f8a5d5b1b5dfd`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.
