@@ -13,11 +13,8 @@ internal sealed class BuilderResetPlan
     /// <summary>Kept: his Braincase settings (live calls, Bun Budget, models).</summary>
     internal const string SettingsFileName = "braincase-settings.json";
 
-    /// <summary>Kept beside the memory directory: which apps Boss allowed or denied, and diagnostics.</summary>
+    /// <summary>Kept in the data root: which apps Boss allowed or denied, and diagnostics.</summary>
     internal static readonly string[] KeptSiblings = ["TargetAuthorization", "Calibration"];
-
-    /// <summary>Removed beside the memory directory: everything Builder Prince lived through.</summary>
-    internal static readonly string[] RemovedSiblings = ["Keepsakes", "State", "Transcripts", "Braincase", "BunDex"];
 
     private BuilderResetPlan(string memoryRoot, IReadOnlyList<string> remove, IReadOnlyList<string> keep)
     {
@@ -42,10 +39,27 @@ internal sealed class BuilderResetPlan
             throw new DataRootViolationException("The Builder reset only ever touches the development namespace.");
         }
 
+        if (DataLayoutMigration.HasLegacyStores(location))
+        {
+            throw new InvalidOperationException("Builder Prince's data is still in the old layout; it moves into the BrainCase first.");
+        }
+
+        // Everything in the BrainCase except his Braincase settings, and his BunDex.
         var memoryRoot = location.RootPath;
-        var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(memoryRoot))!;
+        var dataRoot = location.DataRootPath;
         var remove = new List<string>();
         var keep = new List<string>();
+        if (Directory.Exists(location.BraincaseRootPath))
+        {
+            foreach (var entry in Directory.EnumerateFileSystemEntries(location.BraincaseRootPath).Order(StringComparer.Ordinal))
+            {
+                if (!PathsEqual(entry, memoryRoot))
+                {
+                    remove.Add(entry);
+                }
+            }
+        }
+
         if (Directory.Exists(memoryRoot))
         {
             foreach (var entry in Directory.EnumerateFileSystemEntries(memoryRoot).Order(StringComparer.Ordinal))
@@ -54,18 +68,15 @@ internal sealed class BuilderResetPlan
             }
         }
 
-        foreach (var name in RemovedSiblings)
+        var bunDex = Path.Combine(dataRoot, DataLayout.BunDexDirectoryName);
+        if (Directory.Exists(bunDex))
         {
-            var path = Path.Combine(parent, name);
-            if (Directory.Exists(path))
-            {
-                remove.Add(path);
-            }
+            remove.Add(bunDex);
         }
 
         foreach (var name in KeptSiblings)
         {
-            var path = Path.Combine(parent, name);
+            var path = Path.Combine(dataRoot, name);
             if (Directory.Exists(path))
             {
                 keep.Add(path);
@@ -73,7 +84,7 @@ internal sealed class BuilderResetPlan
         }
 
         var production = Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.Combine(localApplicationData, DevelopmentDataRootPolicy.ProductionApplicationNamespace))) + Path.DirectorySeparatorChar;
-        var development = Path.TrimEndingDirectorySeparator(Path.GetFullPath(parent)) + Path.DirectorySeparatorChar;
+        var development = Path.TrimEndingDirectorySeparator(Path.GetFullPath(dataRoot)) + Path.DirectorySeparatorChar;
         if (remove.Any(path => !Path.GetFullPath(path).StartsWith(development, StringComparison.Ordinal)
                                || Path.GetFullPath(path).StartsWith(production, StringComparison.Ordinal)))
         {
@@ -82,6 +93,12 @@ internal sealed class BuilderResetPlan
 
         return new BuilderResetPlan(memoryRoot, remove, keep);
     }
+
+    private static bool PathsEqual(string left, string right) =>
+        string.Equals(
+            Path.TrimEndingDirectorySeparator(Path.GetFullPath(left)),
+            Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)),
+            OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
 
     /// <summary>True only for the exact memory path, typed by Boss.</summary>
     internal bool Confirms(string? confirmation)

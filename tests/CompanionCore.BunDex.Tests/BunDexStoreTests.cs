@@ -12,10 +12,12 @@ public sealed class BunDexStoreTests
     public void TheTwoHomes_AreSeparateDirectories_UnderTheValidatedRoot_AndNeverProduction()
     {
         using var harness = new BunDexHarness();
-        var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(harness.MemoryLocation.RootPath))!;
+        var dataRoot = harness.MemoryLocation.DataRootPath;
 
-        Assert.Equal(Path.Combine(parent, "BunDex"), harness.Location.BunDexRoot);
-        Assert.Equal(Path.Combine(parent, "Braincase", "bundex-ledger-v1"), harness.Location.LedgerRoot);
+        // M1b: the BunDex sits in the data root; the ledger and every machine store sit in the BrainCase.
+        Assert.Equal(Path.Combine(dataRoot, "BunDex"), harness.Location.BunDexRoot);
+        Assert.Equal(Path.Combine(dataRoot, "Braincase", "bundex-ledger-v1"), harness.Location.LedgerRoot);
+        Assert.Equal(Path.Combine(dataRoot, "Braincase", "Memory"), harness.MemoryLocation.RootPath);
         Assert.False(harness.Location.LedgerRoot.StartsWith(harness.Location.BunDexRoot, StringComparison.Ordinal));
         Assert.Equal(DataRootKind.Test, harness.Location.Kind);
 

@@ -22,11 +22,10 @@ public static class TestDataRootPolicy
             throw new ArgumentException("A non-empty test-run identifier is required.", nameof(testRunId));
         }
 
-        var root = Path.Combine(
+        var root = DataLayout.MemoryRootFor(Path.Combine(
             Path.GetFullPath(isolatedBasePath),
             TestApplicationNamespace,
-            testRunId.ToString("N"),
-            "Memory");
+            testRunId.ToString("N")));
 
         return new MemoryStoreLocation(
             DataRootKind.Test,

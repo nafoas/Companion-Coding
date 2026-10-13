@@ -6,14 +6,13 @@ namespace CompanionCore.Api.Tests;
 public sealed class BraincaseJournalTests
 {
     [Fact]
-    public async Task StateLocation_IsASiblingOfAValidatedTestRoot()
+    public async Task StateLocation_IsTheBraincaseHoldingAValidatedTestRoot()
     {
         await using var harness = await ApiTestHarness.CreateAsync();
 
         Assert.Equal(DataRootKind.Test, harness.StateLocation.Kind);
-        Assert.Equal(
-            Path.Combine(Path.GetDirectoryName(harness.Location.RootPath)!, "Braincase"),
-            harness.StateLocation.RootPath);
+        Assert.Equal(Path.GetDirectoryName(harness.Location.RootPath), harness.StateLocation.RootPath);
+        Assert.Equal("Braincase", Path.GetFileName(harness.StateLocation.RootPath));
         Assert.StartsWith(harness.BasePath, harness.StateLocation.RootPath, StringComparison.Ordinal);
     }
 

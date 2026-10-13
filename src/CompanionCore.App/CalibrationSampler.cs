@@ -47,9 +47,9 @@ internal sealed class CalibrationSampler : IAsyncDisposable
 
     public long SampleFailures { get; private set; }
 
-    /// <summary>The calibration folder beside the memory root: development data or an isolated test root.</summary>
+    /// <summary>The calibration folder in the data root (beside the BrainCase): development data or an isolated test root.</summary>
     public static string DirectoryFor(CompanionCore.Memory.MemoryStoreLocation location) =>
-        Path.Combine(Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(location.RootPath))!, "Calibration");
+        Path.Combine(location.DataRootPath, "Calibration");
 
     public async ValueTask DisposeAsync()
     {

@@ -6,7 +6,27 @@ using CompanionCore.BuilderReset;
 //   dotnet run --project tools/CompanionCore.BuilderReset -- --confirm="<the exact Memory path it prints>"
 
 var confirm = args.FirstOrDefault(argument => argument.StartsWith("--confirm=", StringComparison.OrdinalIgnoreCase))?["--confirm=".Length..];
-var plan = BuilderResetPlan.For(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create));
+var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create);
+var running = false;
+if (OperatingSystem.IsWindows() && Mutex.TryOpenExisting("Local\\CompanionCore.Dev.SingleInstance", out var instance))
+{
+    instance.Dispose();
+    running = true;
+}
+var location = new CompanionCore.Memory.DevelopmentDataRootPolicy(localApplicationData).Resolve();
+if (CompanionCore.Memory.DataLayoutMigration.HasLegacyStores(location))
+{
+    // M1b: the old layout moves into the BrainCase first (a move, never a delete).
+    if (running)
+    {
+        Console.WriteLine("Prince is running with his data in the old place. Close him first; nothing was changed.");
+        return 2;
+    }
+
+    Console.WriteLine($"Moved into the BrainCase: {string.Join(", ", CompanionCore.Memory.DataLayoutMigration.Apply(location).Moved)}");
+}
+
+var plan = BuilderResetPlan.For(localApplicationData);
 
 Console.WriteLine("Builder Prince reset (development data only; Companion Prince is never touched).");
 Console.WriteLine($"Development memory folder: {plan.MemoryRoot}");
@@ -36,9 +56,8 @@ if (confirm is null)
     return 0;
 }
 
-if (OperatingSystem.IsWindows() && Mutex.TryOpenExisting("Local\\CompanionCore.Dev.SingleInstance", out var running))
+if (running)
 {
-    running.Dispose();
     Console.WriteLine();
     Console.WriteLine("Prince is running. Close him first; nothing was changed.");
     return 2;

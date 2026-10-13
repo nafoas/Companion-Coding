@@ -24,10 +24,9 @@ public sealed class DevelopmentDataRootPolicy
         _localApplicationDataBase = Path.GetFullPath(localApplicationDataBase);
     }
 
-    public string RecognizedProductionRoot => Path.Combine(
+    public string RecognizedProductionRoot => DataLayout.MemoryRootFor(Path.Combine(
         _localApplicationDataBase,
-        ProductionApplicationNamespace,
-        "Memory");
+        ProductionApplicationNamespace));
 
     public string RecognizedProductionDatabasePath => Path.Combine(
         RecognizedProductionRoot,
@@ -41,10 +40,9 @@ public sealed class DevelopmentDataRootPolicy
                 "Development memory uses its fixed application namespace; configured path overrides are not permitted.");
         }
 
-        var root = Path.Combine(
+        var root = DataLayout.MemoryRootFor(Path.Combine(
             _localApplicationDataBase,
-            DevelopmentApplicationNamespace,
-            "Memory");
+            DevelopmentApplicationNamespace));
 
         if (PathsEqual(root, RecognizedProductionRoot))
         {

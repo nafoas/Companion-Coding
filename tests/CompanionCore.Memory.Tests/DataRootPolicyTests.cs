@@ -15,8 +15,11 @@ public sealed class DataRootPolicyTests
         Assert.Equal(DataRootKind.Development, location.Kind);
         Assert.Equal("CompanionCore.Dev", location.ApplicationNamespace);
         Assert.Equal(
-            Path.Combine(directory.BasePath, "CompanionCore.Dev", "Memory"),
+            Path.Combine(directory.BasePath, "CompanionCore.Dev", "Braincase", "Memory"),
             location.RootPath);
+        Assert.Equal(Path.Combine(directory.BasePath, "CompanionCore.Dev", "Braincase"), location.BraincaseRootPath);
+        Assert.Equal(Path.Combine(directory.BasePath, "CompanionCore.Dev"), location.DataRootPath);
+        Assert.Equal(Path.Combine(directory.BasePath, "CompanionCore", "Braincase", "Memory"), policy.RecognizedProductionRoot);
         Assert.NotEqual(policy.RecognizedProductionRoot, location.RootPath);
         Assert.Equal(
             DevelopmentDataRootPolicy.DevelopmentDatabaseFileName,

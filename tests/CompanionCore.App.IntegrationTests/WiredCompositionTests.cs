@@ -40,12 +40,13 @@ public sealed partial class WiredCompositionTests
             Assert.Equal(0, second.Unconsolidated);
             Assert.NotEqual(Guid.Empty, first.Lineage);
             Assert.Equal(first.Lineage, second.Lineage);
-            Assert.True(Directory.Exists(Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Memory")));
+            Assert.True(Directory.Exists(Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Braincase", "Memory")));
+            Assert.False(Directory.Exists(Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Memory")));
 
             // CORE-12 and LIVE-02: the placeholder commands attach, and Builder Prince's Braincase
             // is offline by default, with a settings file created off.
             Assert.Equal(("offline", true), (first.Braincase, first.Commands));
-            var settings = Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Memory", "braincase-settings.json");
+            var settings = Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Braincase", "Memory", "braincase-settings.json");
             Assert.Contains("\"liveCalls\": false", File.ReadAllText(settings), StringComparison.Ordinal);
         }
         finally
@@ -70,6 +71,8 @@ public sealed partial class WiredCompositionTests
 
         var root = Path.Combine(Path.GetTempPath(), "CompanionCore.App.IntegrationTests", Guid.NewGuid().ToString("N"));
         var run = Guid.NewGuid();
+        // M1b: the settings sit in the old layout's Memory folder, so this also proves the App
+        // moves the old layout into the BrainCase before it reads Builder Prince's settings.
         var memory = Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Memory");
         try
         {
@@ -80,6 +83,8 @@ public sealed partial class WiredCompositionTests
             var launch = Launch($"\"--test-data-root={root}\" --test-run={run:D}");
 
             Assert.Equal(("live", true, 0L), (launch.Braincase, launch.Commands, launch.Faults));
+            Assert.False(Directory.Exists(memory));
+            Assert.True(File.Exists(Path.Combine(root, "CompanionCore.Tests", run.ToString("N"), "Braincase", "Memory", "braincase-settings.json")));
         }
         finally
         {

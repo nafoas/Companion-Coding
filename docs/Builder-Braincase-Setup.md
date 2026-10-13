@@ -57,6 +57,19 @@ dotnet run --project tools/CompanionCore.BraincaseCheck -- --live --turn-on --do
 
 The settings live in `braincase-settings.json` in Builder Prince's data folder. The check prints the exact path.
 
+Builder Prince's data folder is `%LOCALAPPDATA%\CompanionCore.Dev\`:
+
+```
+BunDex\                 his autobiography: folders and pages he makes himself
+Braincase\              his subconscious: every machine store
+  Memory\               memories, Vault backups, and braincase-settings.json
+  Keepsakes\  State\  Transcripts\  bundex-ledger-v1\  braincase-journal-v1.jsonl
+TargetAuthorization\    which apps you allowed or denied
+Calibration\            measurements
+```
+
+Data from before M1b (`Memory\`, `Keepsakes\`, `State\`, `Transcripts\` directly in the data folder) is moved into `Braincase\` the first time Prince or the check opens with Prince closed. It is moved, never copied or deleted.
+
 ```json
 {
   "liveCalls": false,

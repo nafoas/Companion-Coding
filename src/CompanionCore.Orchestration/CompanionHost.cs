@@ -76,10 +76,16 @@ public sealed class CompanionHost : IAsyncDisposable
     /// <summary>What the last open found and fixed in the BunDex.</summary>
     public BunDexOpenReport BunDexReport { get; private set; } = null!;
 
+    /// <summary>What the M1b layout migration did when this host opened.</summary>
+    public DataLayoutMigrationReport LayoutMigration { get; private init; } = null!;
+
     public static async Task<CompanionHost> OpenAsync(CompanionHostOptions options, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
-        var host = new CompanionHost(options);
+
+        // M1b: old-layout stores move into the BrainCase before anything opens them.
+        var layout = DataLayoutMigration.Apply(options.Location);
+        var host = new CompanionHost(options) { LayoutMigration = layout };
         await host.StartCoreAsync(cancellationToken).ConfigureAwait(false);
         return host;
     }
@@ -96,6 +102,7 @@ public sealed class CompanionHost : IAsyncDisposable
             throw new InvalidOperationException("Repairs run only while no target session is active.");
         }
 
+        DataLayoutMigration.Apply(options.Location);
         return DaBunVault.RestoreAsync(
             options.Location,
             options.Privacy,

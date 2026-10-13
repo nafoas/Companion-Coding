@@ -43,8 +43,7 @@ public sealed class KeepsakeLocation
                 "Keepsakes require a validated development or test memory location.");
         }
 
-        var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(memoryLocation.RootPath))
-            ?? throw new DataRootViolationException("The memory location has no parent directory.");
+        var parent = memoryLocation.BraincaseRootPath;
         return new KeepsakeLocation(memoryLocation.Kind, Path.Combine(parent, DirectoryName), memoryLocation);
     }
 }
