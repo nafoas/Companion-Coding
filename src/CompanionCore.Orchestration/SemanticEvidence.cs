@@ -23,15 +23,22 @@ internal static class SemanticEvidenceMapper
     internal const int MaximumTopicCharacters = 64;
     internal const double MeaningfulChange = 0.25;
 
+    /// <summary>At or above this novelty a sighting counts as new (meaningful to Watchbun).</summary>
+    internal const double NovelAt = 0.5;
+
+    /// <summary>The pre-M3a first-time flag, used only when no sighting record is present.</summary>
+    internal static Func<SemanticObservation, string, double> FirstTime(ISet<string> seenTopics) =>
+        (_, topic) => seenTopics.Add(topic) ? 0.8 : 0.2;
+
     internal static SemanticEvidence Map(
         SemanticInterpretation interpretation,
         AttentionSheetMetadata sheet,
         DateTimeOffset now,
-        ISet<string> seenTopics)
+        Func<SemanticObservation, string, double> noveltyOf)
     {
         ArgumentNullException.ThrowIfNull(interpretation);
         ArgumentNullException.ThrowIfNull(sheet);
-        ArgumentNullException.ThrowIfNull(seenTopics);
+        ArgumentNullException.ThrowIfNull(noveltyOf);
         var change = Clamp(sheet.ChangeScore);
         var events = new List<InterestEvent>();
         var anyNovel = false;
@@ -40,7 +47,8 @@ internal static class SemanticEvidenceMapper
         {
             var topic = Topic(observation.Label);
             var confidence = Clamp(observation.Confidence);
-            var novel = seenTopics.Add(topic);
+            var novelty = Clamp(noveltyOf(observation, topic));
+            var novel = novelty >= NovelAt;
             anyNovel |= novel;
             var region = sheet.Regions.FirstOrDefault(candidate => candidate.Kind == observation.Region)?.NormalizedSource
                 ?? new NormalizedRegion(0, 0, 1, 1);
@@ -51,7 +59,7 @@ internal static class SemanticEvidenceMapper
                 Region = region,
                 RegionKind = observation.Region,
                 Signals = new AttentionSignals(
-                    Novelty: novel ? 0.8 : 0.2,
+                    Novelty: novelty,
                     Change: change,
                     Salience: confidence,
                     Urgency: 0,

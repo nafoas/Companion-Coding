@@ -52,10 +52,12 @@ public enum BridgeOutcomeKind
     Missed = 12,
 }
 
+/// <param name="Repeats">Proposals the novelty gate kept in the record only (M3a): seen, but not new.</param>
 public sealed record BridgeMemoryResult(
     int ProposedCount,
     RemoteProposalRejection Rejection,
-    WriteGateResult? GateResult)
+    WriteGateResult? GateResult,
+    int Repeats = 0)
 {
     public static BridgeMemoryResult None { get; } = new(0, RemoteProposalRejection.None, null);
 }
@@ -109,6 +111,12 @@ public sealed record BridgeOptions
 
     /// <summary>Optional local daily spending limit (the Bun Budget). Null means no cost limit.</summary>
     public DailyCostBudget? DailyCostBudget { get; init; }
+
+    /// <summary>
+    /// The subconscious novelty gate (M3a). Every admitted proposal is recorded as a sighting;
+    /// only the ones that add something new become memories. Null keeps every proposal.
+    /// </summary>
+    public IMemoryNoveltyGate? NoveltyGate { get; init; }
 
     internal void Validate()
     {

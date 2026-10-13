@@ -47,6 +47,15 @@
           "SQLitePCLRaw.core": "2.1.12"
         }
       },
+      "companioncore.api": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Capture.Contracts": "[1.0.0, )",
+          "CompanionCore.Memory": "[1.0.0, )",
+          "CompanionCore.Privacy": "[1.0.0, )",
+          "CompanionCore.Runtime": "[1.0.0, )"
+        }
+      },
       "companioncore.bundex": {
         "type": "Project",
         "dependencies": {
@@ -78,6 +87,17 @@
       },
       "companioncore.privacy": {
         "type": "Project"
+      },
+      "companioncore.runtime": {
+        "type": "Project"
+      },
+      "companioncore.sightings": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Api": "[1.0.0, )",
+          "CompanionCore.Curtain": "[1.0.0, )",
+          "CompanionCore.Memory": "[1.0.0, )"
+        }
       }
     }
   }

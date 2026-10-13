@@ -110,7 +110,7 @@ internal static class SemanticResponseParser
                 return false;
             }
 
-            observations.Add(new SemanticObservation(observation.Region, observation.Label, observation.Confidence));
+            observations.Add(new SemanticObservation(observation.Region, observation.Label, observation.Confidence, observation.Kind ?? ObservationKind.Other, observation.Danger ?? false));
         }
 
         var proposals = wire.MemoryProposals ?? [];

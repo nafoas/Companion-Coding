@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using CompanionCore.BunDex;
+using CompanionCore.Sightings;
 using CompanionCore.Keepsakes;
 using CompanionCore.Memory;
 using CompanionCore.Privacy;
@@ -28,6 +29,9 @@ public sealed record VaultRestoreReport(
 {
     /// <summary>What happened to the BunDex ledger (M1).</summary>
     public BunDexLedgerRestoreReport? BunDex { get; init; }
+
+    /// <summary>What happened to the sighting record (M3a).</summary>
+    public SightingRestore? Sightings { get; init; }
 
     /// <summary>True only when the companion was valid, every live photograph verifies, and the BunDex ledger is usable.</summary>
     public bool Complete => Companion == CompanionStatus.Valid && MissingPhotographs.Count == 0
@@ -161,6 +165,15 @@ internal static class DaBunVault
 
             var bunDex = BunDexLedgerRepair.Restore(BunDexLocation.For(location), bunDexSegments);
 
+            // The sighting record: put back only when the live one is missing; never overwritten.
+            var sightingSegments = new List<(string, byte[])>();
+            foreach (var entry in companion?.Manifest.Entries.Where(entry => CompanionArchive.IsSightingEntry(entry.Name)) ?? [])
+            {
+                sightingSegments.Add((entry.Name, await File.ReadAllBytesAsync(companion!.PathFor(entry.Name)!, cancellationToken).ConfigureAwait(false)));
+            }
+
+            var sightings = SightingVault.RestoreIfMissing(SightingLocation.For(location), sightingSegments);
+
             return new VaultRestoreReport(
                 repair.RepairId,
                 repair.BackupId,
@@ -175,6 +188,7 @@ internal static class DaBunVault
                 repair.DamagedSourceDirectory)
             {
                 BunDex = bunDex,
+                Sightings = sightings,
             };
         }
     }

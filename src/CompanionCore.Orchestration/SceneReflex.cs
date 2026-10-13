@@ -41,6 +41,9 @@ internal sealed class SceneReflex
 
     internal long Suppressed => Interlocked.Read(ref _suppressed);
 
+    /// <summary>The situation he is in: the last scene the Scene Sniff shifted to, if any (M3a).</summary>
+    internal string? Label { get; private set; }
+
     /// <summary>The evidence for one Scene Sniff, and whether it asks for a Glance now.</summary>
     internal (InterestEvent? Interest, bool GlanceNow) Evaluate(SceneSniffSignal scene)
     {
@@ -72,6 +75,7 @@ internal sealed class SceneReflex
             {
                 state.Factor = Math.Max(HabituationFloor, familiarity * HabituationRate);
                 state.LastSeen = at;
+                Label = SceneVocabulary.KeyOf(scene.Label);
             }
         }
 
@@ -102,6 +106,7 @@ internal sealed class SceneReflex
         lock (_gate)
         {
             _labels.Clear();
+            Label = null;
         }
     }
 

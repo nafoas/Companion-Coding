@@ -41,6 +41,12 @@ internal sealed class ObservationWire
 
     [JsonRequired]
     public double Confidence { get; set; }
+
+    /// <summary>Optional (M3a): older answers carry no kind.</summary>
+    public ObservationKind? Kind { get; set; }
+
+    /// <summary>Optional (M3a): older answers carry no danger.</summary>
+    public bool? Danger { get; set; }
 }
 
 /// <summary>

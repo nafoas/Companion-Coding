@@ -334,19 +334,19 @@ public sealed class OrchestrationCoverageTests
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var interpretation = Interpretation(("Door", 0.4), ("Lantern", 0.9), ("Map", 0.6));
 
-        var first = SemanticEvidenceMapper.Map(interpretation, Metadata(changeScore: 0.1), T0, seen);
+        var first = SemanticEvidenceMapper.Map(interpretation, Metadata(changeScore: 0.1), T0, SemanticEvidenceMapper.FirstTime(seen));
         Assert.All(first.Events, e => Assert.Equal(0.8, e.Signals.Novelty));
         Assert.Equal(new GameObservationKey("lantern", 0.9), Key(first.Observation));
         Assert.Equal(("lantern", GameEventKind.Meaningful), (first.WatchbunEvent!.Key, first.WatchbunEvent.Kind));
 
-        var repeat = SemanticEvidenceMapper.Map(interpretation, Metadata(changeScore: 0.1), T0, seen);
+        var repeat = SemanticEvidenceMapper.Map(interpretation, Metadata(changeScore: 0.1), T0, SemanticEvidenceMapper.FirstTime(seen));
         Assert.All(repeat.Events, e => Assert.Equal(0.2, e.Signals.Novelty));
         Assert.Equal(GameEventKind.Change, repeat.WatchbunEvent!.Kind);
 
-        var changed = SemanticEvidenceMapper.Map(interpretation, Metadata(changeScore: SemanticEvidenceMapper.MeaningfulChange), T0, seen);
+        var changed = SemanticEvidenceMapper.Map(interpretation, Metadata(changeScore: SemanticEvidenceMapper.MeaningfulChange), T0, SemanticEvidenceMapper.FirstTime(seen));
         Assert.Equal(GameEventKind.Meaningful, changed.WatchbunEvent!.Kind);
 
-        var empty = SemanticEvidenceMapper.Map(Interpretation(), Metadata(), T0, seen);
+        var empty = SemanticEvidenceMapper.Map(Interpretation(), Metadata(), T0, SemanticEvidenceMapper.FirstTime(seen));
         Assert.Empty(empty.Events);
         Assert.Null(empty.Observation);
         Assert.Null(empty.WatchbunEvent);

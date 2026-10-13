@@ -9,4 +9,26 @@ public sealed record SemanticInterpretation(
     string Summary,
     IReadOnlyList<SemanticObservation> Observations);
 
-public sealed record SemanticObservation(AttentionRegionKind Region, string Label, double Confidence);
+/// <summary>
+/// One thing the eyes saw. <see cref="Kind"/> and <see cref="Danger"/> (M3a) let the subconscious
+/// get used to things by kind, and never get used to danger; older answers carry neither.
+/// </summary>
+public sealed record SemanticObservation(
+    AttentionRegionKind Region,
+    string Label,
+    double Confidence,
+    ObservationKind Kind = ObservationKind.Other,
+    bool Danger = false);
+
+/// <summary>What kind of thing an observation is, as the eyes see it.</summary>
+public enum ObservationKind
+{
+    Other = 0,
+    Creature = 1,
+    Character = 2,
+    Item = 3,
+    Place = 4,
+    Text = 5,
+    Interface = 6,
+    Event = 7,
+}

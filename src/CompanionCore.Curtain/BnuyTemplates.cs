@@ -18,6 +18,9 @@ internal static class BnuyTemplates
     internal const string ReadOn = "Prince read on {0}:";
     internal const string BossSaid = "Boss said:";
     internal const string Remembers = "Prince remembers: {0}.";
+    internal const string SawAgain = "Prince saw this again: {0}.";
+    internal const string SawAFewTimes = "Prince saw this a few times: {0}.";
+    internal const string SawLotsOfTimes = "Prince has seen this lots of times: {0}.";
     internal const string ComesToMind = "Comes to mind, from Prince's own pages:";
     internal const string Page = "\"{0}\" in {1}{2}: {3}";
     internal const string PageFrom = ", from {0}";

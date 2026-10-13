@@ -21,6 +21,7 @@ public sealed class ApiBridge : IAsyncDisposable
     private readonly ISemanticProvider _provider;
     private readonly LocalWriteGate _writeGate;
     private readonly ResumePacketBuilder _packets;
+    private readonly ILocalMemoryReader _memory;
     private readonly RuntimePrivacyState _privacy;
     private readonly ICredentialStore _credentials;
     private readonly BridgeOptions _options;
@@ -69,6 +70,7 @@ public sealed class ApiBridge : IAsyncDisposable
         _provider = provider;
         _writeGate = writeGate;
         _packets = new ResumePacketBuilder(memory);
+        _memory = memory;
         _privacy = privacy;
         _credentials = credentials;
         _options = options;
@@ -840,7 +842,16 @@ public sealed class ApiBridge : IAsyncDisposable
         SemanticInterpretation? interpretation = null;
         using (lease)
         {
-            if (decision.Proposal is { } proposal)
+            var admitted = decision.Proposal;
+            if (admitted is not null && _options.NoveltyGate is { } novelty)
+            {
+                // Recorded as sightings either way; only what is new becomes a memory.
+                var novel = await novelty.SiftAsync(admitted.Records, _memory, CancellationToken.None).ConfigureAwait(false);
+                memory = memory with { Repeats = admitted.Records.Count - novel.Count };
+                admitted = novel.Count == 0 ? null : new AppendMemoryProposal(admitted.LocalOperationId, novel);
+            }
+
+            if (admitted is { } proposal)
             {
                 // An admitted append is completed rather than cancelled half-way.
                 var gateResult = await _writeGate

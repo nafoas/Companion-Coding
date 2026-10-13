@@ -110,6 +110,7 @@
           "CompanionCore.Privacy": "[1.0.0, )",
           "CompanionCore.Recall": "[1.0.0, )",
           "CompanionCore.Runtime": "[1.0.0, )",
+          "CompanionCore.Sightings": "[1.0.0, )",
           "CompanionCore.TargetAuth": "[1.0.0, )",
           "CompanionCore.Transcript": "[1.0.0, )",
           "CompanionCore.Vault": "[1.0.0, )",
@@ -127,6 +128,14 @@
       },
       "companioncore.runtime": {
         "type": "Project"
+      },
+      "companioncore.sightings": {
+        "type": "Project",
+        "dependencies": {
+          "CompanionCore.Api": "[1.0.0, )",
+          "CompanionCore.Curtain": "[1.0.0, )",
+          "CompanionCore.Memory": "[1.0.0, )"
+        }
       },
       "companioncore.targetauth": {
         "type": "Project",
@@ -148,7 +157,8 @@
         "dependencies": {
           "CompanionCore.BunDex": "[1.0.0, )",
           "CompanionCore.Keepsakes": "[1.0.0, )",
-          "CompanionCore.Memory": "[1.0.0, )"
+          "CompanionCore.Memory": "[1.0.0, )",
+          "CompanionCore.Sightings": "[1.0.0, )"
         }
       },
       "companioncore.watchbun": {

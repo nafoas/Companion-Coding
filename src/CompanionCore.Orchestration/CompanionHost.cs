@@ -3,6 +3,7 @@ using CompanionCore.BunDex;
 using CompanionCore.Keepsakes;
 using CompanionCore.Memory;
 using CompanionCore.Privacy;
+using CompanionCore.Sightings;
 using CompanionCore.Runtime.Diagnostics;
 using CompanionCore.TargetAuth;
 using CompanionCore.Transcript;
@@ -75,6 +76,11 @@ public sealed class CompanionHost : IAsyncDisposable
 
     /// <summary>What the last open found and fixed in the BunDex.</summary>
     public BunDexOpenReport BunDexReport { get; private set; } = null!;
+
+    /// <summary>The subconscious sighting record (M3a): everything his eyes saw.</summary>
+    public SightingStore Sightings { get; private set; } = null!;
+
+    public SightingOpenReport SightingReport { get; private set; } = null!;
 
     /// <summary>What the M1b layout migration did when this host opened.</summary>
     public DataLayoutMigrationReport LayoutMigration { get; private init; } = null!;
@@ -185,9 +191,14 @@ public sealed class CompanionHost : IAsyncDisposable
         var time = _options.Time ?? TimeProvider.System;
         BunDex = BunDexStore.Open(BunDexLocation.For(_options.Location), out var bunDexReport, time);
         BunDexReport = bunDexReport;
+        Sightings = SightingStore.Open(SightingLocation.For(_options.Location), out var sightingReport);
+        SightingReport = sightingReport;
         Repository = await MemoryRepository.OpenAsync(_options.Location, _options.Privacy, cancellationToken).ConfigureAwait(false);
         try
         {
+            // M3a: seeing something is not remembering it; only what is new becomes a memory.
+            var configured = _options.Bridge ?? new BridgeOptions();
+            var bridgeOptions = configured.NoveltyGate is null ? configured with { NoveltyGate = new SightingNoveltyGate(Sightings) } : configured;
             Bridge = ApiBridge.Open(
                 _options.Provider,
                 Repository.WriteGate,
@@ -195,7 +206,7 @@ public sealed class CompanionHost : IAsyncDisposable
                 _options.Privacy,
                 Braincase,
                 _options.Credentials,
-                _options.Bridge,
+                bridgeOptions,
                 time,
                 _options.Diagnostics);
             Orchestrator = new CompanionOrchestrator(
@@ -208,7 +219,10 @@ public sealed class CompanionHost : IAsyncDisposable
                     Transcripts,
                     State,
                     _options.Platform,
-                    time),
+                    time)
+                {
+                    Sightings = Sightings,
+                },
                 _options.Orchestrator);
             if (_options.Notice is { } notice)
             {

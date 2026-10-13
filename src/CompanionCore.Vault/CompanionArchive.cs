@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using CompanionCore.BunDex;
+using CompanionCore.Sightings;
 using CompanionCore.Keepsakes;
 using CompanionCore.Memory;
 
@@ -72,9 +73,13 @@ internal static partial class CompanionArchive
         name.StartsWith(BunDexEntryPrefix, StringComparison.Ordinal)
         && BunDexLedger.TryParseSegmentName(name[BunDexEntryPrefix.Length..], out _);
 
+    /// <summary>A sighting record segment (M3a), stored under its own name: <c>sightings-v1-NNNNNN.jsonl</c>.</summary>
+    internal static bool IsSightingEntry(string name) => SightingVault.IsSegmentName(name);
+
     internal static bool ValidEntryName(string name) =>
         KeepsakeEntryPattern().IsMatch(name)
         || IsBunDexEntry(name)
+        || IsSightingEntry(name)
         || (name.StartsWith("state-", StringComparison.Ordinal)
             && name.EndsWith(VaultStateStore.Extension, StringComparison.Ordinal)
             && VaultStateStore.ValidName(name["state-".Length..^VaultStateStore.Extension.Length]));
@@ -114,7 +119,8 @@ internal static partial class CompanionArchive
         }
 
         var ledgerSegments = BunDexLedgerRepair.SnapshotSegments(BunDexLocation.For(keepsakes.MemoryLocation));
-        if (sources.Count + ledgerSegments.Count > MaximumDataEntries)
+        var sightingSegments = SightingVault.SnapshotSegments(SightingLocation.For(keepsakes.MemoryLocation));
+        if (sources.Count + ledgerSegments.Count + sightingSegments.Count > MaximumDataEntries)
         {
             throw new BackupValidationException("The companion archive has too many entries.");
         }
@@ -126,7 +132,8 @@ internal static partial class CompanionArchive
             using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create, leaveOpen: true))
             {
                 var data = sources.Select(source => (source.Name, Path: (string?)source.Path, Bytes: (byte[]?)null))
-                    .Concat(ledgerSegments.Select(segment => (Name: BunDexEntryName(segment.SegmentName), Path: (string?)null, Bytes: (byte[]?)segment.Bytes)));
+                    .Concat(ledgerSegments.Select(segment => (Name: BunDexEntryName(segment.SegmentName), Path: (string?)null, Bytes: (byte[]?)segment.Bytes)))
+                    .Concat(sightingSegments.Select(segment => (Name: segment.SegmentName, Path: (string?)null, Bytes: (byte[]?)segment.Bytes)));
                 foreach (var (name, path, snapshot) in data.OrderBy(source => source.Name, StringComparer.Ordinal))
                 {
                     if ((snapshot?.LongLength ?? new FileInfo(path!).Length) > MaximumEntryBytes)

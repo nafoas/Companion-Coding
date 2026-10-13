@@ -37,6 +37,33 @@ public static partial class Membrane
         return new Sense(kind, words, null);
     }
 
+    /// <summary>At this many sightings it is "a few times"; at <see cref="LotsOfTimes"/>, "lots of times".</summary>
+    internal const int AFewTimes = 3;
+
+    internal const int LotsOfTimes = 10;
+
+    /// <summary>
+    /// One growing impression of the same thing, as the gist he registers ("saw dis a few
+    /// times"): never a count, never one experience per sighting.
+    /// </summary>
+    public static Sense? SawAgain(string description, int times)
+    {
+        var words = Plain(description, MaximumWords);
+        if (words is null || times < 1)
+        {
+            return null;
+        }
+
+        var kind = times switch
+        {
+            1 => SenseKind.Saw,
+            < AFewTimes => SenseKind.SawAgain,
+            < LotsOfTimes => SenseKind.SawAFewTimes,
+            _ => SenseKind.SawLotsOfTimes,
+        };
+        return new Sense(kind, words, null);
+    }
+
     /// <summary>Text he read in his world, verbatim and quoted; <paramref name="on"/> is what it was on ("a sign"), if known.</summary>
     public static Sense? Read(string text, string? on = null)
     {
