@@ -1,6 +1,6 @@
 # M1b — Finish the separation: everything machine lives in the BrainCase
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-13 by Boss ("go ahead and finish the separation between BunDex and Braincase"). This completes M1's deferred finding D2 before M2.
 Accepted remote base: `6b92daf5132e8257cf19367739346657d88fabc4`
 Working branch: `agent/m1b-braincase-separation`
@@ -67,4 +67,18 @@ CompanionCore.Dev\
 
 ## Deferred findings
 
-_(none yet)_
+From Boss's requested emulation (2026-10-13): Builder played Prince as the writer over a temporary scratch BunDex through the real keeper. 13 moments across three games; 10 pages in 7 folders he made himself; the BrainCase rebuilt all 10 pages byte-identically from its 27-line ledger.
+
+- **D1 — One home per kind of thing thrashes across games.** His first lore page was about a scary house, so a cozy farm fact brought "Scawy Stuffs / hollow house secrets" to mind; after he made "Farm Fings", scary-house lore brought "Farm Fings" to mind. Proposal: remember homes per kind *and* game (falling back to kind), and let a place he keeps choosing become the home. Needs Boss's view; natural fit for M5.
+- **D2 — The keep pull never relaxes.** After two "not now"s the pull for that kind stays Strong permanently, even after he keeps one. That reads as insisting, against "inclinations, not instructions". Proposal: count only declines since the last time he kept that kind, so the pull returns to Gentle once he keeps one. Small fix; proposed for M2's packet.
+- **D3 — Reorganizing is not yet reachable by Prince.** The store supports moves and renames (ledger-recorded), but the writer response cannot ask for one. Belongs with M5/M6.
+
+## Paw Gate
+
+- **Candidate.** Head `5a4725c2e8257d9594ccedc34de1916cc82b7f77`, PR #87, against accepted `main` `6b92daf5132e8257cf19367739346657d88fabc4`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; 1193/1193 tests passed (Memory 95, +6 migration tests; Orchestration 119, +1 host-over-old-layout; BunDex 38, reset tests rewritten for the new layout plus old-layout refusal). Layout-pinning assertions were updated to the layout Boss directed.
+- **Mutation pass.** 11 mutants across the migration, reset, host, and locations; 11/11 killed.
+- **Windows CI.** Push run `38329380845` and PR run `38329395547`, both green, including the App test that places settings in the old layout and proves the App migrates before reading them.
+- **Merge-ref check.** Parents `6b92daf` + `5a4725c`, tree `37fad4392383addee3d8f27b7e576bb77a078e4c`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `96250752290e340f0d6ed60e4017e0cee28cd5aa`.
+- **Result.** Passed and accepted.

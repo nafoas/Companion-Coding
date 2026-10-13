@@ -56,7 +56,7 @@ The saved keepsake edge (1280) remains provisional photograph-storage tuning.
 
 - The BunDex writer is a stand-in until Stage 13 gives Prince his voice; the orchestrator does not call the keeper yet (M5).
 - Boss's case-by-case page removal has no command yet; it will need its own ledger entry (M1 D1).
-- `Memory/`, `State/`, `Transcripts/`, and `Keepsakes/` stay where they are; moving them under `Braincase/` is an open option for Boss (M1 D2).
+- Homes are remembered per kind of thing only, so they can flip between games (M1b D1); the keep pull never relaxes after two "not now"s (M1b D2); Prince cannot yet ask to reorganize (M1b D3).
 
 ## Minor
 

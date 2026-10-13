@@ -158,6 +158,8 @@ Merged as `2defb17a1ccda22cac3318098faf6890ab178d56`.
 
 **M1** (PR #85) gives Prince two homes: his BunDex, an organic notebook of folders and pages he names himself, and the BrainCase's append-only ledger it is built from. Da Bun Vault backs up the ledger, and a Builder reset tool clears Builder Prince's development data on Boss's exact confirmation. Merged as `0202c7fd32390e73af69faf79a8410def91f2c24`.
 
+**M1b** (PR #87) finishes the separation: every machine store (memories, keepsakes, state, transcripts, journals, the ledger) lives in the BrainCase, and the data root holds only the BunDex and the BrainCase beside Boss's consent and calibration folders. Older data moves in automatically, never copied or deleted. Merged as `96250752290e340f0d6ed60e4017e0cee28cd5aa`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.
