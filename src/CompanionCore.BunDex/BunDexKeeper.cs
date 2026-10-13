@@ -43,7 +43,8 @@ public sealed class BunDexKeeper
 
         var declines = _store.Declines(role);
         var feeling = declines >= StrongAfterDeclines ? KeepFeeling.Strong : declines == 1 ? KeepFeeling.Warm : KeepFeeling.Gentle;
-        var moment = new KeepMoment(whatHappened, Membrane.At(tags.Where), feeling, _store.Recall(whatHappened.Quoted ?? whatHappened.Words, tags.Where));
+        var (clear, bell) = _store.ComeToMind(whatHappened.Quoted ?? whatHappened.Words, tags.Where);
+        var moment = new KeepMoment(whatHappened, Membrane.At(tags.Where), feeling, clear, bell is null ? [] : [bell]);
 
         KeepResponse? response = null;
         for (var attempt = 0; attempt < BnuyVoice.MaximumAttempts; attempt++)

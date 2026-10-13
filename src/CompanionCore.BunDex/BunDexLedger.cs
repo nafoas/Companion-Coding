@@ -16,6 +16,12 @@ internal enum LedgerKind
     /// <summary>Retired in M1c (no folder is ever a role's home); old entries are read and ignored.</summary>
     RoleRegistered = 6,
     KeepDeclined = 7,
+
+    /// <summary>A play session began (M4a): the session clock for remembering.</summary>
+    SessionBegan = 8,
+
+    /// <summary>A page came to mind (M4a): remembering restarts its clock.</summary>
+    PageRecalled = 9,
 }
 
 internal sealed record PageTagsWire(BunDexRole Role, MemoryLayer Layer, string? Game, string? Save, string[] Subjects, DateTimeOffset CreatedAtUtc, string? Where = null)

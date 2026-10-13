@@ -32,6 +32,9 @@ public sealed record CompanionComponents(
 {
     /// <summary>The subconscious sighting record (M3a); without it, novelty is the old first-time flag.</summary>
     public SightingStore? Sightings { get; init; }
+
+    /// <summary>His BunDex, whose remembering counts play sessions (M4a).</summary>
+    public BunDex.BunDexStore? BunDex { get; init; }
 }
 
 public sealed record OrchestratorSnapshot(
@@ -865,6 +868,12 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             reference,
             GameReference(grant.Target.ExecutableFileName));
         _sniffTriggerPending = false;
+
+        // M4a: a play session began; remembering counts sessions as well as days.
+        if (_c.BunDex is { Health: BunDex.BunDexHealth.Healthy } bunDex)
+        {
+            bunDex.BeginSession();
+        }
         SyncAttentionState(_session);
 
         if (_watchbun is { } existing

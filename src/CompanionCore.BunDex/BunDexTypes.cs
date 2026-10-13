@@ -22,7 +22,7 @@ public enum BunDexRole
     LittleRequests = 11,
 }
 
-/// <summary>The memory layer a page belongs to (item 4). Used by later steps; stored now.</summary>
+/// <summary>The memory layer a page belongs to (item 4): how long it stays clear (M4a). Unspecified falls back to its kind.</summary>
 public enum MemoryLayer
 {
     Unspecified = 0,
@@ -83,12 +83,13 @@ public sealed record BunDexView(IReadOnlyList<FolderView> Folders, IReadOnlyList
 /// </summary>
 public sealed class KeepMoment
 {
-    internal KeepMoment(Sense whatHappened, Place? where, KeepFeeling feeling, IReadOnlyList<Remembered> comesToMind)
+    internal KeepMoment(Sense whatHappened, Place? where, KeepFeeling feeling, IReadOnlyList<Remembered> comesToMind, IReadOnlyList<Feeling>? feelings = null)
     {
         WhatHappened = whatHappened;
         Where = where;
         Feeling = feeling;
         ComesToMind = comesToMind;
+        Feelings = feelings ?? [];
     }
 
     public Sense WhatHappened { get; }
@@ -99,9 +100,12 @@ public sealed class KeepMoment
 
     public IReadOnlyList<Remembered> ComesToMind { get; }
 
+    /// <summary>Other feelings in the moment, such as "something about this rings a bell" (M4a).</summary>
+    public IReadOnlyList<Feeling> Feelings { get; }
+
     /// <summary>The whole moment as one Bnuy request, with his notebook as he sees it.</summary>
     public BnuyRequest ToRequest(BunDexView notebook) =>
-        BnuyRequest.Assemble(Where, [WhatHappened], ComesToMind, NotebookLines.Of(notebook), Feeling);
+        BnuyRequest.Assemble(Where, [WhatHappened], ComesToMind, NotebookLines.Of(notebook), Feeling, feelings: Feelings);
 }
 
 public enum KeepChoice
