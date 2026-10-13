@@ -21,6 +21,8 @@ public sealed class BunDexStore
     private readonly Dictionary<Guid, FolderState> _folders = [];
     private readonly Dictionary<Guid, PageState> _pages = [];
     private readonly Dictionary<BunDexRole, int> _declines = [];
+    private readonly List<DateTimeOffset> _sessions = [];
+    private readonly Dictionary<Guid, DateTimeOffset> _cameToMind = [];
     private readonly HashSet<Guid> _altered = [];
 
     private BunDexStore(BunDexLocation location, BunDexLedger ledger, TimeProvider time)
@@ -172,6 +174,103 @@ public sealed class BunDexStore
         }
     }
 
+    /// <summary>A play session began: the session clock for remembering (M4a).</summary>
+    public void BeginSession()
+    {
+        lock (_gate)
+        {
+            Commit(new LedgerEntry(0, Now(), LedgerKind.SessionBegan));
+        }
+    }
+
+    internal const int MaximumClear = 3;
+    internal static readonly TimeSpan CameToMindCooldown = TimeSpan.FromMinutes(15);
+
+    /// <summary>
+    /// What comes to mind (M4a, plan items 4 and 7i): his own similar pages that are still clear,
+    /// at most a few, ranked by likeness, then the ladder, then recency; and, for a fitting page that
+    /// has faded to familiarity, only the feeling that it rings a bell. Faded pages never come to
+    /// mind unprompted. A page that just came to mind won't again for a while. Everything that comes
+    /// to mind is remembered, which restarts its clock (append-only).
+    /// </summary>
+    internal (IReadOnlyList<Remembered> Clear, Feeling? Bell) ComeToMind(string cue, string? where)
+    {
+        var words = Words(cue);
+        lock (_gate)
+        {
+            var now = Now();
+            var candidates = _pages.Values
+                .Where(page => !(_cameToMind.TryGetValue(page.Id, out var last) && now - last < CameToMindCooldown))
+                .Select(page => (Page: page, Score: Likeness(page, words, where), Layer: PageClarity.LayerOf(page.Tags)))
+                .Where(candidate => candidate.Score >= 2)
+                .Select(candidate => (candidate.Page, candidate.Score, candidate.Layer, Clarity: PageClarity.Of(candidate.Layer, now - candidate.Page.LastTouched, SessionsSince(candidate.Page.LastTouched))))
+                .OrderByDescending(candidate => candidate.Score)
+                .ThenByDescending(candidate => PageClarity.Rank(candidate.Layer))
+                .ThenByDescending(candidate => candidate.Page.LastTouched)
+                .ToList();
+
+            var clear = new List<Remembered>();
+            // Faded pages are neither: they never come to mind unprompted.
+            foreach (var candidate in candidates.Where(candidate => candidate.Clarity == Clarity.Clear))
+            {
+                if (clear.Count == MaximumClear)
+                {
+                    break;
+                }
+
+                if (Membrane.Remember(FolderNames(candidate.Page.FolderId), candidate.Page.Name, candidate.Page.Tags.Where, candidate.Page.Text.ToString()) is { } remembered)
+                {
+                    clear.Add(remembered);
+                    Remembering(candidate.Page.Id, now);
+                }
+            }
+
+            Feeling? bell = null;
+            if (candidates.FirstOrDefault(candidate => candidate.Clarity == Clarity.RingsABell) is { Page: not null } faint)
+            {
+                bell = Membrane.RingsABell();
+                Remembering(faint.Page.Id, now);
+            }
+
+            return (clear, bell);
+        }
+    }
+
+    private void Remembering(Guid pageId, DateTimeOffset now)
+    {
+        _cameToMind[pageId] = now;
+
+        // A read-only (damaged) ledger still lets him remember; only the refresh goes unrecorded.
+        if (!_ledger.Damaged)
+        {
+            Commit(new LedgerEntry(0, now, LedgerKind.PageRecalled, PageId: pageId));
+        }
+    }
+
+    private int SessionsSince(DateTimeOffset at) => _sessions.Count(session => session > at);
+
+    /// <summary>How many play sessions the session clock has counted.</summary>
+    internal int SessionsPlayed
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _sessions.Count;
+            }
+        }
+    }
+
+    /// <summary>How clearly a page would come to mind right now (for the subconscious and tests).</summary>
+    internal Clarity ClarityOf(Guid pageId)
+    {
+        lock (_gate)
+        {
+            var page = _pages.GetValueOrDefault(pageId) ?? throw new BunDexException("That page does not exist.");
+            return PageClarity.Of(PageClarity.LayerOf(page.Tags), Now() - page.LastTouched, SessionsSince(page.LastTouched));
+        }
+    }
+
     internal void RecordDecline(BunDexRole role)
     {
         lock (_gate)
@@ -234,33 +333,6 @@ public sealed class BunDexStore
         lock (_gate)
         {
             return new BunDexView(FoldersUnder(null), PagesIn(null));
-        }
-    }
-
-    internal const int MaximumRecollections = 3;
-
-    /// <summary>
-    /// Association, the way remembering works: his own pages that feel like this moment
-    /// (written where he is now, or sharing its words), most alike first, then most recent.
-    /// It only reminds him of his own writing; it never says where anything should go.
-    /// </summary>
-    internal IReadOnlyList<Remembered> Recall(string whatHappened, string? where)
-    {
-        var words = Words(whatHappened);
-        lock (_gate)
-        {
-            return [.. _pages.Values
-                .Select(page => (Page: page, Score: Likeness(page, words, where)))
-                .Where(candidate => candidate.Score >= 2)
-                .OrderByDescending(candidate => candidate.Score)
-                .ThenByDescending(candidate => candidate.Page.LastWrittenAt)
-                .Select(candidate => Membrane.Remember(
-                    FolderNames(candidate.Page.FolderId),
-                    candidate.Page.Name,
-                    candidate.Page.Tags.Where,
-                    candidate.Page.Text.ToString()))
-                .OfType<Remembered>()
-                .Take(MaximumRecollections)];
         }
     }
 
@@ -369,7 +441,7 @@ public sealed class BunDexStore
                 _folders[entry.FolderId!.Value] = new FolderState(entry.FolderId.Value, entry.ParentId, entry.Name!) { About = entry.Text };
                 break;
             case LedgerKind.PageCreated:
-                var created = new PageState(entry.PageId!.Value, entry.FolderId, entry.Name!, entry.Tags!.ToTags(), new StringBuilder(entry.Text)) { LastWrittenAt = entry.At };
+                var created = new PageState(entry.PageId!.Value, entry.FolderId, entry.Name!, entry.Tags!.ToTags(), new StringBuilder(entry.Text)) { LastWrittenAt = entry.At, LastTouched = entry.At };
                 _pages[created.Id] = created;
                 _declines.Remove(created.Tags.Role);
                 break;
@@ -377,6 +449,7 @@ public sealed class BunDexStore
                 var added = _pages[entry.PageId!.Value];
                 added.Text.Append(entry.Text);
                 added.LastWrittenAt = entry.At;
+                added.LastTouched = entry.At;
                 _declines.Remove(added.Tags.Role);
                 break;
             case LedgerKind.FolderMoved:
@@ -396,6 +469,12 @@ public sealed class BunDexStore
                 break;
             case LedgerKind.KeepDeclined:
                 _declines[entry.Role!.Value] = _declines.GetValueOrDefault(entry.Role.Value) + 1;
+                break;
+            case LedgerKind.SessionBegan:
+                _sessions.Add(entry.At);
+                break;
+            case LedgerKind.PageRecalled when _pages.TryGetValue(entry.PageId!.Value, out var recalled):
+                recalled.LastTouched = entry.At > recalled.LastTouched ? entry.At : recalled.LastTouched;
                 break;
         }
     }
@@ -697,6 +776,9 @@ public sealed class BunDexStore
         public PageTags Tags { get; } = tags;
 
         public DateTimeOffset LastWrittenAt { get; set; }
+
+        /// <summary>When it was last written or remembered: where its clocks start (M4a).</summary>
+        public DateTimeOffset LastTouched { get; set; }
 
         public StringBuilder Text { get; } = text;
 

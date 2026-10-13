@@ -92,6 +92,12 @@ public static partial class Membrane
         return feelings;
     }
 
+    /// <summary>
+    /// A faded memory of his that fits what is happening: only the feeling of familiarity, with
+    /// no details at all (M4a). To remember more, he would have to look it up.
+    /// </summary>
+    public static Feeling RingsABell() => new(BnuyTemplates.RingsABell);
+
     /// <summary>Text he read in his world, verbatim and quoted; <paramref name="on"/> is what it was on ("a sign"), if known.</summary>
     public static Sense? Read(string text, string? on = null)
     {

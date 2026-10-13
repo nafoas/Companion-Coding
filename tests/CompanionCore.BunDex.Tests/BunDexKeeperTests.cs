@@ -84,7 +84,9 @@ public sealed class BunDexKeeperTests
             await keeper.KeepAsync(BunDexRole.Lore, Tags(BunDexRole.Lore, where: "Hollow House"), Saw($"Room number {index} of the clockmaker house has a moon keyhole."));
         }
 
-        Assert.Equal(BunDexStore.MaximumRecollections, writer.Moments[^1].ComesToMind.Count);
+        // A fresh mind (pages that just came to mind rest for a while, M4a): at most a few, most alike first.
+        await new BunDexKeeper(harness.Open(), writer).KeepAsync(BunDexRole.Lore, Tags(BunDexRole.Lore, where: "Hollow House"), Saw("Another clockmaker house room with a moon keyhole."));
+        Assert.Equal(BunDexStore.MaximumClear, writer.Moments[^1].ComesToMind.Count);
         Assert.Contains("keyhole", writer.Moments[^1].ComesToMind[0].Glimpse, StringComparison.Ordinal);
     }
 

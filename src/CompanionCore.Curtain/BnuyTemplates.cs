@@ -46,6 +46,7 @@ internal static class BnuyTemplates
     internal const string CanLook = "Prince is still a little scared, but he can look now.";
     internal const string Brave = "Prince feels brave around this.";
     internal const string BossHasGotIt = "Prince feels Boss has got this covered.";
+    internal const string RingsABell = "Something about this rings a bell.";
 
     internal static IEnumerable<string> All() =>
         typeof(BnuyTemplates).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)

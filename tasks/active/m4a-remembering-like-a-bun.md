@@ -54,7 +54,7 @@ Plan items: 3, 4, 7h (ladder), 7i.
 
 - **Layers follow the approved values with two clocks:**
   - a month away with no sessions forgets nothing;
-  - sessions alone fade short-term pages after the window;
+  - once the days have also passed, sessions fade each layer after its window;
   - whichever clock is longer wins.
 - **Remembering refreshes the clock,** and the refresh survives a reopen.
 - **Not clairvoyant.** A faded page is not offered unprompted. A bell page carries no details.
@@ -63,6 +63,14 @@ Plan items: 3, 4, 7h (ladder), 7i.
 - **The curtain.** No layer, count, or time ever crosses; the bell is a feeling line; the curtain audit includes it.
 - **Every existing suite passes.**
 
+## Judgments made while building (Personal Round Judgment)
+
+- **J3. Writing on a page refreshes it as remembering does.** Both writing and adding restart its clock; only a remembering moment is a new `PageRecalled` entry.
+- **J4. A damaged (read-only) BunDex still lets him remember.** Pages still come to mind, but no refresh and no session is written, and the play session still starts.
+- **J5. A session that began in the same instant a page was written does not count against it.**
+- **J6. Session clock tests use sessions a week apart.** With "whichever is longer", sessions minutes apart never fade anything inside the day window; the tests prove both clocks.
+
 ## Deferred findings
 
-_(none yet)_
+- **D1.** A Bnuy request is assembled only by the keeper today. His looks and conversations will use `ComeToMind` when his voice is wired (Stage 13, M6, M9).
+- **D2.** The cooldown is held in memory. A restart within 15 minutes may let a page come to mind again. This is harmless and stays sparing.

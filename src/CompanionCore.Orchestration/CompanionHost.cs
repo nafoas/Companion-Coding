@@ -222,6 +222,7 @@ public sealed class CompanionHost : IAsyncDisposable
                     time)
                 {
                     Sightings = Sightings,
+                    BunDex = BunDex,
                 },
                 _options.Orchestrator);
             if (_options.Notice is { } notice)

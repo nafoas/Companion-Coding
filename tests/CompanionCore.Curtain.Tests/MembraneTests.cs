@@ -147,7 +147,7 @@ public sealed class MembraneTests
         // Every public way in is a translation that returns an experience or nothing.
         foreach (var method in typeof(Membrane).GetMethods(BindingFlags.Public | BindingFlags.Static))
         {
-            Assert.Contains(Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType, new[] { typeof(Sense), typeof(Remembered), typeof(Place), typeof(IReadOnlyList<Feeling>) });
+            Assert.Contains(Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType, new[] { typeof(Sense), typeof(Remembered), typeof(Place), typeof(Feeling), typeof(IReadOnlyList<Feeling>) });
         }
     }
 }
