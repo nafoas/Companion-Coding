@@ -218,6 +218,13 @@ Merged as `5a2bacf26abafed5267ac257603ba450b35116e7`.
 
 Merged as `073438bc1216d1e4a74673b9247745ef9d0204f2`.
 
+**M5a** (PR #113) wires keeping into live play, and he decides:
+- **What reaches him.** New memories and growing patterns reach Prince one at a time, never during a conversation or an intense moment.
+- **No verdict.** Nothing tells him how worth keeping a moment is, and nothing mentions not writing. Whether to write, how much, and where are his own choices. After a while without writing, he simply feels like scribbling.
+- **Hidden links.** The BrainCase links every page to the memories or sightings behind it, in its hidden index only. His page names stay exactly as he wrote them.
+
+Merged as `8bdf86aa312aa3e2cdf4ab2622093081362a9ffa`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.
