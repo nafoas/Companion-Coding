@@ -1,6 +1,6 @@
 # M5a — Keeping during play: he decides, the BrainCase links
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-14 by Boss ("Do M5A, and keep everything I just said in mind"). Boss's decisions are pinned in the plan: "M5a also: he decides what is worth keeping", and "Three layers: Conscious, Metaconscious, Subconscious".
 Accepted remote base: `8b25736bb7aabe3ca977d53d553911fb3227e7b9`
 Working branch: `agent/m5a-keeping-during-play`
@@ -47,6 +47,7 @@ Plan items: 10, 13–15; "M5 also: keeping during play", "M5 also: what M4e hand
   - Now a page keeps his title exactly as he wrote it, characters a file cannot hold included. File names on disk stay unique underneath, out of his sight.
   - Old ledger lines read as before. A title is only written when it differs from the file name.
 - **J4.** In-play moments are tagged short-term in the hidden index (his layers decide how they fade, M4a/M4e). The kind is never shown to him.
+- **J6. Shutdown finishes a page he is writing** (found by Windows CI). A keep runs off the orchestrator's critical path, so shutdown now waits, bounded, for it before the stores close; two BunDex never touch the same files. Settling in tests waits for keeping, as it does for the eyes.
 - **J5.** Moments carry no "where" until the eyes report places by name (see D2). Being back in the same place still works for pages that have one.
 
 ## Acceptance
@@ -66,3 +67,19 @@ Plan items: 10, 13–15; "M5 also: keeping during play", "M5 also: what M4e hand
 - **D1.** A folder renamed to an existing folder's name, by his own tidying, still gets a number on disk and in his view. This is rare and only from his own step. Folders get the same title treatment as pages in a later step.
 - **D2.** The eyes do not yet name where he is in a game. When they do, moments carry it, and "being back where it happened" applies to in-play pages.
 - **D3.** Until Stage 13, the stand-in writer writes every moment, a placeholder for his own judgment. The BunDex will fill faster than it will with his own choices.
+
+## Paw Gate
+
+- **Candidate.** Head `35b5bbecf6ab3c16881347244c5c680fbed43e53`, PR #113, against accepted `main` `8b25736bb7aabe3ca977d53d553911fb3227e7b9`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; 21 runnable suites, 1504 tests passed.
+- **Mutation pass.** 39 mutants. The full set ran twice, and each later fix was re-checked against its mutants.
+  - 38 are killed.
+  - 1 is equivalent: clearing the queue at a privacy stop is redundant with the privacy-generation check that drops anything from before a stop.
+  - Each survivor got a test, among them: sources added to an existing page, his titles in recall and lookups, finding by his title, bounded titles, a replayed look never offered twice, proposals growing patterns, patterns from another game, and a moment from before a privacy stop never written after resuming.
+  - A redundant privacy check at offering was removed.
+- **CI found a real race** (J6): a keep still writing while the host reopened. It is fixed and has a regression test ("closing while he is writing finishes the page first").
+- **Changed expectations (Boss's direction, not weakened).** M1c's keep-pull tests became his urge to scribble: from moments without writing of any kind, relaxing when he writes.
+- **Windows CI.** Push run `38609273647` and PR run `38609282778`, both green. Push run `38607772011` was green, and PR run `38607799031` failed on the race above, before the fix.
+- **Merge-ref check.** Parents `8b25736` + `35b5bbe`, tree `f1928f00cfab894f269c76c13d755491fb9a519c`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `8bdf86aa312aa3e2cdf4ab2622093081362a9ffa`.
+- **Result.** Passed and accepted. Next: the temporary emulated live Bnuy run (never committed), then M5b.

@@ -54,7 +54,7 @@ The saved keepsake edge (1280) remains provisional photograph-storage tuning.
 
 ## Pre-Stage 13 memory work (M1–M10)
 
-- The BunDex writer is a stand-in until Stage 13 gives Prince his voice; the orchestrator does not call the keeper yet (M5).
+- The BunDex writer is a stand-in until Stage 13 gives Prince his voice; keeping during play is wired from M5a.
 - Boss's case-by-case page removal has no command yet; it will need its own ledger entry (M1 D1).
 - What comes to mind is matched by place and shared words until Stage 13 (M1c D1); Boss's tidying invitation is not yet wired from conversation (M1c D2, M3).
 - The eyes' answers reach Prince only once M5/M9 route them through the membrane (M2 D2); the validator holds the curtain rules until Stage 13 adds the character rules (M2 D3).
@@ -64,6 +64,7 @@ The saved keepsake edge (1280) remains provisional photograph-storage tuning.
 - Deliberate lookups ("remember when...?") are asked for from M6 and Stage 13 (M4b D1); place pull is recomputed per lookup (M4b D2); fit is by shared words until his voice judges closeness (M4b D3).
 - Finishing an adventure is recorded from M7's "Did our adventure finish?" (M4c D1); past-adventure recall is asked for from M6/M7 (M4c D2); one save per game until M7 (M4c D3); "Significant" joins the ladder in M5 (M4c D4).
 - Word likeness is by words, not meaning, until his own mind judges sameness in Stage 13 (M4e D1); patterns are offered during live play from M5a (M4e D2); `MattersToHim` is filled from M5b/M6 (M4e D3).
+- Folder names still get a number on a rename collision from his own tidying (M5a D1); in-play moments carry no place until the eyes name places (M5a D2); the stand-in writer writes every moment until Stage 13 (M5a D3).
 
 ## Minor
 
