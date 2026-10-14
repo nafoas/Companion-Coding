@@ -565,7 +565,7 @@ internal sealed class OrchestrationHarness : IAsyncDisposable
         while (true)
         {
             var snapshot = await Orchestrator.GetSnapshotAsync();
-            if (!snapshot.BridgeInFlight && !snapshot.GlanceInFlight)
+            if (!snapshot.BridgeInFlight && !snapshot.GlanceInFlight && !snapshot.KeepInFlight)
             {
                 await Orchestrator.GetSnapshotAsync();
                 return;

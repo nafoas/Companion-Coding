@@ -57,6 +57,9 @@ public sealed record OrchestratorSnapshot(
     /// <summary>A Glance is in flight (VIS-02).</summary>
     public bool GlanceInFlight { get; init; }
 
+    /// <summary>A moment is reaching him and he may be writing (M5a).</summary>
+    public bool KeepInFlight { get; init; }
+
     /// <summary>One closer look is waiting (VIS-02).</summary>
     public bool InspectQueued { get; init; }
 
@@ -239,6 +242,7 @@ public sealed partial class CompanionOrchestrator : IAsyncDisposable
         {
             Sniff = SniffSnapshot(),
             GlanceInFlight = _glanceInFlight,
+            KeepInFlight = _keepInFlight,
             InspectQueued = _inspectWanted,
             SheetsReceived = _sheetsReceived,
             GlancesSent = _glancesSent,
@@ -417,6 +421,8 @@ public sealed partial class CompanionOrchestrator : IAsyncDisposable
             await _loop.ConfigureAwait(false);
         }
 
+        // M5a: a page he is writing is finished before the stores close, so two BunDex never overlap.
+        await FinishKeepingAsync().ConfigureAwait(false);
         await _shutdown.CancelAsync().ConfigureAwait(false);
         _shutdown.Dispose();
     }

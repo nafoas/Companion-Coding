@@ -240,6 +240,43 @@ public sealed class OrchestrationKeepingTests
         Assert.NotNull((await harness.Orchestrator.GetSnapshotAsync()).TargetSessionId);
     }
 
+    [Fact]
+    public async Task ClosingWhileHeIsWriting_FinishesThePageFirst_AndTwoBunDexNeverOverlap()
+    {
+        await using var harness = await CreateAsync();
+        var writer = new SlowWriter();
+        harness.BunDexWriter = writer;
+        await harness.ReopenHostAsync();
+        await harness.AuthorizeAsync();
+        for (var seen = 0; seen < 3; seen++)
+        {
+            harness.Host.Sightings.See(new Sighting(harness.Time.GetUtcNow(), Game, null, "tree", ObservationKind.Other, false, "a tall tree", SightingSource.Observation));
+        }
+
+        await writer.Started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await harness.ReopenHostAsync();
+
+        Assert.Equal(BunDexHealth.Healthy, harness.Host.BunDex.Health);
+        var page = Assert.Single(harness.Host.BunDex.PagesFrom(PageSources.Sightings(Game, "tree", 3)));
+        Assert.Contains("a tall tree", harness.Host.BunDex.PageText(page), StringComparison.Ordinal);
+        Assert.Empty(harness.Host.BunDexReport.AlteredPages);
+    }
+
+    private sealed class SlowWriter : IBunDexWriter
+    {
+        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public async ValueTask<KeepResponse> RespondAsync(KeepMoment moment, BunDexView notebook, CancellationToken cancellationToken)
+        {
+            Started.TrySetResult();
+            await Task.Delay(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+            return new KeepResponse(KeepChoice.Write, ["trees"], "trees", Text: StandInWriter.Plain(moment));
+        }
+
+        public ValueTask<TidyResponse> TidyAsync(TidyMoment moment, BunDexView notebook, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(TidyResponse.NotNow);
+    }
+
     private static bool IsOpening(CompanionNotice notice) =>
         notice.Conversation?.Kind is ConversationIntentKind.AmbientExpression or ConversationIntentKind.OfferOpening;
 

@@ -21,8 +21,11 @@ public sealed partial class CompanionOrchestrator
     internal const int MaximumPendingKeeps = 8;
     internal static readonly TimeSpan KeepFadesAfter = TimeSpan.FromMinutes(10);
 
+    internal static readonly TimeSpan KeepFinishBound = TimeSpan.FromSeconds(10);
+
     private readonly Queue<PendingKeep> _keeping = new();
     private bool _keepInFlight;
+    private Task _keepTask = Task.CompletedTask;
 
     internal sealed record PendingKeep(Sense WhatHappened, PageTags Tags, IReadOnlyList<string> Sources, DateTimeOffset At, string Session, long Generation);
 
@@ -126,7 +129,7 @@ public sealed partial class CompanionOrchestrator
         var moment = _keeping.Dequeue();
         _keepInFlight = true;
         var token = _shutdown.Token;
-        _ = Task.Run(async () =>
+        _keepTask = Task.Run(async () =>
         {
             try
             {
@@ -149,5 +152,23 @@ public sealed partial class CompanionOrchestrator
                 });
             }
         });
+    }
+
+    /// <summary>Waits, bounded, for a moment he is writing; past the bound it is cancelled and awaited briefly.</summary>
+    private async Task FinishKeepingAsync()
+    {
+        try
+        {
+            await _keepTask.WaitAsync(KeepFinishBound).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            await _shutdown.CancelAsync().ConfigureAwait(false);
+            await Task.WhenAny(_keepTask, Task.Delay(KeepFinishBound)).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            // Its own failure was already recorded; shutdown continues.
+        }
     }
 }
