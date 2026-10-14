@@ -63,4 +63,42 @@ public sealed class PageTitleTests
 
         Assert.DoesNotContain("\"title\"", File.ReadAllText(harness.LastSegment()), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task WhatComesToMind_AndWhatHeFinds_CarryHisOwnNames()
+    {
+        using var harness = new BunDexHarness();
+        var store = harness.Open();
+        store.CreatePage(null, "moon/sun? lantern", "Da moon lantern and da sun lantern.", Tags(BunDexRole.LongTerm, where: "Sky Garden"));
+
+        var writer = new StandInWriter(declineWhen: _ => true);
+        await new BunDexKeeper(store, writer).KeepAsync(BunDexRole.ShortTerm, Tags(BunDexRole.ShortTerm, where: "Sky Garden"), Saw("a moon lantern"));
+        var found = store.LookFor("the moon lantern").Found;
+
+        Assert.Equal("moon/sun? lantern", Assert.Single(writer.Moments[0].ComesToMind).Page);
+        Assert.Equal("moon/sun? lantern", found!.Page);
+    }
+
+    [Fact]
+    public void FindingAPage_GoesByHisName_EvenWhenAnotherFileHasTheCleanedVersion()
+    {
+        using var harness = new BunDexHarness();
+        var store = harness.Open();
+        var plain = store.CreatePage(null, "moon sun", "One.", Tags(BunDexRole.ShortTerm));
+        var his = store.CreatePage(null, "moon/sun?", "Two.", Tags(BunDexRole.ShortTerm));
+
+        Assert.Equal(his, store.FindPage(null, "moon/sun?"));
+        Assert.Equal(plain, store.FindPage(null, "moon sun"));
+    }
+
+    [Fact]
+    public void AVeryLongName_IsBounded()
+    {
+        using var harness = new BunDexHarness();
+        var store = harness.Open();
+
+        store.CreatePage(null, new string('a', BunDexNames.MaximumNameLength + 40), "Long.", Tags(BunDexRole.ShortTerm));
+
+        Assert.Equal(BunDexNames.MaximumNameLength, Assert.Single(store.View().Pages).Length);
+    }
 }

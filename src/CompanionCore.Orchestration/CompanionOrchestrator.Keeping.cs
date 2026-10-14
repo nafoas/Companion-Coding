@@ -78,7 +78,8 @@ public sealed partial class CompanionOrchestrator
 
     private void Offer(ActiveSession session, Sense? whatHappened, PageTags tags, IReadOnlyList<string> sources)
     {
-        if (_c.Keeper is null || whatHappened is null || !_c.Privacy.IsCurrent(session.Grant.Generation))
+        // Privacy is checked when a moment would reach him, and again just before he writes.
+        if (_c.Keeper is null || whatHappened is null)
         {
             return;
         }

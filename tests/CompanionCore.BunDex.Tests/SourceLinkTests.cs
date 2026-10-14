@@ -89,4 +89,28 @@ public sealed class SourceLinkTests
                 || property.PropertyType == typeof(Guid));
         }
     }
+
+    [Fact]
+    public async Task AddingToAPageHeAlreadyHas_LinksTheNewSourceToo()
+    {
+        using var harness = new BunDexHarness();
+        var store = harness.Open();
+        var page = store.CreatePage(null, "door", "A glowing door.", Tags(BunDexRole.ShortTerm) with { Sources = [FirstMemory] });
+        var writer = new StandInWriter();
+        var adds = new AddingWriter();
+
+        await new BunDexKeeper(store, adds).KeepAsync(BunDexRole.ShortTerm, Tags(BunDexRole.ShortTerm), Saw("the door opened"), sources: [SecondMemory]);
+
+        Assert.Equal([FirstMemory, SecondMemory], store.SourcesOf(page));
+        Assert.Equal([page], store.PagesFrom(SecondMemory));
+    }
+
+    private sealed class AddingWriter : IBunDexWriter
+    {
+        public ValueTask<KeepResponse> RespondAsync(KeepMoment moment, BunDexView notebook, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(new KeepResponse(KeepChoice.Write, [], "door", AddToExistingPage: true, Text: " It opened!"));
+
+        public ValueTask<TidyResponse> TidyAsync(TidyMoment moment, BunDexView notebook, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(TidyResponse.NotNow);
+    }
 }
