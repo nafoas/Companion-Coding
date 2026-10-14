@@ -193,6 +193,9 @@ public sealed class CompanionHost : IAsyncDisposable
         BunDexReport = bunDexReport;
         Sightings = SightingStore.Open(SightingLocation.For(_options.Location), out var sightingReport);
         SightingReport = sightingReport;
+
+        // M4e: how familiar a word is to him includes everything his eyes have seen.
+        BunDex.SeenInTheWorld = Sightings.TimesSeen;
         Repository = await MemoryRepository.OpenAsync(_options.Location, _options.Privacy, cancellationToken).ConfigureAwait(false);
         try
         {

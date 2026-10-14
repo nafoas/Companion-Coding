@@ -38,31 +38,38 @@ internal static class PageClarity
         };
 
     /// <param name="sessionsSince">Play sessions begun after the page was last written or remembered.</param>
-    internal static Clarity Of(MemoryLayer layer, TimeSpan sinceTouched, int sessionsSince)
+    /// <param name="strength">How much longer than the plain window it stays with him (M4e); 1 is the plain window.</param>
+    internal static Clarity Of(MemoryLayer layer, TimeSpan sinceTouched, int sessionsSince, double strength = 1)
     {
         if (layer == MemoryLayer.Cherished)
         {
             return Clarity.Clear;
         }
 
-        var window = layer switch
-        {
-            MemoryLayer.LongTerm => Long,
-            MemoryLayer.MediumTerm => Medium,
-            _ => Short,
-        };
+        var window = Window(layer);
 
-        if (Within(window, 1, sinceTouched, sessionsSince))
+        if (Within(window, strength, sinceTouched, sessionsSince))
         {
             return Clarity.Clear;
         }
 
         // Long-term memories always still surface when relevant, as a bell.
-        return layer == MemoryLayer.LongTerm || Within(window, 2, sinceTouched, sessionsSince) ? Clarity.RingsABell : Clarity.Faded;
+        return layer == MemoryLayer.LongTerm || Within(window, 2 * strength, sinceTouched, sessionsSince) ? Clarity.RingsABell : Clarity.Faded;
     }
 
-    /// <summary>Whichever clock is longer: still within either window.</summary>
-    private static bool Within((int Sessions, TimeSpan Time) window, int multiple, TimeSpan sinceTouched, int sessionsSince) =>
+    /// <summary>Not clear, but nearly: just past its window (M4e), so a little lookup brings it back.</summary>
+    internal static bool OnTheTipOfHisTongue(MemoryLayer layer, TimeSpan sinceTouched, int sessionsSince, double strength) =>
+        layer != MemoryLayer.Cherished && Within(Window(layer), 1.5 * strength, sinceTouched, sessionsSince);
+
+    private static (int Sessions, TimeSpan Time) Window(MemoryLayer layer) => layer switch
+    {
+        MemoryLayer.LongTerm => Long,
+        MemoryLayer.MediumTerm => Medium,
+        _ => Short,
+    };
+
+    /// <summary>Whichever clock is longer: still within either window, stretched by how strongly it stays with him.</summary>
+    private static bool Within((int Sessions, TimeSpan Time) window, double multiple, TimeSpan sinceTouched, int sessionsSince) =>
         sessionsSince <= window.Sessions * multiple || sinceTouched <= window.Time * multiple;
 
     /// <summary>The recall-priority ladder: cherished, then long, medium, short.</summary>

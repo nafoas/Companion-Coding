@@ -252,7 +252,7 @@ public sealed class LookupTests
         var scary = store.CreateFolder("Scary Stuff");
         store.CreatePage(scary, "dungeon sign", "Da dungeon sign was purple wif a moon.", Tags(BunDexRole.LongTerm));
 
-        var rummage = store.LookFor("purple dungeon sign gate keeper");
+        var rummage = store.LookFor("purple dungeon sign gate");
 
         Assert.Equal(LookStepKind.ThinksItWas, rummage.Steps[^1].Kind);
         Assert.False(rummage.Sure);

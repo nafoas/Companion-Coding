@@ -44,10 +44,11 @@ public sealed class BunDexKeeper
         var declines = _store.Declines(role);
         var feeling = declines >= StrongAfterDeclines ? KeepFeeling.Strong : declines == 1 ? KeepFeeling.Warm : KeepFeeling.Gentle;
         var cue = whatHappened.Quoted ?? whatHappened.Words;
-        var (clear, bell, bellPage) = _store.ComeToMind(cue, tags.Where);
+        var (clear, bell, lookUp) = _store.ComeToMind(cue, tags.Where);
 
-        // "Dat rings a bell... should look dis up to remembers more" (M4b): a little lookup for it.
-        var rummage = bellPage is { } faint ? _store.Look(cue, tags.Where, Membrane.WantsToRememberMore(), faint).Steps : [];
+        // "Dat rings a bell... should look dis up to remembers more" (M4b, M4e): a little lookup,
+        // when it matters to him or is on the tip of his tongue.
+        var rummage = lookUp is { } faint ? _store.Look(cue, tags.Where, Membrane.WantsToRememberMore(), faint).Steps : [];
         var moment = new KeepMoment(whatHappened, Membrane.At(tags.Where), feeling, clear, bell is null ? [] : [bell], rummage);
 
         KeepResponse? response = null;

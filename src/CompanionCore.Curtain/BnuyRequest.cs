@@ -160,6 +160,7 @@ public sealed class BnuyRequest
         SenseKind.SawAgain => Slotted(BnuyTemplates.SawAgain, (sense.Words, BnuyPartKind.Perceived)),
         SenseKind.SawAFewTimes => Slotted(BnuyTemplates.SawAFewTimes, (sense.Words, BnuyPartKind.Perceived)),
         SenseKind.SawLotsOfTimes => Slotted(BnuyTemplates.SawLotsOfTimes, (sense.Words, BnuyPartKind.Perceived)),
+        SenseKind.SawSoManyTimes => Slotted(BnuyTemplates.SawSoManyTimes, (sense.Words, BnuyPartKind.Perceived)),
         _ => Slotted(BnuyTemplates.Remembers, (sense.Words, BnuyPartKind.Perceived)),
     };
 

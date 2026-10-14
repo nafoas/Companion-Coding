@@ -54,8 +54,9 @@ public sealed class CurtainAuditTests
             var senses = new List<Sense>();
             for (var count = random.Next(1, 5); count > 0; count--)
             {
-                var sense = random.Next(5) switch
+                var sense = random.Next(6) switch
                 {
+                    4 => Membrane.SawAgain(Fill(random, Pick(random, Happenings)), random.Next(1, 120)),
                     0 => Membrane.Read(Fill(random, Pick(random, GameText)), random.Next(2) == 0 ? "a sign" : null),
                     1 => Membrane.BossSaid(Pick(random, BossWords)),
                     2 => Membrane.Remembers(Fill(random, Pick(random, Happenings))),

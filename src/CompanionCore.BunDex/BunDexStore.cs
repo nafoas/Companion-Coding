@@ -193,7 +193,7 @@ public sealed partial class BunDexStore
     /// mind unprompted. A page that just came to mind won't again for a while. Everything that comes
     /// to mind is remembered, which restarts its clock (append-only).
     /// </summary>
-    internal (IReadOnlyList<Remembered> Clear, Feeling? Bell, Guid? BellPage) ComeToMind(string cue, string? where)
+    internal (IReadOnlyList<Remembered> Clear, Feeling? Bell, Guid? LookUp) ComeToMind(string cue, string? where)
     {
         var words = Words(cue);
         lock (_gate)
@@ -202,8 +202,8 @@ public sealed partial class BunDexStore
             var candidates = _pages.Values
                 .Where(page => !(_cameToMind.TryGetValue(page.Id, out var last) && now - last < CameToMindCooldown))
                 .Select(page => (Page: page, Score: Likeness(page, words, where), Layer: PageClarity.LayerOf(page.Tags)))
-                .Where(candidate => candidate.Score >= 2)
-                .Select(candidate => (candidate.Page, candidate.Score, candidate.Layer, Clarity: PageClarity.Of(candidate.Layer, now - candidate.Page.LastTouched, SessionsSince(candidate.Page.LastTouched))))
+                .Where(candidate => candidate.Score >= ComeToMindAt)
+                .Select(candidate => (candidate.Page, candidate.Score, candidate.Layer, Clarity: ClarityOf(candidate.Page, now, where)))
                 .OrderByDescending(candidate => candidate.Score)
                 .ThenByDescending(candidate => PageClarity.Rank(candidate.Layer))
                 .ThenByDescending(candidate => candidate.Page.LastTouched)
@@ -226,15 +226,16 @@ public sealed partial class BunDexStore
             }
 
             Feeling? bell = null;
-            Guid? bellPage = null;
+            Guid? lookUp = null;
             if (candidates.FirstOrDefault(candidate => candidate.Clarity == Clarity.RingsABell) is { Page: not null } faint)
             {
+                // "Dat rings a bell... should look dis up": only when it matters to him or is nearly there.
                 bell = Membrane.RingsABell();
-                bellPage = faint.Page.Id;
+                lookUp = WorthLookingUp(faint.Page, now, where) ? faint.Page.Id : null;
                 Remembering(faint.Page.Id, now);
             }
 
-            return (clear, bell, bellPage);
+            return (clear, bell, lookUp);
         }
     }
 
@@ -264,12 +265,12 @@ public sealed partial class BunDexStore
     }
 
     /// <summary>How clearly a page would come to mind right now (for the subconscious and tests).</summary>
-    internal Clarity ClarityOf(Guid pageId)
+    internal Clarity ClarityOf(Guid pageId, string? where = null)
     {
         lock (_gate)
         {
             var page = _pages.GetValueOrDefault(pageId) ?? throw new BunDexException("That page does not exist.");
-            return PageClarity.Of(PageClarity.LayerOf(page.Tags), Now() - page.LastTouched, SessionsSince(page.LastTouched));
+            return ClarityOf(page, Now(), where);
         }
     }
 
@@ -336,42 +337,6 @@ public sealed partial class BunDexStore
         {
             return new BunDexView(FoldersUnder(null), PagesIn(null));
         }
-    }
-
-    private static int Likeness(PageState page, HashSet<string> words, string? where)
-    {
-        var shared = Words(page.Text.ToString()).Count(words.Contains);
-        var sameWhere = where is not null && string.Equals(page.Tags.Where, where, StringComparison.OrdinalIgnoreCase);
-        return shared + (sameWhere ? 2 : 0);
-    }
-
-    private static readonly HashSet<string> CommonWords = new(StringComparer.Ordinal)
-    {
-        "that", "this", "with", "from", "they", "them", "then", "there", "their", "what", "when", "were", "have", "been", "into", "only",
-        "very", "just", "about", "after", "before", "said", "says", "boss", "prince", "da", "dat", "dis", "dem", "dere", "wif", "even",
-    };
-
-    private static HashSet<string> Words(string text)
-    {
-        var words = new HashSet<string>(StringComparer.Ordinal);
-        var current = new StringBuilder();
-        foreach (var character in text.Append(' '))
-        {
-            if (char.IsLetter(character))
-            {
-                current.Append(char.ToLowerInvariant(character));
-                continue;
-            }
-
-            if (current.Length >= 4 && !CommonWords.Contains(current.ToString()))
-            {
-                words.Add(current.ToString());
-            }
-
-            current.Clear();
-        }
-
-        return words;
     }
 
     private IReadOnlyList<string> FolderNames(Guid? folderId)
@@ -445,6 +410,7 @@ public sealed partial class BunDexStore
             case LedgerKind.PageCreated:
                 var created = new PageState(entry.PageId!.Value, entry.FolderId, entry.Name!, entry.Tags!.ToTags(), new StringBuilder(entry.Text)) { LastWrittenAt = entry.At, LastTouched = entry.At };
                 _pages[created.Id] = created;
+                Learn(created, created.Name + " " + entry.Text);
                 _declines.Remove(created.Tags.Role);
                 break;
             case LedgerKind.PageAdded:
@@ -452,6 +418,8 @@ public sealed partial class BunDexStore
                 added.Text.Append(entry.Text);
                 added.LastWrittenAt = entry.At;
                 added.LastTouched = entry.At;
+                added.Additions++;
+                Learn(added, entry.Text ?? string.Empty);
                 _declines.Remove(added.Tags.Role);
                 break;
             case LedgerKind.FolderMoved:
@@ -465,6 +433,7 @@ public sealed partial class BunDexStore
                 page.PreviousPaths.Add(RelativePagePath(page.Id));
                 page.FolderId = entry.FolderId;
                 page.Name = entry.Name!;
+                Learn(page, page.Name);
                 break;
             case LedgerKind.RoleRegistered:
                 // Retired (M1c): a kind of thing never has a home Prince did not choose each time.
@@ -477,6 +446,7 @@ public sealed partial class BunDexStore
                 break;
             case LedgerKind.PageRecalled when _pages.TryGetValue(entry.PageId!.Value, out var recalled):
                 recalled.LastTouched = entry.At > recalled.LastTouched ? entry.At : recalled.LastTouched;
+                recalled.Recalls++;
                 break;
         }
     }
@@ -785,5 +755,14 @@ public sealed partial class BunDexStore
         public StringBuilder Text { get; } = text;
 
         public List<string> PreviousPaths { get; } = [];
+
+        /// <summary>Every word on the page, its name included (M4e: how familiar words are to him).</summary>
+        public HashSet<string> Words { get; } = new(StringComparer.Ordinal);
+
+        /// <summary>How many times he came back to add to it (M4e: how much he wrote).</summary>
+        public int Additions { get; set; }
+
+        /// <summary>How many times he has remembered it (M4e: each remembering makes it stronger).</summary>
+        public int Recalls { get; set; }
     }
 }

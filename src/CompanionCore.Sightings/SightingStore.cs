@@ -33,6 +33,13 @@ public sealed class SightingStore
     private readonly Familiarity _familiarity = new();
     private readonly Bravery _bravery = new();
     private readonly Dictionary<(string Game, string Thing), List<Impression>> _impressions = [];
+    private readonly Dictionary<string, int> _wordsSeen = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The magnitudes a pattern grows through (M4e): a few times, lots of times, so many times.
+    /// A pattern is offered to keep only when it grows into one, never per sighting.
+    /// </summary>
+    internal static readonly int[] Magnitudes = [3, 10, 30];
     private int _segment;
     private long _segmentBytes;
 
@@ -54,7 +61,13 @@ public sealed class SightingStore
     }
 
     /// <summary>Something the eyes noticed: recorded, then how new it felt (getting used to things).</summary>
-    public double See(Sighting sighting)
+    public double See(Sighting sighting) => SeeAndNotice(sighting).Novelty;
+
+    /// <summary>
+    /// Something the eyes noticed, and whether it grew a pattern into a new magnitude ("saws MANYS
+    /// trees!!", M4e). A repeat is part of the pattern, not a new salient memory; it still counts.
+    /// </summary>
+    public (double Novelty, Impression? Grown) SeeAndNotice(Sighting sighting)
     {
         ArgumentNullException.ThrowIfNull(sighting);
         lock (_gate)
@@ -66,14 +79,27 @@ public sealed class SightingStore
     }
 
     /// <summary>Records a sighting that only adds to impressions (a memory proposal).</summary>
-    public void Record(Sighting sighting)
+    public void Record(Sighting sighting) => RecordAndNotice(sighting);
+
+    /// <summary>Records a sighting that only adds to impressions, and whether it grew a pattern into a new magnitude.</summary>
+    public Impression? RecordAndNotice(Sighting sighting)
     {
         ArgumentNullException.ThrowIfNull(sighting);
         lock (_gate)
         {
             var bounded = Bound(sighting);
             Append(bounded);
-            Apply(bounded);
+            return Apply(bounded).Grown;
+        }
+    }
+
+    /// <summary>How many sightings a word was part of: how familiar it is from what his eyes saw (M4e).</summary>
+    public int TimesSeen(string word)
+    {
+        ArgumentNullException.ThrowIfNull(word);
+        lock (_gate)
+        {
+            return _wordsSeen.GetValueOrDefault(word.ToLowerInvariant());
         }
     }
 
@@ -231,7 +257,7 @@ public sealed class SightingStore
         return new SightingOpenReport(Count, torn, unreadable);
     }
 
-    private double Apply(Sighting sighting)
+    private (double Novelty, Impression? Grown) Apply(Sighting sighting)
     {
         Count++;
         var novelty = sighting.Source == SightingSource.Observation ? _bravery.Calm(sighting, _familiarity.Observe(sighting)) : 0;
@@ -239,7 +265,12 @@ public sealed class SightingStore
         if (sighting.Source == SightingSource.Encounter)
         {
             // A fight is part of the record and of his courage, not another "saw this again".
-            return novelty;
+            return (novelty, null);
+        }
+
+        foreach (var word in Likeness.Words(sighting.Thing + " " + sighting.Words))
+        {
+            _wordsSeen[word] = _wordsSeen.GetValueOrDefault(word) + 1;
         }
 
         var key = Key(sighting.Game, sighting.Thing);
@@ -252,20 +283,18 @@ public sealed class SightingStore
         if (index < 0)
         {
             list.Add(new Impression(Normalize(sighting.Game), sighting.Thing, 1, sighting.At, sighting.At, sighting.Words));
-        }
-        else
-        {
-            var impression = list[index];
-            list[index] = impression with
-            {
-                Count = impression.Count + 1,
-                First = sighting.At < impression.First ? sighting.At : impression.First,
-                Last = sighting.At > impression.Last ? sighting.At : impression.Last,
-                LatestWords = sighting.Words,
-            };
+            return (novelty, null);
         }
 
-        return novelty;
+        var impression = list[index];
+        list[index] = impression = impression with
+        {
+            Count = impression.Count + 1,
+            First = sighting.At < impression.First ? sighting.At : impression.First,
+            Last = sighting.At > impression.Last ? sighting.At : impression.Last,
+            LatestWords = sighting.Words,
+        };
+        return (novelty, Magnitudes.Contains(impression.Count) ? impression : null);
     }
 
     private void Append(Sighting sighting)
