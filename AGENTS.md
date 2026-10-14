@@ -2,6 +2,10 @@
 
 These rules apply to every coding agent in this repository.
 
+## The vision (Boss, 2026-10-14)
+
+Prince is a little personality that actually grows, develops, and learns organically from his own adventures. He lives locally, in his own memories and pages. The BrainCase and the model only facilitate him: the model is his voice, never who he is. This is not a claim of consciousness. It is the lens for every design choice. Read "The vision" at the top of `tasks/proposed/pre-stage-13-changes.md` before designing anything about him. When efficiency conflicts with his agency, personality, or organic feel, his agency and personality win.
+
 ## Required reading order
 
 1. `tasks/active/` — the only authorized current task.
