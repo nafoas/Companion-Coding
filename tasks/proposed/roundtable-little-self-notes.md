@@ -1,4 +1,4 @@
-# Roundtable: the Little Self (Boss, 2026-10-14). Running pins, in progress; they fold into "The vision" in the plan when the roundtable ends.
+# Roundtable: the Little Self (Boss, 2026-10-14). Pinned R1–R20; the R work follows the M steps.
 
 R1. Core identity vs growth. "There are some immutable things that just come with him being a Bnuy. There are some immutable things about him, his relationship with Da Boss, and some things he inherently likes, due to his inherent personality plus who he is as a little round Bnuy. Those are his core identity, that revolve not around memories, but just who he is. The rest is growth."
 R2. The voice vs his own record: Boss will articulate this in more detail soon (open).

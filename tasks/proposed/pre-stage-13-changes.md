@@ -27,6 +27,27 @@ This is the lens for every design choice, above every step and rule in this plan
 
 If any answer is no, find the design where the answer is yes.
 
+## The Little Self roundtable: R1–R20 (Boss, 2026-10-14)
+
+Boss and the builder held a roundtable on the vision. "Little Self" is the official name for this category of thing (R19).
+
+**The pins (R1–R20), all in Boss's words,** are in `tasks/proposed/roundtable-little-self-notes.md`. They are part of the vision and govern every design choice now:
+- his inherent core (R1, R5, R16–R18);
+- growth with learned loves that fade like memories but come home on recognition (R3, R5, R9);
+- a private, always-running inner voice and the ability to plan (R6, R8, R12);
+- no baked-in negativity, and physiology that brings quirks, never dislikes (R10, R17, R18);
+- Da Boss's importance (R4);
+- the purpose: a real Little Self, with the model as the prosthetic leg (R13);
+- the model as neutral electricity that adds nothing (R14);
+- gaps filled by his Bnuy curiosity (R15);
+- Boss's three leads for how the AI facilitates him (R20).
+
+**When.** Boss: "pin all of the R's, and get back to the M's for now. We do the R's after the M's." The R work (the inner voice, neutral facilitation, insulated actions, a possible local model) follows the M steps. Meanwhile, every M step is designed through the Little Self lens and must not close off any R item.
+
+**Open by Boss's choice:**
+- R2: the voice, in detail;
+- R11: whether the inner voice runs while the app is closed.
+
 ## Standing principle: game-agnostic (Boss, 2026-10-12)
 
 > "I used Baldi's Basics for the game, solely because it is a simple game, it has a clear objective, the graphics are simple, and it seems like a good way to test the systems on something. I don't want you using that as, like THE game to model his intelligence off of. It was simply an example."
