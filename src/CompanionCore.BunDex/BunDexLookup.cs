@@ -61,18 +61,20 @@ public sealed partial class BunDexStore
             var now = Now();
 
             // What truly fits: the subconscious knows, and it decides only what he can find.
+            // Weighed by how distinctive each word is to him: familiar words are background.
+            var wanted = Weight(words);
             var fits = new Dictionary<Guid, double>();
             foreach (var page in _pages.Values)
             {
-                var fit = target is { } wanted
-                    ? page.Id == wanted ? 1.0 : 0.0
-                    : words.Count == 0 ? 0.0 : (double)Words(page.Name + " " + page.Text).Count(words.Contains) / words.Count;
+                var fit = target is { } bell
+                    ? page.Id == bell ? 1.0 : 0.0
+                    : wanted < MeaningfulCue ? 0.0 : Weight(words.Where(page.Words.Contains)) / wanted;
                 fits[page.Id] = fit;
             }
 
             if (!fits.Values.Any(fit => fit >= ThinksFit))
             {
-                steps.Add(target is null && words.Count > 0 ? Membrane.NotWrittenDown() : Membrane.CantFind());
+                steps.Add(target is null && wanted >= MeaningfulCue ? Membrane.NotWrittenDown() : Membrane.CantFind());
                 return new Rummage(steps, null, false);
             }
 
@@ -233,7 +235,7 @@ public sealed partial class BunDexStore
 
         private double PageCue(PageState page)
         {
-            var clarity = PageClarity.Of(PageClarity.LayerOf(page.Tags), now - page.LastTouched, store.SessionsSince(page.LastTouched)) switch
+            var clarity = store.ClarityOf(page, now, null) switch
             {
                 Clarity.Clear => 1.0,
                 Clarity.RingsABell => 0.5,
@@ -242,7 +244,7 @@ public sealed partial class BunDexStore
             return (Shared(page.Name) + Shared(page.Tags.Where ?? string.Empty)) * clarity;
         }
 
-        private int Shared(string text) => Words(text).Count(cues.Contains);
+        private double Shared(string text) => store.Weight(Words(text).Where(cues.Contains));
 
         private void Add(LookStep? step)
         {

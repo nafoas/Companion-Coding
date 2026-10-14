@@ -49,8 +49,15 @@ public sealed class StandInWriter : IBunDexWriter
         return ValueTask.FromResult(_tidy(moment, notebook));
     }
 
-    /// <summary>What happened, in plain words (a stand-in has no voice of its own).</summary>
-    public static string Plain(KeepMoment moment) => moment.WhatHappened.Quoted ?? moment.WhatHappened.Words;
+    /// <summary>
+    /// What happened, in plain words (a stand-in has no voice of its own). A pattern keeps its
+    /// magnitude ("seen this so, so many times"): his own words for it come in Stage 13.
+    /// </summary>
+    public static string Plain(KeepMoment moment) => moment.WhatHappened.Kind switch
+    {
+        SenseKind.SawAgain or SenseKind.SawAFewTimes or SenseKind.SawLotsOfTimes or SenseKind.SawSoManyTimes => moment.WhatHappened.Line,
+        _ => moment.WhatHappened.Quoted ?? moment.WhatHappened.Words,
+    };
 
     private static string FirstWords(string text, int count) =>
         string.Join(' ', text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(count));

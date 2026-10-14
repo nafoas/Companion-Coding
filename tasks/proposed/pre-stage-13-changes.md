@@ -989,6 +989,7 @@ Every step stays game-agnostic and follows items 13–15 (the curtain and the me
 | **M2. The curtain** | Requests assembled from inside Prince, in the first person. The membrane as the only path, with its four channels. The build-time check for forbidden vocabulary, role-play framing, and imperatives. The curtain-audit test. The character-validator hook. | 8a, 8c, 13, 14, 15 |
 | **M3. Seeing like a Bun** | The full sighting record with live aggregation ("saw dis a few times"). Gradual desensitization by thing and by kind, with recovery over time, re-sensitizing on context change, and the danger exemption. Per-context fear easing, and trust in Da Boss. | 1, 7a, 12, 17 (trust), 18 (trust) |
 | **M4. Remembering like a Bun** | Four layers with the approved values and two clocks. Recall refreshes a memory. The priority ladder and the adventure lifecycle. Recall actually supplied to his looks, and used sparingly. The visible "okay... now how find dis..." lookup, with hunches in his own folder names, an organic and imperfect search, and "dat rings a bell" (Boss, 2026-10-13). | 3, 4, 5, 7h, 7i, 13–15 |
+| **M4e. Remembering organically** | Words weighed by learned familiarity, never thrown out; patterns that accumulate and are kept by magnitude ("saws MANYS trees!!"); memory strength from his own history and the moment, so remembering, refreshers, and lookups happen organically, never by dice (Boss, 2026-10-14). | 1, 4, 7i, 12, 13–15 |
 | **M5. What matters** | Two-layer entries. Learned significance and the hard rules. "Remember this, Prince" / "That wasn't important". Treasured. The end-of-session review. The hybrid conversation-record path. Bnuy No Write These Down. Keeping during play wired to the Living Bun keeper, with every page linked to its source memories in the BrainCase index only (Boss, 2026-10-13). | 7b–7g, 7m, 7n, 10, 13–15 |
 | **M6. Conversations that live on** | Seed banks moved into the BunDex role with full seed records. BIC generation from the local roots, the 30 s BIC clock, and Brain Farts, all wired at runtime. Pause-and-resume, the idle-timeout fix, and patience during trusted fights. Real conversation through the curtain: Boss's words heard verbatim and answered like a Bun. "Someone said": hearing others, including overheard game dialogue, and remembering what was said, separately from his own recall of events (Boss, 2026-10-13). | 6, 8b, 8d, 13–15, 17 |
 | **M7. Knowing the world and Da Boss** | The Lore Notebook with provenance. Save identity, "Is this a new adventure?", and spoiler suppression. Grouped, evolving opinions (`BeliefHistory`). Relationship records, general memories about Boss, Together List warmth, and nickname approval. | 7j, 7k, 7l, 9, 18 |
@@ -1114,6 +1115,37 @@ Boss: "he goes 'okay... now how find dis...?' then the subconscious locates it, 
   - The search gives up after a few places. Something never written down brings no hunch.
   - "Rings a bell" follows fading: clear when fresh or cherished, more often a bell when old. A found page refreshes the memory.
   - The curtain audit gains the lookup and the hunch lines.
+
+**M4e. Remembering organically (Boss, 2026-10-14)**
+
+Boss: "Instead of the similarity rule working like that, could it not just work organically, like an actual Bnuy would process things? Rather than just arbitrarily throwing stuff out due to similarity in word length, it should work by his subconscious subconsciously filtering some words and patterns as being something Da Bnuy has seen before — so he interprets it as another part of said pattern, not a salient memory on his own — he doesn't announce or write it down every time, but they do still accumulate, such that he'd write down 'saws MANYS trees!!' rather than 'saw a tree, saw a tree, saw a tree'… It is handled intelligently, the way a Lil Bnuy would semantically distinguish the difference between novel and non novel objects, but not totally filtering them out, such that the magnitude of things he saw can be appreciated. 'Dat rings a bell' shouldn't be a diceroll — it should happen naturalistically, based on how long ago Da Thing was, how much Da Bnuy wrote on it, and whether or not he'd realistically know it all based on his personality, traits, things he was thinking about before, etc — it should depend on context… he shouldn't be forced into not being able to remember to fake authenticity — the front end consciousness just needs to genuinely find out these things, some things it'd remember better, some things it'd need a refresher on, some things he'd need to consult da widdle Bnuy BunDex for. It should be contextual and organic, and based on how an actual Bnuy would remember back autobiographically… nothing should be decided for him via diceroll, he needs to organically be able to remember and recall the way a Bnuy would, and it is legitimately him trying to remember based on the information given him, not an AI simply pretending it can't remember." Approved the same day: "make sure everything to the effect that I described it… is all in there."
+
+- **Words are weighed by how familiar they are to him, never thrown out.**
+  - The subconscious learns how familiar each word is from his own life: the pages he wrote and everything his eyes saw. Everyday words ("the", "is") are familiar from the start, the way any speaker knows them.
+  - A familiar word is background: it weighs little as a cue for remembering or finding. A rare, distinctive word weighs a lot. Length never matters: "key", "egg", and "orb" count.
+  - It is his own: a word he meets constantly (trees, after a forest) becomes background. The same word is vivid to a Bnuy who has never seen one.
+- **Patterns accumulate, and the magnitude is appreciated.**
+  - Repeats are recognised as part of a pattern, not as new salient memories. He doesn't announce or write each one, but every one still counts in the subconscious.
+  - The gist crosses as a growing impression, never a count: once, again, a few times, lots of times, so many times.
+  - A pattern is offered to him to keep only when it grows into a new magnitude, so he writes "saws MANYS trees!!" (his voice from Stage 13), never "saw a tree, saw a tree, saw a tree".
+- **How well he remembers comes from his own history and the moment, never chance.** A memory's strength comes from:
+  - how long ago it was, on both clocks;
+  - how much he wrote on it, and how often he came back to add to it;
+  - how often he has remembered it, with each remembering making it stronger;
+  - whether he would realistically know it: what he loves and holds dear (his cherished pages), what he has been thinking about (his thinking-about pages and what he wrote lately), and how strongly he felt (scary or cool things). Learned significance (M5b) and his interests (M6) plug in here;
+  - context: being back in the same place.
+- **What follows, organically.**
+  - Some things he remembers clearly.
+  - Some only ring a bell, and when they matter to him, or are on the tip of his tongue, he looks them up for a refresher. Otherwise the bell stays a passing feeling.
+  - Some he only finds by consulting his BunDex.
+- **No pretending.** His consciousness is never told to forget or to act unsure. It is given only what his subconscious genuinely surfaces, and it genuinely finds the rest by looking. Nothing anywhere is random.
+- **Tests (in addition to the per-step gate):**
+  - No word is dropped for its length. A short distinctive word counts, and a familiar word weighs less.
+  - Familiarity is learned from his own pages and sightings.
+  - A pattern is offered once per new magnitude, never per sighting. It crosses as a magnitude without a number, and what he writes keeps the magnitude.
+  - Each source of strength measurably changes remembering: age, how much he wrote, remembering, what he loves, what he is thinking about, feeling, and place.
+  - The bell leads to a lookup only when it matters to him or is nearly clear.
+  - No randomness anywhere, and the curtain audit includes the new lines.
 
 **M5. What matters**
 - **Two-layer entries:** structured facts in the BrainCase, and the stand-in recollection in the BunDex.

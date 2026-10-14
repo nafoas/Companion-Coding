@@ -42,6 +42,9 @@ public static partial class Membrane
 
     internal const int LotsOfTimes = 10;
 
+    /// <summary>At this many, "so, so many times" (M4e): the magnitude is appreciated, never counted.</summary>
+    internal const int SoManyTimes = 30;
+
     /// <summary>
     /// One growing impression of the same thing, as the gist he registers ("saw dis a few
     /// times"): never a count, never one experience per sighting.
@@ -59,7 +62,8 @@ public static partial class Membrane
             1 => SenseKind.Saw,
             < AFewTimes => SenseKind.SawAgain,
             < LotsOfTimes => SenseKind.SawAFewTimes,
-            _ => SenseKind.SawLotsOfTimes,
+            < SoManyTimes => SenseKind.SawLotsOfTimes,
+            _ => SenseKind.SawSoManyTimes,
         };
         return new Sense(kind, words, null);
     }

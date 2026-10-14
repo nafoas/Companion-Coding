@@ -26,7 +26,8 @@ public sealed class NoveltyGateTests
         Assert.Equal(100, impression.Count);
         Assert.Equal((T0, T0.AddSeconds(990)), (impression.First, impression.Last));
         Assert.Equal(100, store.Count);
-        Assert.Equal("Prince has seen this lots of times: Baldi is coming down the hall (2/7 notebooks).", ImpressionSense.Of(impression)!.Line);
+        // M4e: a hundred is "so, so many": the magnitude is appreciated, never counted.
+        Assert.Equal("Prince has seen this so, so many times: Baldi is coming down the hall (2/7 notebooks).", ImpressionSense.Of(impression)!.Line);
 
         // The record survives a reopen.
         var reopened = harness.Open(out var report);
@@ -125,7 +126,9 @@ public sealed class NoveltyGateTests
     [InlineData(3, SenseKind.SawAFewTimes, "Prince saw this a few times: a zombie.")]
     [InlineData(9, SenseKind.SawAFewTimes, "Prince saw this a few times: a zombie.")]
     [InlineData(10, SenseKind.SawLotsOfTimes, "Prince has seen this lots of times: a zombie.")]
-    [InlineData(500, SenseKind.SawLotsOfTimes, "Prince has seen this lots of times: a zombie.")]
+    [InlineData(29, SenseKind.SawLotsOfTimes, "Prince has seen this lots of times: a zombie.")]
+    [InlineData(30, SenseKind.SawSoManyTimes, "Prince has seen this so, so many times: a zombie.")]
+    [InlineData(500, SenseKind.SawSoManyTimes, "Prince has seen this so, so many times: a zombie.")]
     public void AnImpression_CrossesAsTheGist_NeverACount(int times, SenseKind kind, string line)
     {
         var sense = ImpressionSense.Of(new Impression("Hollow House", "zombie", times, T0, T0, "a zombie"))!;

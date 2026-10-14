@@ -12,6 +12,7 @@ public enum SenseKind
     SawAgain = 7,
     SawAFewTimes = 8,
     SawLotsOfTimes = 9,
+    SawSoManyTimes = 10,
 }
 
 /// <summary>
