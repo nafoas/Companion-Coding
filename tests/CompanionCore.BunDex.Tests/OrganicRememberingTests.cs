@@ -88,15 +88,20 @@ public sealed class OrganicRememberingTests
     }
 
     [Fact]
-    public void HowMuchHeWrote_ComingBackToAdd_KeepsItClear()
+    public void HowMuchHeWrote_ComingBackToAdd_KeepsItClear_AndAReopenRemembersIt()
     {
-        Assert.Equal(Clarity.Clear, After(2, (store, page, _) =>
+        var (store, page, clock, harness) = Build(2, (store, page, _) =>
         {
             for (var addition = 0; addition < 4; addition++)
             {
                 store.AddToPage(page, " More.");
             }
-        }).Clarity);
+        });
+        using (harness)
+        {
+            Assert.Equal(Clarity.Clear, store.ClarityOf(page));
+            Assert.Equal(Clarity.Clear, BunDexStore.Open(harness.Location, out _, clock).ClarityOf(page));
+        }
     }
 
     [Fact]
@@ -109,15 +114,62 @@ public sealed class OrganicRememberingTests
     }
 
     [Fact]
-    public void Remembering_MakesItStronger()
+    public void Remembering_MakesItStronger_AndAReopenRemembersIt()
     {
-        Assert.Equal(Clarity.Clear, After(2, (store, _, _) =>
+        var (store, page, clock, harness) = Build(2, (store, _, _) =>
         {
             for (var lookup = 0; lookup < 4; lookup++)
             {
                 Assert.NotNull(store.LookFor("the moon lantern").Found);
             }
-        }).Clarity);
+        });
+        using (harness)
+        {
+            Assert.Equal(Clarity.Clear, store.ClarityOf(page));
+            Assert.Equal(Clarity.Clear, BunDexStore.Open(harness.Location, out _, clock).ClarityOf(page));
+        }
+    }
+
+    [Fact]
+    public void APageHesThinkingAbout_StaysOnHisMind()
+    {
+        Assert.Equal(Clarity.Clear, After(2, (_, _, _) => { }, tags: Tags(BunDexRole.ThingsThinkingAbout)).Clarity);
+    }
+
+    [Fact]
+    public async Task BackWhereItHappened_ItComesBackClearly()
+    {
+        using var harness = new BunDexHarness();
+        var clock = new HandClock(T0);
+        var store = BunDexStore.Open(harness.Location, out _, clock);
+        store.CreatePage(null, "moon lantern", "moon lantern", Tags(BunDexRole.ShortTerm, where: "Hollow House"));
+        for (var session = 0; session < 2; session++)
+        {
+            clock.Advance(TimeSpan.FromMinutes(1));
+            store.BeginSession();
+        }
+
+        clock.Advance(TimeSpan.FromDays(2.5));
+        Assert.Equal(Clarity.RingsABell, store.ClarityOf(store.FindPage(null, "moon lantern")!.Value));
+
+        var there = new Recorder();
+        await new BunDexKeeper(store, there).KeepAsync(BunDexRole.ShortTerm, Tags(BunDexRole.ShortTerm, where: "Hollow House"), Saw("a moon lantern"));
+
+        Assert.Equal("moon lantern", Assert.Single(there.Moments[0].ComesToMind).Page);
+        Assert.Empty(there.Moments[0].Feelings);
+    }
+
+    [Fact]
+    public void NothingDistinctiveToLookFor_HeCannotFindIt_EvenIfAPageHasThoseWords()
+    {
+        using var harness = new BunDexHarness();
+        var store = harness.Open();
+        store.CreatePage(null, "moon key", "Da moon key is the key to a door.", Tags(BunDexRole.LongTerm));
+
+        var rummage = store.LookFor("the a");
+
+        Assert.Null(rummage.Found);
+        Assert.Equal([LookStepKind.StartsLooking, LookStepKind.CantFind], rummage.Steps.Select(step => step.Kind));
     }
 
     [Theory]
@@ -125,13 +177,13 @@ public sealed class OrganicRememberingTests
     [InlineData(BunDexRole.ThingsThinkingAbout)]
     public void WhatHeHoldsDear_OrHasBeenThinkingAbout_HeRealisticallyKnows(BunDexRole close)
     {
-        Assert.Equal(Clarity.Clear, After(2, (store, _, _) => store.CreatePage(null, "favourite", "Da moon lantern is da best.", Tags(close)), beforeSessions: true).Clarity);
+        Assert.Equal(Clarity.Clear, After(2, (store, _, _) => store.CreatePage(null, "favourite", "Da moon lantern is da best.", Tags(close))).Clarity);
     }
 
     [Fact]
     public void WhatHeWroteThisSession_IsWhatHesBeenThinkingAbout()
     {
-        Assert.Equal(Clarity.Clear, After(2, (store, _, _) => store.CreatePage(null, "today", "Saw anuver moon lantern!", Tags(BunDexRole.ShortTerm))).Clarity);
+        Assert.Equal(Clarity.Clear, After(2, (store, _, _) => store.CreatePage(null, "today", "Saw anuver moon lantern!", Tags(BunDexRole.ShortTerm)), beforeSessions: false).Clarity);
     }
 
     [Fact]
@@ -191,7 +243,8 @@ public sealed class OrganicRememberingTests
     [Fact]
     public async Task ABellCloseToHisHeart_LeadsToALittleLookup()
     {
-        var moment = await BellMoment((store, _) => store.CreatePage(null, "pie", "Moon pie is da best.", Tags(BunDexRole.Cherished)), TimeSpan.FromDays(7));
+        // Only a little of it is close to his heart, so it is neither clear nor on the tip of his tongue.
+        var moment = await BellMoment((store, _) => store.CreatePage(null, "pie", "Moon pie is da best.", Tags(BunDexRole.Cherished)), TimeSpan.FromDays(7), text: "moon lantern glows bright purple");
 
         Assert.Single(moment.Feelings);
         Assert.Equal(LookStepKind.Found, moment.Rummage[^1].Kind);
@@ -220,7 +273,7 @@ public sealed class OrganicRememberingTests
     // ---- helpers ---------------------------------------------------------------------------
 
     /// <summary>A short-term "moon lantern" page; <paramref name="sessions"/> play sessions a week apart; then its clarity.</summary>
-    private static (Clarity Clarity, int Unused) After(int sessions, Action<BunDexStore, Guid, HandClock> act, string? text = null, PageTags? tags = null, bool beforeSessions = false)
+    private static (Clarity Clarity, int Unused) After(int sessions, Action<BunDexStore, Guid, HandClock> act, string? text = null, PageTags? tags = null, bool beforeSessions = true)
     {
         var (store, page, _, harness) = Build(sessions, act, text, tags, beforeSessions);
         using (harness)
@@ -255,12 +308,12 @@ public sealed class OrganicRememberingTests
     }
 
     /// <summary>A short-term "moon lantern" page from Hollow House, rung as a bell by a keep moment in Sky Garden.</summary>
-    private static async Task<KeepMoment> BellMoment(Action<BunDexStore, Guid> before, TimeSpan between, PageTags? tags = null, int sessions = 2, TimeSpan? extra = null)
+    private static async Task<KeepMoment> BellMoment(Action<BunDexStore, Guid> before, TimeSpan between, PageTags? tags = null, int sessions = 2, TimeSpan? extra = null, string text = "moon lantern")
     {
         using var harness = new BunDexHarness();
         var clock = new HandClock(T0);
         var store = BunDexStore.Open(harness.Location, out _, clock);
-        var page = store.CreatePage(null, "moon lantern", "moon lantern", tags ?? Tags(BunDexRole.ShortTerm, where: "Hollow House"));
+        var page = store.CreatePage(null, "moon lantern", text, tags ?? Tags(BunDexRole.ShortTerm, where: "Hollow House"));
         before(store, page);
         for (var session = 0; session < sessions; session++)
         {

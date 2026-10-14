@@ -55,6 +55,8 @@ Plan items: 1, 4, 7i, 12, 13–15.
 - **J3.** Magnitudes fall at 3, 10, and 30.
 - **J4.** Strength factors as listed in design item 4. A brief note (20 words or fewer) gets no writing boost.
 - **J5.** A bell is on the tip of his tongue within 1.5 times its stretched window.
+- **J6.** A page he is thinking about, or wrote this session, counts as close to his heart itself. What is on his mind stays on his mind.
+- **J7.** Live play offers patterns to keep from M5a, together with the pinned source links in the BrainCase index. Until then the host connects only word familiarity.
 
 ## Acceptance
 
@@ -70,4 +72,6 @@ Plan items: 1, 4, 7i, 12, 13–15.
 
 ## Deferred findings
 
-_(none yet)_
+- **D1.** Word likeness is still by words, not meaning: "sapling" and "tree" are different words. Meaning comes in Stage 13, when his own mind judges "is dis da same fing?" over what his subconscious offers. A bundled local meaning model stays an option if the hand-run shows it is needed.
+- **D2.** Patterns are offered to keep during live play from M5a (J7).
+- **D3.** `MattersToHim` is filled by learned significance (M5b) and his interests (M6).
