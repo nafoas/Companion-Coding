@@ -152,7 +152,10 @@ public sealed class OrchestrationFailureTests
 
         for (var cycle = 0; cycle < 5; cycle++)
         {
-            Assert.Single(await harness.Host.Repository.RetrieveAsync(new MemoryQuery { SubjectPrefix = $"synthetic.cycle{cycle}" }));
+            var memory = Assert.Single(await harness.Host.Repository.RetrieveAsync(new MemoryQuery { SubjectPrefix = $"synthetic.cycle{cycle}" }));
+
+            // M5a: a replayed look never offers the same memory twice, so he never writes it twice.
+            Assert.True(harness.Host.BunDex.PagesFrom(BunDex.PageSources.Memory(memory.Record.RecordId)).Count <= 1);
         }
 
         Assert.Equal(0, harness.Orchestrator.Faults);

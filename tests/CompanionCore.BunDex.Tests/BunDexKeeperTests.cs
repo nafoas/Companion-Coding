@@ -106,46 +106,53 @@ public sealed class BunDexKeeperTests
     }
 
     [Fact]
-    public async Task NotNow_IsRespected_TheFeelingGrowsGently_AndRelaxesOnceHeKeepsOne()
+    public async Task HisUrgeToScribble_GrowsAfterAWhileWithoutWriting_OfAnyKind_AndRelaxesWhenHeWrites()
     {
         using var harness = new BunDexHarness();
-        var declines = 2;
-        var writer = new ScriptWriter((moment, _) => declines-- > 0 ? KeepResponse.NotNow : Write(["notes"], "statues " + declines, StandInWriter.Plain(moment)));
+        var notNow = 6;
+        var writer = new ScriptWriter((moment, _) => notNow-- > 0 ? KeepResponse.NotNow : Write(["notes"], "statues " + notNow, StandInWriter.Plain(moment)));
         var keeper = new BunDexKeeper(harness.Open(), writer);
+        BunDexRole[] kinds = [BunDexRole.Lore, BunDexRole.Opinions, BunDexRole.ShortTerm];
 
-        for (var index = 0; index < 4; index++)
+        for (var index = 0; index < 8; index++)
         {
-            await keeper.KeepAsync(BunDexRole.Lore, Tags(BunDexRole.Lore), Saw($"da statues sing {index}"));
+            var kind = kinds[index % kinds.Length];
+            await keeper.KeepAsync(kind, Tags(kind), Saw($"da statues sing {index}"));
         }
 
-        Assert.Equal([KeepFeeling.Gentle, KeepFeeling.Warm, KeepFeeling.Strong, KeepFeeling.Gentle], writer.Moments.Select(moment => moment.Feeling));
+        // M5a: from his nature, never about the moment: whatever kind of moment it is.
+        Assert.Equal(
+            [KeepFeeling.Gentle, KeepFeeling.Gentle, KeepFeeling.Gentle, KeepFeeling.Warm, KeepFeeling.Warm, KeepFeeling.Warm, KeepFeeling.Strong, KeepFeeling.Gentle],
+            writer.Moments.Select(moment => moment.Feeling));
         Assert.All(writer.Moments, moment => Assert.StartsWith("da statues sing", StandInWriter.Plain(moment), StringComparison.Ordinal));
 
-        // The relaxed pull survives a reopen, and other kinds of things were never affected.
-        declines = 1;
+        // The urge, and its relaxing, survive a reopen.
+        notNow = 3;
         var reopened = new BunDexKeeper(harness.Open(), writer);
-        await reopened.KeepAsync(BunDexRole.Lore, Tags(BunDexRole.Lore), Saw("da statues sing again"));
-        await reopened.KeepAsync(BunDexRole.Lore, Tags(BunDexRole.Lore), Saw("da statues sing more"));
-        await reopened.KeepAsync(BunDexRole.Opinions, Tags(BunDexRole.Opinions), Saw("statues are good"));
-        Assert.Equal([KeepFeeling.Gentle, KeepFeeling.Warm, KeepFeeling.Gentle], writer.Moments.Skip(4).Select(moment => moment.Feeling));
+        for (var index = 0; index < 4; index++)
+        {
+            await reopened.KeepAsync(BunDexRole.Opinions, Tags(BunDexRole.Opinions), Saw($"statues are good {index}"));
+        }
+
+        Assert.Equal([KeepFeeling.Gentle, KeepFeeling.Gentle, KeepFeeling.Gentle, KeepFeeling.Warm], writer.Moments.Skip(8).Select(moment => moment.Feeling));
     }
 
     [Fact]
-    public async Task ThePull_AlsoRelaxes_WhenHeAddsToAPageHeAlreadyHas()
+    public async Task HisUrge_AlsoRelaxes_WhenHeAddsToAPageHeAlreadyHas()
     {
         using var harness = new BunDexHarness();
         var store = harness.Open();
         store.CreatePage(null, "statues", "da statues sing.", Tags(BunDexRole.Lore));
-        var declines = 2;
-        var writer = new ScriptWriter((moment, _) => declines-- > 0 ? KeepResponse.NotNow : Write([], "statues", " " + StandInWriter.Plain(moment)) with { AddToExistingPage = true });
+        var notNow = 3;
+        var writer = new ScriptWriter((moment, _) => notNow-- > 0 ? KeepResponse.NotNow : Write([], "statues", " " + StandInWriter.Plain(moment)) with { AddToExistingPage = true });
         var keeper = new BunDexKeeper(store, writer);
 
-        for (var index = 0; index < 4; index++)
+        for (var index = 0; index < 5; index++)
         {
             await keeper.KeepAsync(BunDexRole.Lore, Tags(BunDexRole.Lore), Saw($"again {index}"));
         }
 
-        Assert.Equal([KeepFeeling.Gentle, KeepFeeling.Warm, KeepFeeling.Strong, KeepFeeling.Gentle], writer.Moments.Select(moment => moment.Feeling));
+        Assert.Equal([KeepFeeling.Gentle, KeepFeeling.Gentle, KeepFeeling.Gentle, KeepFeeling.Warm, KeepFeeling.Gentle], writer.Moments.Select(moment => moment.Feeling));
         Assert.Single(store.FindPages(_ => true));
     }
 

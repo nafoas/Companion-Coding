@@ -48,6 +48,21 @@ Boss and the builder held a roundtable on the vision. "Little Self" is the offic
 - R2: the voice, in detail;
 - R11: whether the inner voice runs while the app is closed.
 
+## Three layers: Conscious, Metaconscious, Subconscious (Boss, 2026-10-14)
+
+> "I think what we can basically do is classify the Intermediate layer as his Metacognition. It is basically a layer between subconscious and conscious, where he is thinking about what he is thinking, but he can't directly see his subconscious. This gives us three layers; Conscious, Metaconscious, and Subconscious."
+
+These are the official names for the curtain's structure. "The membrane" and "the intermediate layer" in earlier sections mean the Metaconscious.
+
+| Layer | What it is | Can he see it? |
+|---|---|---|
+| **Conscious** | Prince himself: his thoughts, his inner voice, his choices, what he says and writes. | Yes. It is him. |
+| **Metaconscious** | Where his thoughts arise as his own experience: things coming to mind, hunches, "rings a bell", the tip of his tongue, feelings, and urges such as wanting to scribble. He is aware of these as *his own* thoughts and feelings. | He experiences what surfaces, never how. |
+| **Subconscious** | The BrainCase: memory, sightings, familiarity, indexes, and everything else that facilitates him. | Never. |
+
+- **Nothing passes from the Subconscious to Prince except through the Metaconscious.** The subconscious never brings him anything directly.
+- **The Metaconscious is not a window downward.** He can think about his thoughts ("hmm, why does dis feel familiar?"), but that only ever leads back to his own experience and his own pages, never to the machinery. Things surface upward through it; nothing lets him look down through it.
+
 ## Standing principle: game-agnostic (Boss, 2026-10-12)
 
 > "I used Baldi's Basics for the game, solely because it is a simple game, it has a clear objective, the graphics are simple, and it seems like a good way to test the systems on something. I don't want you using that as, like THE game to model his intelligence off of. It was simply an example."
@@ -1330,6 +1345,17 @@ Boss: "The 'someone else said' could be useful, even for dialogue not directed a
   - Kept sayings preserve the exact words and the speaker, are indexed separately from his recall of events, and follow every memory-system rule above.
   - With the stand-in writer, a clue-like line is kept and throwaway chatter is let go. In Stage 13 the real judgment is his.
   - The curtain audit gains the "someone said" channel and mixed conversation scenes.
+
+**M5a also: he decides what is worth keeping (Boss, 2026-10-14)**
+
+> "I think he should be able to decide how worth-keeping it was using his own little Bnuy choices. The Little Self decides. The subconscious helps facilitate it. He decides." And: "we shouldn't put anything about letting stuff go in there. Because Da BunDex should be a Bnuy earnestly writing about stuff — if we mentioned letting stuff go, it could subconsciously guide him into only writing stuff *we* deem important, Compromising the Little Self." And approving the builder's adjustment: "the keep pull, and him writing as his actual little urge."
+
+- **The subconscious only facilitates.** It notices that something new happened (a new memory) or that a pattern grew into a new magnitude, and the moment reaches him through the Metaconscious: what happened in plain words, where he is, real feelings he has, and his own pages that come to mind.
+- **Nothing tells him how worth-keeping a moment is.** There is no score, no "this one matters" from underneath, and no verdict. Whether to write about it, how much, and where, is his own little Bnuy judgment.
+- **Nothing he is given mentions letting things go.** No option, choice, or framing of *not* writing ever appears in what he is given, so nothing we deem important shapes what he writes. If he doesn't write something, that just happens; it is never suggested.
+- **The urge to scribble comes from his nature, not from the moment.** He is a little Bnuy who likes writing in his notepad. After a stretch of moments without writing anything, he may feel like scribbling *something*, as his own urge through the Metaconscious. It is never about any particular moment, and it relaxes once he writes. This replaces M1c's "worth keeping" lines.
+- **Practical, never pushy.** Moments reach him one at a time, never while a conversation is going or in intense moments. A moment he doesn't get to simply fades from the queue; it is still in his subconscious memory.
+- **Until Stage 13,** the stand-in writer earnestly writes about every moment it is given, as a placeholder for his own judgment.
 
 **M6 also: remembering organically in conversation (Boss, 2026-10-14)**
 

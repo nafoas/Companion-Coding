@@ -28,6 +28,9 @@ public sealed record CompanionHostOptions(
 
     public IDiagnosticsSink? Diagnostics { get; init; }
 
+    /// <summary>Prince's side of his BunDex (M5a); the stand-in writer until Stage 13 gives him his voice.</summary>
+    public BunDex.IBunDexWriter? BunDexWriter { get; init; }
+
     /// <summary>Attached before every start (including after repairs), so no startup notice is missed.</summary>
     public EventHandler<CompanionNotice>? Notice { get; init; }
 }
@@ -226,6 +229,7 @@ public sealed class CompanionHost : IAsyncDisposable
                 {
                     Sightings = Sightings,
                     BunDex = BunDex,
+                    Keeper = new BunDexKeeper(BunDex, _options.BunDexWriter ?? new StandInWriter()),
                 },
                 _options.Orchestrator);
             if (_options.Notice is { } notice)

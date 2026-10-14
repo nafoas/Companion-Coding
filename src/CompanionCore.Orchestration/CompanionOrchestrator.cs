@@ -35,6 +35,9 @@ public sealed record CompanionComponents(
 
     /// <summary>His BunDex, whose remembering counts play sessions (M4a).</summary>
     public BunDex.BunDexStore? BunDex { get; init; }
+
+    /// <summary>Keeping during play (M5a): moments reach him, and he decides what to write.</summary>
+    public BunDex.BunDexKeeper? Keeper { get; init; }
 }
 
 public sealed record OrchestratorSnapshot(
@@ -53,6 +56,9 @@ public sealed record OrchestratorSnapshot(
 
     /// <summary>A Glance is in flight (VIS-02).</summary>
     public bool GlanceInFlight { get; init; }
+
+    /// <summary>A moment is reaching him and he may be writing (M5a).</summary>
+    public bool KeepInFlight { get; init; }
 
     /// <summary>One closer look is waiting (VIS-02).</summary>
     public bool InspectQueued { get; init; }
@@ -102,7 +108,7 @@ public sealed record SniffDiagnostics(
 /// the local write gate, privacy revocation still fences every result, and nothing here
 /// adds wording or personality.
 /// </summary>
-public sealed class CompanionOrchestrator : IAsyncDisposable
+public sealed partial class CompanionOrchestrator : IAsyncDisposable
 {
     internal const string ConversationStateName = "conversation-checkpoint";
     internal const string WatchbunStateName = "watchbun-checkpoint";
@@ -190,6 +196,11 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         _lastPersist = now;
 
         _c.Controller.SessionEvent += OnSessionEvent;
+        if (_c.Sightings is { } patterns)
+        {
+            patterns.PatternGrew += OnPatternGrew;
+        }
+
         _c.Controller.AttentionSheetAvailable += OnSheetAvailable;
         _c.Controller.SniffAvailable += OnSniffAvailable;
         _c.Controller.TextSniffAvailable += OnTextSniffAvailable;
@@ -231,6 +242,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         {
             Sniff = SniffSnapshot(),
             GlanceInFlight = _glanceInFlight,
+            KeepInFlight = _keepInFlight,
             InspectQueued = _inspectWanted,
             SheetsReceived = _sheetsReceived,
             GlancesSent = _glancesSent,
@@ -368,6 +380,11 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         }
 
         _c.Controller.SessionEvent -= OnSessionEvent;
+        if (_c.Sightings is { } patterns)
+        {
+            patterns.PatternGrew -= OnPatternGrew;
+        }
+
         _c.Controller.AttentionSheetAvailable -= OnSheetAvailable;
         _c.Controller.SniffAvailable -= OnSniffAvailable;
         _c.Controller.TextSniffAvailable -= OnTextSniffAvailable;
@@ -404,6 +421,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
             await _loop.ConfigureAwait(false);
         }
 
+        // M5a: a page he is writing is finished before the stores close, so two BunDex never overlap.
+        await FinishKeepingAsync().ConfigureAwait(false);
         await _shutdown.CancelAsync().ConfigureAwait(false);
         _shutdown.Dispose();
     }
@@ -787,6 +806,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
                 break;
             case TargetSessionEventKind.PrivacyPaused:
                 _pendingPhoto = null;
+                _keeping.Clear();
                 Publish(new CompanionNotice(CompanionNoticeKind.PrivacyPaused));
                 break;
             case TargetSessionEventKind.PrivacyResumed:
@@ -936,6 +956,7 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
                 session.Transcript.Dispose();
                 _session = null;
                 _pendingPhoto = null;
+                _keeping.Clear();
             }
         }
 
@@ -1247,6 +1268,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         {
             await ApplyWatchbunAsync(engine => engine.OnGameEvent(gameEvent, now)).ConfigureAwait(false);
         }
+
+        await OfferNewMemoriesAsync(session, outcome.Memory).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -1457,6 +1480,8 @@ public sealed class CompanionOrchestrator : IAsyncDisposable
         {
             await PersistAsync().ConfigureAwait(false);
         }
+
+        KeepNext();
     }
 
     private async Task<WatchbunRefusal> ApplyWatchbunAsync(Func<WatchbunEngine, WatchbunUpdate> apply)

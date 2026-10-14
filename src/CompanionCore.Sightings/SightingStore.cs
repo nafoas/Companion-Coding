@@ -70,11 +70,26 @@ public sealed class SightingStore
     public (double Novelty, Impression? Grown) SeeAndNotice(Sighting sighting)
     {
         ArgumentNullException.ThrowIfNull(sighting);
+        (double Novelty, Impression? Grown) result;
         lock (_gate)
         {
             var bounded = Bound(sighting);
             Append(bounded);
-            return Apply(bounded);
+            result = Apply(bounded);
+        }
+
+        Notify(result.Grown);
+        return result;
+    }
+
+    /// <summary>A pattern grew into a new magnitude (M5a: a moment worth offering him, never per sighting). Raised outside the lock.</summary>
+    public event Action<Impression>? PatternGrew;
+
+    private void Notify(Impression? grown)
+    {
+        if (grown is not null)
+        {
+            PatternGrew?.Invoke(grown);
         }
     }
 
@@ -85,12 +100,16 @@ public sealed class SightingStore
     public Impression? RecordAndNotice(Sighting sighting)
     {
         ArgumentNullException.ThrowIfNull(sighting);
+        Impression? grown;
         lock (_gate)
         {
             var bounded = Bound(sighting);
             Append(bounded);
-            return Apply(bounded).Grown;
+            grown = Apply(bounded).Grown;
         }
+
+        Notify(grown);
+        return grown;
     }
 
     /// <summary>How many sightings a word was part of: how familiar it is from what his eyes saw (M4e).</summary>

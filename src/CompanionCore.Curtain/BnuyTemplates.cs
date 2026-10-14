@@ -37,9 +37,9 @@ internal static class BnuyTemplates
     internal const string QuoteOpen = "«";
     internal const string QuoteClose = "»";
 
-    internal const string KeepGentle = "Prince feels this might be worth keeping.";
-    internal const string KeepWarm = "Prince feels this is worth keeping.";
-    internal const string KeepStrong = "Prince feels this is very much worth keeping.";
+    // His urge to scribble (M5a): from his nature after a while without writing, never about the moment.
+    internal const string KeepWarm = "Prince feels like scribbling in his notepad.";
+    internal const string KeepStrong = "Prince very much feels like scribbling in his notepad.";
     internal const string TidyFeeling = "Prince looks over his BunDex.";
 
     internal const string Scared = "Prince feels scared of this.";

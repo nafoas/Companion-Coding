@@ -99,14 +99,10 @@ public sealed class BnuyRequest
             }
         }
 
-        if (keepFeeling is { } feeling)
+        // His urge to scribble, when he has one (M5a). Nothing here weighs the moment.
+        if (keepFeeling is KeepFeeling.Warm or KeepFeeling.Strong)
         {
-            lines.Add([new BnuyPart(BnuyPartKind.Framing, feeling switch
-            {
-                KeepFeeling.Strong => BnuyTemplates.KeepStrong,
-                KeepFeeling.Warm => BnuyTemplates.KeepWarm,
-                _ => BnuyTemplates.KeepGentle,
-            })]);
+            lines.Add([new BnuyPart(BnuyPartKind.Framing, keepFeeling == KeepFeeling.Strong ? BnuyTemplates.KeepStrong : BnuyTemplates.KeepWarm)]);
         }
 
         foreach (var felt in feelings ?? [])

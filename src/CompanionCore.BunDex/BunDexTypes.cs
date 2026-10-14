@@ -43,7 +43,8 @@ public sealed record PageTags(
     string? Save,
     IReadOnlyList<string> Subjects,
     DateTimeOffset CreatedAtUtc,
-    string? Where = null);
+    string? Where = null,
+    IReadOnlyList<string>? Sources = null);
 
 /// <summary>A page as the BrainCase indexes it. Never shown to Prince.</summary>
 public sealed record IndexedPage(Guid PageId, string RelativePath, PageTags Tags);
