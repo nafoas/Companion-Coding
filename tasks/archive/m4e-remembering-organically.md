@@ -1,6 +1,6 @@
 # M4e — Remembering organically
 
-Status: **in progress**
+Status: **accepted**
 Authorized: 2026-10-14 by Boss ("turn this entire thing I mentioned into like, M4E, and make sure everything to the effect that I described it… is all in there"). Boss's words are pinned in the plan under "M4e. Remembering organically". Boss approved the M4 values chosen as Personal Round Judgment ("the values you picked were good").
 Accepted remote base: `0f7fde6a40d1f02ffc3470b900c4fb5bd106b478`
 Working branch: `agent/m4e-remembering-organically`
@@ -75,3 +75,27 @@ Plan items: 1, 4, 7i, 12, 13–15.
 - **D1.** Word likeness is still by words, not meaning: "sapling" and "tree" are different words. Meaning comes in Stage 13, when his own mind judges "is dis da same fing?" over what his subconscious offers. A bundled local meaning model stays an option if the hand-run shows it is needed.
 - **D2.** Patterns are offered to keep during live play from M5a (J7).
 - **D3.** `MattersToHim` is filled by learned significance (M5b) and his interests (M6).
+
+## Paw Gate
+
+- **Candidate.** Head `ebf604fd4e00496c750c7001de8581a7c34bdab0`, PR #106, against accepted `main` `0f7fde6a40d1f02ffc3470b900c4fb5bd106b478`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror`: 0 warnings, 0 errors; no vulnerable packages; 21 runnable suites, 1477 tests passed.
+- **Mutation pass.** 42 mutants, all killed on the final tests. Every part of Boss's description has a mutant that breaks it and a test that catches it:
+  - the length cutoff;
+  - learning from pages and from what he saw;
+  - the everyday head start;
+  - patterns offered per magnitude;
+  - the magnitude kept on the page;
+  - each strength source;
+  - each reason for the bell's lookup;
+  - the host connection.
+- **First-round survivors.**
+  - Each of the 9 first-round survivors got a test, or a fix where the test setup hid the effect.
+  - The self-care survivor became J6, a design decision: what is on his mind stays on his mind.
+- **Changed expectations (Boss's direction, not weakened).**
+  - 100 and 500 sightings now read "so, so many times".
+  - One M4b lookup test cue is retuned to the new word weights, still asserting "thinks it was this one".
+- **Windows CI.** Push run `38501245500` and PR run `38501262367`, both green.
+- **Merge-ref check.** Parents `0f7fde6` + `ebf604f`, tree `19e3788da313f7edeeb4eca04ccc5b70210f6454`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `073438bc1216d1e4a74673b9247745ef9d0204f2`.
+- **Result.** Passed and accepted.

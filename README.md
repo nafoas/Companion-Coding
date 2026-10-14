@@ -211,6 +211,13 @@ Merged as `7af8283514dc070b0c723a4d2ffc8fc0f0717b94`.
 
 Merged as `5a2bacf26abafed5267ac257603ba450b35116e7`.
 
+**M4e** (PR #106) makes remembering organic, at Boss's direction:
+- **Words are weighed by how familiar they are to Prince,** learned from his own pages and from what he saw. They are never thrown out for their length.
+- **Repeats add up into patterns.** He is offered to keep one only when it grows ("so, so many times"), never for every tree.
+- **How well he remembers comes from his own history and the moment:** how long ago, how much he wrote, how often he remembered, what he loves and has been thinking about, how he felt, and where he is. A bell leads to a little lookup when it matters to him. Nothing is random, and he is never told to forget.
+
+Merged as `073438bc1216d1e4a74673b9247745ef9d0204f2`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.
