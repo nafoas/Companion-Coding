@@ -3,7 +3,7 @@
 | Field | Current value |
 |---|---|
 | Current stage | **Stage 12 complete: Boss gave the Core Bun Approval Hop on 2026-10-12** after the ten-check milestone hand-run passed on his PC with live calls on (Baldi's Basics Classic Remastered). The hand-run found and fixed FIX-05 to FIX-10. Next: Boss's memory-quality changes, then Stage 13, personality installation on Builder Prince |
-| Active task | None. M1, M1b, M1c, M2, M3a, M3b, M4a, M4b, M4c, M4e, and M5a passed their Paw Gates; next is the emulated live Bnuy run, then M5b (what matters) of Boss's approved pre-Stage 13 plan (`tasks/proposed/pre-stage-13-changes.md`) |
+| Active task | M5b, what matters: memories form the way ours do (`tasks/active/m5b-what-matters.md`). The packet is written; the Remembering Novelty values await Boss. M1–M5a passed their Paw Gates, and the emulated live Bnuy run after M5a was done. |
 | Working branch | Accepted product/evidence baseline on `main`: `7a61caf364e0570e3e585bd1e2ea5bab740691ad` (FIX-10) |
 | Entry criteria met | Complete; Tasks 4–11, ERPP-01, KEEP-01, KEEP-02, WIRE-01, WIRE-02, AUDIT-01, R2, R3, and R5 each passed their Paw Gates and were reconciled to accepted `main` |
 | Product code authorized | Stage 12 authorized by Boss on 2026-10-11 ("Let's try Stage 12") |
