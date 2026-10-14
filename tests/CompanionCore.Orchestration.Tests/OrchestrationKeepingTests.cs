@@ -121,6 +121,60 @@ public sealed class OrchestrationKeepingTests
     }
 
     [Fact]
+    public async Task AMomentWaitingBeforeAPrivacyStop_IsNeverWritten_EvenAfterResuming()
+    {
+        await using var harness = await CreateAsync();
+        var writer = new StandInWriter();
+        harness.BunDexWriter = writer;
+        await harness.ReopenHostAsync();
+        var grant = await harness.AuthorizeAsync();
+        await BnuyModeAsync(harness, grant);
+        await SeeTreesAsync(harness, "tree", 3);
+
+        await harness.Controller.PrivacyStopAsync();
+        await harness.SettleAsync();
+        Assert.True((await harness.Controller.ResumeExplicitlyAsync()).Succeeded);
+        await harness.SettleAsync();
+        for (var step = 0; step < 60; step++)
+        {
+            await harness.AdvanceAndTickAsync(TimeSpan.FromSeconds(5));
+        }
+
+        Assert.Empty(writer.Moments);
+    }
+
+    [Fact]
+    public async Task APatternFromAnotherGame_IsNotOffered_InThisOne()
+    {
+        await using var harness = await CreateAsync();
+        var writer = new StandInWriter();
+        harness.BunDexWriter = writer;
+        await harness.ReopenHostAsync();
+        await harness.AuthorizeAsync();
+
+        for (var seen = 0; seen < 3; seen++)
+        {
+            harness.Host.Sightings.See(new Sighting(harness.Time.GetUtcNow(), "another-game", null, "tree", ObservationKind.Other, false, "a tall tree", SightingSource.Observation));
+        }
+
+        await harness.SettleAsync();
+        await harness.AdvanceAndTickAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Empty(writer.Moments);
+    }
+
+    [Fact]
+    public void OnlyNewlyCommittedMemories_AreOffered_NeverAReplayedOne()
+    {
+        var ids = new[] { Guid.NewGuid() };
+
+        Assert.NotNull(CompanionOrchestrator.NewlyCommitted(new BridgeMemoryResult(1, RemoteProposalRejection.None, new WriteGateResult(WriteGateStatus.Committed, WriteGateRejectionReason.None, ids))));
+        Assert.Null(CompanionOrchestrator.NewlyCommitted(new BridgeMemoryResult(1, RemoteProposalRejection.None, new WriteGateResult(WriteGateStatus.AlreadyCommitted, WriteGateRejectionReason.None, ids))));
+        Assert.Null(CompanionOrchestrator.NewlyCommitted(new BridgeMemoryResult(1, RemoteProposalRejection.None, new WriteGateResult(WriteGateStatus.Committed, WriteGateRejectionReason.None, []))));
+        Assert.Null(CompanionOrchestrator.NewlyCommitted(BridgeMemoryResult.None));
+    }
+
+    [Fact]
     public async Task TheQueueIsBounded_AndMomentsFade()
     {
         await using var harness = await CreateAsync();

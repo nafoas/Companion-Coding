@@ -32,7 +32,7 @@ public sealed partial class CompanionOrchestrator
     /// <summary>Every memory newly committed from a look reaches him as something he saw.</summary>
     private async Task OfferNewMemoriesAsync(ActiveSession session, BridgeMemoryResult memory)
     {
-        if (_c.Keeper is null || memory.GateResult is not { Status: WriteGateStatus.Committed, RecordIds.Count: > 0 } committed)
+        if (_c.Keeper is null || NewlyCommitted(memory) is not { } committed)
         {
             return;
         }
@@ -59,6 +59,10 @@ public sealed partial class CompanionOrchestrator
 
         KeepNext();
     }
+
+    /// <summary>Only memories this look newly committed; a replayed look (already committed) offers nothing again.</summary>
+    internal static WriteGateResult? NewlyCommitted(BridgeMemoryResult memory) =>
+        memory.GateResult is { Status: WriteGateStatus.Committed, RecordIds.Count: > 0 } committed ? committed : null;
 
     /// <summary>A pattern grew into a new magnitude: "saws MANYS trees!!", never once per tree.</summary>
     private void OnPatternGrew(Impression grown) => Post(() =>

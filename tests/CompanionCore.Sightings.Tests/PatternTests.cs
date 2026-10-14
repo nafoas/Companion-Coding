@@ -50,6 +50,23 @@ public sealed class PatternTests
     }
 
     [Fact]
+    public void GrowingIntoAMagnitude_IsNoticed_FromSightingsAndRememberingAlike()
+    {
+        using var harness = new SightingHarness();
+        var store = harness.Open();
+        var noticed = new List<(string Thing, int Count)>();
+        store.PatternGrew += grown => noticed.Add((grown.Thing, grown.Count));
+
+        for (var count = 1; count <= 3; count++)
+        {
+            store.See(Seen("tree", T0.AddMinutes(count), kind: ObservationKind.Other, words: "a tall tree"));
+            store.Record(Seen("zombie", T0.AddMinutes(count), words: "a zombie shambled") with { Source = SightingSource.Proposal });
+        }
+
+        Assert.Equal([("tree", 3), ("zombie", 3)], noticed);
+    }
+
+    [Fact]
     public void AFightIsNeverAPattern()
     {
         using var harness = new SightingHarness();
