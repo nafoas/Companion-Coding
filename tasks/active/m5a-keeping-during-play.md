@@ -38,6 +38,17 @@ Plan items: 10, 13–15; "M5 also: keeping during play", "M5 also: what M4e hand
    - Nothing he is given or can say reaches the links.
 6. **The memory system is untouched.** Keeping only reads memory records; the store stays byte-identical. A damaged (read-only) BunDex keeps nothing, and a failure is contained.
 
+## Judgments made while building (Personal Round Judgment)
+
+- **J1.** He feels like scribbling after 3 moments without writing, and very much after 6. It relaxes when he writes or adds anything. ("Really" is a curtain word, so the strong line says "very much".)
+- **J2.** At most 8 moments wait; the oldest fades first. A moment fades after 10 minutes.
+- **J3. His page names are exactly his** (found by the wall test).
+  - Writing two pages with the same name used to show him "trees (2)". The BrainCase had renumbered his name.
+  - Now a page keeps his title exactly as he wrote it, characters a file cannot hold included. File names on disk stay unique underneath, out of his sight.
+  - Old ledger lines read as before. A title is only written when it differs from the file name.
+- **J4.** In-play moments are tagged short-term in the hidden index (his layers decide how they fade, M4a/M4e). The kind is never shown to him.
+- **J5.** Moments carry no "where" until the eyes report places by name (see D2). Being back in the same place still works for pages that have one.
+
 ## Acceptance
 
 - A new memory during play is offered and kept, with its page linked to the memory record, traced both ways and across move, rename, reopen, and Vault rebuild.
@@ -52,4 +63,6 @@ Plan items: 10, 13–15; "M5 also: keeping during play", "M5 also: what M4e hand
 
 ## Deferred findings
 
-_(none yet)_
+- **D1.** A folder renamed to an existing folder's name, by his own tidying, still gets a number on disk and in his view. This is rare and only from his own step. Folders get the same title treatment as pages in a later step.
+- **D2.** The eyes do not yet name where he is in a game. When they do, moments carry it, and "being back where it happened" applies to in-play pages.
+- **D3.** Until Stage 13, the stand-in writer writes every moment, a placeholder for his own judgment. The BunDex will fill faster than it will with his own choices.

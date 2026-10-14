@@ -3,20 +3,23 @@ using CompanionCore.Curtain;
 namespace CompanionCore.BunDex;
 
 /// <summary>
-/// The subconscious side of keeping things (M1c: a Living Bun). When something is worth
-/// keeping, it reaches Prince only as what happened, where he is, a feeling, and a few of his
-/// own pages it reminds him of. He sees his whole notebook, with the lines he wrote about his
-/// places, and decides everything himself: whether to keep it, which place it belongs in, or
-/// that it is something else and needs a new place. Nothing here assigns a kind of thing a home,
-/// or counts, names, or orders his folders. A "not now" is quietly remembered, so the next such
-/// moment pulls a little more, until he keeps one and the pull is gentle again. His notebook is
-/// only ever reorganized by him: while he writes, or when Boss invites it. Everything he is
-/// given crosses the membrane (M2), and everything he writes passes the character validator
-/// first: a leak is asked for again a few times, then nothing is written.
+/// The subconscious side of keeping things (M1c: a Living Bun; M5a: he decides). A moment reaches
+/// Prince only through his Metaconscious: what happened, where he is, real feelings he has, a few
+/// of his own pages it reminds him of, and, after a while without writing, his own urge to
+/// scribble. Nothing tells him how worth keeping it is, and nothing mentions not writing: whether
+/// he writes, how much, and where, are his own little Bnuy choices. He sees his whole notebook, with
+/// the lines he wrote about his places, and decides everything himself. Nothing here assigns a kind
+/// of thing a home, or counts, names, or orders his folders. The BrainCase keeps hidden links from
+/// whatever he writes to where it came from. His notebook is only ever reorganized by him: while he
+/// writes, or when Boss invites it. Everything he writes passes the character validator first: a
+/// leak is asked for again a few times, then nothing is written.
 /// </summary>
 public sealed class BunDexKeeper
 {
-    internal const int StrongAfterDeclines = 2;
+    /// <summary>After this many moments without writing, he feels like scribbling (M5a); after <see cref="StrongUrgeAfter"/>, really.</summary>
+    internal const int UrgeAfter = 3;
+
+    internal const int StrongUrgeAfter = 6;
 
     private readonly BunDexStore _store;
     private readonly IBunDexWriter _writer;
@@ -31,8 +34,12 @@ public sealed class BunDexKeeper
         _diagnostics = diagnostics;
     }
 
-    /// <summary>Something felt worth keeping. <paramref name="whatHappened"/> has already crossed the membrane.</summary>
-    public async Task<KeepOutcome> KeepAsync(BunDexRole role, PageTags tags, Sense whatHappened, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// A moment reaches him (M5a). <paramref name="whatHappened"/> has already crossed into his
+    /// Metaconscious. <paramref name="sources"/> are the hidden links the BrainCase keeps for
+    /// whatever he writes; he never sees them. Whether he writes, and where, is his.
+    /// </summary>
+    public async Task<KeepOutcome> KeepAsync(BunDexRole role, PageTags tags, Sense whatHappened, CancellationToken cancellationToken = default, IReadOnlyList<string>? sources = null)
     {
         ArgumentNullException.ThrowIfNull(tags);
         ArgumentNullException.ThrowIfNull(whatHappened);
@@ -41,8 +48,9 @@ public sealed class BunDexKeeper
             throw new ArgumentException("The page tags must carry the same role.", nameof(tags));
         }
 
-        var declines = _store.Declines(role);
-        var feeling = declines >= StrongAfterDeclines ? KeepFeeling.Strong : declines == 1 ? KeepFeeling.Warm : KeepFeeling.Gentle;
+        // His urge to scribble comes from his nature after a while without writing, never from this moment.
+        var without = _store.MomentsWithoutWriting;
+        var feeling = without >= StrongUrgeAfter ? KeepFeeling.Strong : without >= UrgeAfter ? KeepFeeling.Warm : KeepFeeling.Gentle;
         var cue = whatHappened.Quoted ?? whatHappened.Words;
         var (clear, bell, lookUp) = _store.ComeToMind(cue, tags.Where);
 
@@ -95,12 +103,12 @@ public sealed class BunDexKeeper
             var existing = _store.FindPage(folderId, response.Page);
             if (response.AddToExistingPage && existing is { } existingId)
             {
-                _store.AddToPage(existingId, response.Text);
+                _store.AddToPage(existingId, response.Text, sources);
                 pageId = existingId;
             }
             else
             {
-                pageId = _store.CreatePage(folderId, response.Page, response.Text, tags);
+                pageId = _store.CreatePage(folderId, response.Page, response.Text, sources is { Count: > 0 } ? tags with { Sources = sources } : tags);
             }
         }
         catch (BunDexException exception)

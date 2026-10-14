@@ -20,7 +20,8 @@ public sealed partial class BunDexStore
     private readonly object _gate = new();
     private readonly Dictionary<Guid, FolderState> _folders = [];
     private readonly Dictionary<Guid, PageState> _pages = [];
-    private readonly Dictionary<BunDexRole, int> _declines = [];
+    private readonly Dictionary<string, List<Guid>> _bySource = new(StringComparer.Ordinal);
+    private int _momentsWithoutWriting;
     private readonly List<DateTimeOffset> _sessions = [];
     private readonly Dictionary<Guid, DateTimeOffset> _cameToMind = [];
     private readonly HashSet<Guid> _altered = [];
@@ -99,15 +100,16 @@ public sealed partial class BunDexStore
             ValidateText(text);
             var safe = BunDexNames.MakeSafe(name) ?? throw new BunDexException("That name cannot be used.");
             var unique = UniquePageName(folderId, safe);
+            var title = TitleOf(name);
             var id = Guid.NewGuid();
-            Commit(new LedgerEntry(0, Now(), LedgerKind.PageCreated, FolderId: folderId, Name: unique, PageId: id, Text: text, Tags: PageTagsWire.From(tags)));
+            Commit(new LedgerEntry(0, Now(), LedgerKind.PageCreated, FolderId: folderId, Name: unique, PageId: id, Text: text, Tags: PageTagsWire.From(tags), Title: title == unique ? null : title));
             WriteNewFile(PagePath(id), Encoding.UTF8.GetBytes(text));
             return id;
         }
     }
 
-    /// <summary>Adds text to the end of a page. Committed text is never changed.</summary>
-    public void AddToPage(Guid pageId, string text)
+    /// <summary>Adds text to the end of a page. Committed text is never changed. <paramref name="sources"/> join its hidden links.</summary>
+    public void AddToPage(Guid pageId, string text, IReadOnlyList<string>? sources = null)
     {
         lock (_gate)
         {
@@ -126,7 +128,7 @@ public sealed partial class BunDexStore
                 throw new BunDexException("That page was changed outside the BunDex; it is left as it is.");
             }
 
-            Commit(new LedgerEntry(0, Now(), LedgerKind.PageAdded, PageId: pageId, Text: text));
+            Commit(new LedgerEntry(0, Now(), LedgerKind.PageAdded, PageId: pageId, Text: text, Sources: sources is { Count: > 0 } ? [.. sources] : null));
             AppendToFile(path, Encoding.UTF8.GetBytes(text));
         }
     }
@@ -168,8 +170,9 @@ public sealed partial class BunDexStore
 
             var safe = newName is null ? page.Name : BunDexNames.MakeSafe(newName) ?? throw new BunDexException("That name cannot be used.");
             var unique = UniquePageName(newFolderId, safe, except: pageId);
+            var title = newName is null ? page.Title : TitleOf(newName);
             var from = PagePath(pageId);
-            Commit(new LedgerEntry(0, Now(), LedgerKind.PageMoved, FolderId: newFolderId, Name: unique, PageId: pageId));
+            Commit(new LedgerEntry(0, Now(), LedgerKind.PageMoved, FolderId: newFolderId, Name: unique, PageId: pageId, Title: title == unique ? null : title));
             MoveFile(from, PagePath(pageId));
         }
     }
@@ -218,7 +221,7 @@ public sealed partial class BunDexStore
                     break;
                 }
 
-                if (Membrane.Remember(FolderNames(candidate.Page.FolderId), candidate.Page.Name, candidate.Page.Tags.Where, candidate.Page.Text.ToString()) is { } remembered)
+                if (Membrane.Remember(FolderNames(candidate.Page.FolderId), candidate.Page.Title, candidate.Page.Tags.Where, candidate.Page.Text.ToString()) is { } remembered)
                 {
                     clear.Add(remembered);
                     Remembering(candidate.Page.Id, now);
@@ -274,6 +277,7 @@ public sealed partial class BunDexStore
         }
     }
 
+    /// <summary>A moment passed without his writing anything (the ledger keeps the kind, which only the subconscious reads).</summary>
     internal void RecordDecline(BunDexRole role)
     {
         lock (_gate)
@@ -284,12 +288,34 @@ public sealed partial class BunDexStore
 
     // ---- reads ---------------------------------------------------------------------------
 
-    /// <summary>"Not now"s for this kind of thing since he last kept one.</summary>
-    internal int Declines(BunDexRole role)
+    /// <summary>Moments, of any kind, since he last wrote anything (M5a: his urge to scribble).</summary>
+    internal int MomentsWithoutWriting
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _momentsWithoutWriting;
+            }
+        }
+    }
+
+    /// <summary>The hidden sources a page came from (memory records, sighting patterns). Never shown to Prince.</summary>
+    public IReadOnlyList<string> SourcesOf(Guid pageId)
     {
         lock (_gate)
         {
-            return _declines.GetValueOrDefault(role);
+            return _pages.TryGetValue(pageId, out var page) ? [.. page.Sources] : [];
+        }
+    }
+
+    /// <summary>The pages that came from a source, wherever he filed them. Never shown to Prince.</summary>
+    public IReadOnlyList<Guid> PagesFrom(string source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        lock (_gate)
+        {
+            return _bySource.TryGetValue(source, out var pages) ? [.. pages] : [];
         }
     }
 
@@ -389,12 +415,16 @@ public sealed partial class BunDexStore
         }
     }
 
+    /// <summary>A page by his own name for it (the first, if he gave two pages the same name), or by its name on disk.</summary>
     internal Guid? FindPage(Guid? folderId, string name)
     {
         lock (_gate)
         {
+            var title = TitleOf(name);
             var safe = BunDexNames.MakeSafe(name);
-            return _pages.Values.FirstOrDefault(page => page.FolderId == folderId && string.Equals(page.Name, safe, StringComparison.OrdinalIgnoreCase))?.Id;
+            var inFolder = _pages.Values.Where(page => page.FolderId == folderId).OrderBy(page => page.Name, StringComparer.OrdinalIgnoreCase).ToList();
+            return (inFolder.FirstOrDefault(page => string.Equals(page.Title, title, StringComparison.OrdinalIgnoreCase))
+                ?? inFolder.FirstOrDefault(page => string.Equals(page.Name, safe, StringComparison.OrdinalIgnoreCase)))?.Id;
         }
     }
 
@@ -408,10 +438,11 @@ public sealed partial class BunDexStore
                 _folders[entry.FolderId!.Value] = new FolderState(entry.FolderId.Value, entry.ParentId, entry.Name!) { About = entry.Text };
                 break;
             case LedgerKind.PageCreated:
-                var created = new PageState(entry.PageId!.Value, entry.FolderId, entry.Name!, entry.Tags!.ToTags(), new StringBuilder(entry.Text)) { LastWrittenAt = entry.At, LastTouched = entry.At };
+                var created = new PageState(entry.PageId!.Value, entry.FolderId, entry.Name!, entry.Tags!.ToTags(), new StringBuilder(entry.Text)) { LastWrittenAt = entry.At, LastTouched = entry.At, Title = entry.Title ?? entry.Name! };
                 _pages[created.Id] = created;
-                Learn(created, created.Name + " " + entry.Text);
-                _declines.Remove(created.Tags.Role);
+                Learn(created, created.Title + " " + entry.Text);
+                Link(created, created.Tags.Sources);
+                _momentsWithoutWriting = 0;
                 break;
             case LedgerKind.PageAdded:
                 var added = _pages[entry.PageId!.Value];
@@ -420,7 +451,8 @@ public sealed partial class BunDexStore
                 added.LastTouched = entry.At;
                 added.Additions++;
                 Learn(added, entry.Text ?? string.Empty);
-                _declines.Remove(added.Tags.Role);
+                Link(added, entry.Sources);
+                _momentsWithoutWriting = 0;
                 break;
             case LedgerKind.FolderMoved:
                 var folder = _folders[entry.FolderId!.Value];
@@ -433,13 +465,14 @@ public sealed partial class BunDexStore
                 page.PreviousPaths.Add(RelativePagePath(page.Id));
                 page.FolderId = entry.FolderId;
                 page.Name = entry.Name!;
-                Learn(page, page.Name);
+                page.Title = entry.Title ?? entry.Name!;
+                Learn(page, page.Title);
                 break;
             case LedgerKind.RoleRegistered:
                 // Retired (M1c): a kind of thing never has a home Prince did not choose each time.
                 break;
             case LedgerKind.KeepDeclined:
-                _declines[entry.Role!.Value] = _declines.GetValueOrDefault(entry.Role.Value) + 1;
+                _momentsWithoutWriting++;
                 break;
             case LedgerKind.SessionBegan:
                 _sessions.Add(entry.At);
@@ -633,6 +666,13 @@ public sealed partial class BunDexStore
         return Suffixed(name, Taken);
     }
 
+    /// <summary>His name for a page, as he wrote it: only trimmed and bounded, never renumbered or cleaned for disk.</summary>
+    private static string TitleOf(string name)
+    {
+        var title = name.Trim();
+        return title.Length <= BunDexNames.MaximumNameLength ? title : title[..BunDexNames.MaximumNameLength].TrimEnd();
+    }
+
     private static string Suffixed(string name, Func<string, bool> taken)
     {
         if (!taken(name))
@@ -658,7 +698,7 @@ public sealed partial class BunDexStore
             .Select(folder => new FolderView(folder.Name, folder.About, FoldersUnder(folder.Id), PagesIn(folder.Id)))];
 
     private IReadOnlyList<string> PagesIn(Guid? folderId) =>
-        [.. _pages.Values.Where(page => page.FolderId == folderId).Select(page => page.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase)];
+        [.. _pages.Values.Where(page => page.FolderId == folderId).Select(page => page.Title).OrderBy(name => name, StringComparer.OrdinalIgnoreCase)];
 
     private void WriteNewFile(string path, byte[] bytes)
     {
@@ -743,7 +783,11 @@ public sealed partial class BunDexStore
 
         public Guid? FolderId { get; set; } = folderId;
 
+        /// <summary>The file name on disk (unique within its folder). Never shown to him.</summary>
         public string Name { get; set; } = name;
+
+        /// <summary>His own name for the page, exactly as he wrote it (M5a): the BrainCase never alters it.</summary>
+        public string Title { get; set; } = name;
 
         public PageTags Tags { get; } = tags;
 
@@ -764,5 +808,27 @@ public sealed partial class BunDexStore
 
         /// <summary>How many times he has remembered it (M4e: each remembering makes it stronger).</summary>
         public int Recalls { get; set; }
+
+        /// <summary>Where it came from, in the BrainCase's hidden index only (M5a).</summary>
+        public List<string> Sources { get; } = [];
+    }
+
+    private void Link(PageState page, IEnumerable<string>? sources)
+    {
+        foreach (var source in sources ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(source) || page.Sources.Contains(source, StringComparer.Ordinal))
+            {
+                continue;
+            }
+
+            page.Sources.Add(source);
+            if (!_bySource.TryGetValue(source, out var pages))
+            {
+                _bySource[source] = pages = [];
+            }
+
+            pages.Add(page.Id);
+        }
     }
 }

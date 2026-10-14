@@ -24,12 +24,12 @@ internal enum LedgerKind
     PageRecalled = 9,
 }
 
-internal sealed record PageTagsWire(BunDexRole Role, MemoryLayer Layer, string? Game, string? Save, string[] Subjects, DateTimeOffset CreatedAtUtc, string? Where = null)
+internal sealed record PageTagsWire(BunDexRole Role, MemoryLayer Layer, string? Game, string? Save, string[] Subjects, DateTimeOffset CreatedAtUtc, string? Where = null, string[]? Sources = null)
 {
     internal static PageTagsWire From(PageTags tags) =>
-        new(tags.Role, tags.Layer, tags.Game, tags.Save, [.. tags.Subjects], tags.CreatedAtUtc, tags.Where);
+        new(tags.Role, tags.Layer, tags.Game, tags.Save, [.. tags.Subjects], tags.CreatedAtUtc, tags.Where, tags.Sources is { Count: > 0 } sources ? [.. sources] : null);
 
-    internal PageTags ToTags() => new(Role, Layer, Game, Save, Subjects, CreatedAtUtc, Where);
+    internal PageTags ToTags() => new(Role, Layer, Game, Save, Subjects, CreatedAtUtc, Where, Sources ?? []);
 }
 
 /// <summary>One committed ledger line. <see cref="Hash"/> chains to the previous line.</summary>
@@ -45,7 +45,9 @@ internal sealed record LedgerEntry(
     PageTagsWire? Tags = null,
     BunDexRole? Role = null,
     string Prev = "",
-    string? Hash = null);
+    string? Hash = null,
+    string[]? Sources = null,
+    string? Title = null);
 
 /// <summary>
 /// The BrainCase's append-only BunDex ledger: JSON lines in numbered segments, each line

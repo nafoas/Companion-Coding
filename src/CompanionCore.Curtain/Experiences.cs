@@ -91,7 +91,11 @@ public sealed class Feeling
     public override string ToString() => Line;
 }
 
-/// <summary>How strongly something feels worth keeping. A feeling, never a number.</summary>
+/// <summary>
+/// His urge to scribble in his notepad (M5a): part of his nature, growing after a while without
+/// writing and relaxing once he writes. Never a verdict on how worth keeping anything is. A
+/// feeling, never a number; <see cref="Gentle"/> is no urge at all.
+/// </summary>
 public enum KeepFeeling
 {
     Gentle = 1,

@@ -199,10 +199,10 @@ public sealed partial class BunDexStore
             var here = store._pages.Values.Where(page => page.FolderId == place)
                 .OrderByDescending(page => fits[page.Id])
                 .ThenByDescending(page => page.LastWrittenAt)
-                .ThenBy(page => page.Name, StringComparer.Ordinal)
+                .ThenBy(page => page.Title, StringComparer.Ordinal)
                 .ToList();
             if (here.FirstOrDefault(page => fits[page.Id] >= ThinksFit) is { } match
-                && Membrane.Remember(store.FolderNames(match.FolderId), match.Name, match.Tags.Where, match.Text.ToString()) is { } remembered)
+                && Membrane.Remember(store.FolderNames(match.FolderId), match.Title, match.Tags.Where, match.Text.ToString()) is { } remembered)
             {
                 Sure = fits[match.Id] >= SureFit;
                 Found = remembered;
@@ -213,7 +213,7 @@ public sealed partial class BunDexStore
 
             if (here.FirstOrDefault(page => fits[page.Id] > 0) is { } similar)
             {
-                Add(Membrane.ADifferentOne(similar.Name));
+                Add(Membrane.ADifferentOne(similar.Title));
             }
 
             var deeper = Ordered(store.Places(place).Where(child => child is not null && Pull(child) > 0)).ToList();
@@ -241,7 +241,7 @@ public sealed partial class BunDexStore
                 Clarity.RingsABell => 0.5,
                 _ => 0.25,
             };
-            return (Shared(page.Name) + Shared(page.Tags.Where ?? string.Empty)) * clarity;
+            return (Shared(page.Title) + Shared(page.Tags.Where ?? string.Empty)) * clarity;
         }
 
         private double Shared(string text) => store.Weight(Words(text).Where(cues.Contains));

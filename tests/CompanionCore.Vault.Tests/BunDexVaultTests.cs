@@ -56,6 +56,30 @@ public sealed class BunDexVaultTests
     }
 
     [Fact]
+    public async Task APagesHiddenSourceLinks_SurviveAVaultRebuild()
+    {
+        await using var harness = await CreateAsync();
+        var location = BunDexLocation.For(harness.Location);
+        var store = BunDexStore.Open(location, out _);
+        var memory = PageSources.Memory(Guid.NewGuid());
+        var pattern = PageSources.Sightings("synthetic-game", "Tree", 30);
+        var page = store.CreatePage(null, "trees", "so many trees", Tags() with { Sources = [memory] });
+        store.AddToPage(page, " and more", [pattern]);
+        await DaBunVault.CreateAsync(harness.Repository!, harness.Keepsakes, harness.State);
+        await harness.CloseAsync();
+        Directory.Delete(location.LedgerRoot, recursive: true);
+        Directory.Delete(location.BunDexRoot, recursive: true);
+
+        var report = await DaBunVault.RestoreAsync(harness.Location, harness.Privacy, harness.Keepsakes, harness.State);
+
+        Assert.Equal(BunDexLedgerRestore.Restored, report.BunDex!.Outcome);
+        var reopened = BunDexStore.Open(location, out _);
+        Assert.Equal([memory, pattern], reopened.SourcesOf(page));
+        Assert.Equal([page], reopened.PagesFrom(pattern));
+        Assert.Equal("sightings:synthetic-game:tree:30", pattern);
+    }
+
+    [Fact]
     public async Task ABrokenChain_IsPreserved_AndRebuiltFromTheVaultPlusEveryValidNewerEntry()
     {
         await using var harness = await CreateAsync();

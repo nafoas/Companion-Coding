@@ -116,4 +116,24 @@ public sealed class CurtainRulesTests
     [InlineData("Level 3, 100 coins")]
     public void TheBareWords_AreHisWorld_AndNeverCensored(string text) =>
         Assert.Empty(CurtainRules.FindSelfClaims(text));
+
+    [Fact]
+    public void NoTemplate_WeighsAMomentOrMentionsNotWriting()
+    {
+        // M5a (Boss, 2026-10-14): he decides what is worth keeping; nothing he is given weighs a
+        // moment, and nothing mentions letting things go, so nothing we deem important shapes him.
+        var weighing = new System.Text.RegularExpressions.Regex(@"\b(?:worth|important|matters?|not now|let(?:s|ting)? (?:it )?go|skip|ignore|forget|bother|decide|should (?:keep|write))\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        Assert.All(BnuyTemplates.All(), template => Assert.DoesNotMatch(weighing, template));
+    }
+
+    [Fact]
+    public void HisUrgeToScribble_IsALine_OnlyWhenHeHasOne()
+    {
+        string? UrgeLine(KeepFeeling feeling) => BnuyRequest.Assemble(null, keepFeeling: feeling).Lines.Skip(1).Select(line => line[0].Text).SingleOrDefault();
+
+        Assert.Null(UrgeLine(KeepFeeling.Gentle));
+        Assert.Equal("Prince feels like scribbling in his notepad.", UrgeLine(KeepFeeling.Warm));
+        Assert.Equal("Prince very much feels like scribbling in his notepad.", UrgeLine(KeepFeeling.Strong));
+    }
 }

@@ -518,8 +518,12 @@ internal sealed class OrchestrationHarness : IAsyncDisposable
             Orchestrator = options ?? new OrchestratorOptions { SemanticCadence = SemanticCadence.Unthrottled },
             Bridge = new BridgeOptions { InitialBackoff = TimeSpan.Zero, MaximumBackoff = TimeSpan.Zero },
             Notice = (_, notice) => Notices.Enqueue(notice),
+            BunDexWriter = BunDexWriter,
         });
     }
+
+    /// <summary>Prince's side of his BunDex for the next host opened (M5a); the stand-in writer when null.</summary>
+    internal BunDex.IBunDexWriter? BunDexWriter { get; set; }
 
     internal async Task ReopenHostAsync(OrchestratorOptions? options = null)
     {
