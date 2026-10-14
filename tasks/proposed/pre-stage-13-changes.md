@@ -14,6 +14,18 @@ Status: **approved (Boss, 2026-10-12: "Let us begin, then.").** The list, the bu
   - no assumption that games have a single counter, a short loop, or simple graphics.
 - **Tests and examples** stay synthetic and varied: exploration, story, combat, building, horror, cozy, menus, and long sessions.
 
+## Standing principle: remembering is organic, never by dice, never pretending (Boss, 2026-10-14)
+
+> "nothing should be decided for him via diceroll, he needs to organically be able to remember and recall the way a Bnuy would, and it is legitimately him trying to remember based on the information given him, not an AI simply pretending it can't remember." … "he shouldn't be forced into not being able to remember to fake authenticity — the front end consciousness just needs to genuinely find out these things, some things it'd remember better, some things it'd need a refresher on, some things he'd need to consult da widdle Bnuy BunDex for." … "I don't want anything to be based on brute force filtering out like that, it's not how Bnuys remember."
+
+This holds for every M step after M4e and for Stage 13. Built in M4e; see "M4e. Remembering organically" below.
+
+- **Never by dice.** No randomness, quota, counter, or "be wrong / forget now" rule anywhere in remembering, recall, lookup, keeping, or sightings. Imperfection comes only from honest sources: his own history (age, how much he wrote, remembering), what matters to him, his filing, and context. Every new step keeps the "no randomness" tests passing and adds its own assemblies to them.
+- **Never brute-force filtering.** Nothing is thrown out by a fixed rule such as word length or a hard-coded list. Familiarity is learned from his own life, and familiar things are weighed down, never dropped.
+- **Never pretending.** His consciousness is never told to forget, act unsure, or play dumb. It is given only what his subconscious genuinely surfaces, through the membrane, and it genuinely finds the rest by looking.
+- **Patterns, not logs.** Repeats join a pattern and are appreciated by their magnitude ("saws MANYS trees!!"), never announced or written one by one, and never dropped.
+- **Contextual.** What he remembers well depends on what he loves, what he has been thinking about, how he felt, and where he is. Every later source of "what matters" (significance, interests, relationships, requests) plugs into the same strength, not a separate rule.
+
 ## 1. Memories are novel, not a log (Boss, 2026-10-12)
 
 > "They are all the same memory. Dis is a Living Bun, or it should feel like one, and living beings don't constantly say the same thing twice. Memories need to be novel. He should have a record of everything he sees, but not everything he sees should become a *memory*, per se. The near duplicates perform this. He needs to remember like a person does, not like a log."
@@ -1005,6 +1017,12 @@ Every step stays game-agnostic and follows items 13–15 (the curtain and the me
 
 **What stays for Stage 13:** Prince's own words everywhere (the specification text, his responses to the "keep this" pull, his folders and pages, every line he says) and the validator's character rules.
 
+**Stage 13 also: remembering organically in his own voice (Boss, 2026-10-14).**
+- **He writes patterns in his own words** ("saws MANYS trees!!"). The core only gives him the magnitude.
+- **His own mind judges sameness.** "Is dis da same fing?": meaning, not just words. The subconscious offers candidates and the lookup's pages; his consciousness decides, honestly, from what it was given.
+- **He is never told to forget, to act unsure, or to pretend.** His uncertainty is only ever the honest product of what surfaced and what he found.
+- **The neutral rummage, bell, and magnitude lines** become his own voice. Their meaning and the curtain rules stay the same.
+
 
 ## Test plan: every M step is a full stage with its own Paw Gate (Boss, 2026-10-12)
 
@@ -1190,6 +1208,23 @@ Boss: "I still want there to be an internal, BrainCase, Subconscious layer index
   - no code path assigns a place, counts or orders folders, or reorganizes without his step;
   - M2's membrane checks cover the keep moment and the tidying invitation like every other channel.
 
+**M5 also: what M4e hands to M5 (Boss, 2026-10-14)**
+
+Boss approved splitting M5 into M5a, M5b, and M5c, with an emulation run after M5a ("all that other stuff is good"), and pinned remembering organically ("make sure to pin all of this… to the appropriate one they go to").
+
+- **M5a: keeping during play.**
+  - Live play offers patterns to keep only when one grows into a new magnitude (`SightingStore.SeeAndNotice` / `RecordAndNotice`): a few times, lots of times, so, so many times. Never per sighting: "saws MANYS trees!!", never "saw a tree, saw a tree, saw a tree".
+  - The magnitude crosses as a feeling of how many, never a number. What he writes keeps it.
+  - A pattern page is linked in the BrainCase index to the sightings behind it, exactly as other pages link to their source memories, and never visible to him.
+  - Moments to keep use M4e's organic remembering: what comes to mind, the bell, and the bell's little lookup by context.
+  - After M5a, the temporary emulated live Bnuy run is repeated so Boss can watch him keep, look up, and remember. It is never committed.
+- **M5b: what matters.** Learned significance, "Remember this, Prince", and Treasured feed M4e's memory strength through `MattersToHim`, so significant things are remembered better and their bells are looked up. It is never a separate rule and never a dice roll. "That wasn't important" lowers significance but never makes him forget or deletes anything.
+- **M5c: the end of a session.** The end-of-session review and the session aggregate wording (M3a D3) use magnitudes ("so, so many trees"), never counts or one line per repeat.
+- **Tests (in addition to the per-step gate):**
+  - during live play, thirty of the same thing offer three keep moments, never thirty;
+  - significance measurably strengthens remembering;
+  - the no-randomness tests cover every new assembly.
+
 **M6. Conversations that live on**
 - **The seed banks live in the BunDex role** with full seed records: subject, why interrupted, last exchange, links, unanswered question, resume confidence, age, attempts.
 - **Entry rule:** a seed requires substantive engagement, something unfinished, and value in resuming. Yes/no-only or click-only conversations never enter.
@@ -1250,6 +1285,14 @@ Boss: "The 'someone else said' could be useful, even for dialogue not directed a
   - With the stand-in writer, a clue-like line is kept and throwaway chatter is let go. In Stage 13 the real judgment is his.
   - The curtain audit gains the "someone said" channel and mixed conversation scenes.
 
+**M6 also: remembering organically in conversation (Boss, 2026-10-14)**
+
+- **Deliberate remembering.** "Remember when…?" from Boss, or his own wish to remember more, uses the Bnuy lookup (`LookFor`) and its rummage: hunches in his own places, truthful finding, gentle giving up. He is never told the answer and never told to forget it.
+- **Recall in conversation is organic.** What comes to mind while talking uses M4e's memory strength: clear, a bell with a refresher when it matters, or only by looking. It stays sparing.
+- **His interests feed what matters to him.** His BIC interests and inherent roots plug into `MattersToHim`, so he realistically knows more about what he loves.
+- **What he has been thinking about.** Seeds and things-thinking-about from conversations count as what is on his mind, and are remembered better while they are.
+- **Remembered sayings** follow the same organic remembering as everything else: how much he wrote, how often he recalled them, and how close they are to his heart. Words he has heard constantly become background, and a repeated line is a pattern, not a new saying each time.
+
 **M7. Knowing the world and Da Boss**
 - **Lore notes** carry provenance (saw, read, told, suspects, confirmed). One unreliable source never becomes confirmed.
 - **Save identity:**
@@ -1263,6 +1306,12 @@ Boss: "The 'someone else said' could be useful, even for dialogue not directed a
   - Together List games get the warmer invitation but still ask;
   - nicknames stick only with positive engagement.
 - **The immutable relationship boundaries** hold under adversarial scenarios: long absence, repeated non-response, dismissals.
+
+**M7 also: past adventures, remembered organically (Boss, 2026-10-14)**
+
+- **Finishing.** "Did our adventure finish?" records Finished when Boss confirms. It moves through the lifecycle on both clocks (M4c), never by a timer or a dice roll.
+- **Talking about past adventures** uses the lifecycle selection (`SelectAdventure`). Treasured Episodes always come to mind, adventure context fades gently, and detail needs a lookup in his BunDex. Returning to the adventure brings detail forward.
+- **What he knows about Boss and the world** (relationships, lore, opinions) plugs into the same memory strength, never a separate filter.
 
 **M8. Little Requests**
 - **Real curiosity only.** Requests arise from something seen times interest times novelty. No timer or quota can produce one; the caps only limit.
@@ -1281,6 +1330,10 @@ Boss: "The 'someone else said' could be useful, even for dialogue not directed a
 - **His own reactions raise attention by observation only.** "Look at this, Prince" works like pointing.
 - **The accepted attention numbers are unchanged.** The existing attention suite passes untouched.
 
+**M9 also: remembering, felt (Boss, 2026-10-14)**
+
+- **Remembering is felt, not reported.** "Rings a bell", a pattern's magnitude, and the pull to look something up cross only as feelings through the membrane. Never a strength, layer, weight, or count.
+
 **M10. Boss's hand-run**
 - The real App on Boss's PC with the stand-in writer, in any game Boss chooses.
 - The pulse plus a readable BunDex/BrainCase view show:
@@ -1289,4 +1342,11 @@ Boss: "The 'someone else said' could be useful, even for dialogue not directed a
   - seeds, BIC thoughts, and pause/resume;
   - Little Requests;
   - an empty BunDex filling organically.
+  - remembering organically (Boss, 2026-10-14):
+    - no word thrown out for its length;
+    - patterns kept by magnitude ("so, so many");
+    - some things clear, some ringing a bell and looked up, some found only in his BunDex;
+    - nothing random, and nothing pretended.
+
+    Boss judges whether it feels like a Bnuy remembering.
 - **Boss's approval of M10 is the gate into Stage 13.**
