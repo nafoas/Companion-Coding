@@ -1279,12 +1279,40 @@ Boss approved splitting M5 into M5a, M5b, and M5c, with an emulation run after M
   - A pattern page is linked in the BrainCase index to the sightings behind it, exactly as other pages link to their source memories, and never visible to him.
   - Moments to keep use M4e's organic remembering: what comes to mind, the bell, and the bell's little lookup by context.
   - After M5a, the temporary emulated live Bnuy run is repeated so Boss can watch him keep, look up, and remember. It is never committed.
-- **M5b: what matters.** Learned significance, "Remember this, Prince", and Treasured feed M4e's memory strength through `MattersToHim`, so significant things are remembered better and their bells are looked up. It is never a separate rule and never a dice roll. "That wasn't important" lowers significance but never makes him forget or deletes anything.
+- **M5b: what matters** (reworked: see "M5b also: memories form the way ours do" below, which supersedes this line). Learned significance, "Remember this, Prince", and Treasured feed M4e's memory strength through `MattersToHim`, so significant things are remembered better and their bells are looked up. It is never a separate rule and never a dice roll. "That wasn't important" lowers significance but never makes him forget or deletes anything.
 - **M5c: the end of a session.** The end-of-session review and the session aggregate wording (M3a D3) use magnitudes ("so, so many trees"), never counts or one line per repeat.
 - **Tests (in addition to the per-step gate):**
   - during live play, thirty of the same thing offer three keep moments, never thirty;
   - significance measurably strengthens remembering;
   - the no-randomness tests cover every new assembly.
+
+**M5b also: memories form the way ours do (Boss, 2026-10-14)**
+
+Boss: "if we made these tiered memory systems be something he consciously thought about, it'd take from the Little Self thing… we don't consciously remember things with more priority than others- memories just sorta happen… the subconscious merely forms memories via the same way we do- if something is important to him, if something is repetitive and routine forming, if he genuinely loves something… He doesn't have to consciously go 'this memory is now cherished', it just happens via positive reinforcement that his subconscious notices and files… the Bnuy subconscious is still not 'deciding' what he remembers- rather, it looks at what he genuinely already likes."
+
+And: "We don't put words in his mouth… We don't decide for him- we let his actions speak for him. We drop the hard rules… 'he keeps writing about a carrot patch Da Boss and him walk by on adventures' is positively reinforced by him going inside the carrot patch, eating the carrot, being happy with the carrot, feeling how da dirt feels under his peets, how the carrot patch smells, how it sounds… this isn't inventing how it feels- it is merely going 'He expressed excitement at how soft the dirt feels' and 'he called these carrots really sweet'… we don't artificially inflate or deflate memories to give it a sense of exclusivity, we let the positive reinforcement happen organically- we just are the ones interpreting it."
+
+This supersedes earlier wording in items 7e, 7f, 7g, "M5. What matters", and "M5 also: what M4e hands to M5" wherever they conflict.
+
+- **No tier is ever chosen, by anyone.** Not by Prince consciously, not by Boss, not by a rule. How clearly something stays with him, up to cherished, forms in his subconscious the way ours does.
+- **His actions speak for him.** The subconscious only reads what he himself did and expressed: what he wrote, what he came back to, what he went and did, and the reactions he expressed ("he called these carrots really sweet", "he was excited at how soft the dirt felt"). It interprets his own expressions; it never invents a feeling, never judges content, and never puts words in his mouth.
+- **The hard rules are dropped.** Nothing (boss defeats, credits, Watchbun completion, corrections, or anything else) is significant because a rule says so. A boss fight usually sticks because he felt it, shared it with Boss, and it was his adventure.
+- **Positive reinforcement is organic, and novelty applies to it.** A memory grows from new experience of it: new things he sensed, did, felt, and said about it. Repeating the same thing reinforces less each time, because it is already familiar (Remembering Novelty), just as with everything else he meets. What he genuinely loves stays special because it is genuinely richer in his life, never because of a cap, a quota, a ranking, or an artificial taper.
+- **Cherished is a place a memory grows into.** Past a high bar of richness and fondness it is cherished: always clear to him, and never demoted (learned loves are never demoted). He never declares it, and nothing assigns it.
+- **What he finds significant comes from him:** his personality, his traits, his interests, what he wants to do, the current adventure, what he notices Da Boss finds important, and general Bnuy curiosity. He is very curious: new things are interesting by default.
+- **"Remember this, Prince" is an earnest ask from Boss, never a command.** He hears it as Boss's words ("maybees I should write dis down"); what he does with it is his. It has no direct effect underneath; it counts only through him, like anything else he notices Boss cares about.
+- **Boss engaging is felt, not counted.** When Boss responds to a memory he brings up, how happy it made him is his own reaction. We never tell him how to feel.
+- **"That wasn't important" is removed.** Nobody tells him something doesn't matter. It is replaced by **Remembering Novelty**: the subconscious's existing recognition of repeats and patterns (M3a, M4e), so he writes "saws MANYS trees!!", never "saw a tree, saw a tree, saw a tree". It never filters what he sees or makes him not know it; it only shapes how memories consolidate. Its thresholds lean curious, with a high bar before anything becomes background, and the values are shown to Boss before they change.
+- **Learned significance follows the learned-loves rule (R pin):** it fades gently on both clocks like a memory, comes home when he recognizes it again, and is never demoted.
+- **Until Stage 13,** his reactions come from the stand-in, so M5b builds the paths (his expressions, read neutrally, feeding remembering and cherished). His real voice fills them; his inherent core (R1) and interests (M6) plug into the same paths later. How his expressions are interpreted at Stage 13 belongs with Boss's R leads (neutral prompt, insulated actions, local model).
+- **Ahead for M5c:** the end-of-session review's question to Boss ("Should Prince put this in his BunDex?") is reconsidered under this principle.
+- **Tests (in addition to the per-step gate):**
+  - new, varied experiences of a memory strengthen it more than repeating the same reaction;
+  - a cherished memory forms only from his own recorded actions and expressions, and is never demoted;
+  - no code path assigns a tier, cherished status, or significance from a rule, a game event kind, or Boss's command;
+  - "Remember this, Prince" changes nothing underneath by itself;
+  - nothing he is given names significance, fondness, tiers, or cherished status;
+  - no randomness, no caps or quotas on what he may love, and the curtain audit covers every new line.
 
 **M6. Conversations that live on**
 - **The seed banks live in the BunDex role** with full seed records: subject, why interrupted, last exchange, links, unanswered question, resume confidence, age, attempts.
