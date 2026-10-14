@@ -131,7 +131,8 @@ public sealed partial class BunDexStore
 
         var sessionBegan = _sessions.Count == 0 ? DateTimeOffset.MaxValue : _sessions[^1];
         var dear = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var other in _pages.Values.Where(other => other.Id != page.Id))
+        // A page he is thinking about, or wrote this session, is itself on his mind.
+        foreach (var other in _pages.Values)
         {
             if (other.Tags.Role is BunDexRole.Cherished or BunDexRole.ThingsThinkingAbout || other.LastWrittenAt >= sessionBegan)
             {
