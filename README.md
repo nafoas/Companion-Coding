@@ -225,6 +225,14 @@ Merged as `073438bc1216d1e4a74673b9247745ef9d0204f2`.
 
 Merged as `8bdf86aa312aa3e2cdf4ab2622093081362a9ffa`.
 
+**M5b** (PR #116): memories form the way ours do (Boss, 2026-10-14).
+- **Reinforcement.** No tier is chosen by anyone. Every experience of a memory reinforces it by what that experience actually brought: writing it, adding to it, being reminded of it, looking it up, or expressing something about it. The same thing again brings less each time. There is no checklist, and nothing is capped.
+- **Fondness and cherished.** Fondness comes only from his own expressions read as fond. Past a high bar, a memory is cherished: always clear to him, and never demoted. Nothing assigns it.
+- **"Remember this, Prince"** is an earnest ask he hears, never a command.
+- **Remembering Novelty** leans curious.
+
+Merged as `12e1596dd0bd79dfc204a44a54c7388f008c4c73`.
+
 ## Important boundaries
 
 - Neutral utilitarian core first; personality and final presentation later.

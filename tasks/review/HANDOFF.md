@@ -2,13 +2,13 @@
 
 ## Task
 
-No task is active. **M1 (Two homes)** merged as `0202c7f` (PR #85) **M1b (BrainCase separation)** merged as `9625075` (PR #87), **M1c (a Living Bun)** merged as `c601339` (PR #89), **M2 (the curtain)** merged as `e272da2` (PR #92), **M3a ("saw dis a few times")** merged as `816bfee` (PR #95), **M3b ("Da Boss has got it covered")** merged as `f8447e4` (PR #97), **M4a (remembering like a Bun)** merged as `a8519eb` (PR #100), **M4b (the Bnuy lookup)** merged as `7af8283` (PR #102), **M4c (the adventure lifecycle)** merged as `5a2bacf` (PR #104), **M4e (remembering organically)** merged as `073438b` (PR #106), and **M5a (keeping during play)** merged as `8bdf86aa312aa3e2cdf4ab2622093081362a9ffa` (PR #113). M4 is complete; each passed its Paw Gate. Packets are archived in `tasks/archive/`.
+No task is active. **M1 (Two homes)** merged as `0202c7f` (PR #85) **M1b (BrainCase separation)** merged as `9625075` (PR #87), **M1c (a Living Bun)** merged as `c601339` (PR #89), **M2 (the curtain)** merged as `e272da2` (PR #92), **M3a ("saw dis a few times")** merged as `816bfee` (PR #95), **M3b ("Da Boss has got it covered")** merged as `f8447e4` (PR #97), **M4a (remembering like a Bun)** merged as `a8519eb` (PR #100), **M4b (the Bnuy lookup)** merged as `7af8283` (PR #102), **M4c (the adventure lifecycle)** merged as `5a2bacf` (PR #104), **M4e (remembering organically)** merged as `073438b` (PR #106), **M5a (keeping during play)** merged as `8bdf86a` (PR #113), and **M5b (what matters)** merged as `12e1596dd0bd79dfc204a44a54c7388f008c4c73` (PR #116). M4 is complete; each passed its Paw Gate. Packets are archived in `tasks/archive/`.
 
 Builder: Claude.
 
 ## Next safe task
 
-The temporary emulated live Bnuy run (never committed), then **M5b (what matters)** of the approved pre-Stage 13 plan (`tasks/proposed/pre-stage-13-changes.md`): its own packet in `tasks/active/`, tests, mutation pass, and Paw Gate. M10 (Boss's hand-run) gates Stage 13. Companion Prince is not awakened.
+**M5c (the end of a session)** of the approved pre-Stage 13 plan (`tasks/proposed/pre-stage-13-changes.md`): its own packet in `tasks/active/`, tests, mutation pass, and Paw Gate. M10 (Boss's hand-run) gates Stage 13. Companion Prince is not awakened.
 
 ## Open decisions for Boss
 

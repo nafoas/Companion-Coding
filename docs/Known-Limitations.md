@@ -65,6 +65,7 @@ The saved keepsake edge (1280) remains provisional photograph-storage tuning.
 - Finishing an adventure is recorded from M7's "Did our adventure finish?" (M4c D1); past-adventure recall is asked for from M6/M7 (M4c D2); one save per game until M7 (M4c D3); "Significant" joins the ladder in M5 (M4c D4).
 - Word likeness is by words, not meaning, until his own mind judges sameness in Stage 13 (M4e D1); patterns are offered during live play from M5a (M4e D2); `MattersToHim` is filled from M5b/M6 (M4e D3).
 - Folder names still get a number on a rename collision from his own tidying (M5a D1); in-play moments carry no place until the eyes name places (M5a D2); the stand-in writer writes every moment until Stage 13 (M5a D3).
+- Until Stage 13 the stand-in reader reads no feeling in his words, so in live play fondness stays empty and only richness grows (M5b D1); his interests (M6) and inherent core (R1) plug into what matters to him later (M5b D2); M5c reconsiders the end-of-session review's question to Boss under the M5b principle (M5b D3).
 
 ## Minor
 
