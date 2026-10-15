@@ -305,6 +305,8 @@ public sealed class WhatMattersTests
         var plain = Guid.NewGuid();
         var cherished = store.CreatePage(null, "carrot patch", "Da carrot patch.", Tags(BunDexRole.ShortTerm) with { Sources = [PageSources.Memory(dear), PageSources.Sightings("synthetic-game", "carrot", 10)] });
         store.CreatePage(null, "fence", "A fence.", Tags(BunDexRole.ShortTerm) with { Sources = [PageSources.Memory(plain)] });
+        // Another kind of hidden source, even one shaped like a memory's, is never taken for one.
+        store.AddToPage(cherished, " so many carrots.", ["photos:" + Guid.NewGuid().ToString("N")]);
         Assert.Empty(store.CherishedMemories());
 
         Cherish(store, cherished);
@@ -366,12 +368,45 @@ public sealed class WhatMattersTests
         var writer = new StandInWriter();
 
         var outcome = await new BunDexKeeper(store, writer, reader: reader).KeepAsync(BunDexRole.ShortTerm, Tags(BunDexRole.ShortTerm, where: "Sunny Acres"), Saw("a sweet carrot"));
+        var afterWriting = store.FondnessOf(outcome.PageId!.Value);
+        Assert.True(afterWriting > 0);
         var added = await new BunDexKeeper(store, new AddsTo("Sunny Acres stuffs", outcome.PageId!.Value, store), reader: reader).KeepAsync(BunDexRole.ShortTerm, Tags(BunDexRole.ShortTerm, where: "Sunny Acres"), Saw("anuver carrot"));
 
         Assert.Equal(KeepOutcomeKind.Written, added.Kind);
         Assert.Equal(2, reader.Read.Count);
         Assert.Equal(store.PageText(outcome.PageId!.Value), string.Concat(reader.Read));
-        Assert.True(store.FondnessOf(outcome.PageId!.Value) > 0);
+        Assert.True(store.FondnessOf(outcome.PageId!.Value) > afterWriting);
+    }
+
+    [Fact]
+    public void ExpressingSomethingAboutIt_BringsItBackToHim_LikeRemembering()
+    {
+        using var harness = new BunDexHarness();
+        var clock = new HandClock(T0);
+        var store = BunDexStore.Open(harness.Location, out _, clock);
+        var page = store.CreatePage(null, "moon lantern", "moon lantern", Tags(BunDexRole.ShortTerm));
+        for (var session = 0; session < 3; session++)
+        {
+            clock.Advance(TimeSpan.FromDays(7));
+            store.BeginSession();
+        }
+
+        Assert.Equal(Clarity.Faded, store.ClarityOf(page));
+        store.Experience(page, "moon lantern", null);
+        Assert.Equal(Clarity.Clear, store.ClarityOf(page));
+    }
+
+    [Fact]
+    public void LookingItUp_WithSomethingNew_IsAnExperienceOfIt()
+    {
+        using var harness = new BunDexHarness();
+        var store = harness.Open();
+        var page = store.CreatePage(null, "moon lantern", "Da moon lantern.", Tags(BunDexRole.ShortTerm));
+        var before = store.RichnessOf(page);
+
+        Assert.NotNull(store.LookFor("moon lantern glowing").Found);
+
+        Assert.True(store.RichnessOf(page) - before > 0.9, "Something new he looked for with it brings almost a whole new thing.");
     }
 
     // ---- "Remember this, Prince" ------------------------------------------------------------

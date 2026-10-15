@@ -244,10 +244,11 @@ public sealed partial class BunDexStore
         var now = Now();
         var dear = new HashSet<string>(StringComparer.Ordinal);
         var fond = 0.0;
-        // A page he cherishes, is thinking about, or wrote this session, is itself on his mind.
+        // A page he is thinking about, or wrote this session, is itself on his mind. (A page he
+        // cherishes is always fully present and fully fond, so it reaches here through fondness below.)
         foreach (var other in _pages.Values)
         {
-            if (IsCherished(other) || other.Tags.Role == BunDexRole.ThingsThinkingAbout || other.LastWrittenAt >= sessionBegan)
+            if (other.Tags.Role == BunDexRole.ThingsThinkingAbout || other.LastWrittenAt >= sessionBegan)
             {
                 dear.UnionWith(other.Words);
             }

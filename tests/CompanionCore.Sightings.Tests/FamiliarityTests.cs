@@ -37,6 +37,9 @@ public sealed class FamiliarityTests
 
         Assert.True(anotherCreature < somethingElse);
         Assert.True(anotherCreature >= Familiarity.Peak * 0.5);
+
+        // M5b leans curious (Boss-approved): after thirty of a kind, a new one of that kind is still at 70% of fresh.
+        Assert.Equal(Familiarity.Peak * 0.7, anotherCreature, 2);
         Assert.Equal(Familiarity.Peak, somethingElse, 3);
     }
 

@@ -184,6 +184,28 @@ public sealed class OrchestrationRememberThisTests
         Assert.Equal(0, harness.Orchestrator.Faults);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task TheHostsReader_IsHowHisOwnWordsAreRead(bool reader)
+    {
+        await using var harness = await CreateAsync();
+        harness.ExpressionReader = reader ? new AlwaysFond() : null;
+        await harness.ReopenHostAsync();
+        await harness.AuthorizeAsync();
+        await SeeTreesAsync(harness, "tree", 3);
+        await harness.WaitForAsync(() => harness.Host.BunDex.FindPages(_ => true).Count == 1);
+        await harness.SettleAsync();
+
+        // Without one, the stand-in reads nothing.
+        Assert.Equal(reader, harness.Host.BunDex.FondnessOf(harness.Host.BunDex.FindPages(_ => true)[0].PageId) > 0);
+    }
+
+    private sealed class AlwaysFond : IExpressionReader
+    {
+        public ExpressedFeeling? Read(string hisWords) => new(FeelingKind.Fond, 1);
+    }
+
     private static async Task SeeTreesAsync(OrchestrationHarness harness, string thing, int count)
     {
         for (var seen = 0; seen < count; seen++)
