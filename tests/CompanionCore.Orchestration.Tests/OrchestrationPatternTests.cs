@@ -46,7 +46,8 @@ public sealed class OrchestrationPatternTests
             harness.Host.Sightings.See(new Sighting(harness.Time.GetUtcNow().AddMinutes(tree), "synthetic-game", null, "tree", ObservationKind.Other, false, "a tall tree", SightingSource.Observation));
         }
 
-        Assert.True(harness.Host.BunDex.Weight("tree") < 0.1);
+        // M5b leans curious (Boss-approved): after thirty trees, "tree" still weighs a quarter.
+        Assert.Equal(0.25, harness.Host.BunDex.Weight("tree"), 6);
         Assert.Equal(1.0, harness.Host.BunDex.Weight("moon"));
     }
 }
