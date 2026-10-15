@@ -17,8 +17,9 @@ public sealed class FamiliarityTests
         Assert.Equal(Familiarity.Peak, novelties[0], 3);
         Assert.All(novelties.Zip(novelties.Skip(1)), pair => Assert.True(pair.Second < pair.First || pair.Second == Familiarity.Floor));
         Assert.True(novelties.Count(novelty => novelty > Familiarity.Floor) >= 10, "It fades gradually, not all at once.");
-        Assert.True(novelties[^1] < 0.1);
-        Assert.True(novelties[^1] >= Familiarity.Floor);
+        // Fifty repeats bring it down to the floor (M5b: a curious Bnuy's floor is 0.1), never below.
+        Assert.Equal(Familiarity.Floor, novelties[^1], 3);
+        Assert.Equal(0.1, Familiarity.Floor);
     }
 
     [Fact]

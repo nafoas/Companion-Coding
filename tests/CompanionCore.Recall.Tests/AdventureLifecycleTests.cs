@@ -141,6 +141,46 @@ public sealed class AdventureLifecycleTests
         Assert.Throws<ArgumentException>(() => RecallSelector.SelectAdventure(seeded.All, Game, " ", AdventureStage.Active));
     }
 
+    [Theory]
+    [InlineData(AdventureStage.Remembered)]
+    [InlineData(AdventureStage.AdventureRecord)]
+    public async Task AMemoryBehindAPageHeCherishes_IsATreasuredEpisode_AndAlwaysComesUp(AdventureStage stage)
+    {
+        await using var harness = await RecallTestHarness.CreateAsync();
+        var seeded = await SeedAsync(harness);
+        var routine = seeded.All.Single(memory => memory.Record.VisibleRecollection == "[neutral routine] two.").Record.RecordId;
+
+        var plain = RecallSelector.SelectAdventure(seeded.All, Game, Save, stage);
+        var cherished = RecallSelector.SelectAdventure(seeded.All, Game, Save, stage, treasured: new HashSet<Guid> { routine });
+
+        Assert.DoesNotContain(plain.Items, item => item.Record.RecordId == routine);
+        Assert.Contains(cherished.Items, item => item.Record.RecordId == routine);
+        Assert.Equal(plain.Resting - 1, cherished.Resting);
+
+        // On the ladder it stands with the treasured highlight, above context and detail.
+        var top = cherished.Items.Take(2).Select(item => item.Record.RecordId).ToHashSet();
+        Assert.Contains(routine, top);
+        Assert.Contains(seeded.Highlight, top);
+
+        // A summary that covers it is not itself treasured.
+        var summary = cherished.Items.ToList().FindIndex(item => item.Record.RecordId == seeded.Summary);
+        Assert.True(summary is -1 or > 1);
+    }
+
+    [Fact]
+    public async Task WithoutCherishedPages_NothingChanges()
+    {
+        await using var harness = await RecallTestHarness.CreateAsync();
+        var seeded = await SeedAsync(harness);
+
+        foreach (var stage in Enum.GetValues<AdventureStage>())
+        {
+            var before = RecallSelector.SelectAdventure(seeded.All, Game, Save, stage).Items.Select(item => item.Record.RecordId);
+            var empty = RecallSelector.SelectAdventure(seeded.All, Game, Save, stage, treasured: new HashSet<Guid>()).Items.Select(item => item.Record.RecordId);
+            Assert.Equal(before, empty);
+        }
+    }
+
     /// <summary>One adventure: six session entries (one a highlight), an active then finished status, its summary and highlight; plus another save's entry and a hypothesis.</summary>
     private static async Task<(List<RetrievedMemory> All, Guid Summary, Guid Highlight)> SeedAsync(RecallTestHarness harness)
     {

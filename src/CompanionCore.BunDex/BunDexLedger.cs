@@ -22,6 +22,9 @@ internal enum LedgerKind
 
     /// <summary>A page came to mind (M4a): remembering restarts its clock.</summary>
     PageRecalled = 9,
+
+    /// <summary>He expressed something about a page (M5b): an experience of it, in his own words.</summary>
+    Experienced = 10,
 }
 
 internal sealed record PageTagsWire(BunDexRole Role, MemoryLayer Layer, string? Game, string? Save, string[] Subjects, DateTimeOffset CreatedAtUtc, string? Where = null, string[]? Sources = null)
@@ -47,7 +50,10 @@ internal sealed record LedgerEntry(
     string Prev = "",
     string? Hash = null,
     string[]? Sources = null,
-    string? Title = null);
+    string? Title = null,
+    double? Gain = null,
+    FeelingKind? Felt = null,
+    double? FeltStrength = null);
 
 /// <summary>
 /// The BrainCase's append-only BunDex ledger: JSON lines in numbered segments, each line

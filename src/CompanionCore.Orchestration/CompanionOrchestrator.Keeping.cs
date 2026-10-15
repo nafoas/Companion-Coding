@@ -27,7 +27,10 @@ public sealed partial class CompanionOrchestrator
     private bool _keepInFlight;
     private Task _keepTask = Task.CompletedTask;
 
-    internal sealed record PendingKeep(Sense WhatHappened, PageTags Tags, IReadOnlyList<string> Sources, DateTimeOffset At, string Session, long Generation);
+    internal sealed record PendingKeep(Sense WhatHappened, PageTags Tags, IReadOnlyList<string> Sources, DateTimeOffset At, string Session, long Generation, Sense? Heard = null);
+
+    /// <summary>The last thing that reached him this session: what "this" means when Boss says "Remember this, Prince".</summary>
+    private PendingKeep? _lastMoment;
 
     /// <summary>Moments waiting to reach him (for tests and the pulse).</summary>
     internal int PendingKeeps => _keeping.Count;
@@ -91,13 +94,44 @@ public sealed partial class CompanionOrchestrator
             return;
         }
 
-        _keeping.Enqueue(new PendingKeep(whatHappened, tags, sources, Now(), session.Reference, session.Grant.Generation));
+        _keeping.Enqueue(_lastMoment = new PendingKeep(whatHappened, tags, sources, Now(), session.Reference, session.Grant.Generation));
         while (_keeping.Count > MaximumPendingKeeps)
         {
             // The oldest moment fades; it is still in his subconscious memory.
             _keeping.Dequeue();
         }
     }
+
+    /// <summary>
+    /// "Remember this, Prince" (M5b, Boss 2026-10-14): an earnest ask from Boss, never a command.
+    /// It reaches him as Boss's own words with what just happened ("maybees I should write dis
+    /// down"), ahead of anything else waiting; what he does with it is his. It changes nothing
+    /// underneath by itself: if he writes about it, delights in it, or comes back to it, those are
+    /// his own experiences, and they count like any other. False when there is no one to hear it.
+    /// </summary>
+    public Task<bool> RememberThisAsync(string words) =>
+        InvokeAsync(() =>
+        {
+            if (_c.Keeper is null || _session is not { } session || !_c.Privacy.IsCurrent(session.Grant.Generation) || Membrane.BossSaid(words ?? string.Empty) is not { } heard)
+            {
+                return Task.FromResult(false);
+            }
+
+            var now = Now();
+            var moment = _lastMoment is { } last && string.Equals(last.Session, session.Reference, StringComparison.Ordinal) && now - last.At <= KeepFadesAfter
+                ? last with { Heard = heard, At = now, Generation = session.Grant.Generation }
+                : new PendingKeep(heard, new PageTags(BunDexRole.ShortTerm, MemoryLayer.Unspecified, session.Game, null, [], now), [], now, session.Reference, session.Grant.Generation);
+            var waiting = _keeping.ToArray();
+            _keeping.Clear();
+            _keeping.Enqueue(moment);
+            foreach (var other in waiting.Take(MaximumPendingKeeps - 1))
+            {
+                _keeping.Enqueue(other);
+            }
+
+            KeepNext();
+            return Task.FromResult(true);
+        });
 
     /// <summary>One moment at a time, when nothing else is asking for him.</summary>
     private void KeepNext()
@@ -135,7 +169,7 @@ public sealed partial class CompanionOrchestrator
             {
                 if (_c.Privacy.IsCurrent(moment.Generation))
                 {
-                    await keeper.KeepAsync(moment.Tags.Role, moment.Tags, moment.WhatHappened, token, moment.Sources).ConfigureAwait(false);
+                    await keeper.KeepAsync(moment.Tags.Role, moment.Tags, moment.WhatHappened, token, moment.Sources, moment.Heard).ConfigureAwait(false);
                 }
             }
             catch (Exception exception) when (exception is not (OutOfMemoryException or OperationCanceledException))

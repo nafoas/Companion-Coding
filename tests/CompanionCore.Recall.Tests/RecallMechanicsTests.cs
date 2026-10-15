@@ -282,6 +282,24 @@ public sealed class RecallMechanicsTests
     }
 
     [Fact]
+    public async Task Selector_AMemoryBehindAPageHeCherishes_RanksLikeATreasuredEpisode()
+    {
+        var cherished = RecallTestHarness.Retrieved(RecallTestHarness.Entry("[neutral] the carrot patch", "s", null, null, 1, scope: MemoryScope.General) with { SourceKind = MemorySourceKind.Guess });
+        var plain = RecallTestHarness.Retrieved(RecallTestHarness.Entry("[neutral] a fence", "s", null, null, 2, scope: MemoryScope.General) with { SourceKind = MemorySourceKind.Integration });
+        var focused = RecallTestHarness.Retrieved(RecallTestHarness.Entry("[neutral] focused", "s", null, null, 3, scope: MemoryScope.General, subject: "opinion:tea") with { SourceKind = MemorySourceKind.Integration });
+        var context = new RecallContext(null, null, null, ["opinion:tea"]);
+
+        Assert.Equal([focused, plain, cherished], RecallSelector.Select([cherished, plain, focused], context).Items);
+        Assert.Equal([cherished, focused, plain], RecallSelector.Select([cherished, plain, focused], context, new HashSet<Guid> { cherished.Record.RecordId }).Items);
+
+        await using var harness = await RecallTestHarness.CreateAsync();
+        var first = await harness.CommitOneAsync(new AppendMemoryProposal(Guid.NewGuid(), [RecallTestHarness.Entry("[neutral] a fence", "session.desk", null, null, 1) with { SourceKind = MemorySourceKind.Integration }]));
+        var second = await harness.CommitOneAsync(new AppendMemoryProposal(Guid.NewGuid(), [RecallTestHarness.Entry("[neutral] the carrot patch", "session.desk", null, null, 2) with { SourceKind = MemorySourceKind.Guess }]));
+        var recalled = await RecallService.RecallAsync(harness.Repository, new RecallContext(null, null, "session.desk", []), treasured: new HashSet<Guid> { second.Record.RecordId });
+        Assert.Equal([second.Record.RecordId, first.Record.RecordId], recalled.Items.Select(item => item.Record.RecordId));
+    }
+
+    [Fact]
     public void BeliefHistory_PicksTheCurrentRecord_RegardlessOfInputOrder()
     {
         var earlier = RecallTestHarness.Retrieved(RecallTestHarness.Entry("[neutral] earlier", "s", null, null, 1, scope: MemoryScope.General), isCurrent: false);

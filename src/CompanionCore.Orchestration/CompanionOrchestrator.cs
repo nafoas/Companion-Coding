@@ -807,6 +807,7 @@ public sealed partial class CompanionOrchestrator : IAsyncDisposable
             case TargetSessionEventKind.PrivacyPaused:
                 _pendingPhoto = null;
                 _keeping.Clear();
+                _lastMoment = null;
                 Publish(new CompanionNotice(CompanionNoticeKind.PrivacyPaused));
                 break;
             case TargetSessionEventKind.PrivacyResumed:
@@ -957,6 +958,7 @@ public sealed partial class CompanionOrchestrator : IAsyncDisposable
                 _session = null;
                 _pendingPhoto = null;
                 _keeping.Clear();
+                _lastMoment = null;
             }
         }
 

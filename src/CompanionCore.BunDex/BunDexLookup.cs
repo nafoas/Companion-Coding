@@ -207,7 +207,7 @@ public sealed partial class BunDexStore
                 Sure = fits[match.Id] >= SureFit;
                 Found = remembered;
                 steps.Add(Membrane.Found(remembered, Sure));
-                store.Remembering(match.Id, now);
+                store.Remembering(match.Id, now, cues);
                 return true;
             }
 

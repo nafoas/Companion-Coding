@@ -1,6 +1,6 @@
 # M5b — What matters: memories form the way ours do
 
-Status: **packet; values awaiting Boss**
+Status: **building** (Boss approved the Remembering Novelty values and said "Start building.")
 Authorized: 2026-10-14 by Boss ("Anyways, begin the packet"). Boss's decisions are pinned in the plan under "M5b also: memories form the way ours do", which supersedes items 7e, 7f, and 7g and the earlier M5 wording wherever they conflict.
 Accepted remote base: `d203080cb8abb578a32c1a7838b898f1ca22f3c7`
 Working branch: `agent/m5b-what-matters`
@@ -57,7 +57,7 @@ Plan items: 7e–7g (as reworked), "M5b also", "M4e. Remembering organically", a
 - Each word of the experience counts by:
   - how distinctive it is to him (M4e's familiarity);
   - how new it is *to this memory*, with the same gentle formula, so the same thing again counts less and less but never as nothing.
-- Then by how strongly he felt it. Delight and fright both make memories stick.
+- How strongly he felt, of any kind, as he expressed it, keeps a memory longer (J4). Delight and fright both make memories stick.
 - So:
   - going into the carrot patch, eating the carrot, the soft dirt, the smell: each brings something new and reinforces a lot;
   - "nice carrot" for the fifth time reinforces a little;
@@ -129,7 +129,30 @@ These values need Boss's approval before they change:
 
 ## Judgments made while building (Personal Round Judgment)
 
-(Recorded as they are made.)
+- **J1. How rich keeps how long.**
+  - A brief note's worth is 20 distinctive things, M4e's brief note: anything at or below it stays its plain window.
+  - Each further 15 keeps it one more whole window.
+  - Five vivid additions, about 38 new things, now keep a short-term page clear one more session.
+  - At 20 per window, five additions fell just short, which was too stingy for coming back with new things.
+- **J2. New to this memory.** Within one memory, a thing it already holds counts half the second time, a third the third, and so on. The same delight 200 times stays far below cherished, yet it is never nothing.
+- **J3. The high bar.** Cherished at 40 fondness: about a dozen varied, wholly fond experiences, more when he is only a little fond.
+- **J4. Feeling keeps it longer directly.** His strongest expressed feeling of any kind multiplies how long a memory stays, by up to 1.5×. That is M4e's approved value, now sourced from his own expression instead of a hidden kind, so a brief note he was very frightened or delighted about still sticks. Fondness grows by what a fond experience brought, times how fond.
+- **J5. Everyday words stay background.** Everyday familiarity rises to 1000 alongside the curious lean, so "the" weighs exactly what it did before. The curious lean is for the things he meets.
+- **J6. What an experience brought is kept as it was then.**
+  - The ledger records each experience's gain at the time.
+  - A reopen therefore remembers exactly, even though how familiar the world is to him has changed since.
+  - Lines from before M5b are replayed with the weights at replay.
+- **J7. Reminders.**
+  - A remembering keeps up to 64 words of what reminded him, or of what he looked for.
+  - A remembering from before M5b counts as his own page's name coming back to him.
+  - Expressing something about a memory refreshes its clock, like remembering it.
+- **J8. What "this" means.**
+  - It is the last moment that reached him this session, within the 10 minutes a moment waits, and never one from before a privacy stop. Otherwise he hears Boss's words alone.
+  - It goes first in the queue, and still never during a conversation or an intense moment.
+- **J9. Treasured Episodes in Recall.**
+  - Only the memory record behind a cherished page is treasured. A session summary covering it is not.
+  - Consolidated highlights stay treasured as before.
+- **J10. Fondness spreads by presence.** How present a fond memory is follows its own clocks and experiences (clear 1, a bell ½, faded ¼, the same as the lookup's). Its own heart is left out, so two fond memories never lean on each other.
 
 ## Deferred findings
 
