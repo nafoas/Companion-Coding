@@ -519,11 +519,15 @@ internal sealed class OrchestrationHarness : IAsyncDisposable
             Bridge = new BridgeOptions { InitialBackoff = TimeSpan.Zero, MaximumBackoff = TimeSpan.Zero },
             Notice = (_, notice) => Notices.Enqueue(notice),
             BunDexWriter = BunDexWriter,
+            ExpressionReader = ExpressionReader,
         });
     }
 
     /// <summary>Prince's side of his BunDex for the next host opened (M5a); the stand-in writer when null.</summary>
     internal BunDex.IBunDexWriter? BunDexWriter { get; set; }
+
+    /// <summary>How the subconscious reads his own words, for the next host opened (M5b); the stand-in reads nothing when null.</summary>
+    internal BunDex.IExpressionReader? ExpressionReader { get; set; }
 
     internal async Task ReopenHostAsync(OrchestratorOptions? options = null)
     {

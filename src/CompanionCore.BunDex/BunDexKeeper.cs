@@ -25,21 +25,37 @@ public sealed class BunDexKeeper
     private readonly IBunDexWriter _writer;
     private readonly ICharacterValidator _validator;
     private readonly Action<CurtainLeakKind>? _diagnostics;
+    private readonly IExpressionReader _reader;
 
-    public BunDexKeeper(BunDexStore store, IBunDexWriter writer, ICharacterValidator? validator = null, Action<CurtainLeakKind>? diagnostics = null)
+    /// <param name="reader">How the subconscious reads a feeling in his own words (M5b); the stand-in reads nothing until Stage 13.</param>
+    public BunDexKeeper(BunDexStore store, IBunDexWriter writer, ICharacterValidator? validator = null, Action<CurtainLeakKind>? diagnostics = null, IExpressionReader? reader = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _writer = writer ?? throw new ArgumentNullException(nameof(writer));
         _validator = validator ?? CurtainValidator.Instance;
         _diagnostics = diagnostics;
+        _reader = reader ?? ReadsNothing.Instance;
+    }
+
+    /// <summary>
+    /// He expressed something about one of his memories (M5b): "he called these carrots really
+    /// sweet". The subconscious keeps his own words as an experience of that memory, with whatever
+    /// feeling they express. Nothing is invented, and nothing is said back to him.
+    /// </summary>
+    public void Expressed(Guid pageId, string hisWords)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(hisWords);
+        _store.Experience(pageId, hisWords, _reader.Read(hisWords));
     }
 
     /// <summary>
     /// A moment reaches him (M5a). <paramref name="whatHappened"/> has already crossed into his
     /// Metaconscious. <paramref name="sources"/> are the hidden links the BrainCase keeps for
     /// whatever he writes; he never sees them. Whether he writes, and where, is his.
+    /// <paramref name="heard"/> is anything Boss said to him about it ("Remember this, Prince"):
+    /// an earnest ask he hears, never a command (M5b).
     /// </summary>
-    public async Task<KeepOutcome> KeepAsync(BunDexRole role, PageTags tags, Sense whatHappened, CancellationToken cancellationToken = default, IReadOnlyList<string>? sources = null)
+    public async Task<KeepOutcome> KeepAsync(BunDexRole role, PageTags tags, Sense whatHappened, CancellationToken cancellationToken = default, IReadOnlyList<string>? sources = null, Sense? heard = null)
     {
         ArgumentNullException.ThrowIfNull(tags);
         ArgumentNullException.ThrowIfNull(whatHappened);
@@ -57,7 +73,7 @@ public sealed class BunDexKeeper
         // "Dat rings a bell... should look dis up to remembers more" (M4b, M4e): a little lookup,
         // when it matters to him or is on the tip of his tongue.
         var rummage = lookUp is { } faint ? _store.Look(cue, tags.Where, Membrane.WantsToRememberMore(), faint).Steps : [];
-        var moment = new KeepMoment(whatHappened, Membrane.At(tags.Where), feeling, clear, bell is null ? [] : [bell], rummage);
+        var moment = new KeepMoment(whatHappened, Membrane.At(tags.Where), feeling, clear, bell is null ? [] : [bell], rummage, heard);
 
         KeepResponse? response = null;
         for (var attempt = 0; attempt < BnuyVoice.MaximumAttempts; attempt++)
@@ -101,14 +117,16 @@ public sealed class BunDexKeeper
             Guid? folderId;
             (folderId, newPlace) = EnsureFolder(response.Folder ?? [], response.AboutNewPlace);
             var existing = _store.FindPage(folderId, response.Page);
+            // What he writes is his own expression too: the subconscious reads any feeling in it (M5b).
+            var felt = _reader.Read(response.Text);
             if (response.AddToExistingPage && existing is { } existingId)
             {
-                _store.AddToPage(existingId, response.Text, sources);
+                _store.AddToPage(existingId, response.Text, sources, felt);
                 pageId = existingId;
             }
             else
             {
-                pageId = _store.CreatePage(folderId, response.Page, response.Text, sources is { Count: > 0 } ? tags with { Sources = sources } : tags);
+                pageId = _store.CreatePage(folderId, response.Page, response.Text, sources is { Count: > 0 } ? tags with { Sources = sources } : tags, felt);
             }
         }
         catch (BunDexException exception)

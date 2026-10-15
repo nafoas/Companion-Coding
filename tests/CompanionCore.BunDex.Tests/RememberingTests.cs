@@ -33,7 +33,7 @@ public sealed class RememberingTests
     [InlineData(BunDexRole.LongTerm, 10, Clarity.Clear)]
     [InlineData(BunDexRole.LongTerm, 11, Clarity.RingsABell)]
     [InlineData(BunDexRole.LongTerm, 500, Clarity.RingsABell)]
-    [InlineData(BunDexRole.Cherished, 1000, Clarity.Clear)]
+    [InlineData(BunDexRole.Cherished, 1000, Clarity.RingsABell)]
     public void PlaySessionsFadeEachLayer_ByItsApprovedWindow(BunDexRole role, int sessions, Clarity expected)
     {
         using var harness = new BunDexHarness();
@@ -86,16 +86,19 @@ public sealed class RememberingTests
     [InlineData(BunDexRole.Opinions, MemoryLayer.LongTerm)]
     [InlineData(BunDexRole.Relationship, MemoryLayer.LongTerm)]
     [InlineData(BunDexRole.ScaryOrCool, MemoryLayer.LongTerm)]
-    [InlineData(BunDexRole.Cherished, MemoryLayer.Cherished)]
+    [InlineData(BunDexRole.Cherished, MemoryLayer.LongTerm)]
     public void APagesLayer_ComesFromTheKindOfThingItIs(BunDexRole role, MemoryLayer expected)
     {
         Assert.Equal(expected, PageClarity.LayerOf(Tags(role)));
     }
 
     [Fact]
-    public void ATaggedLayer_IsKeptOverTheDefault()
+    public void ATaggedLayer_IsKeptOverTheDefault_ButNoTagEverCherishes()
     {
-        Assert.Equal(MemoryLayer.Cherished, PageClarity.LayerOf(Tags(BunDexRole.ShortTerm) with { Layer = MemoryLayer.Cherished }));
+        Assert.Equal(MemoryLayer.MediumTerm, PageClarity.LayerOf(Tags(BunDexRole.ShortTerm) with { Layer = MemoryLayer.MediumTerm }));
+
+        // M5b: cherished is only ever grown into from his own fond experiences, never tagged.
+        Assert.Equal(MemoryLayer.LongTerm, PageClarity.LayerOf(Tags(BunDexRole.ShortTerm) with { Layer = MemoryLayer.Cherished }));
     }
 
     [Fact]
@@ -220,7 +223,8 @@ public sealed class RememberingTests
         using var harness = new BunDexHarness();
         var clock = new HandClock(T0);
         var store = BunDexStore.Open(harness.Location, out _, clock);
-        store.CreatePage(null, "first adventure", "Da very first adventure wif Boss. Da sky went pink.", Tags(BunDexRole.Cherished, where: "Sky Garden"));
+        var first = store.CreatePage(null, "first adventure", "Da very first adventure wif Boss. Da sky went pink.", Tags(BunDexRole.ShortTerm, where: "Sky Garden"));
+        Cherish(store, first);
         Sessions(store, clock, 300);
         clock.Advance(TimeSpan.FromDays(3 * 365));
 
@@ -264,9 +268,15 @@ public sealed class RememberingTests
         var store = BunDexStore.Open(harness.Location, out _, clock);
 
         // Written oldest to newest in ladder order, so recency alone would pick them backwards.
-        foreach (var (name, role) in new[] { ("cherished", BunDexRole.Cherished), ("long", BunDexRole.LongTerm), ("medium", BunDexRole.MediumTerm), ("short", BunDexRole.ShortTerm) })
+        foreach (var (name, role) in new[] { ("cherished", BunDexRole.ShortTerm), ("long", BunDexRole.LongTerm), ("medium", BunDexRole.MediumTerm), ("short", BunDexRole.ShortTerm) })
         {
-            store.CreatePage(null, name, "pumpkin contest win", Tags(role, where: "Sunny Acres"));
+            var page = store.CreatePage(null, name, "pumpkin contest win", Tags(role, where: "Sunny Acres"));
+            if (name == "cherished")
+            {
+                // Grown into, never tagged (M5b).
+                Cherish(store, page);
+            }
+
             clock.Advance(TimeSpan.FromMinutes(1));
         }
 

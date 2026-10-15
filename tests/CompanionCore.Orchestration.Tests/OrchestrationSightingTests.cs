@@ -50,7 +50,8 @@ public sealed class OrchestrationSightingTests
         var zombie = new Sighting(harness.Time.GetUtcNow(), game, null, "zombie", ObservationKind.Other, false, "Zombie", SightingSource.Observation);
         Assert.Equal(4, harness.Host.Sightings.ImpressionOf(game, "zombie")!.Count);
         var fresh = zombie with { Thing = "never seen before" };
-        Assert.True(harness.Host.Sightings.NoveltyOf(zombie) < harness.Host.Sightings.NoveltyOf(fresh) / 2);
+        // M5b leans curious (Boss-approved): after four, it feels half as new as something never seen.
+        Assert.Equal(harness.Host.Sightings.NoveltyOf(fresh) / 2, harness.Host.Sightings.NoveltyOf(zombie), 6);
 
         var before = harness.Host.Sightings.Count;
         await harness.Controller.PrivacyStopAsync();

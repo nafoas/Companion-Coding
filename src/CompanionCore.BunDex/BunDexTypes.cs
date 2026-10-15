@@ -84,9 +84,10 @@ public sealed record BunDexView(IReadOnlyList<FolderView> Folders, IReadOnlyList
 /// </summary>
 public sealed class KeepMoment
 {
-    internal KeepMoment(Sense whatHappened, Place? where, KeepFeeling feeling, IReadOnlyList<Remembered> comesToMind, IReadOnlyList<Feeling>? feelings = null, IReadOnlyList<LookStep>? rummage = null)
+    internal KeepMoment(Sense whatHappened, Place? where, KeepFeeling feeling, IReadOnlyList<Remembered> comesToMind, IReadOnlyList<Feeling>? feelings = null, IReadOnlyList<LookStep>? rummage = null, Sense? heard = null)
     {
         Rummage = rummage ?? [];
+        Heard = heard;
         WhatHappened = whatHappened;
         Where = where;
         Feeling = feeling;
@@ -108,9 +109,12 @@ public sealed class KeepMoment
     /// <summary>When something rang a bell: his little lookup to remember more (M4b).</summary>
     public IReadOnlyList<LookStep> Rummage { get; }
 
+    /// <summary>What Boss said to him about it, if anything ("Remember this, Prince"): words he hears, never a command (M5b).</summary>
+    public Sense? Heard { get; }
+
     /// <summary>The whole moment as one Bnuy request, with his notebook as he sees it.</summary>
     public BnuyRequest ToRequest(BunDexView notebook) =>
-        BnuyRequest.Assemble(Where, [WhatHappened], ComesToMind, NotebookLines.Of(notebook), Feeling, feelings: Feelings, rummage: Rummage);
+        BnuyRequest.Assemble(Where, Heard is { } heard ? [WhatHappened, heard] : [WhatHappened], ComesToMind, NotebookLines.Of(notebook), Feeling, feelings: Feelings, rummage: Rummage);
 }
 
 public enum KeepChoice
@@ -220,3 +224,50 @@ public sealed record KeepOutcome(KeepOutcomeKind Kind, Guid? PageId, bool NewPla
 public sealed record TidyOutcome(TidyChoice Choice, int Applied, int Refused);
 
 public sealed class BunDexException(string message) : Exception(message);
+
+/// <summary>A feeling his own words expressed (M5b), as the subconscious reads them. Never invented, never told to him.</summary>
+public enum FeelingKind
+{
+    /// <summary>Delight, love, "so sweet!!".</summary>
+    Fond = 1,
+
+    /// <summary>Fright, "oogly!!".</summary>
+    Frightened = 2,
+}
+
+/// <summary>What reading his own expression found, and how strongly (0 to 1).</summary>
+public sealed record ExpressedFeeling
+{
+    public ExpressedFeeling(FeelingKind kind, double strength)
+    {
+        if (!Enum.IsDefined(kind) || double.IsNaN(strength) || strength is < 0 or > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(strength), "A feeling has a known kind and a strength from 0 to 1.");
+        }
+
+        Kind = kind;
+        Strength = strength;
+    }
+
+    public FeelingKind Kind { get; }
+
+    public double Strength { get; }
+}
+
+/// <summary>
+/// The subconscious reading his own words (M5b, Boss 2026-10-14: "we just are the ones
+/// interpreting it"). It reports only a feeling those words express, or nothing; it never invents
+/// one and never judges what happened. Stage 13 brings the real reader.
+/// </summary>
+public interface IExpressionReader
+{
+    ExpressedFeeling? Read(string hisWords);
+}
+
+/// <summary>The stand-in until Stage 13: it reads nothing, so no feeling is ever made up.</summary>
+public sealed class ReadsNothing : IExpressionReader
+{
+    public static ReadsNothing Instance { get; } = new();
+
+    public ExpressedFeeling? Read(string hisWords) => null;
+}

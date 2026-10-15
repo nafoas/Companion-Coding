@@ -22,11 +22,13 @@ public sealed record RecallSelection(
 /// Local relevant-context selection with spoiler suppression. Session memories need the
 /// same session, save memories the same save, and spoiler-flagged knowledge is offered only
 /// within the save where it was learned. Ranking keeps current, corrected
-/// understanding first; nothing is ever removed from the store.
+/// understanding first; nothing is ever removed from the store. Treasured Episodes are the
+/// consolidated highlights and the memories behind the pages he has grown to cherish (M5b):
+/// <c>treasured</c> comes from his BunDex, never from a rule or a command.
 /// </summary>
 public static class RecallSelector
 {
-    public static RecallSelection Select(IEnumerable<RetrievedMemory> candidates, RecallContext context)
+    public static RecallSelection Select(IEnumerable<RetrievedMemory> candidates, RecallContext context, IReadOnlySet<Guid>? treasured = null)
     {
         ArgumentNullException.ThrowIfNull(candidates);
         ArgumentNullException.ThrowIfNull(context);
@@ -64,7 +66,7 @@ public static class RecallSelector
                 continue;
             }
 
-            eligible.Add((memory, Score(memory, metadata, focus)));
+            eligible.Add((memory, Score(memory, metadata, focus, treasured)));
         }
 
         var (selected, truncated) = Bounded(eligible, context.MaximumRecords, context.MaximumRecollectionBytes);
@@ -83,7 +85,8 @@ public static class RecallSelector
         string save,
         AdventureStage stage,
         int maximumRecords = 32,
-        int maximumRecollectionBytes = 24 * 1024)
+        int maximumRecollectionBytes = 24 * 1024,
+        IReadOnlySet<Guid>? treasured = null)
     {
         ArgumentNullException.ThrowIfNull(candidates);
         ArgumentException.ThrowIfNullOrWhiteSpace(game);
@@ -109,6 +112,7 @@ public static class RecallSelector
 
             // Treasured Episodes are the preserved highlights; a highlighted original is session detail.
             var offered = metadata.Kind == RecallRecordKind.Highlight
+                || Cherished(memory, treasured)
                 || stage is AdventureStage.Active or AdventureStage.FreshlyFinished
                 || metadata.Kind == RecallRecordKind.Adventure
                 || (stage == AdventureStage.Remembered && metadata.Kind == RecallRecordKind.Summary);
@@ -118,7 +122,7 @@ public static class RecallSelector
                 continue;
             }
 
-            eligible.Add((memory, Score(memory, metadata, [])));
+            eligible.Add((memory, Score(memory, metadata, [], treasured)));
         }
 
         var (selected, truncated) = Bounded(eligible, maximumRecords, maximumRecollectionBytes);
@@ -168,7 +172,11 @@ public static class RecallSelector
     /// other source, then relevance bonuses, then strict source authority. Confidence only
     /// breaks ties inside one authority rank (its weight stays below the smallest rank gap).
     /// </summary>
-    private static double Score(RetrievedMemory memory, RecallMetadata metadata, HashSet<string> focus)
+    /// <summary>A memory behind a page he has grown to cherish (M5b). A summary covering it is not itself cherished.</summary>
+    private static bool Cherished(RetrievedMemory memory, IReadOnlySet<Guid>? treasured) =>
+        treasured is not null && treasured.Contains(memory.Record.RecordId);
+
+    private static double Score(RetrievedMemory memory, RecallMetadata metadata, HashSet<string> focus, IReadOnlySet<Guid>? treasured)
     {
         var score = memory.IsCurrent ? 10_000.0 : 0.0;
         if (memory.IsCurrent && memory.Record.SourceKind == MemorySourceKind.UserCorrection)
@@ -182,7 +190,7 @@ public static class RecallSelector
         }
 
         // The ladder (plan item 7h): Treasured Episodes, then adventure context, then session detail.
-        if (metadata.Highlight)
+        if (metadata.Highlight || Cherished(memory, treasured))
         {
             score += 300;
         }
@@ -204,7 +212,8 @@ public static class RecallService
     public static async Task<RecallSelection> RecallAsync(
         MemoryRepository repository,
         RecallContext context,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlySet<Guid>? treasured = null)
     {
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentNullException.ThrowIfNull(context);
@@ -224,6 +233,6 @@ public static class RecallService
             candidates.AddRange(await repository.RetrieveBySubjectAsync(subject, cancellationToken).ConfigureAwait(false));
         }
 
-        return RecallSelector.Select(candidates, context);
+        return RecallSelector.Select(candidates, context, treasured);
     }
 }

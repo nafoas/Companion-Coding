@@ -80,6 +80,42 @@ public sealed class BunDexVaultTests
     }
 
     [Fact]
+    public async Task WhatHeHasGrownToCherish_SurvivesAVaultRebuild()
+    {
+        await using var harness = await CreateAsync();
+        var location = BunDexLocation.For(harness.Location);
+        var store = BunDexStore.Open(location, out _);
+        var memory = Guid.NewGuid();
+        var page = store.CreatePage(null, "carrot patch", "Da carrot patch.", Tags() with { Sources = [PageSources.Memory(memory)] });
+        var keeper = new BunDexKeeper(store, new StandInWriter(), reader: new AlwaysFond());
+        foreach (var fond in new[]
+        {
+            "da dirt is so soft under my peets", "carrots smell sweet and earthy", "crunchy crunch, so juicy", "leaves tickle my whiskers",
+            "bees hum in da sunny patch", "warm sunshine on my fluffy back", "Boss laughed when i hopped happily", "sparkly dew drops on every leaf",
+            "cozy nap beside da fence", "dandelions waving hello", "puddle splashes giggle wiggle", "pumpkin muffins crumbly yummy",
+        })
+        {
+            keeper.Expressed(page, fond);
+        }
+
+        Assert.Equal([memory], store.CherishedMemories());
+        await DaBunVault.CreateAsync(harness.Repository!, harness.Keepsakes, harness.State);
+        await harness.CloseAsync();
+        Directory.Delete(location.LedgerRoot, recursive: true);
+        Directory.Delete(location.BunDexRoot, recursive: true);
+
+        var report = await DaBunVault.RestoreAsync(harness.Location, harness.Privacy, harness.Keepsakes, harness.State);
+
+        Assert.Equal(BunDexLedgerRestore.Restored, report.BunDex!.Outcome);
+        Assert.Equal([memory], BunDexStore.Open(location, out _).CherishedMemories());
+    }
+
+    private sealed class AlwaysFond : IExpressionReader
+    {
+        public ExpressedFeeling? Read(string hisWords) => new(FeelingKind.Fond, 1);
+    }
+
+    [Fact]
     public async Task ABrokenChain_IsPreserved_AndRebuiltFromTheVaultPlusEveryValidNewerEntry()
     {
         await using var harness = await CreateAsync();

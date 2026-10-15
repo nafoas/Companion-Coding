@@ -31,6 +31,9 @@ public sealed record CompanionHostOptions(
     /// <summary>Prince's side of his BunDex (M5a); the stand-in writer until Stage 13 gives him his voice.</summary>
     public BunDex.IBunDexWriter? BunDexWriter { get; init; }
 
+    /// <summary>How the subconscious reads a feeling in his own words (M5b). Null is the stand-in, which reads nothing, until Stage 13.</summary>
+    public BunDex.IExpressionReader? ExpressionReader { get; init; }
+
     /// <summary>Attached before every start (including after repairs), so no startup notice is missed.</summary>
     public EventHandler<CompanionNotice>? Notice { get; init; }
 }
@@ -229,7 +232,7 @@ public sealed class CompanionHost : IAsyncDisposable
                 {
                     Sightings = Sightings,
                     BunDex = BunDex,
-                    Keeper = new BunDexKeeper(BunDex, _options.BunDexWriter ?? new StandInWriter()),
+                    Keeper = new BunDexKeeper(BunDex, _options.BunDexWriter ?? new StandInWriter(), reader: _options.ExpressionReader),
                 },
                 _options.Orchestrator);
             if (_options.Notice is { } notice)

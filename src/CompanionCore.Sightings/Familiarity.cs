@@ -10,10 +10,10 @@ namespace CompanionCore.Sightings;
 internal sealed class Familiarity
 {
     internal const double Peak = 0.9;
-    internal const double ThingRate = 0.6;
-    internal const double KindRate = 0.1;
+    internal const double ThingRate = 0.25;
+    internal const double KindRate = 0.05;
     internal const double DangerFloor = 0.5;
-    internal const double Floor = 0.05;
+    internal const double Floor = 0.1;
     internal const double NewSituationShare = 0.5;
     internal static readonly TimeSpan ThingHalfLife = TimeSpan.FromDays(3);
     internal static readonly TimeSpan KindHalfLife = TimeSpan.FromDays(7);

@@ -38,14 +38,15 @@ public sealed class OrganicRememberingTests
         Assert.True(store.Weight("the") < 0.02);
 
         var weights = new List<double>();
-        for (var page = 0; page < 6; page++)
+        for (var page = 0; page < 12; page++)
         {
             store.CreatePage(null, $"tree page {(char)('a' + page)}", "A tree.", Tags(BunDexRole.ShortTerm));
             weights.Add(store.Weight("tree"));
         }
 
+        // M5b leans curious (Boss-approved): a word weighs half after he has met it ten times.
         Assert.Equal(weights.OrderDescending(), weights);
-        Assert.Equal(0.5, weights[2], 3);
+        Assert.Equal(0.5, weights[9], 3);
         Assert.Equal(weights[^1], harness.Open().Weight("tree"));
     }
 
@@ -74,7 +75,7 @@ public sealed class OrganicRememberingTests
         var store = harness.Open();
         store.SeenInTheWorld = word => word == "tree" ? 400 : 0;
 
-        Assert.True(store.Weight("tree") < 0.01);
+        Assert.True(store.Weight("tree") < store.Weight("moon") / 40);
         Assert.Equal(1.0, store.Weight("moon"));
     }
 
@@ -87,14 +88,24 @@ public sealed class OrganicRememberingTests
         Assert.Equal(Clarity.Faded, After(3, (_, _, _) => { }).Clarity);
     }
 
+    /// <summary>Four times he came back and added something new about it: what he noticed, did, and felt.</summary>
+    private static readonly string[] NewThings =
+    [
+        " Da lantern hummed a soft little tune when it got dark outside.",
+        " Inside it a tiny moth danced round and round wif glowing wings.",
+        " Boss carried it up da creaky stairs to da dusty attic window.",
+        " It smelled like warm wax and old paper and maybe cinnamon too.",
+        " Snowflakes tapped on its glass while crickets chirped nearby.",
+    ];
+
     [Fact]
-    public void HowMuchHeWrote_ComingBackToAdd_KeepsItClear_AndAReopenRemembersIt()
+    public void ComingBackToAddNewThings_KeepsItClear_AndAReopenRemembersIt()
     {
         var (store, page, clock, harness) = Build(2, (store, page, _) =>
         {
-            for (var addition = 0; addition < 4; addition++)
+            foreach (var added in NewThings)
             {
-                store.AddToPage(page, " More.");
+                store.AddToPage(page, added);
             }
         });
         using (harness)
@@ -102,6 +113,34 @@ public sealed class OrganicRememberingTests
             Assert.Equal(Clarity.Clear, store.ClarityOf(page));
             Assert.Equal(Clarity.Clear, BunDexStore.Open(harness.Location, out _, clock).ClarityOf(page));
         }
+    }
+
+    [Fact]
+    public void AddingTheSameThingAgain_BringsLessEachTime_NeverNothing()
+    {
+        // No checklist (Boss, M5b): coming back four times with nothing new is not four new experiences.
+        Assert.Equal(Clarity.RingsABell, After(2, (store, page, _) =>
+        {
+            for (var addition = 0; addition < 4; addition++)
+            {
+                store.AddToPage(page, " Da lantern hummed a soft little tune when it got dark outside.");
+            }
+        }).Clarity);
+
+        using var harness = new BunDexHarness();
+        var store = harness.Open();
+        var page = store.CreatePage(null, "moon lantern", "moon lantern", Tags(BunDexRole.ShortTerm));
+        var gains = new List<double>();
+        for (var addition = 0; addition < 5; addition++)
+        {
+            var before = store.RichnessOf(page);
+            store.AddToPage(page, " Da lantern hummed a soft tune.");
+            gains.Add(store.RichnessOf(page) - before);
+        }
+
+        Assert.Equal(gains.OrderDescending(), gains);
+        Assert.All(gains, gain => Assert.True(gain > 0));
+        Assert.True(gains[^1] < gains[0] / 3);
     }
 
     [Fact]
@@ -109,25 +148,47 @@ public sealed class OrganicRememberingTests
     {
         var many = string.Join(' ', Enumerable.Range(0, 80).Select(index => $"{(char)('a' + (index / 26))}{(char)('a' + (index % 26))}word"));
 
-        Assert.Equal(Clarity.RingsABell, After(3, (_, _, _) => { }, text: many).Clarity);
+        Assert.Equal(Clarity.Clear, After(3, (_, _, _) => { }, text: many).Clarity);
         Assert.Equal(Clarity.Faded, After(3, (_, _, _) => { }, text: "moon lantern " + string.Join(' ', Enumerable.Range(0, 18).Select(index => $"{(char)('a' + index)}word"))).Clarity);
     }
 
     [Fact]
-    public void Remembering_MakesItStronger_AndAReopenRemembersIt()
+    public async Task BeingRemindedByNewThings_MakesItStronger_AndAReopenRemembersIt()
     {
-        var (store, page, clock, harness) = Build(2, (store, _, _) =>
+        using var harness = new BunDexHarness();
+        var clock = new HandClock(T0);
+        var store = BunDexStore.Open(harness.Location, out _, clock);
+        var page = store.CreatePage(null, "moon lantern", "moon lantern", Tags(BunDexRole.ShortTerm));
+
+        // Each time something new happened that brought it to mind.
+        foreach (var reminder in NewThings)
+        {
+            var writer = new Recorder();
+            await new BunDexKeeper(store, writer).KeepAsync(BunDexRole.ShortTerm, Tags(BunDexRole.ShortTerm), Saw("a moon lantern." + reminder));
+            Assert.Equal("moon lantern", Assert.Single(writer.Moments[0].ComesToMind).Page);
+            clock.Advance(BunDexStore.CameToMindCooldown);
+        }
+
+        for (var session = 0; session < 2; session++)
+        {
+            clock.Advance(TimeSpan.FromDays(7));
+            store.BeginSession();
+        }
+
+        Assert.Equal(Clarity.Clear, store.ClarityOf(page));
+        Assert.Equal(Clarity.Clear, BunDexStore.Open(harness.Location, out _, clock).ClarityOf(page));
+    }
+
+    [Fact]
+    public void LookingUpTheSameThingAgain_BringsLittle()
+    {
+        Assert.Equal(Clarity.RingsABell, After(2, (store, _, _) =>
         {
             for (var lookup = 0; lookup < 4; lookup++)
             {
                 Assert.NotNull(store.LookFor("the moon lantern").Found);
             }
-        });
-        using (harness)
-        {
-            Assert.Equal(Clarity.Clear, store.ClarityOf(page));
-            Assert.Equal(Clarity.Clear, BunDexStore.Open(harness.Location, out _, clock).ClarityOf(page));
-        }
+        }).Clarity);
     }
 
     [Fact]
@@ -173,11 +234,25 @@ public sealed class OrganicRememberingTests
     }
 
     [Theory]
-    [InlineData(BunDexRole.Cherished)]
-    [InlineData(BunDexRole.ThingsThinkingAbout)]
-    public void WhatHeHoldsDear_OrHasBeenThinkingAbout_HeRealisticallyKnows(BunDexRole close)
+    [InlineData(true)]
+    [InlineData(false)]
+    public void WhatHeHoldsDear_OrHasBeenThinkingAbout_HeRealisticallyKnows(bool cherished)
     {
-        Assert.Equal(Clarity.Clear, After(2, (store, _, _) => store.CreatePage(null, "favourite", "Da moon lantern is da best.", Tags(close))).Clarity);
+        Assert.Equal(Clarity.Clear, After(2, (store, _, _) =>
+        {
+            var favourite = store.CreatePage(null, "favourite", "Da moon lantern is da best.", Tags(cherished ? BunDexRole.ShortTerm : BunDexRole.ThingsThinkingAbout));
+            if (cherished)
+            {
+                Cherish(store, favourite);
+            }
+        }).Clarity);
+    }
+
+    [Fact]
+    public void AHiddenCherishedKind_IsNotHoldingItDear()
+    {
+        // M5b: no tag or kind makes something dear to him; only his own fond experiences do.
+        Assert.Equal(Clarity.RingsABell, After(2, (store, _, _) => store.CreatePage(null, "favourite", "Da moon lantern is da best.", Tags(BunDexRole.Cherished))).Clarity);
     }
 
     [Fact]
@@ -192,10 +267,20 @@ public sealed class OrganicRememberingTests
         Assert.Equal(Clarity.Clear, After(2, (store, _, _) => store.MattersToHim = words => words.Contains("lantern") ? 1 : 0).Clarity);
     }
 
-    [Fact]
-    public void HowStronglyHeFelt_KeepsItLonger()
+    [Theory]
+    [InlineData(FeelingKind.Frightened)]
+    [InlineData(FeelingKind.Fond)]
+    public void HowStronglyHeFelt_KeepsItLonger(FeelingKind kind)
     {
-        Assert.Equal(Clarity.RingsABell, After(3, (_, _, _) => { }, tags: Tags(BunDexRole.ScaryOrCool) with { Layer = MemoryLayer.ShortTerm }).Clarity);
+        Assert.Equal(Clarity.Faded, After(3, (_, _, _) => { }).Clarity);
+        Assert.Equal(Clarity.RingsABell, After(3, (store, page, _) => store.Experience(page, "oh!! moon lantern!!", new ExpressedFeeling(kind, 1))).Clarity);
+    }
+
+    [Fact]
+    public void AHiddenScaryKind_IsNotAFeeling()
+    {
+        // M5b: how strongly he felt comes from what he expressed, never from a hidden kind.
+        Assert.Equal(Clarity.Faded, After(3, (_, _, _) => { }, tags: Tags(BunDexRole.ScaryOrCool) with { Layer = MemoryLayer.ShortTerm }).Clarity);
     }
 
     [Fact]
@@ -244,7 +329,7 @@ public sealed class OrganicRememberingTests
     public async Task ABellCloseToHisHeart_LeadsToALittleLookup()
     {
         // Only a little of it is close to his heart, so it is neither clear nor on the tip of his tongue.
-        var moment = await BellMoment((store, _) => store.CreatePage(null, "pie", "Moon pie is da best.", Tags(BunDexRole.Cherished)), TimeSpan.FromDays(7), text: "moon lantern glows bright purple");
+        var moment = await BellMoment((store, _) => Cherish(store, store.CreatePage(null, "pie", "Moon pie is da best.", Tags(BunDexRole.ShortTerm))), TimeSpan.FromDays(7), text: "moon lantern glows bright purple");
 
         Assert.Single(moment.Feelings);
         Assert.Equal(LookStepKind.Found, moment.Rummage[^1].Kind);
@@ -253,7 +338,7 @@ public sealed class OrganicRememberingTests
     [Fact]
     public async Task ABellHeFeltStronglyAbout_LeadsToALittleLookup()
     {
-        var moment = await BellMoment((_, _) => { }, TimeSpan.FromDays(7), Tags(BunDexRole.ScaryOrCool, where: "Hollow House") with { Layer = MemoryLayer.ShortTerm }, sessions: 3);
+        var moment = await BellMoment((store, page) => store.Experience(page, "oogly!! moon lantern!!", new ExpressedFeeling(FeelingKind.Frightened, 1)), TimeSpan.FromDays(7), sessions: 3);
 
         Assert.Single(moment.Feelings);
         Assert.Equal(LookStepKind.Found, moment.Rummage[^1].Kind);

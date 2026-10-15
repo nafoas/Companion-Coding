@@ -32,6 +32,37 @@ internal sealed class BunDexHarness : IDisposable
     /// <summary>Something that happened, as it crosses the membrane: "Prince saw...".</summary>
     internal static CompanionCore.Curtain.Sense Saw(string description) => CompanionCore.Curtain.Membrane.Saw(description)!;
 
+    /// <summary>Synthetic, varied fond things he expressed about a memory: each brings something new (M5b).</summary>
+    internal static readonly string[] FondThings =
+    [
+        "da dirt is so soft under my peets",
+        "carrots smell sweet and earthy",
+        "crunchy crunch, so juicy",
+        "leaves tickle my whiskers",
+        "bees hum in da sunny patch",
+        "warm sunshine on my fluffy back",
+        "Boss laughed when i hopped happily",
+        "sparkly dew drops on every leaf",
+        "cozy nap beside da fence",
+        "dandelions waving hello",
+        "puddle splashes giggle wiggle",
+        "pumpkin muffins crumbly yummy",
+        "twinkly fireflies blinking softly",
+        "fuzzy caterpillar wobbling slowly",
+        "rainbow ribbons fluttering breezy",
+    ];
+
+    /// <summary>He grows to cherish a page the only way there is: many varied, fond experiences of it, in his own words.</summary>
+    internal static void Cherish(BunDexStore store, Guid page)
+    {
+        foreach (var fond in FondThings)
+        {
+            store.Experience(page, fond, new ExpressedFeeling(FeelingKind.Fond, 1));
+        }
+
+        Assert.True(store.Cherishes(page));
+    }
+
     internal string LastSegment() => BunDexLedger.Segments(Location.LedgerRoot)[^1].Path;
 
     public void Dispose()

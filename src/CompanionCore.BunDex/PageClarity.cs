@@ -25,17 +25,20 @@ internal static class PageClarity
     internal static readonly (int Sessions, TimeSpan Time) Medium = (5, TimeSpan.FromDays(21));
     internal static readonly (int Sessions, TimeSpan Time) Long = (10, TimeSpan.FromDays(60));
 
-    /// <summary>The layer a page belongs to: its tag, or by default from the kind of thing it is.</summary>
-    internal static MemoryLayer LayerOf(PageTags tags) => tags.Layer != MemoryLayer.Unspecified
+    /// <summary>
+    /// The layer a page's tags put it in: its tag, or by default from the kind of thing it is.
+    /// Never cherished (M5b): cherished is only ever grown into, from his own fond experiences, so
+    /// a hidden tag or kind that says so is read as long-term.
+    /// </summary>
+    internal static MemoryLayer LayerOf(PageTags tags) => (tags.Layer != MemoryLayer.Unspecified
         ? tags.Layer
         : tags.Role switch
         {
-            BunDexRole.Cherished => MemoryLayer.Cherished,
             BunDexRole.MediumTerm => MemoryLayer.MediumTerm,
-            BunDexRole.LongTerm or BunDexRole.Adventures or BunDexRole.Lore or BunDexRole.Opinions
+            BunDexRole.Cherished or BunDexRole.LongTerm or BunDexRole.Adventures or BunDexRole.Lore or BunDexRole.Opinions
                 or BunDexRole.Relationship or BunDexRole.ScaryOrCool => MemoryLayer.LongTerm,
             _ => MemoryLayer.ShortTerm,
-        };
+        }) is var layer && layer == MemoryLayer.Cherished ? MemoryLayer.LongTerm : layer;
 
     /// <param name="sessionsSince">Play sessions begun after the page was last written or remembered.</param>
     /// <param name="strength">How much longer than the plain window it stays with him (M4e); 1 is the plain window.</param>

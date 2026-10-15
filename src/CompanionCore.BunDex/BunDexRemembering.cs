@@ -5,27 +5,47 @@ namespace CompanionCore.BunDex;
 /// <summary>
 /// Remembering organically (M4e, Boss 2026-10-14). Words are weighed by how familiar they are to
 /// him, learned from his own pages and from what his eyes saw, never thrown out for their length.
-/// A memory's strength comes from his own history and the moment: how long ago, how much he wrote,
-/// how often he remembered it, whether it is close to his heart or what he has been thinking
-/// about, how strongly he felt, and where he is. Nothing here is random; his consciousness is only
-/// ever given what this genuinely surfaces.
+/// A memory's strength comes from his own history and the moment: how long ago, what his
+/// experiences of it brought, whether it is close to his heart or what he has been thinking about,
+/// and where he is. Nothing here is random; his consciousness is only ever given what this
+/// genuinely surfaces.
+///
+/// Memories form the way ours do (M5b, Boss 2026-10-14: "there isn't a memory checklist, it
+/// reinforces in different ways every time"). Every experience of a memory (writing it, adding to
+/// it, being reminded of it, looking it up, expressing something about it) reinforces it by what it
+/// actually brought: each word by how distinctive it is to him and how new it is to that memory,
+/// then by how strongly he felt. No kind of experience carries a weight of its own. Fondness grows
+/// only from his own expressions read as fond; past a high bar a memory is cherished, always clear
+/// and never demoted. Nothing assigns it, and nothing is capped, ranked, or tapered.
 /// </summary>
 public sealed partial class BunDexStore
 {
-    /// <summary>A word met this many times weighs half as much as a brand-new one.</summary>
-    internal const double FamiliarAfter = 3;
+    /// <summary>A word met this many times weighs half as much as a brand-new one (M5b: leaning curious, Boss-approved).</summary>
+    internal const double FamiliarAfter = 10;
 
-    /// <summary>Everyday words are familiar from the start, the way any speaker knows them.</summary>
-    internal const double EverydayFamiliarity = 300;
+    /// <summary>Within one memory, something it already holds counts half as much the second time, a third the third (M5b).</summary>
+    internal const double NewToItAfter = 1;
+
+    /// <summary>A brief note's worth of distinctive things (M4e's brief note): richer than this, a memory stays with him longer (M5b).</summary>
+    internal const double BriefRichness = 20;
+
+    /// <summary>Each this much more richness keeps a memory with him another whole window (M5b).</summary>
+    internal const double RichnessPerWindow = 15;
+
+    /// <summary>The high bar: this much fondness, from his own fond experiences, and a memory is cherished (M5b).</summary>
+    internal const double CherishedAt = 40;
+
+    /// <summary>A reminder is remembered by at most this many of its words.</summary>
+    internal const int MaximumReminderWords = 64;
+
+    /// <summary>Everyday words are familiar from the start, the way any speaker knows them (exactly as background as before M5b's curious lean).</summary>
+    internal const double EverydayFamiliarity = 1000;
 
     /// <summary>How strongly his own cues must fit for a page to come to mind unprompted (one distinctive word and where he is, or a few distinctive words).</summary>
     internal const double ComeToMindAt = 1.0;
 
     /// <summary>Being where it happened is as strong a cue as a brand-new word.</summary>
     internal const double SamePlaceCue = 1.0;
-
-    /// <summary>A brief note: writing more than this many words makes a page stay with him longer.</summary>
-    internal const int BriefNote = 20;
 
     /// <summary>Below this, there is nothing distinctive to look for.</summary>
     internal const double MeaningfulCue = 0.5;
@@ -102,19 +122,110 @@ public sealed partial class BunDexStore
         where is not null && string.Equals(page.Tags.Where, where, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// How much longer than its layer's window a page stays with him (1 is the plain window):
-    /// how much he wrote, how often he remembered it, whether it is close to his heart, how
-    /// strongly he felt, and being back where it happened.
+    /// What an experience brings a memory (M5b): each word by how distinctive it is to him, and by
+    /// how new it is to this memory. The same thing again brings less each time, never nothing.
     /// </summary>
-    private double Strength(PageState page, string? where)
+    private double Gain(Dictionary<string, int>? met, IEnumerable<string> words) =>
+        words.Sum(word => Weight(word) / (1 + ((met?.GetValueOrDefault(word) ?? 0) / NewToItAfter)));
+
+    /// <summary>An experience of a memory: what it brought, and how strongly he felt; fondness only from his fond feelings, by how fond.</summary>
+    private static void Experienced(PageState page, IEnumerable<string> words, double gain, LedgerEntry entry)
     {
-        var wrote = 1 + (0.5 * Math.Clamp((page.Words.Count - BriefNote) / 60.0, 0, 1)) + (0.25 * Math.Min(page.Additions, 4));
-        var remembered = 1 + (0.25 * Math.Min(page.Recalls, 8));
-        var heart = 1 + Care(page);
-        var felt = page.Tags.Role == BunDexRole.ScaryOrCool ? 1.5 : 1;
-        var place = SamePlace(page, where) ? 1.5 : 1;
-        return wrote * remembered * heart * felt * place;
+        foreach (var word in words)
+        {
+            page.Met[word] = page.Met.GetValueOrDefault(word) + 1;
+        }
+
+        var strength = entry.Felt is null ? 0 : Math.Clamp(entry.FeltStrength ?? 0, 0, 1);
+        page.Richness += gain;
+        page.FeltMost = Math.Max(page.FeltMost, strength);
+        if (entry.Felt == FeelingKind.Fond)
+        {
+            page.Fondness += gain * strength;
+        }
     }
+
+    /// <summary>Grown into from his own fond experiences, never assigned (M5b). Fondness only grows, so it is never demoted.</summary>
+    private static bool IsCherished(PageState page) => page.Fondness >= CherishedAt;
+
+    /// <summary>How fond of it he is, from nothing to cherished (0 to 1).</summary>
+    private static double FondOf(PageState page) => Math.Min(1, page.Fondness / CherishedAt);
+
+    /// <summary>The layer a page is in now: cherished when he has grown to cherish it, otherwise its kind's (M4a).</summary>
+    private static MemoryLayer LayerOf(PageState page) => IsCherished(page) ? MemoryLayer.Cherished : PageClarity.LayerOf(page.Tags);
+
+    /// <summary>How rich his experiences of a page have been (for the subconscious and tests). Never shown to Prince.</summary>
+    internal double RichnessOf(Guid pageId)
+    {
+        lock (_gate)
+        {
+            return (_pages.GetValueOrDefault(pageId) ?? throw new BunDexException("That page does not exist.")).Richness;
+        }
+    }
+
+    /// <summary>How fond his experiences of a page have made him (for the subconscious and tests). Never shown to Prince.</summary>
+    internal double FondnessOf(Guid pageId)
+    {
+        lock (_gate)
+        {
+            return (_pages.GetValueOrDefault(pageId) ?? throw new BunDexException("That page does not exist.")).Fondness;
+        }
+    }
+
+    /// <summary>Whether he would realistically know a page now, 0 to 1 (for the subconscious and tests). Never shown to Prince.</summary>
+    internal double CareOf(Guid pageId)
+    {
+        lock (_gate)
+        {
+            return Care(_pages.GetValueOrDefault(pageId) ?? throw new BunDexException("That page does not exist."));
+        }
+    }
+
+    /// <summary>Whether he has grown to cherish a page (for the subconscious and tests). Never shown to Prince.</summary>
+    internal bool Cherishes(Guid pageId)
+    {
+        lock (_gate)
+        {
+            return IsCherished(_pages.GetValueOrDefault(pageId) ?? throw new BunDexException("That page does not exist."));
+        }
+    }
+
+    /// <summary>
+    /// The memory records behind the pages he cherishes, through the hidden source links (M5a):
+    /// what Recall treats as Treasured Episodes, so both memory systems agree on what he holds
+    /// dear. Never shown to Prince.
+    /// </summary>
+    public IReadOnlySet<Guid> CherishedMemories()
+    {
+        lock (_gate)
+        {
+            var memories = new HashSet<Guid>();
+            foreach (var page in _pages.Values.Where(IsCherished))
+            {
+                foreach (var source in page.Sources)
+                {
+                    if (source.StartsWith(MemorySourcePrefix, StringComparison.Ordinal) && Guid.TryParseExact(source[MemorySourcePrefix.Length..], "N", out var record))
+                    {
+                        memories.Add(record);
+                    }
+                }
+            }
+
+            return memories;
+        }
+    }
+
+    private const string MemorySourcePrefix = "memory:";
+
+    /// <summary>
+    /// How much longer than its layer's window a page stays with him (1 is the plain window): what
+    /// his experiences of it brought, whether it is close to his heart, and being back where it
+    /// happened; and how strongly he felt about it, of any kind, as he expressed it (M4e's felt,
+    /// now from his own expression rather than a hidden kind). A brief note stays its plain window.
+    /// </summary>
+    private double Strength(PageState page, string? where) => Experiences(page) * (1 + (page.FeltMost / 2)) * (1 + Care(page)) * (SamePlace(page, where) ? 1.5 : 1);
+
+    private static double Experiences(PageState page) => 1 + (Math.Max(0, page.Richness - BriefRichness) / RichnessPerWindow);
 
     /// <summary>
     /// Whether he would realistically know it: how much it shares with what he holds dear (his
@@ -130,31 +241,53 @@ public sealed partial class BunDexStore
         }
 
         var sessionBegan = _sessions.Count == 0 ? DateTimeOffset.MaxValue : _sessions[^1];
+        var now = Now();
         var dear = new HashSet<string>(StringComparer.Ordinal);
-        // A page he is thinking about, or wrote this session, is itself on his mind.
+        var fond = 0.0;
+        // A page he is thinking about, or wrote this session, is itself on his mind. (A page he
+        // cherishes is always fully present and fully fond, so it reaches here through fondness below.)
         foreach (var other in _pages.Values)
         {
-            if (other.Tags.Role is BunDexRole.Cherished or BunDexRole.ThingsThinkingAbout || other.LastWrittenAt >= sessionBegan)
+            if (other.Tags.Role == BunDexRole.ThingsThinkingAbout || other.LastWrittenAt >= sessionBegan)
             {
                 dear.UnionWith(other.Words);
+            }
+
+            // What he is fond of spreads to what shares its distinctive things (carrots!), as present as that memory is now.
+            if (!ReferenceEquals(other, page) && other.Fondness > 0)
+            {
+                fond = Math.Max(fond, Weight(page.Words.Where(other.Words.Contains)) / own * FondOf(other) * Presence(other, now));
             }
         }
 
         var close = Weight(page.Words.Where(dear.Contains)) / own;
         var matters = MattersToHim?.Invoke(page.Words) ?? 0;
-        return Math.Clamp(Math.Max(close, matters), 0, 1);
+        return Math.Clamp(Math.Max(Math.Max(close, matters), Math.Max(FondOf(page), fond)), 0, 1);
     }
+
+    /// <summary>
+    /// How present a memory is to him now, from its own clocks and experiences (fondness fades like
+    /// a memory and comes home on being reminded: the learned-loves rule). Its heart is left out, so
+    /// two fond memories never lean on each other.
+    /// </summary>
+    private double Presence(PageState page, DateTimeOffset now) =>
+        PageClarity.Of(LayerOf(page), now - page.LastTouched, SessionsSince(page.LastTouched), Experiences(page) * (1 + (page.FeltMost / 2))) switch
+        {
+            Clarity.Clear => 1.0,
+            Clarity.RingsABell => 0.5,
+            _ => 0.25,
+        };
 
     /// <summary>How clearly a page comes to mind now, from its layer, both clocks, and its strength.</summary>
     private Clarity ClarityOf(PageState page, DateTimeOffset now, string? where) =>
-        PageClarity.Of(PageClarity.LayerOf(page.Tags), now - page.LastTouched, SessionsSince(page.LastTouched), Strength(page, where));
+        PageClarity.Of(LayerOf(page), now - page.LastTouched, SessionsSince(page.LastTouched), Strength(page, where));
 
     /// <summary>
-    /// A bell worth a little lookup: it is close to his heart, he felt strongly about it, or it is
-    /// on the tip of his tongue. Otherwise the bell stays a passing feeling.
+    /// A bell worth a little lookup: it is close to his heart, he expressed a feeling about it, or
+    /// it is on the tip of his tongue. Otherwise the bell stays a passing feeling.
     /// </summary>
     private bool WorthLookingUp(PageState page, DateTimeOffset now, string? where) =>
         Care(page) > 0
-        || page.Tags.Role == BunDexRole.ScaryOrCool
-        || PageClarity.OnTheTipOfHisTongue(PageClarity.LayerOf(page.Tags), now - page.LastTouched, SessionsSince(page.LastTouched), Strength(page, where));
+        || page.FeltMost > 0
+        || PageClarity.OnTheTipOfHisTongue(LayerOf(page), now - page.LastTouched, SessionsSince(page.LastTouched), Strength(page, where));
 }

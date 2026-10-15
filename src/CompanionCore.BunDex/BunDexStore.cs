@@ -87,7 +87,8 @@ public sealed partial class BunDexStore
         }
     }
 
-    public Guid CreatePage(Guid? folderId, string name, string text, PageTags tags)
+    /// <param name="felt">A feeling his own words expressed, as the subconscious read them (M5b), if any.</param>
+    public Guid CreatePage(Guid? folderId, string name, string text, PageTags tags, ExpressedFeeling? felt = null)
     {
         ArgumentNullException.ThrowIfNull(tags);
         lock (_gate)
@@ -102,14 +103,15 @@ public sealed partial class BunDexStore
             var unique = UniquePageName(folderId, safe);
             var title = TitleOf(name);
             var id = Guid.NewGuid();
-            Commit(new LedgerEntry(0, Now(), LedgerKind.PageCreated, FolderId: folderId, Name: unique, PageId: id, Text: text, Tags: PageTagsWire.From(tags), Title: title == unique ? null : title));
+            var gain = Gain(null, Words(title + " " + text));
+            Commit(new LedgerEntry(0, Now(), LedgerKind.PageCreated, FolderId: folderId, Name: unique, PageId: id, Text: text, Tags: PageTagsWire.From(tags), Title: title == unique ? null : title, Gain: gain, Felt: felt?.Kind, FeltStrength: felt?.Strength));
             WriteNewFile(PagePath(id), Encoding.UTF8.GetBytes(text));
             return id;
         }
     }
 
     /// <summary>Adds text to the end of a page. Committed text is never changed. <paramref name="sources"/> join its hidden links.</summary>
-    public void AddToPage(Guid pageId, string text, IReadOnlyList<string>? sources = null)
+    public void AddToPage(Guid pageId, string text, IReadOnlyList<string>? sources = null, ExpressedFeeling? felt = null)
     {
         lock (_gate)
         {
@@ -128,7 +130,7 @@ public sealed partial class BunDexStore
                 throw new BunDexException("That page was changed outside the BunDex; it is left as it is.");
             }
 
-            Commit(new LedgerEntry(0, Now(), LedgerKind.PageAdded, PageId: pageId, Text: text, Sources: sources is { Count: > 0 } ? [.. sources] : null));
+            Commit(new LedgerEntry(0, Now(), LedgerKind.PageAdded, PageId: pageId, Text: text, Sources: sources is { Count: > 0 } ? [.. sources] : null, Gain: Gain(page.Met, Words(text)), Felt: felt?.Kind, FeltStrength: felt?.Strength));
             AppendToFile(path, Encoding.UTF8.GetBytes(text));
         }
     }
@@ -204,7 +206,7 @@ public sealed partial class BunDexStore
             var now = Now();
             var candidates = _pages.Values
                 .Where(page => !(_cameToMind.TryGetValue(page.Id, out var last) && now - last < CameToMindCooldown))
-                .Select(page => (Page: page, Score: Likeness(page, words, where), Layer: PageClarity.LayerOf(page.Tags)))
+                .Select(page => (Page: page, Score: Likeness(page, words, where), Layer: LayerOf(page)))
                 .Where(candidate => candidate.Score >= ComeToMindAt)
                 .Select(candidate => (candidate.Page, candidate.Score, candidate.Layer, Clarity: ClarityOf(candidate.Page, now, where)))
                 .OrderByDescending(candidate => candidate.Score)
@@ -224,7 +226,7 @@ public sealed partial class BunDexStore
                 if (Membrane.Remember(FolderNames(candidate.Page.FolderId), candidate.Page.Title, candidate.Page.Tags.Where, candidate.Page.Text.ToString()) is { } remembered)
                 {
                     clear.Add(remembered);
-                    Remembering(candidate.Page.Id, now);
+                    Remembering(candidate.Page.Id, now, words);
                 }
             }
 
@@ -235,21 +237,38 @@ public sealed partial class BunDexStore
                 // "Dat rings a bell... should look dis up": only when it matters to him or is nearly there.
                 bell = Membrane.RingsABell();
                 lookUp = WorthLookingUp(faint.Page, now, where) ? faint.Page.Id : null;
-                Remembering(faint.Page.Id, now);
+                Remembering(faint.Page.Id, now, words);
             }
 
             return (clear, bell, lookUp);
         }
     }
 
-    private void Remembering(Guid pageId, DateTimeOffset now)
+    /// <param name="reminder">What reminded him, or what he looked for: remembering is an experience of it too (M5b).</param>
+    private void Remembering(Guid pageId, DateTimeOffset now, IReadOnlyCollection<string> reminder)
     {
         _cameToMind[pageId] = now;
 
         // A read-only (damaged) ledger still lets him remember; only the refresh goes unrecorded.
         if (!_ledger.Damaged)
         {
-            Commit(new LedgerEntry(0, now, LedgerKind.PageRecalled, PageId: pageId));
+            var words = reminder.Take(MaximumReminderWords).ToArray();
+            Commit(new LedgerEntry(0, now, LedgerKind.PageRecalled, PageId: pageId, Text: string.Join(' ', words), Gain: Gain(_pages[pageId].Met, words)));
+        }
+    }
+
+    /// <summary>
+    /// He expressed something about one of his memories (M5b): his own words, and the feeling the
+    /// subconscious read in them, if any. It is an experience of that memory like any other.
+    /// </summary>
+    internal void Experience(Guid pageId, string hisWords, ExpressedFeeling? felt)
+    {
+        ArgumentNullException.ThrowIfNull(hisWords);
+        lock (_gate)
+        {
+            var page = _pages.GetValueOrDefault(pageId) ?? throw new BunDexException("That page does not exist.");
+            ValidateText(hisWords);
+            Commit(new LedgerEntry(0, Now(), LedgerKind.Experienced, PageId: pageId, Text: hisWords, Gain: Gain(page.Met, Words(hisWords)), Felt: felt?.Kind, FeltStrength: felt?.Strength));
         }
     }
 
@@ -440,7 +459,10 @@ public sealed partial class BunDexStore
             case LedgerKind.PageCreated:
                 var created = new PageState(entry.PageId!.Value, entry.FolderId, entry.Name!, entry.Tags!.ToTags(), new StringBuilder(entry.Text)) { LastWrittenAt = entry.At, LastTouched = entry.At, Title = entry.Title ?? entry.Name! };
                 _pages[created.Id] = created;
+                var createdWords = Words(created.Title + " " + entry.Text);
+                var createdGain = entry.Gain ?? Gain(null, createdWords);
                 Learn(created, created.Title + " " + entry.Text);
+                Experienced(created, createdWords, createdGain, entry);
                 Link(created, created.Tags.Sources);
                 _momentsWithoutWriting = 0;
                 break;
@@ -449,7 +471,8 @@ public sealed partial class BunDexStore
                 added.Text.Append(entry.Text);
                 added.LastWrittenAt = entry.At;
                 added.LastTouched = entry.At;
-                added.Additions++;
+                var addedWords = Words(entry.Text ?? string.Empty);
+                Experienced(added, addedWords, entry.Gain ?? Gain(added.Met, addedWords), entry);
                 Learn(added, entry.Text ?? string.Empty);
                 Link(added, entry.Sources);
                 _momentsWithoutWriting = 0;
@@ -479,7 +502,14 @@ public sealed partial class BunDexStore
                 break;
             case LedgerKind.PageRecalled when _pages.TryGetValue(entry.PageId!.Value, out var recalled):
                 recalled.LastTouched = entry.At > recalled.LastTouched ? entry.At : recalled.LastTouched;
-                recalled.Recalls++;
+                // Before M5b a remembering kept no words: it was his own page coming back to him.
+                var reminder = Words(entry.Text ?? recalled.Title);
+                Experienced(recalled, reminder, entry.Gain ?? Gain(recalled.Met, reminder), entry);
+                break;
+            case LedgerKind.Experienced when _pages.TryGetValue(entry.PageId!.Value, out var expressed):
+                expressed.LastTouched = entry.At > expressed.LastTouched ? entry.At : expressed.LastTouched;
+                var hisWords = Words(entry.Text ?? string.Empty);
+                Experienced(expressed, hisWords, entry.Gain ?? Gain(expressed.Met, hisWords), entry);
                 break;
         }
     }
@@ -803,11 +833,17 @@ public sealed partial class BunDexStore
         /// <summary>Every word on the page, its name included (M4e: how familiar words are to him).</summary>
         public HashSet<string> Words { get; } = new(StringComparer.Ordinal);
 
-        /// <summary>How many times he came back to add to it (M4e: how much he wrote).</summary>
-        public int Additions { get; set; }
+        /// <summary>How many of his experiences of it each word was part of (M5b: what is already familiar to this memory).</summary>
+        public Dictionary<string, int> Met { get; } = new(StringComparer.Ordinal);
 
-        /// <summary>How many times he has remembered it (M4e: each remembering makes it stronger).</summary>
-        public int Recalls { get; set; }
+        /// <summary>Everything his experiences of it brought, each by how new it was to it and how strongly he felt (M5b).</summary>
+        public double Richness { get; set; }
+
+        /// <summary>What his fond experiences of it brought (M5b). It only ever grows.</summary>
+        public double Fondness { get; set; }
+
+        /// <summary>The strongest feeling he ever expressed about it, of any kind (M5b).</summary>
+        public double FeltMost { get; set; }
 
         /// <summary>Where it came from, in the BrainCase's hidden index only (M5a).</summary>
         public List<string> Sources { get; } = [];
