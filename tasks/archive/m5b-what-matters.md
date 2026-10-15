@@ -1,6 +1,6 @@
 # M5b — What matters: memories form the way ours do
 
-Status: **building** (Boss approved the Remembering Novelty values and said "Start building.")
+Status: **accepted** (Boss approved the Remembering Novelty values and said "Start building.")
 Authorized: 2026-10-14 by Boss ("Anyways, begin the packet"). Boss's decisions are pinned in the plan under "M5b also: memories form the way ours do", which supersedes items 7e, 7f, and 7g and the earlier M5 wording wherever they conflict.
 Accepted remote base: `d203080cb8abb578a32c1a7838b898f1ca22f3c7`
 Working branch: `agent/m5b-what-matters`
@@ -159,3 +159,30 @@ These values need Boss's approval before they change:
 - **D1.** Stage 13's real reader of his expressions; until then, fondness stays empty in live play.
 - **D2.** His interests (M6) and inherent core (R1) plug into `MattersToHim`.
 - **D3.** M5c reconsiders the end-of-session review's question to Boss ("Should Prince put this in his BunDex?") under this principle.
+
+## Paw Gate
+
+- **Candidate.** Head `2a379f84d27803d9810ef2aa853dbd39e50fdff9`, PR #116, against accepted `main` `d203080cb8abb578a32c1a7838b898f1ca22f3c7`.
+- **Local gate (Linux).** Locked restore; Release `/warnaserror` gave 0 warnings and 0 errors. No vulnerable packages. 21 runnable suites, 1545 tests passed.
+- **Mutation pass.** 59 mutants; each later fix was re-checked against its mutants.
+  - **57 are killed.** Seven first survived and each got a test:
+    - another kind of hidden source shaped like a memory's is never taken for one;
+    - what he writes is read both when he creates a page and when he adds to it;
+    - expressing something refreshes a memory's clock;
+    - a lookup with something new is an experience of it;
+    - the host's expression reader reaches his keeper;
+    - the gentler kind rate is pinned.
+  - **1 exposed redundant code**, now removed: a cherished page was also counted as "dear", which its fondness already covers exactly.
+  - **1 is equivalent:** "Remember this" checks that the last moment is from this session, but ending a session already clears it. The check is kept as a guard against a moment leaking across sessions.
+- **Changed expectations (Boss's direction, not weakened).** Tests built on M4e's flat counts, on the hidden Cherished and ScaryOrCool kinds, and on the old novelty numbers were re-derived from the new principle:
+  - coming back with new things keeps a page clear, and the same thing again brings less;
+  - only grown cherishing and expressed feeling count;
+  - the approved curious values are pinned exactly.
+- **CI.**
+  - **Head:** push run `38665596281` and PR run `38665601486`, both green.
+  - **Earlier on the branch:**
+    - `ba2ce6a` failed on the two orchestration tests that still expected the old novelty numbers; they were fixed in the next commit.
+    - PR run `38663413064` on `0fd914c` failed only on the known Windows sniff-latency timing test, which M5b does not touch; its push run `38663409559` passed.
+- **Merge-ref check.** Parents `d203080` + `2a379f8`, tree `1093efb09e9bf36c25729b7c1961f3559e764bf7`, equal to the local merge-tree.
+- **Merge.** Squash-merged with an expected-head fence as `12e1596dd0bd79dfc204a44a54c7388f008c4c73`.
+- **Result.** Passed and accepted. Next: M5c (the end of a session).
